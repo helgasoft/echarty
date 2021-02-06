@@ -1,2 +1,2 @@
 # echarty
- New project
+ This is a stub for a project in development
