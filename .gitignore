@@ -1,0 +1,8 @@
+.Rproj.user
+.Rhistory
+.RData
+inst/doc
+*.vs/
+.V8history
+.vscode
+.DS_Store
