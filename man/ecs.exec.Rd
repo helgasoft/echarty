@@ -18,11 +18,13 @@ Other proxy commands:\cr
 \emph{p_append_data} - add data to existing series\cr
 \emph{p_dispatch} - send action commands, see \href{https://echarts.apache.org/en/api.html#echartsInstance.dispatchAction}{documentation}}
 }
+\value{
+A proxy object to update the chart.
+}
 \description{
 Once chart changes had been made, they need to be sent back to the widget for display
 }
 \examples{
-\dontrun{
 if (interactive()) {
 
 library(shiny)
@@ -97,8 +99,6 @@ runApp( list(
     })
   }
 ))
-}
-
 }
 
 }

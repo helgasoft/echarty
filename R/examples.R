@@ -10,31 +10,56 @@
 #'   Shiny plots & interactions through Shiny proxy.\cr
 #' Example usage is shown for all commands of this package.
 #' 
-#' @examples  
-#' \dontrun{
+#' @return No return value, used for help text
 #' 
-#' #--- Basic scatter chart, instant display
+#' @examples  
+#' \donttest{
+#' 
+#' #------ Basic scatter chart, instant display
 #' cars %>% ec.init()
 #' 
-#' #--- Same chart, change theme and save for further processing
-#' e <- cars %>% ec.init() %>% ec.theme('dark')
-#' e
+#' #------ Same chart, change theme and save for further processing
+#' p <- cars %>% ec.init() %>% ec.theme('dark')
+#' p
 #' 
-#' #--- JSON back and forth
+#' #------ JSON back and forth
 #' tmp <- cars %>% ec.init()
 #' tmp
 #' json <- tmp %>% ec.inspect()
 #' ec.fromJson(json) %>% ec.theme("dark")
 #'
-#' #--- Data grouping
-#' iris %>% group_by(Species) %>% ec.init()     # by factor column
-#' e <- Orange %>% group_by(Tree) %>% ec.init() # no factor column
-#' e$x$opts$series[[1]] <- append(e$x$opts$series[[1]], list(
+#' #------ Data grouping
+#' iris %>% dplyr::group_by(Species) %>% ec.init()     # by factor column
+#' p <- Orange %>% dplyr::group_by(Tree) %>% ec.init() # no factor column
+#' p$x$opts$series[[1]] <- append(p$x$opts$series[[1]], list(
 #'   symbolSize = 10
 #' ))   # further customization added
-#' e
+#' p
 #'
-#' #--- Plugin leaflet
+#' #------ Heatmap
+#' times <- c(5,1,0,0,0,0,0,0,0,0,0,2,4,1,1,3,4,6,4,4,3,3,2,5,7,0,0,0,0,0,
+#'            0,0,0,0,5,2,2,6,9,11,6,7,8,12,5,5,7,2,1,1,0,0,0,0,0,0,0,0,3,2,
+#'            1,9,8,10,6,5,5,5,7,4,2,4,7,3,0,0,0,0,0,0,1,0,5,4,7,14,13,12,9,5,
+#'            5,10,6,4,4,1,1,3,0,0,0,1,0,0,0,2,4,4,2,4,4,14,12,1,8,5,3,7,3,0,
+#'            2,1,0,3,0,0,0,0,2,0,4,1,5,10,5,7,11,6,0,5,3,4,2,0,1,0,0,0,0,0,
+#'            0,0,0,0,1,0,2,1,3,4,0,0,0,0,1,2,2,6)
+#' df <- NULL; n <- 1; 
+#' for(i in 0:6) { df <- rbind(df, data.frame(0:23, rep(i,24), times[n:(n+23)]));  n<-n+24  }
+#' hours <- ec.data(df); hours <- hours[-1]    # remove columns row
+#' times <- c('12a',paste0(1:11,'a'),'12p',paste0(1:11,'p'))
+#' days <- c('Saturday','Friday','Thursday','Wednesday','Tuesday','Monday','Sunday')
+#' p <- ec.init(preset=FALSE)
+#' p$x$opts <- list( title = list(text='Punch Card Heatmap'),
+#'   tooltip = list(position='top'),grid=list(height='50%',top='10%'),
+#'   xAxis = list(type='category', data=times, splitArea=list(show=TRUE)),
+#'   yAxis = list(type='category', data=days,  splitArea=list(show=TRUE)),
+#'   visualMap = list(min=0,max=10,calculable=TRUE,orient='horizontal',left='center',bottom='15%'),
+#'   series = list(list(name='Hours', type = 'heatmap', data= hours,label=list(show=TRUE),
+#'       emphasis=list(itemStyle=list(shadowBlur=10,shadowColor='rgba(0,0,0,0.5)'))))
+#' )
+#' p
+#' 
+#' #------ Plugin leaflet
 #' tmp <- quakes %>% dplyr::relocate('long')  # set lon,lat order
 #' p <- tmp %>% ec.init(load='leaflet')
 #' p$x$opts$legend = list(data=list(list(name='quakes')))
@@ -42,44 +67,31 @@
 #' p$x$opts$series[[1]]$symbolSize = htmlwidgets::JS("function(x){ return x[3];}")
 #' p
 #'  
-#' #--- Plugin geo
-#' tmp <- quakes %>% dplyr::relocate('long')
-#' p <- ec.init(load=c('geo'), preset=FALSE)
-#' p$x$opts$geo <- list(map='world', roam=TRUE, silent=TRUE)
-#' # p$x$renderer <- "webgl"  # works too
+#' #------ Plugins 3D and GL
+#' p <- ec.init(load = c('3D','GL'))
 #' p$x$opts$series[[1]] <- list(
-#'   name ='quakes',
-#'   type = 'scatter',
-#'   coordinateSystem = 'geo',
-#'   symbolSize = 5,
-#'   itemStyle = list( color='red'),
-#'   data = ec.data(tmp, series=TRUE)
-#' )
-#' p$x$opts$legend = list(data = list(list(name = 'quakes')))
-#' p
-#' 
-#' #--- Plugins 3D and GL
-#' e <- ec.init(load = c('3D','GL'))
-#' e$x$opts$series[[1]] <- list(
 #'   type = 'surface',
 #'   data = ec.data(as.data.frame(as.table(volcano)), TRUE)
 #' )
-#' e 
+#' p 
 #' 
-#' #--- Visual map for 3D chart
-#' library(onion)
-#' library(tibble)
-#' p <- as_tibble(bunny) %>%  #head(100) %>%
-#'   ec.init(load = c('3D','GL')) 
+#' #------ 3D chart with custom coloring
+#' #  [4] is the JS index of column Species
+#' p <- iris %>% ec.init(load = c('3D','GL'))
 #' p$x$opts$series[[1]] <- list(
-#'   type='scatter3D', symbolSize=2, encode=list(x='x',y='y',z='z'))
-#' p$x$opts$visualMap <- ec.vismap(
-#'   as_tibble(bunny), inRange=list(color=rainbow(10)))
+#'   type='scatter3D', symbolSize=7, 
+#'   encode=list(x='Sepal.Length', y='Sepal.Width', z='Petal.Length'),
+#'   itemStyle=list(color = htmlwidgets::JS("function(params){
+#'       if (params.value[4] == 1)    { return '#FE8463'; }
+#'       else if(params.value[4] == 2){ return '#27727B'; }
+#'       return '#9BCA63';
+#'   }") )
+#' )
 #' p
 #' 
-#' #--- Data as JS equation
-#' e <- ec.init(load=c('3D','GL'))
-#' e$x$opts$series[[1]] <- list(
+#' #------ Surface data equation with JS code
+#' p <- ec.init(load=c('3D','GL'))
+#' p$x$opts$series[[1]] <- list(
 #'   type = 'surface',
 #'   equation = list(
 #'     x = list(min=-3,max=4,step=0.05), 
@@ -88,43 +100,43 @@
 #'           return Math.sin(x * x + y * y) * x / Math.PI; }")
 #'   )
 #' )
-#' e
-#' 
-#' #--- Data as R equation in a data.frame
-#' library(tidyverse)
-#' data <- expand_grid(
-#'   y = seq(0, 1, by = 0.1),
-#'   x = seq(0, 2, by = 0.1)
+#' p
+#'
+#' #------ Surface with data from a data.frame
+#' library(dplyr)
+#' data <- expand.grid(
+#'   x = seq(0, 2, by = 0.1),
+#'   y = seq(0, 1, by = 0.1)
 #' ) %>% mutate(z = x * (y ^ 2)) %>% select(x,y,z)
-#' e <- ec.init(load=c('3D','GL'))
-#' e$x$opts$series[[1]] <- list(
+#' p <- ec.init(load=c('3D','GL'))
+#' p$x$opts$series[[1]] <- list(
 #'   type = 'surface',
 #'   data = ec.data(data, TRUE))
-#' e
+#' p
 #' 
-#' #--- Band serie with customization
+#' #------ Band serie with customization
 #' # Custom plugin for ec.sband's renderer
 #' # initial or later data loading is shown (switch commented lines)
 #' # first column usually sets the X-axis
 #' library(dplyr)
 #' dats <- as.data.frame(EuStockMarkets) %>% mutate(day=1:n()) %>% 
 #'   relocate(day) %>% slice_head(n=200)
-#' # e <- dats %>% ec.init(load='custom') # needs encode below
-#' e <- ec.init(load='custom')            # need data below
-#' e$x$opts$series[[1]] <- ec.sband(dats, 'DAX','FTSE')
-#' e$x$opts$series[[1]] <- append(e$x$opts$series[[1]], list(
+#' # p <- dats %>% ec.init(load='custom') # needs encode below
+#' p <- ec.init(load='custom')            # need data below
+#' p$x$opts$series[[1]] <- ec.sband(dats, 'DAX','FTSE')
+#' p$x$opts$series[[1]] <- append(p$x$opts$series[[1]], list(
 #'   name = 'band', color = 'lemonchiffon'
 #' ))
-#' e$x$opts$series[[2]] <- list(
+#' p$x$opts$series[[2]] <- list(
 #'   type='line', name='CAC', color='red', symbolSize=1,
 #'   # encode=list(x='day', y='CAC'),
 #'   data = ec.data(dats %>% select(day,CAC), TRUE) )
-#' e$x$opts$legend = list(data=list(
+#' p$x$opts$legend = list(data=list(
 #'   list(name='band'), list(name='CAC') ))
-#' e$x$opts$dataZoom <- list(list(type='slider',start=50))
-#' e
+#' p$x$opts$dataZoom <- list(list(type='slider',start=50))
+#' p
 #' 
-#' #--- Timeline animation
+#' #------ Timeline animation
 #' orng <- Orange
 #' orng$Tree <- paste('tree',as.character(orng$Tree)) # to string
 #' series <- list()
@@ -145,18 +157,18 @@
 #'     text=paste('Age',i,'days'), left='center'), series=myser
 #'   )
 #' }
-#' e <- ec.init()
-#' e$x$opts$xAxis <- list(list(type='category', name='5 orange trees', nameLocation='center'))
-#' e$x$opts$yAxis <- list(list(type='value', name='circumference (mm)',
+#' p <- ec.init()
+#' p$x$opts$xAxis <- list(list(type='category', name='5 orange trees', nameLocation='center'))
+#' p$x$opts$yAxis <- list(list(type='value', name='circumference (mm)',
 #'                    max=240, nameRotate=90, nameLocation='center',nameGap=33))
-#' e$x$opts$timeline <- list(axisType='category',
+#' p$x$opts$timeline <- list(axisType='category',
 #'                    playInterval=1000, autoPlay=TRUE,
 #'                    data=c(as.character(unique(orng$age))))
-#' e$x$opts$series <- series
-#' e$x$opts$options <- options
-#' e
+#' p$x$opts$series <- series
+#' p$x$opts$options <- options
+#' p
 #' 
-#' #--- Groups in a boxplot
+#' #------ Groups in a boxplot
 #' # original JS: https://echarts.apache.org/examples/en/editor.html?c=boxplot-multi
 #' grps <- list()   # data in 3 groups
 #' for (grp in 1:3) {
@@ -168,15 +180,15 @@
 #'   tmp <- lapply(seriesData, boxplot.stats)
 #'   grps[[grp]] <- lapply(tmp, function(x) x$stats)
 #' }
-#' e <- ec.init() 
+#' p <- ec.init() 
 #' for (grp in 1:3) {
-#'   e$x$opts$series[[grp]] <- list(
+#'   p$x$opts$series[[grp]] <- list(
 #'     name = paste0('category', grp),
 #'     type = 'boxplot',
 #'     data = grps[[grp]]
 #'   )
 #' }
-#' e$x$opts$xAxis <- list(
+#' p$x$opts$xAxis <- list(
 #'   type = 'category',
 #'   data = as.character(1:18),
 #'   boundaryGap = TRUE, nameGap = 30,
@@ -184,26 +196,26 @@
 #'   axisLabel = list(formatter = "exprmt {value}"),
 #'   splitLine = list(show=FALSE)
 #' )
-#' e$x$opts$yAxis <- list(
+#' p$x$opts$yAxis <- list(
 #'   type = 'value', name = 'Value',
 #'   min = -200, max = 400,
 #'   splitArea = list(show=FALSE)  
 #' )
-#' e$x$opts$legend$data <- list('category1', 'category2', 'category3')
-#' e$x$opts$tooltip <- list(trigger='item', axisPointer=list(type='shadow'))
-#' e$x$opts$dataZoom <- list(list(type='slider',start=50)) #list(type='inside',start=50), 
-#' e
+#' p$x$opts$legend$data <- list('category1', 'category2', 'category3')
+#' p$x$opts$tooltip <- list(trigger='item', axisPointer=list(type='shadow'))
+#' p$x$opts$dataZoom <- list(list(type='slider',start=50)) 
+#' p
 #' 
-#' #--- EChartsJS v.5 feature custom transform - a regresssion line
+#' #------ EChartsJS v.5 feature custom transform - a regression line
 #' # presets for xAxis,yAxis,dataset and series are used
 #' dset <- data.frame(x=1:10, y=sample(1:100,10))
-#' e <- dset %>% ec.init(js='echarts.registerTransform(ecStat.transform.regression)')
-#' e$x$opts$dataset[[2]] <- list(transform = list(type='ecStat:regression'))
-#' e$x$opts$series[[2]] <- list(
-#'   type='line', symbolSize=0.1, symbol='circle', datasetIndex=1)
-#' e 
+#' p <- dset %>% ec.init(js='echarts.registerTransform(ecStat.transform.regression)')
+#' p$x$opts$dataset[[2]] <- list(transform = list(type='ecStat:regression'))
+#' p$x$opts$series[[2]] <- list(
+#'   type='line', itemStyle=list(color='red'), datasetIndex=1)
+#' p 
 #' 
-#' #--- EChartsJS v.5 features transform and sort
+#' #------ EChartsJS v.5 features transform and sort
 #' datset <- list(
 #'   list(source=list(
 #'     list('name', 'age', 'profession', 'score', 'date'),
@@ -220,16 +232,16 @@
 #'     list(dimension='profession', order='desc'),
 #'     list(dimension='score', order='desc'))
 #'   )))
-#' e <- ec.init(title = list(
+#' p <- ec.init(title = list(
 #'         text='Data transform, multiple-sort bar', 
 #'         subtext='JS source v.5',
 #'         sublink=paste0('https://echarts.apache.org/next/examples/en/editor.html',
 #'                  '?c=doc-example/data-transform-multiple-sort-bar'), 
 #'         left='center')) 
-#' e$x$opts$dataset <- datset
-#' e$x$opts$xAxis <- list(type = 'category', axisLabel=list(interval=0, rotate=30))
-#' e$x$opts$yAxis <- list(name='score')
-#' e$x$opts$series[[1]] <- list(
+#' p$x$opts$dataset <- datset
+#' p$x$opts$xAxis <- list(type = 'category', axisLabel=list(interval=0, rotate=30))
+#' p$x$opts$yAxis <- list(name='score')
+#' p$x$opts$series[[1]] <- list(
 #'   type='bar',
 #'   label=list( show=TRUE, rotate=90, position='insideBottom',
 #'               align='left', verticalAlign='middle'
@@ -246,63 +258,78 @@
 #'   encode=list( x='name', y='score', label=list('profession') ),
 #'   datasetIndex = 1
 #' )
-#' e$x$opts$tooltip <- list(trigger='item', axisPointer=list(type='shadow'))
-#' e
+#' p$x$opts$tooltip <- list(trigger='item', axisPointer=list(type='shadow'))
+#' p
 #'
-#' #--- Sankey and graph plots
-#' # prepare data
-#' library(tidyverse)
-#' letters <- read_csv('https://raw.githubusercontent.com/jessesadler/intro-to-r/master/data/correspondence-data-1585.csv')
-#' sources <- letters %>%
-#'   distinct(source) %>% rename(label = source)
-#' destinations <- letters %>%
-#'   distinct(destination) %>% rename(label = destination)
-#' nodes <- full_join(sources, destinations, by = "label")
-#' nodes <- nodes %>% rowid_to_column("id")
-#' per_route <- letters %>% group_by(source, destination) %>% summarise(weight = n()) %>% ungroup()
-#' edges <- per_route %>% 
-#'   left_join(nodes, by = c("source" = "label")) %>% rename(from = id)
-#' edges <- edges %>% 
-#'   left_join(nodes, by = c("destination" = "label")) %>% rename(to = id)
-#' edges <- select(edges, from, to, weight)
+#' #------ Gauge
+#' p <- ec.init(preset = FALSE); 
+#' p$x$opts$series[[1]] <- list( 
+#'   type = 'gauge', max=160, min=40,
+#'   detail = list(formatter = '🧠={value}', fontSize=20), 
+#'   data = list(list(value=85, name='IQ test')) )
+#' p
 #' 
-#' # Sankey chart --------------
-#' p <- ec.init(title=list(text="Daniel's letters 1585"), preset=FALSE)
-#' p$x$opts$series[[1]] <- list( type='sankey',
-#'     data = lapply(ec.data(nodes,TRUE), function(x) 
-#'       list(name=x$value[2])),
-#'     edges = lapply(ec.data(per_route,TRUE), function(x) 
-#'       list(source=as.character(x$value[1]), 
-#'            target=as.character(x$value[2]), value=x$value[3]) )
+#' #------ Custom gauge with animation
+#' p <- ec.init(js = "setInterval(function () { 
+#'    opts.series[0].data[0].value = (Math.random() * 100).toFixed(2) - 0;  
+#'    chart.setOption(opts, true);}, 2000);")
+#' p$x$opts <- list(series=list(list(type = 'gauge',
+#'   axisLine = list(lineStyle=list(width=30,
+#'     color = list(c(0.3, '#67e0e3'),c(0.7, '#37a2da'),c(1, '#fd666d')))),
+#'   pointer = list(itemStyle=list(color='auto')), 
+#'   axisTick = list(distance=-30,length=8, lineStyle=list(color='#fff',width=2)),
+#'   splitLine = list(distance=-30,length=30, lineStyle=list(color='#fff',width=4)),
+#'   axisLabel = list(color='auto',distance=40,fontSize=20),
+#'   detail = list(valueAnimation=TRUE, formatter='{value} km/h',color='auto'),
+#'   data = list(list(value=70))
+#' )))
+#' p
+#' 
+#' 
+#' #------ Sankey and graph plots
+#' # prepare data
+#' sankey <- data.frame(
+#'   node = c("a","b", "c", "d", "e"),
+#'   source = c("a", "b", "c", "d", "c"),
+#'   target = c("b", "c", "d", "e", "e"),
+#'   value = c(5, 6, 2, 8, 13),
+#'   stringsAsFactors = FALSE
 #' )
-#' p$x$opts$tooltip <- list(trigger='item')
+#' 
+#' p <- ec.init(preset=FALSE)
+#' p$x$opts$series[[1]] <- list( type='sankey',
+#'   data = lapply(ec.data(sankey,TRUE),
+#'                 function(x) list(name=x$value[1])),
+#'   edges = lapply(ec.data(sankey,TRUE), function(x)
+#'     list(source=as.character(x$value[2]), 
+#'          target=as.character(x$value[3]), value=x$value[4]) ) 
+#' )
 #' p
 #' 
 #' # graph plot with same data ---------------
-#' p <- ec.init(preset=FALSE, title=list(text="Daniel's letters 1585", 
-#'         subtext='data source',
-#'         sublink='https://www.jessesadler.com/post/network-analysis-with-r/', 
-#'         left='center'))
-#' p$x$opts$series[[1]] <- list( type = 'graph', 
-#'   layout = 'force', #' try 'circular' too
-#'   nodes = lapply(ec.data(nodes,TRUE), function(x) 
-#'     list(id = x$value[1], name = x$value[2], tooltip = list(show=FALSE) )),
-#'   edges = lapply(ec.data(edges,TRUE), function(x) 
-#'     list(source = as.character(x$value[1]), 
-#'          target = as.character(x$value[2]), 
-#'          value = x$value[3], lineStyle = list(width=x$value[3])) ), 
+#' p <- ec.init(preset=FALSE, title=list(text="Graph"))
+#' p$x$opts$series[[1]] <- list( type='graph',
+#'   layout = 'force',   # try 'circular' too
+#'   data = lapply(ec.data(sankey,TRUE),
+#'                 function(x) list(name=x$value[1], tooltip = list(show=FALSE))),
+#'   edges = lapply(ec.data(sankey,TRUE), 
+#'                 function(x) list(source=x$value[2], 
+#'                   target=x$value[3], value=x$value[4], 
+#'                   lineStyle = list(width=x$value[4]))), 
 #'   emphasis = list(focus='adjacency',
 #'                   label=list( position='right', show=TRUE)),
-#'   label = list(show=TRUE), roam = TRUE, zoom = 4, 
-#'   tooltip=list(textStyle=list(color='blue'), formatter='{c} letters'),
+#'   label = list(show=TRUE), roam = TRUE, zoom = 4,
+#'   tooltip=list(textStyle=list(color='blue')),
 #'   lineStyle = list(curveness=0.3)
 #' )
 #' p$x$opts$tooltip <- list(trigger='item')
 #' p
-#'
+#' 
 #'    
-#' #--- Shiny interactive chart
+#' #------ Shiny interactive chart
+#' if (interactive()) {
 #' library(shiny)
+#' library(dplyr)
 #' runApp( list(
 #'   ui = fluidPage(
 #'     ecs.output('plot'),
@@ -316,15 +343,15 @@
 #'   server = function(input, output, session){
 #' 
 #'     output$plot <- ecs.render({
-#'       e <- mtcars %>% group_by(cyl) %>% ec.init()
-#'       e$x$opts$tooltip <- list(list(show=TRUE))
-#'       e$x$opts$series[[1]]$emphasis <- list(focus='series', blurScope='coordinateSystem')
-#'       e
+#'       p <- mtcars %>% group_by(cyl) %>% ec.init()
+#'       p$x$opts$tooltip <- list(list(show=TRUE))
+#'       p$x$opts$series[[1]]$emphasis <- list(focus='series', blurScope='coordinateSystem')
+#'       p
 #'     })
 #' 
 #'     observeEvent(input$addm, {
-#'       e <- ecs.proxy('plot')
-#'       e$x$opts$series[[1]] = list(
+#'       p <- ecs.proxy('plot')
+#'       p$x$opts$series[[1]] = list(
 #'         markPoint = list(data = list(
 #'           list(coord = c(22.5, 140.8)),
 #'           list(coord = c(30.5, 95.1))
@@ -340,41 +367,42 @@
 #'         )
 #'         ,markLine = list(data = list(list(type='average')))
 #'       )
-#'       e %>% ecs.exec() #' ='p_merge'
+#'       p %>% ecs.exec() # ='p_merge'
 #'     })
 #'     observeEvent(input$adds, {
-#'       e <- ecs.proxy('plot')
-#'       e$x$opts$series[[1]] <- list(
+#'       p <- ecs.proxy('plot')
+#'       p$x$opts$series[[1]] <- list(
 #'         type = 'line', name = 'newLine',
 #'         encode = list(x='mpg', y='disp')
 #'       )
-#'       e %>% ecs.exec('p_update')
+#'       p %>% ecs.exec('p_update')
 #'     })
 #'     observeEvent(input$dels, {
-#'       e <- ecs.proxy('plot')
-#'       e$x$opts$seriesName <- 'newLine'
-#'       #'e$x$opts$seriesIndex <- 4  #' alternative ok
-#'       e %>% ecs.exec('p_del_serie')
+#'       p <- ecs.proxy('plot')
+#'       p$x$opts$seriesName <- 'newLine'
+#'       # p$x$opts$seriesIndex <- 4  # alternative ok
+#'       p %>% ecs.exec('p_del_serie')
 #'     })
 #'     observeEvent(input$delm, {
-#'       e <- ecs.proxy('plot')
-#'       e$x$opts$seriesIndex <- 1
-#'       e$x$opts$delMarks <- c('markArea','markLine')
-#'       e %>% ecs.exec('p_del_marks')
+#'       p <- ecs.proxy('plot')
+#'       p$x$opts$seriesIndex <- 1
+#'       p$x$opts$delMarks <- c('markArea','markLine')
+#'       p %>% ecs.exec('p_del_marks')
 #'     })
 #'     observeEvent(input$hilit, {
-#'       e <- ecs.proxy('plot')
-#'       e$x$opts <- list(type='highlight', seriesName='4')
-#'       e %>% ecs.exec('p_dispatch')
+#'       p <- ecs.proxy('plot')
+#'       p$x$opts <- list(type='highlight', seriesName='4')
+#'       p %>% ecs.exec('p_dispatch')
 #'     })
 #'     observeEvent(input$dnplay, {
-#'       e <- ecs.proxy('plot')
-#'       e$x$opts <- list(type='downplay', seriesName='4')
-#'       e %>% ecs.exec('p_dispatch')
+#'       p <- ecs.proxy('plot')
+#'       p$x$opts <- list(type='downplay', seriesName='4')
+#'       p %>% ecs.exec('p_dispatch')
 #'     })
 #'   }
 #' ))
-#'
+#' }
+#' 
 #' }
 #' 
 #' @export 

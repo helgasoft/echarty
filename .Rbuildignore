@@ -6,6 +6,7 @@
 ^\.Rproj\.user$
 cran-comments.md
 ^LICENSE\.md$
+^LICENSE
 ^data-raw$
 .travis.yml
 .vs

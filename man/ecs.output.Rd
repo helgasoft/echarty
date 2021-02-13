@@ -13,10 +13,12 @@ ecs.output(outputId, width = "100\%", height = "400px")
 \code{'400px'}, \emph{'auto'}) or a number, which will be coerced to a
 string and have \emph{'px'} appended.}
 }
+\value{
+An output or render function that enables the use of the widget within Shiny applications.
+}
 \description{
 Placeholder for a chart in Shiny UI
-redrawing the entire chart.
 }
 \seealso{
-\link{ecs.exec} for example.
+\link{ecs.exec} for example, \code{\link[htmlwidgets]{shinyWidgetOutput}} for return value.
 }

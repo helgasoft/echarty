@@ -21,7 +21,7 @@ ec.init(
 \item{df}{A data.frame to be used as dataset in the chart, default NULL}
 
 \item{load}{Name(s) of plugin(s) to load. Currently supported are
-\emph{3D, GL, geo, leaflet, custom}. Could be a vector or comma-delimited string. default NULL.}
+\emph{3D, GL, leaflet, custom}. Could be a vector or comma-delimited string. default NULL.}
 
 \item{width, height}{A valid CSS unit (like \code{'100\%'},
 \code{'500px'}, \code{'auto'}) or a number, which will be coerced to a
@@ -31,7 +31,7 @@ string and have \code{'px'} appended.}
 
 \item{renderer}{\code{'canvas'} (default) or \code{'svg'}.}
 
-\item{preset}{Enable (TRUE, default) or disable(FALSE) presets like xAxis,yAxis,dataset,series[\link{1}], but not \code{group1}.}
+\item{preset}{Enable (TRUE, default) or disable(FALSE) presets like xAxis,yAxis,dataset,series, but not \code{group1}.}
 
 \item{group1}{Preset parameters if df is grouped, default TRUE \cr
 If the grouping is on multiple columns, only the first one is used.}

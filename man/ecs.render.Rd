@@ -13,9 +13,12 @@ ecs.render(expr, env = parent.frame(), quoted = FALSE)
 
 \item{quoted}{Is \code{expr} a quoted expression? default FALSE.}
 }
+\value{
+An output or render function that enables the use of the widget within Shiny applications.
+}
 \description{
 This is the initial rendering of a chart in the UI.
 }
 \seealso{
-\link{ecs.exec} for example
+\link{ecs.exec} for example, \code{\link[htmlwidgets]{shinyWidgetOutput}} for return value.
 }

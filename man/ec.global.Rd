@@ -2,30 +2,31 @@
 % Please edit documentation in R/echarty.R
 \name{ec.global}
 \alias{ec.global}
-\title{Global theme}
+\title{Global options}
 \usage{
-ec.global(theme = NULL, font = NULL, urltiles = NULL)
+ec.global(options = NULL)
 }
 \arguments{
-\item{theme}{Name of theme file (without extension), from folder /inst/themes}
-
-\item{font}{Font family name}
-
-\item{urltiles}{Tiles URL template for leaflet maps}
+\item{options}{A list of options: \cr
+theme = name of theme file (without extension), from folder /inst/themes\cr
+font = font family name \cr
+urltiles = tiles URL template for leaflet maps}
 }
 \value{
-none
+none, setting values only
 }
 \description{
 Set a global theme, font and/or tile URL
 }
 \details{
-To get these values in code use \code{\link[base]{getOption}}. Revert back to default by setting them to NULL.
+To get these values in code use \code{\link[base]{getOption}}.
+Revert back to default by setting them to NULL.
+More list components could be added in the future.
 }
 \examples{
-ec.global(theme = 'dark')
+ec.global(list(theme = 'dark'))
 cars \%>\% ec.init()
-ec.global(theme = NULL)
+ec.global(list(theme = NULL))
 cars \%>\% ec.init()
 
 }

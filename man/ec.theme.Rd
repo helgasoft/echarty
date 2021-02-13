@@ -23,12 +23,9 @@ Apply a pre-built theme to a chart
 Just a few themes are included in folder 'inst/themes'. The entire collection could be found \href{https://github.com/apache/echarts/tree/master/theme}{here} and copied if needed.
 }
 \examples{
-\dontrun{
 mtcars \%>\% ec.init() \%>\% ec.theme('dark-mushroom')
-cars \%>\% ec.init() \%>\% ec.theme('myne', code=
+cars \%>\% ec.init() \%>\% ec.theme('mine', code=
   '{"color": ["green","#eeaa33"], 
     "backgroundColor": "lemonchiffon"}')
-    
-}
 
 }

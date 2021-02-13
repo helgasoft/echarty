@@ -48,19 +48,34 @@ HTMLWidgets.widget({
           }
         }
         
-        if(x.hasOwnProperty('eval')){
-          if (x.eval)
+        let eva2 = null;
+        if (x.hasOwnProperty('eval')) {
+          if (x.eval) {
+            let tmp = null;
+            if (Array.isArray(x.eval)) {
+              tmp = x.eval[0];
+              eva2 = x.eval[1];
+            } else
+              tmp = x.eval;
             try {
-              eval(x.eval);
-            } catch(err) { console.log('Eval:' + err.message) }
+              eval(tmp);
+            } catch(err) { console.log('Eva1:' + err.message) }
+          }
         }
         
-        chart = echarts.init(document.getElementById(el.id), x.theme, {renderer: x.renderer});
+        chart = echarts.init(document.getElementById(el.id), x.theme, 
+                            {renderer: x.renderer});
         
         opts = evalFun(x.opts);
         
         if(x.draw === true)
           chart.setOption(opts);
+        
+        if (eva2) {
+          try {
+            eval(eva2);
+          } catch(err) { console.log('Eva2:' + err.message) }
+        }
         
         // shiny callbacks
         if (HTMLWidgets.shinyMode) {

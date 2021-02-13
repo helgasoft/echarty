@@ -6,6 +6,9 @@
 \usage{
 lhs \%>\% rhs
 }
+\value{
+A value of the lhs (left-hand-side) object prepared for rhs (right-hand-side) function/call.
+}
 \description{
 Imported from magrittr
 }

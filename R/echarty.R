@@ -6,8 +6,8 @@
 #'
 #' @param df A data.frame to be used as dataset in the chart, default NULL
 #' @param load Name(s) of plugin(s) to load. Currently supported are 
-#'    \emph{3D, GL, geo, leaflet, custom}. Could be a vector or comma-delimited string. default NULL.
-#' @param preset Enable (TRUE, default) or disable(FALSE) presets like xAxis,yAxis,dataset,series[[1]], but not \code{group1}.   
+#'    \emph{3D, GL, leaflet, custom}. Could be a vector or comma-delimited string. default NULL.
+#' @param preset Enable (TRUE, default) or disable(FALSE) presets like xAxis,yAxis,dataset,series, but not \code{group1}.
 #' @param group1 Preset parameters if df is grouped, default TRUE \cr
 #'      If the grouping is on multiple columns, only the first one is used.
 #' @param width,height A valid CSS unit (like \code{'100\%'},
@@ -112,7 +112,7 @@ ec.init <- function( df = NULL, load = NULL,
   
   if (is.null(load)) return(wt)
 
-  if (length(load==1) && grepl(',', load, fixed=TRUE))
+  if (length(load)==1 && grepl(',', load, fixed=TRUE))
       load <- unlist(strsplit(load, ','))
       
   if ('3D' %in% load && preset) {
@@ -148,20 +148,21 @@ ec.init <- function( df = NULL, load = NULL,
     }
     
     dep <- htmltools::htmlDependency(
-      name = 'leaflet', 
+      name = 'echarts-leaflet', 
       version = '1.0.0', src = c(file = path), 
       script='echarts-leaflet.js')
     wt$dependencies <- append(wt$dependencies, htmlwidgets::getDependency('leaflet'))
     wt$dependencies <- append(wt$dependencies, list(dep))
-  } 
-  if ('geo' %in% load) {
-    dep <- htmltools::htmlDependency(
-      name = 'world',
-      version = '1.0.0', src = c(file = path),
-      script = 'world.js'
-    )
-    wt$dependencies <- append(wt$dependencies, list(dep))
   }
+  ## will be implemented later as manual or dynamic load on-demand, world.js is too big to include in echarty
+  # if ('geo' %in% load) {
+  #   dep <- htmltools::htmlDependency(
+  #     name = 'world',
+  #     version = '1.0.0', src = c(file = path),
+  #     script = 'world.js'
+  #   )
+  #   wt$dependencies <- append(wt$dependencies, list(dep))
+  # }
   if ('GL' %in% load) {
     dep <- htmltools::htmlDependency(
       name = 'gl',
@@ -207,30 +208,6 @@ ec.data <- function(df, series=FALSE) {
 }
 
 
-#' Build EchartsJS visualMap list from data
-#' 
-#' @param df Chart data in data.frame format, required
-#' @param calculable Show handles or not, default TRUE
-#' @param type One of 'continuous'(default) or 'piecewise'
-#' @param ... Any other \href{https://echarts.apache.org/en/option.html#visualMap}{options} to pass
-#' @return A list to set in parameter \code{visualMap}
-#'
-#' @export
-ec.vismap <- function(df=NULL, calculable=TRUE, 
-                      type = c('continuous', 'piecewise'), ...) 
-{
-  if (is.null(df)) {
-    stop('data required', call. = FALSE)
-  }
-  vm <- list(...)
-  vm$calculable <- calculable
-  vm$type <- type[1]
-  rng <- range(df, na.rm=TRUE) %>% .get_validate_range()
-  vm$min <- rng$min
-  vm$max <- rng$max
-  vm  # =e$x$opts$visualMap
-}
-
 
 #' Band
 #' 
@@ -271,14 +248,14 @@ ec.sband <- function(df=NULL, lower=NULL, upper=NULL, ...) {
 #' Shiny: UI chart
 #' 
 #' Placeholder for a chart in Shiny UI
-#' redrawing the entire chart.
 #' 
 #' @param outputId Name of output UI element.
 #' @param width,height Must be a valid CSS unit (like \code{'100\%'},
 #'   \code{'400px'}, \emph{'auto'}) or a number, which will be coerced to a
 #'   string and have \emph{'px'} appended.
+#' @return An output or render function that enables the use of the widget within Shiny applications. 
 #'
-#' @seealso [ecs.exec] for example.
+#' @seealso [ecs.exec] for example, \code{\link[htmlwidgets]{shinyWidgetOutput}} for return value.
 #' 
 #' @export
 ecs.output <- function(outputId, width = '100%', height = '400px') {
@@ -293,8 +270,9 @@ ecs.output <- function(outputId, width = '100%', height = '400px') {
 #' @param expr An \code{echarty} widget to generate the chart.
 #' @param env The environment in which to evaluate \code{expr}.
 #' @param quoted Is \code{expr} a quoted expression? default FALSE.
+#' @return An output or render function that enables the use of the widget within Shiny applications.
 #'   
-#' @seealso [ecs.exec] for example
+#' @seealso [ecs.exec] for example, \code{\link[htmlwidgets]{shinyWidgetOutput}} for return value.
 #' 
 #' @export
 ecs.render <- function(expr, env=parent.frame(), quoted=FALSE) {
@@ -336,11 +314,11 @@ ecs.proxy <- function(id) {
 #' \emph{p_del_marks} - delete marks of a serie\cr
 #' \emph{p_append_data} - add data to existing series\cr
 #' \emph{p_dispatch} - send action commands, see \href{https://echarts.apache.org/en/api.html#echartsInstance.dispatchAction}{documentation}
+#' @return A proxy object to update the chart.
 #' 
 #' @seealso [ecs.proxy], [ecs.render], [ecs.output]
 #' 
 #' @examples
-#' \dontrun{
 #' if (interactive()) {
 #' 
 #' library(shiny)
@@ -417,8 +395,6 @@ ecs.proxy <- function(id) {
 #' ))
 #' }
 #' 
-#' }
-#' 
 #' @export
 ecs.exec <- function(proxy, cmd='p_merge') {
 
@@ -448,29 +424,33 @@ ecs.exec <- function(proxy, cmd='p_merge') {
 
 # ----------- Utilities ----------------------
 
-#' Global theme
+#' Global options
 #' 
 #' Set a global theme, font and/or tile URL
 #'
-#' @param theme Name of theme file (without extension), from folder /inst/themes
-#' @param font Font family name
-#' @param urltiles Tiles URL template for leaflet maps
-#' @return none
+#' @param options A list of options: \cr
+#'     theme = name of theme file (without extension), from folder /inst/themes\cr
+#'     font = font family name \cr
+#'     urltiles = tiles URL template for leaflet maps
+#' @return none, setting values only
 #' 
-#' @details To get these values in code use \code{\link[base]{getOption}}. Revert back to default by setting them to NULL.
+#' @details To get these values in code use \code{\link[base]{getOption}}. 
+#' Revert back to default by setting them to NULL.
+#' More list components could be added in the future.
 #'
 #' @examples
-#' ec.global(theme = 'dark')
+#' ec.global(list(theme = 'dark'))
 #' cars %>% ec.init()
-#' ec.global(theme = NULL)
+#' ec.global(list(theme = NULL))
 #' cars %>% ec.init()
 #' 
 #' @export
-ec.global <- function(theme=NULL, font=NULL, urltiles=NULL ) {
+ec.global <- function(options = NULL) {
+  if (is.null(options)) return()
   options(
-    'ECHARTS_THEME' = theme,
-    'ECHARTS_FONT' = font,
-    'ECHARTS_TILES' = urltiles
+    'ECHARTS_THEME' = options$theme,
+    'ECHARTS_FONT' = options$font,
+    'ECHARTS_TILES' = options$urltiles
   )
 }
 
@@ -487,13 +467,10 @@ ec.global <- function(theme=NULL, font=NULL, urltiles=NULL ) {
 #' @details Just a few themes are included in folder 'inst/themes'. The entire collection could be found \href{https://github.com/apache/echarts/tree/master/theme}{here} and copied if needed.
 #'
 #' @examples
-#' \dontrun{
 #' mtcars %>% ec.init() %>% ec.theme('dark-mushroom')
-#' cars %>% ec.init() %>% ec.theme('myne', code=
+#' cars %>% ec.init() %>% ec.theme('mine', code=
 #'   '{"color": ["green","#eeaa33"], 
 #'     "backgroundColor": "lemonchiffon"}')
-#'     
-#' }
 #' 
 #' @export
 ec.theme <- function (e, name, code = NULL) 
@@ -573,23 +550,6 @@ ec.fromJson <- function(txt) {
 
 # ----------- Internal --------------
 
-# validate Min/Max for visualMap
-.get_validate_range <- function (rng) {
-  max <- max(rng, na.rm = TRUE)
-  min <- min(rng, na.rm = TRUE)
-  if (!(max > min)) {
-    if (rng[1] >= 0) {
-      max <- rng[1]
-      min <- 0
-    }
-    else {
-      max <- 0
-      min <- rng[1]
-    }
-  }
-  return(list(max = max, min = min))
-}
-
 # needed by widget init
 .preRender <- function(e) {
 
@@ -630,6 +590,7 @@ ec.fromJson <- function(txt) {
 #' Imported from magrittr
 #'
 #' @name %>%
+#' @return A value of the lhs (left-hand-side) object prepared for rhs (right-hand-side) function/call.
 #' @rdname pipe
 #' @keywords internal
 #' @export
@@ -639,7 +600,7 @@ NULL
 
 
 #  ------------- Licence -----------------
-#' 
+#'
 #' Original work Copyright 2018 John Coene
 #' 
 #' Modified work Copyright 2021 Larry Helgason
