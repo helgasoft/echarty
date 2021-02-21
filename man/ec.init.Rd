@@ -6,22 +6,36 @@
 \usage{
 ec.init(
   df = NULL,
+  group1 = "scatter",
+  preset = TRUE,
   load = NULL,
   width = NULL,
   height = NULL,
   elementId = NULL,
   renderer = "canvas",
-  preset = TRUE,
-  group1 = TRUE,
   js = NULL,
   ...
 )
 }
 \arguments{
-\item{df}{A data.frame to be used as dataset in the chart, default NULL}
+\item{df}{A data.frame to be preset as \href{https://echarts.apache.org/en/option.html#dataset}{dataset}, default NULL}
 
-\item{load}{Name(s) of plugin(s) to load. Currently supported are
-\emph{3D, GL, leaflet, custom}. Could be a vector or comma-delimited string. default NULL.}
+\item{group1}{Type of grouped series, default 'scatter'. Set to NULL to disable. \cr
+If the grouping is on multiple columns, only the first one is used.}
+
+\item{preset}{Enable (TRUE, default) or disable(FALSE) presets xAxis, yAxis and first serie.}
+
+\item{load}{Name(s) of plugin(s) to load. Could be a character vector or comma-delimited string. default NULL.\cr
+Built-in plugins: \cr \itemize{
+\item leaflet - Leaflet maps with customizable tiles, see \href{https://github.com/gnijuohz/echarts-leaflet#readme}{source}\cr
+\item custom - renderers for \link{ec.band} and ec.ebars \cr
+} Plugins with one-time installation (popup prompt): \cr \itemize{
+\item 3D - 3D charts and WebGL acceleration, see \href{https://github.com/ecomfe/echarts-gl}{source} and \href{https://echarts.apache.org/en/option-gl.html#series}{docs} \cr
+\item world - world map with country boundaries, see \href{https://github.com/apache/echarts/tree/master/test/data/map/js}{source} \cr
+\item liquid - liquid fill, see \href{https://github.com/ecomfe/echarts-liquidfill}{source}  \cr
+\item gmodular - graph modularity, see \href{https://github.com/ecomfe/echarts-graph-modularity}{source}  \cr
+\item wordcloud - cloud of words, see \href{https://github.com/ecomfe/echarts-wordcloud}{source} \cr
+} Install you own plugins with \link{ec.plugjs}.}
 
 \item{width, height}{A valid CSS unit (like \code{'100\%'},
 \code{'500px'}, \code{'auto'}) or a number, which will be coerced to a
@@ -30,11 +44,6 @@ string and have \code{'px'} appended.}
 \item{elementId}{Id of the widget, default NULL}
 
 \item{renderer}{\code{'canvas'} (default) or \code{'svg'}.}
-
-\item{preset}{Enable (TRUE, default) or disable(FALSE) presets like xAxis,yAxis,dataset,series, but not \code{group1}.}
-
-\item{group1}{Preset parameters if df is grouped, default TRUE \cr
-If the grouping is on multiple columns, only the first one is used.}
 
 \item{js}{A Javascript expression to evaluate, default NULL.}
 
@@ -49,7 +58,7 @@ Initialize a chart.
 \details{
 Widgets are defined in \href{https://www.htmlwidgets.org/develop_intro.html}{htmlwidgets}.
 This command creates one with \code{\link[htmlwidgets]{createWidget}}, then adds some EchartsJS features to it.\cr
-It also presets values for xAxis,yAxis,dataset and series. The user can overwrite them if needed.
+It may preset values for xAxis,yAxis,series and dataset, which user can overwrite if needed.
 }
 \examples{
  # basic scatter chart from a data.frame, using presets

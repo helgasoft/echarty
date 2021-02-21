@@ -1,8 +1,7 @@
 //  JS renderers for error bars, bands, etc.
 	
 /*
-  added ErrorBar support for grouped bars, barGap and barCategoryGap
-  author: helgasoft.com
+  Error Bar support for grouped bars, barGap and barCategoryGap
      Notes:	
   Prefix 'ri' stands for 'renderItem' function.
   Error bars can have chart bars, lines and scatter points as "hosts".
@@ -12,7 +11,8 @@
   Default legend = FALSE, since we'll have only chart bars in legend.	
   Error bars will inherit color from their chart bar, blending with them.
   Therefore it is preferable to set a different color, like so -
-  e_error_bar(..., color='blue'). Black is now set as default color.
+  ec.ebars(..., color='blue'). Black is now set as default color.
+  ec.ebars are set at the end, after all other series.
   
 	To test in R:
   grps <- 5    # customizable number of groups
@@ -22,11 +22,11 @@
     'Yaxis' = 50 * abs(rnorm(grps*rpt))) %>%
     mutate(Lower = Yaxis - 5 * runif(grps*rpt),
            Upper = Yaxis + 5 * runif(grps*rpt))
-  df %>% group_by(Category) %>% 
-    e_charts(Xaxis) %>% 
-    e_bar(Yaxis) %>%  #, barGap ='22%', barCategoryGap='55%') %>%
-    e_error_bar(Lower, Upper) %>%
-    e_datazoom(start = 50)
+  p <- df %>% group_by(Category) %>% ec.init()
+  p$x$opts$xAxis <- list(type='category')
+  p$x$opts$series[[1]] <- list( type='bar', barGap ='22%', barCategoryGap='55%')
+  p$x$opts$dataZoom <- list(start = 50)
+  p <- ec.ebars(p, Lower, Upper)
 */
 function riErrorBar(params, api) {
 
@@ -102,7 +102,7 @@ function riErrorBar(params, api) {
 
 /*
   renderItem function for Polygon
-  used also by e_band2
+  used also by ec.band
 */
 function riPolygon(params, api) {
     if (params.context.rendered) return;

@@ -4,12 +4,21 @@
 #'
 #' Initialize a chart.
 #'
-#' @param df A data.frame to be used as dataset in the chart, default NULL
-#' @param load Name(s) of plugin(s) to load. Currently supported are 
-#'    \emph{3D, GL, leaflet, custom}. Could be a vector or comma-delimited string. default NULL.
-#' @param preset Enable (TRUE, default) or disable(FALSE) presets like xAxis,yAxis,dataset,series, but not \code{group1}.
-#' @param group1 Preset parameters if df is grouped, default TRUE \cr
+#' @param df A data.frame to be preset as \href{https://echarts.apache.org/en/option.html#dataset}{dataset}, default NULL
+#' @param group1 Type of grouped series, default 'scatter'. Set to NULL to disable. \cr
 #'      If the grouping is on multiple columns, only the first one is used.
+#' @param preset Enable (TRUE, default) or disable(FALSE) presets xAxis, yAxis and first serie.
+#' @param load Name(s) of plugin(s) to load. Could be a character vector or comma-delimited string. default NULL.\cr
+#'   Built-in plugins: \cr \itemize{
+#'   \item leaflet - Leaflet maps with customizable tiles, see \href{https://github.com/gnijuohz/echarts-leaflet#readme}{source}\cr
+#'   \item custom - renderers for [ec.band] and ec.ebars \cr 
+#'  } Plugins with one-time installation (popup prompt): \cr \itemize{
+#'   \item 3D - 3D charts and WebGL acceleration, see \href{https://github.com/ecomfe/echarts-gl}{source} and \href{https://echarts.apache.org/en/option-gl.html#series}{docs} \cr
+#'   \item world - world map with country boundaries, see \href{https://github.com/apache/echarts/tree/master/test/data/map/js}{source} \cr
+#'   \item liquid - liquid fill, see \href{https://github.com/ecomfe/echarts-liquidfill}{source}  \cr
+#'   \item gmodular - graph modularity, see \href{https://github.com/ecomfe/echarts-graph-modularity}{source}  \cr
+#'   \item wordcloud - cloud of words, see \href{https://github.com/ecomfe/echarts-wordcloud}{source} \cr
+#'  } Install you own plugins with [ec.plugjs].
 #' @param width,height A valid CSS unit (like \code{'100\%'},
 #'   \code{'500px'}, \code{'auto'}) or a number, which will be coerced to a
 #'   string and have \code{'px'} appended.
@@ -21,24 +30,24 @@
 #'
 #' @details Widgets are defined in \href{https://www.htmlwidgets.org/develop_intro.html}{htmlwidgets}. 
 #'  This command creates one with \code{\link[htmlwidgets]{createWidget}}, then adds some EchartsJS features to it.\cr
-#'  It also presets values for xAxis,yAxis,dataset and series. The user can overwrite them if needed.
+#'  It may preset values for xAxis,yAxis,series and dataset, which user can overwrite if needed.
 #' 
 #' @examples
 #'  # basic scatter chart from a data.frame, using presets
 #'  cars %>% ec.init()
 #'  
 #' @import htmlwidgets
-#'
+#' 
 #' @export
-ec.init <- function( df = NULL, load = NULL,
+ec.init <- function( df = NULL, group1 = 'scatter', preset = TRUE, load = NULL,
   width = NULL, height = NULL, elementId = NULL, 
-  renderer = 'canvas', preset = TRUE, group1 = TRUE, js = NULL, ...) {
+  renderer = 'canvas', js = NULL, ...) {
   
   opts <- list(...)
   if (preset)
     opts <- append(opts, list(
-      xAxis = list(list()),
-      yAxis = list(list()),
+      xAxis = list(ec=''),
+      yAxis = list(ec=''),
       series = list(list())
     ))
   
@@ -60,12 +69,12 @@ ec.init <- function( df = NULL, load = NULL,
     x$opts$series[[1]] <- list(type='scatter')
   
   if (!is.null(df)) {
-    # data.frame given, assign to dataset
+    # if data.frame given, assign to dataset regardless of parameter preset
     if (!'data.frame' %in% class(df)) 
       stop('df must be a data.frame', call. = FALSE)
     
     # grouping uses transform - a v.5 feature
-    if (group1 && dplyr::is.grouped_df(df)) {
+    if (!is.null(group1) && dplyr::is.grouped_df(df)) {
       grnm <- dplyr::group_vars(df)[[1]]   # group1 means just 1st one
       df <- df %>% dplyr::relocate(grnm, .after = dplyr::last_col())
       x$opts$dataset <- list(list(source = ec.data(df)))
@@ -79,12 +88,12 @@ ec.init <- function( df = NULL, load = NULL,
         txfm <- append(txfm, list(list(transform = list(
           type='filter', config=list(dimension=grnm, '='=srch4)))))
         x$opts$series[[k]] <- list(
-          type='scatter', datasetIndex=k, name=i)
+          type=group1, datasetIndex=k, name=i)
         x$opts$legend$data <- append(x$opts$legend$data, list(list(name=i)))
       }
       x$opts$dataset <- append(x$opts$dataset, txfm)
     } 
-    else if (preset)
+    else 
       x$opts$dataset <- list(list(source = ec.data(df)))
   }
 
@@ -115,21 +124,11 @@ ec.init <- function( df = NULL, load = NULL,
   if (length(load)==1 && grepl(',', load, fixed=TRUE))
       load <- unlist(strsplit(load, ','))
       
-  if ('3D' %in% load && preset) {
-      wt$x$opts$xAxis <- NULL
-      wt$x$opts$yAxis <- NULL
-      wt$x$opts$series[[1]] <- NULL
-      wt$x$opts$grid3D <- list(list())
-      wt$x$opts$xAxis3D <- list(list())
-      wt$x$opts$yAxis3D <- list(list())
-      wt$x$opts$zAxis3D <- list(list())
-  }
-  
   path <- system.file('js', package = 'echarty')
   dep <- NULL
   if ('leaflet' %in% load) {
     if (preset) {
-      # customize for leaflet
+      # customizations for leaflet
       wt$x$opts$dataset <- NULL  # dataset not suitable, data must be in series
       wt$x$opts$xAxis <- NULL
       wt$x$opts$yAxis <- NULL
@@ -141,7 +140,7 @@ ec.init <- function( df = NULL, load = NULL,
         tiles = list( list(urlTemplate = urltls))
       )
   
-      # note: leaflet user data should be ordered (lon,lat)
+      # leaflet user data should be ordered (lon,lat)!
       if (!is.null(df))
         wt$x$opts$series[[1]]$data <- ec.data(df, TRUE)
       wt$x$opts$series[[1]]$coordinateSystem <- 'leaflet'
@@ -154,23 +153,6 @@ ec.init <- function( df = NULL, load = NULL,
     wt$dependencies <- append(wt$dependencies, htmlwidgets::getDependency('leaflet'))
     wt$dependencies <- append(wt$dependencies, list(dep))
   }
-  ## will be implemented later as manual or dynamic load on-demand, world.js is too big to include in echarty
-  # if ('geo' %in% load) {
-  #   dep <- htmltools::htmlDependency(
-  #     name = 'world',
-  #     version = '1.0.0', src = c(file = path),
-  #     script = 'world.js'
-  #   )
-  #   wt$dependencies <- append(wt$dependencies, list(dep))
-  # }
-  if ('GL' %in% load) {
-    dep <- htmltools::htmlDependency(
-      name = 'gl',
-      version = '2.0.1', src = c(file = path),
-      script = 'echarts-gl.min.js'
-    )
-    wt$dependencies <- append(wt$dependencies, list(dep))
-  }
   if ('custom' %in% load) {
     dep <- htmltools::htmlDependency(
       name = 'renderers', version = '1.0.2', 
@@ -178,6 +160,99 @@ ec.init <- function( df = NULL, load = NULL,
     wt$dependencies <- append(wt$dependencies, list(dep))
   }
   
+  # Plugins implemented as dynamic load on-demand
+  if ('3D' %in% load) {
+    if (preset) {
+      wt$x$opts$xAxis <- NULL   # replace 2D presets with 3D
+      wt$x$opts$yAxis <- NULL
+      wt$x$opts$series[[1]] <- NULL
+      wt$x$opts$grid3D  <- list(list())  # todo list(ec='')?
+      wt$x$opts$xAxis3D <- list(list())
+      wt$x$opts$yAxis3D <- list(list())
+      wt$x$opts$zAxis3D <- list(list())
+    }
+    wt <- ec.plugjs(wt, 'https://cdn.jsdelivr.net/npm/echarts-gl@2.0.1/dist/echarts-gl.min.js')
+  }
+  if ('world' %in% load) 
+    wt <- ec.plugjs(wt, 'https://cdn.jsdelivr.net/npm/echarts@4.9.0/map/js/world.js')
+  
+  if ('liquid' %in% load) 
+    wt <- ec.plugjs(wt, 'https://cdn.jsdelivr.net/npm/echarts-liquidfill@3.0.0/dist/echarts-liquidfill.min.js')
+  
+  if ('gmodular' %in% load) 
+    wt <- ec.plugjs(wt, 'https://github.com/ecomfe/echarts-graph-modularity/raw/master/dist/echarts-graph-modularity.min.js')
+  
+  if ('wordcloud' %in% load) 
+    wt <- ec.plugjs(wt, 'https://cdn.jsdelivr.net/npm/echarts-wordcloud@2.0.0/dist/echarts-wordcloud.min.js')
+  
+  # load unknown installed plugins
+  unk <- load[! load %in% c('leaflet','custom','3D','world','liquid','gmodular','wordcloud')]
+  for(p in unk) wt <- ec.plugjs(wt, p)
+  
+  return(wt)
+}
+
+
+#' Install Javascript plugin from URL source
+#' 
+#' @param wt A widget to add dependency to, see \code{\link[htmlwidgets]{createWidget}}
+#' @param source URL of the uninstalled Javascript plugin, \cr
+#'   or name of an installed plugin file, suffix .js included. Default is NULL.
+#' @return A widget with JS dependency added if successful, otherwise input wt
+#'
+#' @details When \emph{source} is URL, the plugin file is installed with a popup prompt to the user.\cr
+#'   When \emph{source} is just a file name (xxx.js), it is assumed installed and only a dependency is added. The latter option is for internal usage by echarty.
+#'   
+#' @examples
+#' # import map plugin and display two (lon,lat) locations
+#' p <- ec.init() %>% ec.plugjs(
+#'   'https://raw.githubusercontent.com/apache/echarts/master/test/data/map/js/china-contour.js')
+#' p$x$opts <- list(
+#'   geo = list(map='china-contour', roam=TRUE),
+#'   legend = list(data = list(list(name = 'Geo'))),
+#'   series = list(list( name = 'Geo',
+#'     type = 'scatter', coordinateSystem = 'geo',
+#'     symbolSize = 9, itemStyle = list(color='red'),
+#'     data = list(list(value=c(113, 40)), list(value=c(118, 39))) ))
+#' )
+#' p
+#'
+#' @importFrom utils askYesNo download.file
+#'
+#' @export
+ec.plugjs <- function(wt=NULL, source=NULL) {
+  if (missing(wt))
+    stop('ec.plugjs expecting widget', call. = FALSE)
+  if (is.null(source)) return(wt)
+  fname <- basename(source)
+  if (!endsWith(fname, '.js'))
+    stop('ec.plugjs expecting .js suffix', call. = FALSE)
+  path <- system.file('js', package = 'echarty')
+  ffull <- paste0(path,'/',fname)
+  if (!file.exists(ffull)) {
+    if (!startsWith(source, 'http'))
+      stop('ec.plugjs expecting URL source', call. = FALSE)
+    prompt <- paste0('One-time installation of plugin\n',fname,'\n Would you like to proceed ?')
+    ans <- FALSE
+    if (interactive())
+      ans <- askYesNo(prompt)
+    if (is.na(ans)) ans <- FALSE  # was cancelled
+    if (ans) {
+      try(withCallingHandlers(
+        download.file(source, ffull), # method = "libcurl"),
+        warning = function(w) {
+          cat('ec.plugjs Error:', sub(".+HTTP status was ", "", w))
+          ans <- FALSE
+        }),
+        silent = TRUE)
+    } 
+    if (!ans) return(wt)
+  }
+  dep <- htmltools::htmlDependency(
+    name = fname, version = '1.0.0', src = c(file = path),
+    script = fname
+  )
+  wt$dependencies <- append(wt$dependencies, list(dep))
   return(wt)
 }
 
@@ -221,7 +296,7 @@ ec.data <- function(df, series=FALSE) {
 #'
 #' @details The coordinates of the two boundaries are merged into a polygon and displayed as one.
 #' @export
-ec.sband <- function(df=NULL, lower=NULL, upper=NULL, ...) {
+ec.band <- function(df=NULL, lower=NULL, upper=NULL, ...) {
   if (is.null(df) || is.null(lower) || is.null(upper)) 
     stop('df, lower and upper are all required', call. = FALSE)
   if (!'data.frame' %in% class(df)) 
@@ -241,6 +316,22 @@ ec.sband <- function(df=NULL, lower=NULL, upper=NULL, ...) {
     serie$itemStyle = list(borderWidth=0.5)
   serie
 }
+
+
+#' Translator Assistant 
+#' 
+#' Translate Javascript data objects to R
+#' 
+#' @return none
+#'
+#' @details To learn by examples in Javascript from \href{https://echarts.apache.org/examples/en/}{Echarts}
+#' @export
+ec.js2r <- function() {
+  if (interactive())
+    shiny::runGist('https://gist.github.com/helgasoft/819035e853d9889ba02cb69ecc587f34',quiet=TRUE)
+  return(NULL)
+}
+
 
 
 # ----------- Shiny --------------

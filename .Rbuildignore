@@ -17,3 +17,4 @@ vignettes
 README.md
 ^CODE_OF_CONDUCT\.md$
 ^README\.Rmd$
+^man/figs$

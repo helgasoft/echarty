@@ -36,6 +36,25 @@
 #' ))   # further customization added
 #' p
 #'
+#' #------ Pie
+#' i<-0; data<-list(); for(v in islands[which(islands>60)]) { i<-i+1; 
+#' data <- append(data, list(list(value=v, name=names(islands)[i]))) }
+#' p <- ec.init()
+#' p$x$opts <- list(title=list(
+#'   text="Landmasses over 60,000 mi\u00B2",left='center'),
+#'   tooltip=list(trigger='item'),
+#'   series=list(list(type='pie', radius='50%', data=data, name='mi\u00B2',
+#'     emphasis=list(itemStyle=list(shadowBlur=10, shadowColor='rgba(0,0,0,0.5)')))))
+#' p
+#' 
+#' #------ Liquidfill plugin
+#' p <- ec.init(load=c('liquid'), preset=FALSE)
+#' p$x$opts$series[[1]] <- list(
+#'   type='liquidFill', data=c(0.6, 0.5, 0.4, 0.3), # amplitude=0,
+#'   waveAnimation=FALSE, animationDuration=0, animationDurationUpdate=0
+#' )
+#' p
+#' 
 #' #------ Heatmap
 #' times <- c(5,1,0,0,0,0,0,0,0,0,0,2,4,1,1,3,4,6,4,4,3,3,2,5,7,0,0,0,0,0,
 #'            0,0,0,0,5,2,2,6,9,11,6,7,8,12,5,5,7,2,1,1,0,0,0,0,0,0,0,0,3,2,
@@ -67,8 +86,8 @@
 #' p$x$opts$series[[1]]$symbolSize = htmlwidgets::JS("function(x){ return x[3];}")
 #' p
 #'  
-#' #------ Plugins 3D and GL
-#' p <- ec.init(load = c('3D','GL'))
+#' #------ Plugin 3D
+#' p <- ec.init(load = '3D')
 #' p$x$opts$series[[1]] <- list(
 #'   type = 'surface',
 #'   data = ec.data(as.data.frame(as.table(volcano)), TRUE)
@@ -77,7 +96,7 @@
 #' 
 #' #------ 3D chart with custom coloring
 #' #  [4] is the JS index of column Species
-#' p <- iris %>% ec.init(load = c('3D','GL'))
+#' p <- iris %>% ec.init(load = '3D')
 #' p$x$opts$series[[1]] <- list(
 #'   type='scatter3D', symbolSize=7, 
 #'   encode=list(x='Sepal.Length', y='Sepal.Width', z='Petal.Length'),
@@ -90,7 +109,7 @@
 #' p
 #' 
 #' #------ Surface data equation with JS code
-#' p <- ec.init(load=c('3D','GL'))
+#' p <- ec.init(load='3D')
 #' p$x$opts$series[[1]] <- list(
 #'   type = 'surface',
 #'   equation = list(
@@ -108,32 +127,34 @@
 #'   x = seq(0, 2, by = 0.1),
 #'   y = seq(0, 1, by = 0.1)
 #' ) %>% mutate(z = x * (y ^ 2)) %>% select(x,y,z)
-#' p <- ec.init(load=c('3D','GL'))
+#' p <- ec.init(load='3D')
 #' p$x$opts$series[[1]] <- list(
 #'   type = 'surface',
 #'   data = ec.data(data, TRUE))
 #' p
 #' 
 #' #------ Band serie with customization
-#' # Custom plugin for ec.sband's renderer
-#' # initial or later data loading is shown (switch commented lines)
-#' # first column usually sets the X-axis
+#' # first column ('day') usually goes to the X-axis
+#' # try also alternative data setting - replace lines @1 & @2 with
+#' #   @1: p <- dats %>% ec.init(load='custom') 
+#' #   @2: encode=list(x='day', y='CAC')
 #' library(dplyr)
-#' dats <- as.data.frame(EuStockMarkets) %>% mutate(day=1:n()) %>% 
+#' dats <- as.data.frame(EuStockMarkets) %>% mutate(day=1:n()) %>%
 #'   relocate(day) %>% slice_head(n=200)
-#' # p <- dats %>% ec.init(load='custom') # needs encode below
-#' p <- ec.init(load='custom')            # need data below
-#' p$x$opts$series[[1]] <- ec.sband(dats, 'DAX','FTSE')
-#' p$x$opts$series[[1]] <- append(p$x$opts$series[[1]], list(
-#'   name = 'band', color = 'lemonchiffon'
-#' ))
-#' p$x$opts$series[[2]] <- list(
-#'   type='line', name='CAC', color='red', symbolSize=1,
-#'   # encode=list(x='day', y='CAC'),
-#'   data = ec.data(dats %>% select(day,CAC), TRUE) )
-#' p$x$opts$legend = list(data=list(
-#'   list(name='band'), list(name='CAC') ))
-#' p$x$opts$dataZoom <- list(list(type='slider',start=50))
+#' p <- ec.init(load='custom')            # @1
+#' p$x$opts <- list(
+#'   xAxis = list(list()),
+#'   yAxis = list(list()),
+#'   series = list(
+#'     append( ec.band(dats, 'DAX','FTSE'), list(
+#'       name='band', color='lemonchiffon')),  # band + customize
+#'     list(type='line', name='CAC', color='red', symbolSize=1,
+#'          data = ec.data(dats %>% select(day,CAC), TRUE) )  # @2
+#'   ),
+#'   legend = list(data=list(
+#'     list(name='band'), list(name='CAC') )),
+#'   dataZoom = list(list(type='slider',start=50))
+#' )
 #' p
 #' 
 #' #------ Timeline animation
@@ -261,6 +282,34 @@
 #' p$x$opts$tooltip <- list(trigger='item', axisPointer=list(type='shadow'))
 #' p
 #'
+#' #------ Sunburst
+#' data = list(list(name='Grandpa',children=list(list(name='Uncle Leo',value=15,
+#'      children=list(list(name='Cousin Jack',value=2), list(name='Cousin Mary',value=5,
+#'      children=list(list(name='Jackson',value=2))), list(name='Cousin Ben',value=4))), 
+#'    list(name='Father',value=10,children=list(list(name='Me',value=5), 
+#'    list(name='Brother Peter',value=1))))), list(name='Nancy',children=list(
+#'    list(name='Uncle Nike',children=list(list(name='Cousin Betty',value=1), 
+#'    list(name='Cousin Jenny',value=2))))))
+#' p <- ec.init()
+#' p$x$opts <- list(
+#'   series = list(list(type='sunburst', data=data, radius=list(0, '90%'),label=list(rotate='radial')))
+#' )
+#' p
+#' 
+#' #------ registerMap JSON
+#' json <- jsonlite::read_json("https://echarts.apache.org/examples/data/asset/geo/USA.json")
+#' dusa <- USArrests %>% dplyr::mutate(states = row.names(.))
+#' p <- ec.init(preset=FALSE)
+#' p$x$registerMap <- list(list(mapName = 'USA', geoJSON = json))
+#' p$x$opts <- list(
+#'   visualMap = list(type='continuous', calculable=TRUE, 
+#'                    min=min(dusa$UrbanPop), max=max(dusa$UrbanPop))
+#'   ,series = list( list(type='map', map='USA', name='UrbanPop', roam=TRUE,
+#'        data = lapply(ec.data(dusa,TRUE), function(x) list(name=x$value[5], value=x$value[3])) 
+#'    ))
+#' )
+#' p  
+#' 
 #' #------ Gauge
 #' p <- ec.init(preset = FALSE); 
 #' p$x$opts$series[[1]] <- list( 
@@ -407,6 +456,6 @@
 #' 
 #' @export 
 ec.examples <- function(){
-  cat('copy/paste code from ?ec.examples Help')
+  cat("copy/paste code from ?ec.examples Help\n Or run all examples at once with example('ec.examples') and they'll show up in the Viewer.")
 }
 

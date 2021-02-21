@@ -6,3 +6,5 @@ inst/doc
 .V8history
 .vscode
 .DS_Store
+.Rbuildignore
+CRAN-RELEASE
