@@ -24,6 +24,8 @@ echarty::ec.js2r()   # in version 0.1.1
  **echarty** was inspired by and benefits some code from [Echarts4R](https://github.com/JohnCoene/echarts4r),  
  hat tip also to the pioneers - [recharts](https://github.com/yihui/recharts) and [ECharts2Shiny](https://github.com/XD-DENG/ECharts2Shiny),  
  and cheers for [htmlwidgets](https://github.com/ramnathv/htmlwidgets/) and [ECHARTS](https://echarts.apache.org/en/) to make it all possible.  
- #
+ <br/>
+<br/>
+<img src='https://www.r-pkg.org/badges/version/echarty' alt='CRAN' />  <img src='https://cranlogs.r-pkg.org/badges/last-day/echarty' alt='counter'/>
 
-<img src=https://www.r-pkg.org/badges/version/echarty alt='CRAN' /> <img src=https://cranlogs.r-pkg.org/badges/last-day/echarty alt='counter'/>
+
