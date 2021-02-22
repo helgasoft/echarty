@@ -6,6 +6,8 @@ Tips and tricks to help you get started with **echarty**.
 [Use Case 1](uc1.md) - Building an interactive map with regional data
 
 [Use Case 2](uc2.md) - Like Clockwork
+
+[Use Case 3](uc3.md) - Hierarchical data
 <br/>  
 <br/>
 
