@@ -10,22 +10,27 @@ Many users find the latter representation most intuitive and straightforward. Ho
 Note also the difference in data setting for chart *tree* compared to *sunburst* and *treemap*.  *Tree*'s data is the top-level node, while *sunburst* and *treemap* use the first lower level.
 Here are examples for the three types.  
 <br />
+
 ## List of lists
-#
+
 ```r
-data <- list(list(name='Grandpa',children=list(list(name='Uncle Leo',value=15,
-     children=list(list(name='Cousin Jack',value=2), list(name='Cousin Mary',value=5,
-     children=list(list(name='Jackson',value=2))), list(name='Cousin Ben',value=4))),
-   list(name='Father',value=10,children=list(list(name='Me',value=5),
-   list(name='Brother Peter',value=1))))), list(name='Nancy',children=list(
-   list(name='Uncle Nike',children=list(list(name='Cousin Betty',value=1),
-   list(name='Cousin Jenny',value=2))))))
+data <- list(list(name='Grandpa',children=list(
+  list(name='Uncle Leo',value=15,
+     children=list(list(name='Cousin Jack',value=2), 
+                   list(name='Cousin Mary',value=5,
+     children=list(list(name='Jackson',value=2))), 
+                   list(name='Cousin Ben',value=4))),
+  list(name='Father',value=10,children=list(list(name='Me',value=5),
+      list(name='Brother Peter',value=1))))), 
+  list(name='Nancy',children=list(list(name='Uncle Nike',children=list(list(name='Cousin Betty',value=1), list(name='Cousin Jenny',value=2))))))
+# -------------------------------------------------
 
 p <- ec.init(preset=FALSE)
 p$x$opts$series <- list(list(type = 'sunburst', 
   data = data, radius=list(0, '90%'), label=list(rotate='radial')))
 p
 ```
+<br />
 
 ## Data frame with nested children
 
@@ -41,6 +46,7 @@ level11[1, "children"][[1]] <- list(level111)
 level11[2, "children"][[1]] <- list(level112)
 level11[3, "children"][[1]] <- list(level113)
 level1[1, "children"][[1]] <- list(level11)
+# -------------------------------------------------
 
 p <- ec.init(preset=FALSE)
 p$x$opts$series <- list(list(type='tree', 
@@ -59,6 +65,8 @@ p$x$opts$series <- list(list(type='sunburst',
 p
 
 ```
+<br />
+
 ## Data frame with parent-child
 
 ```r
@@ -68,6 +76,7 @@ df <- data.frame(parents = c("","Reptiles", "Reptiles", "Mammals", "Mammals", "F
 library(data.tree)
 tmp <- data.tree::FromDataFrameNetwork(df)
 json <- data.tree::ToListExplicit(tmp, unname=TRUE)
+# -------------------------------------------------
 
 p <- ec.init(preset=FALSE)
 p$x$opts$series <- list(list(type='sunburst', 

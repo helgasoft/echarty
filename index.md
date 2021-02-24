@@ -8,6 +8,8 @@ Tips and tricks to help you get started with **echarty**.
 [Use Case 2](uc2.md) - Like Clockwork
 
 [Use Case 3](uc3.md) - Hierarchical data
+
+[Use Case 4](uc4.md) - Timeline and sankey
 <br/>  
 <br/>
 
