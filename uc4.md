@@ -1,7 +1,8 @@
 # Use Case 4 - Timeline with sankey
+<br />
 
 Heard it through the grapevine - an interesting [question](https://twitter.com/rdatasculptor/status/1363235363200892930) by [rdatasculptor](https://twitter.com/rdatasculptor).  
-Will sankey chart work with timeline ?  Never tried, lets do it now.  
+Will sankey chart work with timeline ?  Never tried, let's do it now.  
 To speed things up, we go to echarty's examples. In the Console type **?ec.examples**, then in Help panel, hit Ctrl/F and seach for 'sankey'. We find the following code  
 <br />
 
@@ -26,7 +27,6 @@ p$x$opts$series[[1]] <- list( type='sankey',
 )
 p
 ```
-<br />
 
 Sankey chart data consists of nodes connected by edges having a value. If the data is defined as *data.frame*, we need to transform it into a list with command *ec.data()*. Once in that format, we can access the columns by index - *node* is value[1], ..., *value* is value[4]. The [edges](https://echarts.apache.org/en/option.html#series-sankey.edges) definition requires three parameters - source, target and value.  
 
@@ -77,10 +77,14 @@ p$x$opts <- list(
 )
 p
 ```
+
+<img src="img/uc4-1.png" alt="sankey" />
+
+<br/>
 <br />
 
 So the final answer is **yes** - sankey and timeline work together just fine.  
-For more *sankey* customizations check [this example](https://echarts.apache.org/examples/en/editor.html?c=sankey-levels).  
+For more *sankey* customizations check [this Echarts example](https://echarts.apache.org/examples/en/editor.html?c=sankey-levels).  
 <br/>
 
 
