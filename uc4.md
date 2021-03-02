@@ -1,4 +1,4 @@
-# Use Case 4 - Timeline with sankey
+# Use Case 4 - Sankey with timeline
 <br />
 
 Heard it through the grapevine - an interesting [question](https://twitter.com/rdatasculptor/status/1363235363200892930) by [rdatasculptor](https://twitter.com/rdatasculptor).  

@@ -95,3 +95,4 @@ p$x$opts$tooltip <- list(ey='')   # ey is a dummy parameter, we want the same em
 p
 ```
 
+<img src="img/uc3-1.png" alt="sunburst" />

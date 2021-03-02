@@ -9,7 +9,9 @@ Tips and tricks to help you get started with **echarty**.
 
 [Use Case 3](uc3.md) - Hierarchical data
 
-[Use Case 4](uc4.md) - Timeline and sankey
+[Use Case 4](uc4.md) - Sankey with timeline
+
+[Use Case 5](uc5.md) - Bubbles and troubles with JavaScript
 <br/>  
 <br/>
 
