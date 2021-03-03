@@ -51,6 +51,7 @@ options <- lapply(tmp$timeline, function(x) { i <<- i+1; list(
     symbolSize = htmlwidgets::JS("function(val) { var y = Math.sqrt(parseInt(val[2]) / 5e2) + 0.1; return y * 80;}")
 )) })
 
+library(echarty)
 # chart settings, translated from JS with ec.js2r() + manual editing
 p <- ec.init()
 p$x$opts <- list(

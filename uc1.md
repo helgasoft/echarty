@@ -1,4 +1,3 @@
-
 # Use Case 1 - step-by-step tutorial
 
 ## Building an interactive map with regional data
@@ -11,7 +10,7 @@ Let start by initializing the chart, load the map (as a plugin) and make sure it
 ```r
 library(echarty)
 url <- 'https://raw.githubusercontent.com/echarts-maps/echarts-countries-js/master/echarts-countries-js/France.js'
-p <- ec.init() %>% ec.depjs(url)
+p <- ec.init() %>% ec.plugjs(url)
 p$x$opts <- list(
    series = list(list(type='map', map='France', roam=TRUE))
 )
@@ -23,7 +22,7 @@ Run the code. We get a popup prompt *"One-time installation of plugin France.js"
 \
 The problem is in the **map name**. In the [docs](https://echarts.apache.org/en/option.html#series-map.map) we see that for file 'china.js' they use *map='china'*. So the easy conclusion by analogy would be to set *map='France'* for 'France.js' ?  
 Actually map name and file name may have nothing in common. We'll need to dig inside the JS file to find the exact name.  
-Open *France.js* in a text editor and look for *'registerMap('*. It turns out the name right after is '法国' - Chinese for 'France'. Lets update the code:
+Open *France.js* in a text editor and look for *'registerMap('*. It turns out the name right after is '法国' - Chinese for 'France'. Let's update the code:
 
 ```r
 p <- ec.init(load='France.js')

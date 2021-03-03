@@ -3,7 +3,7 @@
 ## Building a clock using echarty's Translation Assistant  
 \
 Watching the time go by? A little gem from ECharts examples can help - a finely crafted [classical clock](https://echarts.apache.org/examples/en/editor.html?c=gauge-clock).  
-Looking at the code, we see the usual 'option', but also some JS functions at the bottom. And that's a lot to rewrite in R! Fortunately, there is a better way:  
+Looking at the JS code, we see the usual 'option', but also some functions at the bottom. And that's a lot to rewrite in R! Fortunately, there is a better way:  
 Introducing the Echarty Translator Assistant (TA) - run the following R command
 ```r
 echarty::ec.js2r()   # needs version 0.1.1
@@ -30,9 +30,9 @@ In *R code* replace *formatter="@@"* with *formatter=\<above code\>* and plot.
 \
 \
 We see numbers now, how wonderful ! Clock is not ticking yet because we still have not applied the JS functions.  
-From ECharts code, copy **only** text from "var timeUpdatedStatus..." to the end, and copy it in your text editor. After making sure there are no double quotes, enclose everything in double quotes and set it as an R string, like **code<-"..."**.  
+From ECharts code, copy **only** text from "var timeUpdatedStatus..." to the end, and copy it in your text editor. After making sure there are no double quotes, enclose everything in double quotes and set it as an R string, like **jcode<-"..."**.  
 Next step is to look for two ECharts objects which have different names in our R environment. Replace **myChart** with **chart**, and **option** with **opts**.  Now select/copy the entire text and paste it on top of *R code* before *p <- ec.init*.
-Then replace *p <- ec.init()* with *p <- ec.init(js=code)* to load the JS code in Echarty. Cross fingers and hit *Plot to R* again...  
+Then replace *p <- ec.init()* with *p <- ec.init(js=jcode)* to load the JS code in *echarty*. Cross fingers and hit *Plot to R* again...  
 \
 <img src="img/uc2-3.png" alt="clock3"/>
 \
@@ -41,7 +41,7 @@ Let the good times R-R-R-Rolex ™ 👍
 Once you learn those R-to-JS interaction steps, you can dance with any Echart.  
 Here is the complete R code  
 ```r
-code <- "
+jcode <- "
 var timeUpdatedStatus = {
   second: false,
   minute: false,
@@ -78,7 +78,7 @@ setInterval(function () {
   date = null;
 }, 1000);"
 
-p <- ec.init(js=code)
+p <- ec.init(js = jcode)
 p$x$opts <- list(
   series = list(
     list(name='hour',type='gauge',startAngle=90,endAngle=-270,min=0,max=12,splitNumber=12,

@@ -1,9 +1,8 @@
 
 ## Introduction
-<br/>
 
-As decribed in [this paper](https://doi.org/10.1016/j.visinf.2018.04.011), library ECharts' foundation lays on the "*user-configurable declarative object* **option**". [Option](https://echarts.apache.org/en/option.html) is JSON data, and to build complex charts as data structures is a powerful concept, also simple and easy-to-use.  
-The goal of **echarty** is to provide a minimal interface, a "glue", between R and ECharts, then stay out of the way and let your JSON data do the talking. There are  utilities included to assist with data preparation (*ec.data*, *ec.js2r*), Shiny/proxy (*ecs.\**) and JS plugins (*ec.plugjs*).  
+As decribed in [this paper](https://doi.org/10.1016/j.visinf.2018.04.011), library ECharts' foundation lays on the "*user-configurable declarative object* **option**". [Option](https://echarts.apache.org/en/option.html) is JSON-like data. Building complex charts as data structures is a powerful concept, and also simple and easy-to-use.  
+The goal of **echarty** is to provide a minimal interface, a "glue", between R and ECharts, then stay out of the way and let your R data lists do the talking. There are utilities included to assist with data preparation (*ec.data*, *ec.js2r*), Shiny with proxy (*ecs.\**) and JS plugins (*ec.plugjs*).  
 Have the **full functionality** of [ECharts](https://echarts.apache.org/examples/en/index.html) in R with minimal overhead!   
 <br/>  
 
@@ -25,9 +24,9 @@ Tips and tricks to help you get started with **echarty**.
 ## Learn by example
 Have fun with **echarty Translator Assistant**  - translate Javascript data to R !  
 Javascript library ECharts has lots of great [examples](href="https://echarts.apache.org/examples/en/)
-. The goal is to facilitate translation of their JSON data (*option* object) to R lists. Give it a go with the following R command:
+. The goal is to facilitate translation of their JSON-like data (*option* object) to R lists. Give it a go with the following R command:
 ```r
-echarty::ec.js2r()   # echarty v.0.1.1 and up
+echarty::ec.js2r()   # echarty v.0.1.1
 ```
 <br/>
 <br/>
