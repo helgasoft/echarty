@@ -1,4 +1,11 @@
 
+## Introduction
+<br/>
+
+As decribed in [this paper](https://doi.org/10.1016/j.visinf.2018.04.011), library ECharts' foundation lays on the "*user-configurable declarative object* **option**". [Option](https://echarts.apache.org/en/option.html) is JSON data, and to build complex charts as data structures is a powerful concept, also simple and easy-to-use.  
+The goal of **echarty** is to provide a minimal interface, a "glue", between R and ECharts, then stay out of the way and let your JSON data do the talking. There are  utilities included to assist with data preparation (*ec.data*, *ec.js2r*), Shiny/proxy (*ecs.\**) and JS plugins (*ec.plugjs*).  
+Have the **full functionality** of [ECharts](https://echarts.apache.org/examples/en/index.html) in R with minimal overhead!   
+<br/>  
 
 ## Tutorials
 Tips and tricks to help you get started with **echarty**.
@@ -11,27 +18,27 @@ Tips and tricks to help you get started with **echarty**.
 
 [Use Case 4](uc4.md) - Sankey with timeline
 
-[Use Case 5](uc5.md) - Bubbles and troubles with JavaScript
+[Use Case 5](uc5.md) - Bubbles without troubles with JavaScript
 <br/>  
 <br/>
 
 ## Learn by example
 Have fun with **echarty Translator Assistant**  - translate Javascript data to R !  
-Javascript library Echarts has lots of great [examples](href="https://echarts.apache.org/examples/en/)
-. The goal is to facilitate the translation of their **data** to R, especially the *option* object. Option components represent the chart.  
-Give it a go with the following R command
+Javascript library ECharts has lots of great [examples](href="https://echarts.apache.org/examples/en/)
+. The goal is to facilitate translation of their JSON data (*option* object) to R lists. Give it a go with the following R command:
 ```r
-echarty::ec.js2r()   # in version 0.1.1
+echarty::ec.js2r()   # echarty v.0.1.1 and up
 ```
 <br/>
 <br/>
 
 ## Open Source Acknowledgements
- **echarty** was inspired by and benefits some code from [Echarts4R](https://github.com/JohnCoene/echarts4r),  
+ **echarty** was inspired by and benefits some code from [echarts4R](https://github.com/JohnCoene/echarts4r),  
  hat tip also to the pioneers - [recharts](https://github.com/yihui/recharts) and [ECharts2Shiny](https://github.com/XD-DENG/ECharts2Shiny),  
- and cheers for [htmlwidgets](https://github.com/ramnathv/htmlwidgets/) and [ECHARTS](https://echarts.apache.org/en/) to make it all possible.  
+ and cheers for [htmlwidgets](https://github.com/ramnathv/htmlwidgets/) and [ECharts](https://echarts.apache.org/en/) to make it all possible.  
  <br/>
 <br/>
+<!--
 <img src='https://www.r-pkg.org/badges/version/echarty' alt='CRAN' />  <img src='https://cranlogs.r-pkg.org/badges/last-day/echarty' alt='counter'/>
-
+-->
 

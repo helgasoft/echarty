@@ -2,20 +2,20 @@
 
 ## Building a clock using echarty's Translation Assistant  
 \
-Watching the time go by? A little gem from Echarts examples can help - a finely crafted [classical clock](https://echarts.apache.org/examples/en/editor.html?c=gauge-clock).  
+Watching the time go by? A little gem from ECharts examples can help - a finely crafted [classical clock](https://echarts.apache.org/examples/en/editor.html?c=gauge-clock).  
 Looking at the code, we see the usual 'option', but also some JS functions at the bottom. And that's a lot to rewrite in R! Fortunately, there is a better way:  
 Introducing the Echarty Translator Assistant (TA) - run the following R command
 ```r
 echarty::ec.js2r()   # needs version 0.1.1
 ```
 It is a R/Shiny app to help translate data from JS examples to R. Take a moment to familiarize yourself with it and check the **Info** button upper right.  
-We copy only the *option* object from Echarts and paste it in TA, then hit Translate and Plot ... and get an error. This is due to the existance of a **formatter** component. We need to find it in *R code* and replace *formatter=function...)),anchor* with *formatter="@@"),anchor*.  
+We copy only the *option* object from ECharts and paste it in TA, then hit Translate and Plot ... and get an error. This is due to the existance of a **formatter** component. We need to find it in *R code* and replace *formatter=function...)),anchor* with *formatter="@@"),anchor*.  
 Try *Plot to R* again, we should get the following image  
 \
 <img src="img/uc2-1.png" alt="clock1"/>
 \
 \
-Better than nothing. Now lets get the original JS function from Echarts and put it back in the formatter the *right way*. The text is here:  
+Better than nothing. Now lets get the original JS function from ECharts and put it back in the formatter the *right way*. The text is here:  
 ```js
 function (value) { if (value === 0) { return ''; } return value; }
 ```
@@ -30,8 +30,8 @@ In *R code* replace *formatter="@@"* with *formatter=\<above code\>* and plot.
 \
 \
 We see numbers now, how wonderful ! Clock is not ticking yet because we still have not applied the JS functions.  
-From Echarts code copy **only** text from "var timeUpdatedStatus..." to the end, and copy it in your text editor. After making sure there are no double quotes, enclose everything in double quotes and set it as an R string, like **code<-"..."**.  
-Next step is to look for two Echarts objects which have different names in our R environment. Replace **myChart** with **chart**, and **option** with **opts**.  Now select/copy the entire text and paste it on top of *R code* before *p <- ec.init*.
+From ECharts code, copy **only** text from "var timeUpdatedStatus..." to the end, and copy it in your text editor. After making sure there are no double quotes, enclose everything in double quotes and set it as an R string, like **code<-"..."**.  
+Next step is to look for two ECharts objects which have different names in our R environment. Replace **myChart** with **chart**, and **option** with **opts**.  Now select/copy the entire text and paste it on top of *R code* before *p <- ec.init*.
 Then replace *p <- ec.init()* with *p <- ec.init(js=code)* to load the JS code in Echarty. Cross fingers and hit *Plot to R* again...  
 \
 <img src="img/uc2-3.png" alt="clock3"/>

@@ -1,8 +1,9 @@
-# Use Case 4 - Bubbles and troubles with JavaScript
+# Use Case 4 - Bubbles without troubles with JavaScript
+<br />
 
-Echarts being a JavaScript library, dealing with JS code sometimes becomes unavoidable. For instance replicating [this interesting example](https://echarts.apache.org/examples/en/editor.html?c=scatter-life-expectancy-timeline) in R requires serious work in both languages.  
+ECharts being a JavaScript library, dealing with JS code sometimes becomes unavoidable. For instance replicating [this interesting example](https://echarts.apache.org/examples/en/editor.html?c=scatter-life-expectancy-timeline) in R requires serious work in both languages.  
 \
-The chart presents life expectancy and GDP for 19 countries in one century timeframe. There are 81 recorded years from 1800 to 2015. One serie per year per country contains 5 values - income, life expectancy, population, country and year. 
+The chart presents life expectancy and GDP for 19 countries in two centuries timeframe. There are 81 recorded years from 1800 to 2015. One serie per year per country contains 5 values - income, life expectancy, population, country and year. 
 ```r
 > str(tmp)  # data from downloaded JSON file
 List of 3
@@ -12,9 +13,12 @@ List of 3
 ```
 We analyze the data preparation and whether it is doable in R. This block is at the bottom of the JS source. It builds timeline options in a loop. In R, we can do the same with *lapply*.  
 Note how *symbolSize* is set as a JS function. This is the only way to make it proportional to the country's population, as *val[2]* is the third (0,1,2) data column, which is Population.  
-The only other JS function used is for the tooltip formatter - *jcode*. There we changed the HTML layout a bit to make it more table-like.  
-One good trick to mention is the way *series* is set in *p$x$opts*. We have *options* built for all timeline points. It contains all series already, so we can just assign the first one to *series* in *p$x$opts*.  
-Final step is to translate the few titles/names from Chinese to English, easily done with [Google](http://translate.google.com/). Below is the entire code. Again *echarty*'s overhead comes down to exactly **one** command - *ec.init()*.  
+The other JS function *jcode* is used for the tooltip formatter. There we changed the HTML layout a bit to make it more table-like.
+<!-- 
+One good trick to mention is the way *series* is set in *p$x$opts*. We have *options* built for all timeline points. It contains all series already, so we can just assign the first one to *series* in *p$x$opts*. 
+  series = list(options[[1]]$series), 
+  -->  
+Final step is to translate the few titles/names from Chinese to English, easily done with [Google](http://translate.google.com/). Below is the entire code. Again *echarty*'s overhead comes down to exactly **one** command - *ec.init()*.
 <br />
 
 ```r
@@ -71,7 +75,6 @@ p$x$opts <- list(
         ,inRange = list(color = rep(c('#51689b', '#ce5c5c', '#fbc357', '#8fbf8f', '#659d84',
          '#fb8e6a', '#c77288', '#786090', '#91c4c5', '#6890ba'),2))
   ),
-  series = list(options[[1]]$series), 
   animationDurationUpdate = 1000, animationEasingUpdate = "quinticInOut", 
   options = options)
 p    # %>% ec.inspect()

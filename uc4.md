@@ -84,7 +84,7 @@ p
 <br />
 
 So the final answer is **yes** - sankey and timeline work together just fine.  
-For more *sankey* customizations check [this Echarts example](https://echarts.apache.org/examples/en/editor.html?c=sankey-levels).  
+For more *sankey* customizations check [this ECharts example](https://echarts.apache.org/examples/en/editor.html?c=sankey-levels).  
 <br/>
 
 

@@ -114,7 +114,7 @@ p$x$opts <- list(
 p
 ```
 
-At last we have the final code above. The *visualMap* has been enhanced with a [*formatter*](https://echarts.apache.org/en/option.html#visualMap-continuous.formatter). It shows the *visualMap* values as formatted integers. Sometimes, like in our case, formatters are JS code that needs to be wrapped in *htmlwidgets::JS()* so it can be sent to Echarts for execution. Other [simpler formatters](https://echarts.apache.org/en/option.html#series-scatter.tooltip.formatter) are just strings like *"{a}: {c}"*.  
+At last we have the final code above. The *visualMap* has been enhanced with a [*formatter*](https://echarts.apache.org/en/option.html#visualMap-continuous.formatter). It shows the *visualMap* values as formatted integers. Sometimes, like in our case, formatters are JS code that needs to be wrapped in *htmlwidgets::JS()* so it can be sent to ECharts for execution. Other [simpler formatters](https://echarts.apache.org/en/option.html#series-scatter.tooltip.formatter) are just strings like *"{a}: {c}"*.  
 Note also how the *max* parameter is set. Without it the color range would be out of sync.  
 So here is the result of our efforts - a nice map with pan/zoom and value coloring.  
 \
