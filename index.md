@@ -17,7 +17,10 @@ Tips and tricks to help you get started with **echarty**.
 
 [Use Case 4](uc4.md) - Sankey with timeline
 
-[Use Case 5](uc5.md) - Bubbles without troubles with JavaScript
+[Use Case 5](uc5.html) - Bubbles without troubles with JavaScript - <span style="color:magenta">*live demo*</span>
+
+[Use Case 6](uc6.md) - Grouped, stacked and timelined
+
 <br/>  
 <br/>
 
