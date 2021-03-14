@@ -4,10 +4,12 @@
 \alias{ec.fromJson}
 \title{Convert JSON string to chart}
 \usage{
-ec.fromJson(txt)
+ec.fromJson(txt, ...)
 }
 \arguments{
 \item{txt}{JSON character string, url, or file, see \code{\link[jsonlite]{fromJSON}}}
+
+\item{...}{Any arguments to pass to internal ec.init}
 }
 \value{
 An \code{echarty} widget.
@@ -17,5 +19,17 @@ Convert JSON string to chart
 }
 \details{
 \code{txt} should contain the full list of options required to build a chart.
-It is subsequently passed to EchartsJS function \href{https://echarts.apache.org/en/api.html#echartsInstance.setOption}{setOption}.
+It is subsequently passed to EChartsJS function \href{https://echarts.apache.org/en/api.html#echartsInstance.setOption}{setOption}.
+}
+\examples{
+txt <- '{
+  "xAxis": { "type": "category",
+     "data": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+   },
+   "yAxis": { "type": "value" },
+   "series": { "type": "line",
+     "data": [150, 230, 224, 218, 135, 147, 260]
+   } }'
+ec.fromJson(txt)
+
 }

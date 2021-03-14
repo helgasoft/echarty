@@ -2,19 +2,22 @@
 % Please edit documentation in R/echarty.R
 \name{ec.data}
 \alias{ec.data}
-\title{Get an EchartsJS dataset from a data.frame}
+\title{Get an EChartsJS dataset from a data.frame}
 \usage{
-ec.data(df, series = FALSE)
+ec.data(df, format = "dataset")
 }
 \arguments{
 \item{df}{Chart data in data.frame format, required}
 
-\item{series}{If FALSE, data is prepared for \href{https://echarts.apache.org/en/option.html#dataset.source}{dataset} (default),\cr
-if TRUE, data is for \href{https://echarts.apache.org/en/option.html#series-scatter.data}{series}}
+\item{format}{A key on how to format the output list \cr \itemize{
+\item 'dataset' list used in \href{https://echarts.apache.org/en/option.html#dataset.source}{dataset} (default),\cr
+\item 'values' list for \href{https://echarts.apache.org/en/option.html#series-scatter.data}{series.data} \cr
+\item 'names' creates named lists useful for named data like \href{https://echarts.apache.org/en/option.html#series-sankey.links}{sankey links}
+}}
 }
 \value{
-A list for \emph{dataset.source} or \emph{series.data}. The latter does not include column names.
+A list for \emph{dataset.source}, \emph{series.data} or a list of named lists.
 }
 \description{
-Get an EchartsJS dataset from a data.frame
+Get an EChartsJS dataset from a data.frame
 }

@@ -7,4 +7,6 @@ inst/doc
 .vscode
 .DS_Store
 .Rbuildignore
+*.Rmd
 CRAN-RELEASE
+cran-comments.md

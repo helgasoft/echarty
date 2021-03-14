@@ -23,12 +23,12 @@ ec.init(
 \item{group1}{Type of grouped series, default 'scatter'. Set to NULL to disable. \cr
 If the grouping is on multiple columns, only the first one is used.}
 
-\item{preset}{Enable (TRUE, default) or disable(FALSE) presets xAxis, yAxis and first serie.}
+\item{preset}{Disable(FALSE) or enable (TRUE, default) presets for xAxis, yAxis and first serie.}
 
 \item{load}{Name(s) of plugin(s) to load. Could be a character vector or comma-delimited string. default NULL.\cr
 Built-in plugins: \cr \itemize{
 \item leaflet - Leaflet maps with customizable tiles, see \href{https://github.com/gnijuohz/echarts-leaflet#readme}{source}\cr
-\item custom - renderers for \link{ec.band} and ec.ebars \cr
+\item custom - renderers for \link{ecr.band} and ecr.ebars \cr
 } Plugins with one-time installation (popup prompt): \cr \itemize{
 \item 3D - 3D charts and WebGL acceleration, see \href{https://github.com/ecomfe/echarts-gl}{source} and \href{https://echarts.apache.org/en/option-gl.html#series}{docs} \cr
 \item world - world map with country boundaries, see \href{https://github.com/apache/echarts/tree/master/test/data/map/js}{source} \cr
@@ -57,8 +57,10 @@ Initialize a chart.
 }
 \details{
 Widgets are defined in \href{https://www.htmlwidgets.org/develop_intro.html}{htmlwidgets}.
-This command creates one with \code{\link[htmlwidgets]{createWidget}}, then adds some EchartsJS features to it.\cr
-It may preset values for xAxis,yAxis,series and dataset, which user can overwrite if needed.
+This command creates one with \code{\link[htmlwidgets]{createWidget}}, then adds some EChartsJS features to it.\cr
+When \link{ec.init} is chained after a data.frame, a \href{https://echarts.apache.org/en/option.html#dataset}{dataset} is preset. \cr
+When the data.frame is grouped and \emph{group1} is not null, more datasets with legend and series are also preset. Grouped series are of type \code{scatter}. \cr
+Users can delete or overwrite any presets as needed.
 }
 \examples{
  # basic scatter chart from a data.frame, using presets

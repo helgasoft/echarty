@@ -29,76 +29,107 @@ if (interactive()) {
 
 library(shiny)
 runApp( list(
-  ui = fluidPage(
-    ecs.output('plot'),
-    actionButton('addm', 'Add marks'),
-    actionButton('delm', 'Del area+line marks'), HTML('&nbsp; &nbsp; &nbsp; &nbsp;'),
-    actionButton('adds', 'Add serie'),
-    actionButton('dels', 'Del serie'), HTML('&nbsp; &nbsp; &nbsp; &nbsp;'),
-    actionButton('hilit', 'Highlight'),
-    actionButton('dnplay', 'Downplay')
-  ),
-  server = function(input, output, session){
+ui = fluidPage(
+  ecs.output('plot'),
+  fluidRow(
+    column(4, actionButton('addm', 'Add marks'),
+           actionButton('delm', 'Delete marks'),
+           br(),span('mark points stay, area/line deletable')
+    ),
+    column(3, actionButton('adds', 'Add serie'),
+           actionButton('dels', 'Del serie')),
+    column(5, actionButton('adata', 'Add data'),
+           actionButton('hilit', 'Highlight'),
+           actionButton('dnplay', 'Downplay') )
+  )
+),
+server = function(input, output, session) {
 
-    output$plot <- ecs.render({
-      e <- mtcars \%>\% group_by(cyl) \%>\% ec.init()
-      e$x$opts$tooltip <- list(list(show=TRUE))
-      e$x$opts$series[[1]]$emphasis <- list(focus='series', blurScope='coordinateSystem')
-      e
-    })
+  output$plot <- ecs.render({
+    p <- ec.init()
+    p$x$opts$series <- lapply(mtcars \%>\% relocate(disp, .after=mpg)
+                              \%>\% group_by(cyl) \%>\% group_split(), function(s) {
+                                list(type='scatter', name=unique(s$cyl), data=ec.data(s, 'values'))
+                              })
+    p$x$opts$legend <- list(ey='')
+    p$x$opts$xAxis <- list(type="value"); p$x$opts$yAxis <- list(ec='')
+    p$x$opts$tooltip <- list(list(show=TRUE))
+    p$x$opts$series[[1]]$emphasis <- list(focus='series', blurScope='coordinateSystem')
+    p
+  })
 
-    observeEvent(input$addm, {
-      e <- ecs.proxy('plot')
-      e$x$opts$series[[1]] = list(
-        markPoint = list(data = list(
-          list(coord = c(22.5, 140.8)),
-          list(coord = c(30.5, 95.1))
-        ), itemStyle = list(color='lightblue')
-        )
-        ,markArea = list(data = list(list(
-          list(xAxis = 15),
-          list(xAxis = 25)
-        ))
-        ,silent=TRUE
-        ,itemStyle = list(color='pink', opacity=0.2)
-        ,label = list(formatter='X-area', position='insideTop')
-        )
-        ,markLine = list(data = list(list(type='average')))
+  observeEvent(input$addm, {
+    p <- ecs.proxy('plot')
+    p$x$opts$series = list( list(
+      markPoint = list(data = list(
+        list(coord = c(22.5, 140.8)),
+        list(coord = c(30.5, 95.1))
+      ),
+      itemStyle = list(color='lightblue')
       )
-      e \%>\% ecs.exec() #' ='p_merge'
-    })
-    observeEvent(input$adds, {
-      e <- ecs.proxy('plot')
-      e$x$opts$series[[1]] <- list(
-        type = 'line', name = 'newLine',
-        encode = list(x='mpg', y='disp')
+      ,markArea = list(data = list(list(
+        list(xAxis = 15),
+        list(xAxis = 25)
+      ))
+      ,silent=TRUE
+      ,itemStyle = list(color='pink', opacity=0.2)
+      ,label = list(formatter='X-area', position='insideTop')
       )
-      e \%>\% ecs.exec('p_update')
-    })
-    observeEvent(input$dels, {
-      e <- ecs.proxy('plot')
-      e$x$opts$seriesName <- 'newLine'
-      #'e$x$opts$seriesIndex <- 4  #' alternative ok
-      e \%>\% ecs.exec('p_del_serie')
-    })
-    observeEvent(input$delm, {
-      e <- ecs.proxy('plot')
-      e$x$opts$seriesIndex <- 1
-      e$x$opts$delMarks <- c('markArea','markLine')
-      e \%>\% ecs.exec('p_del_marks')
-    })
-    observeEvent(input$hilit, {
-      e <- ecs.proxy('plot')
-      e$x$opts <- list(type='highlight', seriesName='4')
-      e \%>\% ecs.exec('p_dispatch')
-    })
-    observeEvent(input$dnplay, {
-      e <- ecs.proxy('plot')
-      e$x$opts <- list(type='downplay', seriesName='4')
-      e \%>\% ecs.exec('p_dispatch')
-    })
-  }
-))
+      ,markLine = list(data = list(list(type='average')))
+    ), list(
+      markPoint = list(data = list(
+        list(coord = c(25.5, 143.8)),
+        list(coord = c(33.5, 98.1))
+      ),
+      itemStyle = list(color='forestgreen')
+      )
+    ))
+    p \%>\% ecs.exec() # ='p_merge'
+  })
+  observeEvent(input$adds, {
+    p <- ecs.proxy('plot')
+    p$x$opts$series <- list(list(
+      type = 'line', name = 'newLine',
+      #encode = list(x='mpg', y='disp')  # for dataset only
+      data=list(list(10,100),list(5,200),list(10,400),list(10,200),list(15,150),list(5,300))
+    ))
+    p \%>\% ecs.exec('p_update')
+  })
+
+  observeEvent(input$adata, {
+    set.seed(sample(1:444, 1))
+    tmp <- apply(unname(data.frame(rnorm(5, 10, 3), rnorm(5, 200, 33))),
+                 1, function(x) { list(value=x) })
+    p <- ecs.proxy('plot')
+    p$x$opts$seriesIndex <- 1
+    p$x$opts$data <- tmp
+    p \%>\% ecs.exec('p_append_data')
+  })
+
+  observeEvent(input$dels, {
+    p <- ecs.proxy('plot')
+    p$x$opts$seriesName <- 'newLine'
+    #'p$x$opts$seriesIndex <- 4  # ok too
+    p \%>\% ecs.exec('p_del_serie')
+  })
+  observeEvent(input$delm, {
+    p <- ecs.proxy('plot')
+    p$x$opts$seriesIndex <- 1
+    p$x$opts$delMarks <- c('markArea','markLine')
+    p \%>\% ecs.exec('p_del_marks')
+  })
+  observeEvent(input$hilit, {
+    p <- ecs.proxy('plot')
+    p$x$opts <- list(type='highlight', seriesName='4')
+    p \%>\% ecs.exec('p_dispatch')
+  })
+  observeEvent(input$dnplay, {
+    p <- ecs.proxy('plot')
+    p$x$opts <- list(type='downplay', seriesName='4')
+    p \%>\% ecs.exec('p_dispatch')
+  })
+} ))
+  
 }
 
 }

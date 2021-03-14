@@ -279,23 +279,72 @@ if (HTMLWidgets.shinyMode) {
           chart.setOption(data.opts);
           break;
           
-        case 'p_replace':
+        case 'p_replace':     // replace entire chart
           chart.setOption(data.opts, true);
           break;
-
-        case 'p_append_data':
-          chart.appendData({
-            seriesIndex: cpts.seriesIndex,
-            data: cpts.data
-          });
+          
+        case 'p_update':    // more like 'append serie'
+          
+          if(!cpts.series)  // add series array if none
+            cpts.series = [];
+  
+          data.opts.series.forEach(function(serie){
+            // for JS_EVAL and renderItem
+            if (typeof serie.renderItem == 'string') 
+              serie.renderItem = eval(serie.renderItem);
+            cpts.series.push(serie);
+          })
+  
+          if (data.opts.legend) {    // legend
+            if(cpts.legend.length > 0)
+              if(data.opts.legend.data)
+                cpts.legend[0].data = cpts.legend[0].data.concat(data.opts.legend.data);
+          }
+          if (data.opts.xAxis) {    // x Axis
+            if(cpts.xAxis){
+              if(cpts.xAxis[0].data){
+                let xaxis = cpts.xAxis[0].data.concat(data.opts.xAxis[0].data);
+                xaxis = xaxis.filter(distinct);
+                cpts.xAxis[0].data = xaxis;
+              }
+            } else
+              cpts.xAxis = data.opts.xAxis;
+          }
+          if (data.opts.yAxis) {    // y Axis
+            if(cpts.yAxis){
+              if(cpts.yAxis[0].data){
+                let yaxis = cpts.yAxis[0].data.concat(data.opts.yAxis[0].data);
+                yaxis = yaxis.filter(distinct);
+                cpts.yAxis[0].data = yaxis;
+              }
+            }
+          }
+          if (data.opts.dataset) 
+            cpts.dataset = data.opts.dataset;
+console.log('user.opts='+Object.keys(data.opts))
+          chart.setOption(cpts, true);
           break;
           
-        case 'p_dispatch':
-          chart.dispatchAction(data.opts);
+        case 'p_append_data':       // add data to one serie
+          if (!cpts.series) break;
+          if (data.opts.seriesName) {
+            // find index by name
+            var idx = 0;
+            cpts.series.forEach(function(serie) {
+              if (serie.name==data.opts.seriesName) data.opts.seriesIndex = idx;
+              idx++;
+            })
+            //console.log('appd ',data.opts.seriesName,'=',data.opts.seriesIndex)
+          }
+          if (data.opts.seriesIndex)
+            chart.appendData({
+              seriesIndex: data.opts.seriesIndex,
+              data: data.opts.data
+            });
           break;
         
         case 'p_del_serie':
-          if(data.opts.seriesName){
+          if (data.opts.seriesName) {
             let series = cpts.series;
             series.forEach( function(s, index) {
               if(s.name == data.opts.seriesName){
@@ -304,7 +353,7 @@ if (HTMLWidgets.shinyMode) {
             }, series)
             cpts.series = series;
           }
-          else if(data.opts.seriesIndex)
+          else if (data.opts.seriesIndex)
             cpts.series = cpts.series.splice(data.opts.seriesIndex, 1);
           chart.setOption(cpts, true);
           break;
@@ -330,43 +379,8 @@ if (HTMLWidgets.shinyMode) {
           chart.setOption(cpts, true);
           break;
           
-        case 'p_update':
-          
-          if(!cpts.series)  // add series if none
-            cpts.series = [];
-  
-          data.opts.series.forEach(function(serie){
-            // for JS_EVAL and renderItem
-            if (typeof serie.renderItem == 'string') 
-              serie.renderItem = eval(serie.renderItem);
-            cpts.series.push(serie);
-          })
-  
-          if (data.opts.legend) {    // legend
-            if(cpts.legend.length > 0)
-              if(data.opts.legend.data)
-                cpts.legend[0].data = cpts.legend[0].data.concat(data.opts.legend.data);
-          }
-          if (data.opts.xAxis) {    // x Axis
-            if(cpts.xAxis){
-              if(cpts.xAxis[0].data){
-                let xaxis = cpts.xAxis[0].data.concat(data.opts.xAxis[0].data);
-                xaxis = xaxis.filter(distinct);
-                cpts.xAxis[0].data = xaxis;
-              }
-            }
-          }
-          if (data.opts.yAxis) {    // y Axis
-            if(cpts.yAxis){
-              if(cpts.yAxis[0].data){
-                let yaxis = cpts.yAxis[0].data.concat(data.opts.yAxis[0].data);
-                yaxis = yaxis.filter(distinct);
-                cpts.yAxis[0].data = yaxis;
-              }
-            }
-          }
-          
-          chart.setOption(cpts, true);
+        case 'p_dispatch':
+          chart.dispatchAction(data.opts);
           break;
           
         default:

@@ -35,13 +35,15 @@ tmp
 json <- tmp \%>\% ec.inspect()
 ec.fromJson(json) \%>\% ec.theme("dark")
 
+
 #------ Data grouping
 iris \%>\% dplyr::group_by(Species) \%>\% ec.init()     # by factor column
+
 p <- Orange \%>\% dplyr::group_by(Tree) \%>\% ec.init() # no factor column
-p$x$opts$series[[1]] <- append(p$x$opts$series[[1]], list(
-  symbolSize = 10
-))   # further customization added
+p$x$opts$series <- lapply(p$x$opts$series, function(x) { 
+  x$symbolSize=10; x$encode=list(x='age', y='circumference'); x } )
 p
+
 
 #------ Pie
 i<-0; data<-list(); for(v in islands[which(islands>60)]) { i<-i+1; 
@@ -55,12 +57,14 @@ p$x$opts <- list(title=list(
 p
 
 #------ Liquidfill plugin
+if (interactive()) {
 p <- ec.init(load=c('liquid'), preset=FALSE)
 p$x$opts$series[[1]] <- list(
   type='liquidFill', data=c(0.6, 0.5, 0.4, 0.3), # amplitude=0,
   waveAnimation=FALSE, animationDuration=0, animationDurationUpdate=0
 )
 p
+}
 
 #------ Heatmap
 times <- c(5,1,0,0,0,0,0,0,0,0,0,2,4,1,1,3,4,6,4,4,3,3,2,5,7,0,0,0,0,0,
@@ -94,15 +98,17 @@ p$x$opts$series[[1]]$symbolSize = htmlwidgets::JS("function(x){ return x[3];}")
 p
  
 #------ Plugin 3D
+if (interactive()) {
 p <- ec.init(load = '3D')
-p$x$opts$series[[1]] <- list(
+p$x$opts$series <- list(
   type = 'surface',
-  data = ec.data(as.data.frame(as.table(volcano)), TRUE)
+  data = ec.data(as.data.frame(as.table(volcano)), 'values')  
 )
-p 
+p
+}
 
 #------ 3D chart with custom coloring
-#  [4] is the JS index of column Species
+if (interactive()) {
 p <- iris \%>\% ec.init(load = '3D')
 p$x$opts$series[[1]] <- list(
   type='scatter3D', symbolSize=7, 
@@ -111,11 +117,13 @@ p$x$opts$series[[1]] <- list(
       if (params.value[4] == 1)    { return '#FE8463'; }
       else if(params.value[4] == 2){ return '#27727B'; }
       return '#9BCA63';
-  }") )
+  }") )  # [4] is the JS index of column Species
 )
 p
+}
 
 #------ Surface data equation with JS code
+if (interactive()) {
 p <- ec.init(load='3D')
 p$x$opts$series[[1]] <- list(
   type = 'surface',
@@ -127,8 +135,10 @@ p$x$opts$series[[1]] <- list(
   )
 )
 p
+}
 
 #------ Surface with data from a data.frame
+if (interactive()) {
 library(dplyr)
 data <- expand.grid(
   x = seq(0, 2, by = 0.1),
@@ -137,8 +147,9 @@ data <- expand.grid(
 p <- ec.init(load='3D')
 p$x$opts$series[[1]] <- list(
   type = 'surface',
-  data = ec.data(data, TRUE))
+  data = ec.data(data, 'values'))
 p
+}
 
 #------ Band serie with customization
 # first column ('day') usually goes to the X-axis
@@ -153,10 +164,10 @@ p$x$opts <- list(
   xAxis = list(list()),
   yAxis = list(list()),
   series = list(
-    append( ec.band(dats, 'DAX','FTSE'), list(
+    append( ecr.band(dats, 'DAX','FTSE'), list(
       name='band', color='lemonchiffon')),  # band + customize
     list(type='line', name='CAC', color='red', symbolSize=1,
-         data = ec.data(dats \%>\% select(day,CAC), TRUE) )  # @2
+         data = ec.data(dats \%>\% select(day,CAC), 'values') )  # @2
   ),
   legend = list(data=list(
     list(name='band'), list(name='CAC') )),
@@ -312,7 +323,7 @@ p$x$opts <- list(
   visualMap = list(type='continuous', calculable=TRUE, 
                    min=min(dusa$UrbanPop), max=max(dusa$UrbanPop))
   ,series = list( list(type='map', map='USA', name='UrbanPop', roam=TRUE,
-       data = lapply(ec.data(dusa,TRUE), function(x) list(name=x$value[5], value=x$value[3])) 
+       data = lapply(ec.data(dusa,'names'), function(x) list(name=x$states, value=x$UrbanPop))
    ))
 )
 p  
@@ -354,11 +365,8 @@ sankey <- data.frame(
 
 p <- ec.init(preset=FALSE)
 p$x$opts$series[[1]] <- list( type='sankey',
-  data = lapply(ec.data(sankey,TRUE),
-                function(x) list(name=x$value[1])),
-  edges = lapply(ec.data(sankey,TRUE), function(x)
-    list(source=as.character(x$value[2]), 
-         target=as.character(x$value[3]), value=x$value[4]) ) 
+  data = lapply(ec.data(sankey,'names'), function(x) list(name=x$node)),
+  edges = ec.data(sankey,'names')
 )
 p
 
@@ -366,12 +374,10 @@ p
 p <- ec.init(preset=FALSE, title=list(text="Graph"))
 p$x$opts$series[[1]] <- list( type='graph',
   layout = 'force',   # try 'circular' too
-  data = lapply(ec.data(sankey,TRUE),
-                function(x) list(name=x$value[1], tooltip = list(show=FALSE))),
-  edges = lapply(ec.data(sankey,TRUE), 
-                function(x) list(source=x$value[2], 
-                  target=x$value[3], value=x$value[4], 
-                  lineStyle = list(width=x$value[4]))), 
+  data = lapply(ec.data(sankey,'names'),
+             function(x) list(name=x$node, tooltip = list(show=FALSE))),
+  edges = lapply(ec.data(sankey,'names'),
+             function(x) { x$lineStyle <- list(width=x$value); x }),
   emphasis = list(focus='adjacency',
                   label=list( position='right', show=TRUE)),
   label = list(show=TRUE), roam = TRUE, zoom = 4,
@@ -399,7 +405,7 @@ runApp( list(
   server = function(input, output, session){
 
     output$plot <- ecs.render({
-      p <- mtcars \%>\% group_by(cyl) \%>\% ec.init()
+      p <- mtcars \%>\% relocate(disp, .after=mpg) \%>\% group_by(cyl) \%>\% ec.init()
       p$x$opts$tooltip <- list(list(show=TRUE))
       p$x$opts$series[[1]]$emphasis <- list(focus='series', blurScope='coordinateSystem')
       p

@@ -1,7 +1,7 @@
 Package: echarty
 Title: Minimal R/Shiny Interface to Library 'Echarts JavaScript'
 Date: 2021-02-20
-Version: 0.1.1
+Version: 0.1.2
 Authors@R: c( 
   person("Larry", "Helgason", email = "larry@helgasoft.com", role = c("aut", "cre", "cph")),
   person("John", "Coene", email = "jcoenep@gmail.com", role = c("aut", "cph"))
@@ -9,7 +9,7 @@ Authors@R: c(
 Author: Larry Helgason [aut, cre, cph], 
   John Coene [aut, cph]
 Maintainer: Larry Helgason <larry@helgasoft.com>
-Description: The goal is to deliver the full functionality of 'Echarts JavaScript' Version 5 with minimal overhead. 'Echarts JavaScript' is based on data structures. 'echarty' users build R lists for these same data structures. In general one to three 'echarty' commands are sufficient to produce any chart. 
+Description: The goal is to deliver the full functionality of 'Echarts JavaScript' with minimal overhead. 'Echarts JavaScript' is based on data structures. 'echarty' users build R lists for these same data structures. In general one to three 'echarty' commands are sufficient to produce any chart. 
 Depends: R (>= 3.0.0)
 License: Apache License (>= 2.0)
 LazyData: true
@@ -20,8 +20,7 @@ Imports:
   magrittr,
   shiny,
   purrr,
-  jsonlite,
-  rstudioapi
+  jsonlite
 Suggests:
     rmarkdown,
     knitr

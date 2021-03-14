@@ -1,37 +1,24 @@
 //  JS renderers for error bars, bands, etc.
+//  Prefix 'ri' stands for 'renderItem' - the calling origin.
 	
 /*
   Error Bar support for grouped bars, barGap and barCategoryGap
      Notes:	
-  Prefix 'ri' stands for 'renderItem' function.
   Error bars can have chart bars, lines and scatter points as "hosts".
-  It's convenient to "attach" error bars to their related chart bars	
-  so they'll show/hide together when user clicks on a legend button.	
-  This is done by having the same name for error and chart bars.	
-  Default legend = FALSE, since we'll have only chart bars in legend.	
-  Error bars will inherit color from their chart bar, blending with them.
-  Therefore it is preferable to set a different color, like so -
-  ec.ebars(..., color='blue'). Black is now set as default color.
-  ec.ebars are set at the end, after all other series.
-  
-	To test in R:
-  grps <- 5    # customizable number of groups
-  rpt <- grps*2
-  df <- data.frame('Category' = c(rep(LETTERS[1:grps], each=rpt)),
-    'Xaxis' = rep(paste(rep(LETTERS[1:grps], each=2), 1:grps*2, sep='.'), grps*rpt/(grps*2)), 
-    'Yaxis' = 50 * abs(rnorm(grps*rpt))) %>%
-    mutate(Lower = Yaxis - 5 * runif(grps*rpt),
-           Upper = Yaxis + 5 * runif(grps*rpt))
-  p <- df %>% group_by(Category) %>% ec.init()
-  p$x$opts$xAxis <- list(type='category')
-  p$x$opts$series[[1]] <- list( type='bar', barGap ='22%', barCategoryGap='55%')
-  p$x$opts$dataZoom <- list(start = 50)
-  p <- ec.ebars(p, Lower, Upper)
+  Error bars will "attach" to their host series and show/hide 
+  together when user clicks on a legend button.	
+  Attaching is done automatically (by type), or by name.
+  Error bars will inherit color from their host bar, blending with them.
+  Therefore it is preferable to use a different color, default is 'black'.
+  ecr.ebars will add a legend if none is found.
+  ecr.ebars should be set at the end, after all other series.
+  ecr.ebars are custom series, so ec.init(load='custom') is required.
+
 */
 function riErrorBar(params, api) {
 
   // input oss contains 
-  //   [last.barGap, last.barCategoryGap, series.count, ends.width]
+  //   [last.barGap, last.barCategoryGap, series.count, ends.half.width]
   let oss = JSON.parse(sessionStorage.getItem('ErrorBar.oss'));
   if (oss===null || !Object.keys(oss).length) return null;   // needs 4 input values
 
@@ -101,8 +88,8 @@ function riErrorBar(params, api) {
 }
 
 /*
-  renderItem function for Polygon
-  used also by ec.band
+  renderItem function for polygons
+  used by ecr.band
 */
 function riPolygon(params, api) {
     if (params.context.rendered) return;

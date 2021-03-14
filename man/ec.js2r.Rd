@@ -13,5 +13,5 @@ none
 Translate Javascript data objects to R
 }
 \details{
-To learn by examples in Javascript from \href{https://echarts.apache.org/examples/en/}{Echarts}
+Learn from Javascript examples of \href{https://echarts.apache.org/examples/en/}{ECharts}
 }

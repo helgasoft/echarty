@@ -7,11 +7,11 @@
 #' @param df A data.frame to be preset as \href{https://echarts.apache.org/en/option.html#dataset}{dataset}, default NULL
 #' @param group1 Type of grouped series, default 'scatter'. Set to NULL to disable. \cr
 #'      If the grouping is on multiple columns, only the first one is used.
-#' @param preset Enable (TRUE, default) or disable(FALSE) presets xAxis, yAxis and first serie.
+#' @param preset Disable(FALSE) or enable (TRUE, default) presets for xAxis, yAxis and first serie.
 #' @param load Name(s) of plugin(s) to load. Could be a character vector or comma-delimited string. default NULL.\cr
 #'   Built-in plugins: \cr \itemize{
 #'   \item leaflet - Leaflet maps with customizable tiles, see \href{https://github.com/gnijuohz/echarts-leaflet#readme}{source}\cr
-#'   \item custom - renderers for [ec.band] and ec.ebars \cr 
+#'   \item custom - renderers for [ecr.band] and ecr.ebars \cr 
 #'  } Plugins with one-time installation (popup prompt): \cr \itemize{
 #'   \item 3D - 3D charts and WebGL acceleration, see \href{https://github.com/ecomfe/echarts-gl}{source} and \href{https://echarts.apache.org/en/option-gl.html#series}{docs} \cr
 #'   \item world - world map with country boundaries, see \href{https://github.com/apache/echarts/tree/master/test/data/map/js}{source} \cr
@@ -29,8 +29,10 @@
 #' @return A widget to plot, or to save and expand with more features.
 #'
 #' @details Widgets are defined in \href{https://www.htmlwidgets.org/develop_intro.html}{htmlwidgets}. 
-#'  This command creates one with \code{\link[htmlwidgets]{createWidget}}, then adds some EchartsJS features to it.\cr
-#'  It may preset values for xAxis,yAxis,series and dataset, which user can overwrite if needed.
+#'  This command creates one with \code{\link[htmlwidgets]{createWidget}}, then adds some EChartsJS features to it.\cr
+#'  When [ec.init] is chained after a data.frame, a \href{https://echarts.apache.org/en/option.html#dataset}{dataset} is preset. \cr
+#'  When the data.frame is grouped and \emph{group1} is not null, more datasets with legend and series are also preset. Grouped series are of type \code{scatter}. \cr
+#'  Users can delete or overwrite any presets as needed.
 #' 
 #' @examples
 #'  # basic scatter chart from a data.frame, using presets
@@ -44,12 +46,15 @@ ec.init <- function( df = NULL, group1 = 'scatter', preset = TRUE, load = NULL,
   renderer = 'canvas', js = NULL, ...) {
   
   opts <- list(...)
-  if (preset)
-    opts <- append(opts, list(
-      xAxis = list(ec=''),
-      yAxis = list(ec=''),
-      series = list(list())
-    ))
+  
+  # presets are used as default for examples and testing
+  # user can also ignore or replace them
+  if (preset) {
+    if (!('xAxis' %in% names(opts))) opts$xAxis <- list(ey='')
+    if (!('yAxis' %in% names(opts))) opts$yAxis <- list(ey='')
+    if (!('series' %in% names(opts))) opts$series <- list(list())
+    opts$series[[1]] <- list(type='scatter')
+  }
   
   # forward widget options using x
   x <- list(
@@ -63,20 +68,15 @@ ec.init <- function( df = NULL, group1 = 'scatter', preset = TRUE, load = NULL,
     opts = opts
   )
   
-  # user will most probably replace this preset
-  # we use it as default for examples and testing
-  if (preset)
-    x$opts$series[[1]] <- list(type='scatter')
-  
   if (!is.null(df)) {
-    # if data.frame given, assign to dataset regardless of parameter preset
+    # if data.frame given, assign to dataset regardless of parameter 'preset'
     if (!'data.frame' %in% class(df)) 
       stop('df must be a data.frame', call. = FALSE)
     
     # grouping uses transform - a v.5 feature
     if (!is.null(group1) && dplyr::is.grouped_df(df)) {
       grnm <- dplyr::group_vars(df)[[1]]   # group1 means just 1st one
-      df <- df %>% dplyr::relocate(grnm, .after = dplyr::last_col())
+      #df <- df %>% dplyr::relocate(grnm, .after = dplyr::last_col())
       x$opts$dataset <- list(list(source = ec.data(df)))
       grvals <- unname(unlist(dplyr::group_data(df)[grnm]))
       txfm <- list(); k <- 0
@@ -88,8 +88,8 @@ ec.init <- function( df = NULL, group1 = 'scatter', preset = TRUE, load = NULL,
         txfm <- append(txfm, list(list(transform = list(
           type='filter', config=list(dimension=grnm, '='=srch4)))))
         x$opts$series[[k]] <- list(
-          type=group1, datasetIndex=k, name=i)
-        x$opts$legend$data <- append(x$opts$legend$data, list(list(name=i)))
+          type=group1, datasetIndex=k, name=as.character(i))
+        x$opts$legend$data <- append(x$opts$legend$data, list(list(name=as.character(i))))
       }
       x$opts$dataset <- append(x$opts$dataset, txfm)
     } 
@@ -142,7 +142,7 @@ ec.init <- function( df = NULL, group1 = 'scatter', preset = TRUE, load = NULL,
   
       # leaflet user data should be ordered (lon,lat)!
       if (!is.null(df))
-        wt$x$opts$series[[1]]$data <- ec.data(df, TRUE)
+        wt$x$opts$series[[1]]$data <- ec.data(df, 'values')
       wt$x$opts$series[[1]]$coordinateSystem <- 'leaflet'
     }
     
@@ -166,7 +166,7 @@ ec.init <- function( df = NULL, group1 = 'scatter', preset = TRUE, load = NULL,
       wt$x$opts$xAxis <- NULL   # replace 2D presets with 3D
       wt$x$opts$yAxis <- NULL
       wt$x$opts$series[[1]] <- NULL
-      wt$x$opts$grid3D  <- list(list())  # todo list(ec='')?
+      wt$x$opts$grid3D  <- list(list())  # todo list(ey='')?
       wt$x$opts$xAxis3D <- list(list())
       wt$x$opts$yAxis3D <- list(list())
       wt$x$opts$zAxis3D <- list(list())
@@ -257,64 +257,205 @@ ec.plugjs <- function(wt=NULL, source=NULL) {
 }
 
 
-#' Get an EchartsJS dataset from a data.frame
+#' Get an EChartsJS dataset from a data.frame
 #' 
 #' @param df Chart data in data.frame format, required
-#' @param series If FALSE, data is prepared for \href{https://echarts.apache.org/en/option.html#dataset.source}{dataset} (default),\cr
-#'  if TRUE, data is for \href{https://echarts.apache.org/en/option.html#series-scatter.data}{series} 
-#' @return A list for \emph{dataset.source} or \emph{series.data}. The latter does not include column names.
+#' @param format A key on how to format the output list \cr \itemize{
+#'  \item 'dataset' list used in \href{https://echarts.apache.org/en/option.html#dataset.source}{dataset} (default),\cr
+#'  \item 'values' list for \href{https://echarts.apache.org/en/option.html#series-scatter.data}{series.data} \cr
+#'  \item 'names' creates named lists useful for named data like \href{https://echarts.apache.org/en/option.html#series-sankey.links}{sankey links}
+#'  }
+#' @return A list for \emph{dataset.source}, \emph{series.data} or a list of named lists.
 #'
 #' @export
-ec.data <- function(df, series=FALSE) {
+ec.data <- function(df, format='dataset') {
   if (missing(df))
     stop('expecting df as data.frame', call. = FALSE)
   if (!'data.frame' %in% class(df))
     stop('df has to be data.frame', call. = FALSE)
   
   # TODO: replace purrr with something simpler
-  tmp <- lapply(lapply(purrr::transpose(df), unname), 
-                function(x) unlist(purrr::flatten(x)) )
-  datset <- c(list(colnames(df)), tmp)
-  
-  if (isTRUE(series)) {   # change format
-    datset <- lapply(tmp, function(x) list(value=x))
-  }
+  tmp <- purrr::transpose(df)       # named lists
+  if (format=='dataset') {
+    datset <- c(list(colnames(df)), lapply(tmp, unname))
+  } else if (format=='values' || isTRUE(format)) {
+    datset <- lapply(tmp, function(x) list(value=unlist(unname(x))))
+  } else   # ='names'
+    datset <- tmp
+
   return(datset)
 }
 
 
 
-#' Band
+#' Area band
 #' 
-#' Add a new 'custom' serie with coordinates of a polygon.
+#' A 'custom' serie with lower and upper boundaries
 #' 
 #' @param df A data.frame with lower and upper numerical columns.
 #' @param lower The column name of band's lower boundary, a string.
 #' @param upper The column name of band's upper boundary, a string.
+#' @param two Type of rendering - by polygon (FALSE,default), or by two stacked lines (TRUE)
 #' @param ... More parameters for \href{https://echarts.apache.org/en/option.html#series-line.type}{serie}
-#' @return One serie list
+#' @return One list serie when two=FALSE, or a list of two list series when two=TRUE
 #'
-#' @details The coordinates of the two boundaries are merged into a polygon and displayed as one.
+#' @details When two=FALSE, the coordinates of the two boundaries are chained into a polygon and displayed as one. Uses absolute cartesian coordinates. \cr
+#'      When two=TRUE, two smooth \emph{stacked} lines are drawn, one with customizable areaStyle. The upper boundary coordinates represent values on top of the lower boundary coordinates.
+#'      
+#' @examples 
+#' myList <- list(x=LETTERS[1:7],
+#'                d=c(140, 232, 101, 264, 90, 340, 250),
+#'                u=c(120, 282, 111, 234, 220, 340, 310),
+#'                l=c(200, 332, 151, 400, 190, 540, 450))
+#' data <- as.data.frame(do.call(cbind, myList))
+#' colnames(data) <- c('x','down','up','coord')
+#' p <- ec.init(load='custom')
+#' p$x$opts <- list(
+#'   xAxis=list(list(type='category', boundaryGap=FALSE, data=data$x)),
+#'   yAxis=list(list(scale=TRUE)),
+#'   legend=list(ey=''),
+#'   series = ecr.band(data, 'down', 'up', two=TRUE, name='band')   # two=TRUE
+#'   #series = list(ecr.band(data, 'down', 'up', name='polyBand'))  # two=FALSE
+#' )
+#' p$x$opts$series <- append(p$x$opts$series, 
+#'   list(list(name='line',type='line', lineStyle=list(width=2), data=data$coord)) )
+#' p
+#' 
 #' @export
-ec.band <- function(df=NULL, lower=NULL, upper=NULL, ...) {
+ecr.band <- function(df=NULL, lower=NULL, upper=NULL, two=FALSE, ...) {
   if (is.null(df) || is.null(lower) || is.null(upper)) 
     stop('df, lower and upper are all required', call. = FALSE)
   if (!'data.frame' %in% class(df)) 
     stop('df must be a data.frame', call. = FALSE)
+  args <- list(...)
   
-  ld <- nrow(df[upper])
-  l2 <- unname(unlist(df[upper])[order(ld:1)])  		# reverse
-  tmp <- data.frame(x=c(df[1:ld,1],df[ld:1,1]), y=c(df[lower][[1]], l2))
-  
-  serie <- list(
-    type = 'custom', 
-    renderItem = htmlwidgets::JS('riPolygon'),
-    data = ec.data(tmp, TRUE),
-    ...
-  )
-  if (is.null(serie$itemStyle))
-    serie$itemStyle = list(borderWidth=0.5)
+  if (two) {    # as two stacked areas
+    colr <- paste("new echarts.graphic.LinearGradient(0, 0, 0, 1, [",
+                  "{offset: 0, color: 'rgba(255, 0, 135)'},",
+                  "{offset: 1, color: 'rgba(135, 0, 157)'}])")
+    astyle <- list(opacity=0.8, color=htmlwidgets::JS(colr))  # default color
+    if ('areaStyle' %in% names(args)) astyle <- args$areaStyle
+    smooth <- if ('smooth' %in% names(args)) args$smooth else TRUE
+    lineStyle <- if ('lineStyle' %in% names(args)) args$lineStyle else list(width=0)
+    boundaryGap <- if ('boundaryGap' %in% names(args)) args$boundaryGap else FALSE
+    serie <- list(
+      list(type='line', stack='band',
+           showSymbol=FALSE, lineStyle=lineStyle, smooth=smooth,
+           data=unname(unlist(df[lower])), tooltip=list(show=FALSE), color='#fff0'), 
+      list(type='line', stack='band',
+           showSymbol=FALSE, lineStyle=lineStyle, smooth=smooth,
+           data=unname(unlist(df[upper])), tooltip=list(show=FALSE), areaStyle=astyle, ...)
+    )
+  } else {    # as polygon
+    ld <- nrow(df[upper])
+    l2 <- unname(unlist(df[upper])[order(ld:1)])  		# reverse
+    tmp <- data.frame(x=c(df[1:ld,1],df[ld:1,1]), y=c(df[lower][[1]], l2))
+    
+    serie <- list(
+      type = 'custom', 
+      renderItem = htmlwidgets::JS('riPolygon'),
+      data = ec.data(tmp, 'values'),  # only this format works
+      ...
+    )
+    if (is.null(serie$itemStyle))
+      serie$itemStyle = list(borderWidth=0.5)
+  }
   serie
+}
+
+
+#' Error bars
+#' 
+#' Custom series to display error bars for scatter,bar or line series
+#' 
+#' @param wt A widget to add error bars to, see \code{\link[htmlwidgets]{createWidget}}
+#' @param df A data.frame with three or more columns in order x,low,high,etc.
+#' @param hwidth Half-width of error bar in pixels, default is 6.
+#' @param ... More parameters for \href{https://echarts.apache.org/en/option.html#series-custom.type}{custom serie}
+#' @return A widget with error bars added if successful, otherwise input wt
+#'
+#' @details Grouped bars are supported, but require the group column to be included in df. \cr
+#'  Complete data frame df could be chained to ec.init to auto-populate the bar series.\cr
+#'  ecr.ebars will add a legend if none is found.\cr
+#'  ecr.ebars are custom series, so \emph{ec.init(load='custom')} is required.
+#'  ecr.ebars should be set at the end, after all other series. \cr
+#'
+#' @examples
+#' 
+#' df <- mtcars %>% dplyr::group_by(cyl,gear) %>% dplyr::summarise(mmm=mean(mpg)) %>% 
+#'   dplyr::mutate(low=mmm*(1-0.2*runif(1)), high=mmm*(1+0.2*runif(1))) %>% 
+#'   dplyr::relocate(cyl, .after = last_col())   # move group column away from first three cols
+#' p <- df %>% ec.init(group1='bar', load='custom')
+#' # since this is grouped data, must include the group column 'cyl'
+#' ecr.ebars(p, df[,c('gear','low','high','cyl')])
+#' 
+#' @export
+ecr.ebars <- function(wt, df, hwidth=6, ...) {
+  # alternating bar with custom series doesn't work, first bars then customs
+  if (missing(wt)) stop('ecr.ebars expecting widget', call. = FALSE)
+  if (missing(df)) stop('df is required', call. = FALSE)
+  if (!inherits(df, "data.frame")) stop('df must be data.frame', call. = FALSE)
+  ser <- wt$x$opts$series  # all series
+  if (is.null(ser)) stop('series are missing', call. = FALSE)
+  args <- list(...)
+  
+  # look for barGap(s), barCategoryGap(s)
+  allBarGaps <-   lapply(ser, function(x) { x$barGap })
+  allBarCgGaps <- lapply(ser, function(x) { x$barCategoryGap })
+  lbg <- utils::tail(unlist(allBarGaps),1); lbg <- if (is.null(lbg)) '' else lbg
+  lcg <- utils::tail(unlist(allBarCgGaps),1); lcg <- if (is.null(lcg)) '' else lcg
+  
+  cntr <- function(x, typ) { grep(typ, x) }
+  name <- args$name; 
+  tmp <- NULL   # count number of similar (grouped) series
+  if (!is.null(name)) 
+    tmp <- unlist(lapply(ser, function(x) { 
+      if (length(grep(name,x))>0) x$type else NULL }))[1]
+  if (!is.null(tmp))    # attached by name, count same-type series
+    info <- length(unlist(lapply(ser, function(x) grep(tmp, x))))
+  else {    # no name or not found - choose first of type bar/line/scatter, count how many
+    info <- length(unlist(lapply(ser, cntr, typ='bar')))
+    if (info==0) info <- length(unlist(lapply(ser, cntr, typ='line')))
+    if (info==0) info <- length(unlist(lapply(ser, cntr, typ='scatter')))
+  }
+  
+  if (info==0) return(wt)    # no bars/lines/scatter, nothing to attach to
+  
+  # set minimal info to be read by the renderer
+  # renderers.js works in a very isolated environment, so we send data thru sessionStorage
+  # info = last barGap, last barCategoryGap, number of bars, bar half-width in pixels
+  info <- c(lbg, lcg, as.character(info), hwidth)
+  
+  info <- paste0("sessionStorage.setItem('ErrorBar.oss','"
+                 ,jsonlite::toJSON(info),"'); riErrorBar;") #renderErrorBar2;")
+  # no groups
+  if (!dplyr::is.grouped_df(df)) {
+    if (is.null(name)) name <- colnames(df)[1]
+    c <- list(type='custom', name=name, renderItem = htmlwidgets::JS(info),
+              data=ec.data(df, 'values'), ...)
+    if (!("z" %in% names(args))) c$z <- 3
+    if (!("itemStyle" %in% names(args))) c$itemStyle <- list()
+    if (is.null(c$itemStyle$borderWidth)) c$itemStyle$borderWidth <- 1.5
+    if (is.null(c$itemStyle$color)) c$itemStyle$color <- 'black'  # set, or it will blend with main bar
+    cser <- list(c)
+  }
+  else {
+    grnm <- dplyr::group_vars(df)[[1]]   # group1 means just 1st one
+    tmp <- df %>% dplyr::group_split()
+    cser <- lapply(tmp, function(s) {
+      name <- unlist(unique(unname(s[,grnm])))
+      c <- list(type='custom', name=name, renderItem = htmlwidgets::JS(info),
+                data=ec.data(s, 'values'), ...)
+      if (!("z" %in% names(args))) c$z <- 3
+      if (!("color" %in% names(args))) c$color <- 'black'  # set, or it will blend with main bar
+      if (!("itemStyle" %in% names(args))) c$itemStyle <- list(borderWidth = 1.5)
+      c
+    })
+  }
+  wt$x$opts$series <- append(wt$x$opts$series, cser)
+  if (!("legend" %in% names(wt$x$opts))) wt$x$opts$legend <- list(ey='')
+  wt$x$opts$xAxis$type <- 'category'
+  wt
 }
 
 
@@ -324,11 +465,20 @@ ec.band <- function(df=NULL, lower=NULL, upper=NULL, ...) {
 #' 
 #' @return none
 #'
-#' @details To learn by examples in Javascript from \href{https://echarts.apache.org/examples/en/}{Echarts}
+#' @details Learn from Javascript examples of \href{https://echarts.apache.org/examples/en/}{ECharts}
+#' @import shiny
 #' @export
 ec.js2r <- function() {
-  if (interactive())
-    shiny::runGist('https://gist.github.com/helgasoft/819035e853d9889ba02cb69ecc587f34',quiet=TRUE)
+  if (interactive()) {
+    prompt <- paste0('Ready to launch Translation Assistant\n Would you like to proceed ?')
+    ans <- FALSE
+    if (interactive())
+      ans <- askYesNo(prompt)
+    if (is.na(ans)) ans <- FALSE  # was cancelled
+    if (ans) {
+      shiny::runGist('https://gist.github.com/helgasoft/819035e853d9889ba02cb69ecc587f34',quiet=TRUE)
+    }
+  }
   return(NULL)
 }
 
@@ -414,76 +564,107 @@ ecs.proxy <- function(id) {
 #' 
 #' library(shiny)
 #' runApp( list(
-#'   ui = fluidPage(
-#'     ecs.output('plot'),
-#'     actionButton('addm', 'Add marks'),
-#'     actionButton('delm', 'Del area+line marks'), HTML('&nbsp; &nbsp; &nbsp; &nbsp;'),
-#'     actionButton('adds', 'Add serie'),
-#'     actionButton('dels', 'Del serie'), HTML('&nbsp; &nbsp; &nbsp; &nbsp;'),
-#'     actionButton('hilit', 'Highlight'),
-#'     actionButton('dnplay', 'Downplay')
-#'   ),
-#'   server = function(input, output, session){
+#' ui = fluidPage(
+#'   ecs.output('plot'),
+#'   fluidRow(
+#'     column(4, actionButton('addm', 'Add marks'),
+#'            actionButton('delm', 'Delete marks'),
+#'            br(),span('mark points stay, area/line deletable')
+#'     ),
+#'     column(3, actionButton('adds', 'Add serie'),
+#'            actionButton('dels', 'Del serie')),
+#'     column(5, actionButton('adata', 'Add data'),
+#'            actionButton('hilit', 'Highlight'),
+#'            actionButton('dnplay', 'Downplay') )
+#'   )
+#' ),
+#' server = function(input, output, session) {
 #' 
-#'     output$plot <- ecs.render({
-#'       e <- mtcars %>% group_by(cyl) %>% ec.init()
-#'       e$x$opts$tooltip <- list(list(show=TRUE))
-#'       e$x$opts$series[[1]]$emphasis <- list(focus='series', blurScope='coordinateSystem')
-#'       e
-#'     })
+#'   output$plot <- ecs.render({
+#'     p <- ec.init()
+#'     p$x$opts$series <- lapply(mtcars %>% relocate(disp, .after=mpg)
+#'                               %>% group_by(cyl) %>% group_split(), function(s) {
+#'                                 list(type='scatter', name=unique(s$cyl), data=ec.data(s, 'values'))
+#'                               })
+#'     p$x$opts$legend <- list(ey='')
+#'     p$x$opts$xAxis <- list(type="value"); p$x$opts$yAxis <- list(ec='')
+#'     p$x$opts$tooltip <- list(list(show=TRUE))
+#'     p$x$opts$series[[1]]$emphasis <- list(focus='series', blurScope='coordinateSystem')
+#'     p
+#'   })
 #' 
-#'     observeEvent(input$addm, {
-#'       e <- ecs.proxy('plot')
-#'       e$x$opts$series[[1]] = list(
-#'         markPoint = list(data = list(
-#'           list(coord = c(22.5, 140.8)),
-#'           list(coord = c(30.5, 95.1))
-#'         ), itemStyle = list(color='lightblue')
-#'         )
-#'         ,markArea = list(data = list(list(
-#'           list(xAxis = 15),
-#'           list(xAxis = 25)
-#'         ))
-#'         ,silent=TRUE
-#'         ,itemStyle = list(color='pink', opacity=0.2)
-#'         ,label = list(formatter='X-area', position='insideTop')
-#'         )
-#'         ,markLine = list(data = list(list(type='average')))
+#'   observeEvent(input$addm, {
+#'     p <- ecs.proxy('plot')
+#'     p$x$opts$series = list( list(
+#'       markPoint = list(data = list(
+#'         list(coord = c(22.5, 140.8)),
+#'         list(coord = c(30.5, 95.1))
+#'       ),
+#'       itemStyle = list(color='lightblue')
 #'       )
-#'       e %>% ecs.exec() #' ='p_merge'
-#'     })
-#'     observeEvent(input$adds, {
-#'       e <- ecs.proxy('plot')
-#'       e$x$opts$series[[1]] <- list(
-#'         type = 'line', name = 'newLine',
-#'         encode = list(x='mpg', y='disp')
+#'       ,markArea = list(data = list(list(
+#'         list(xAxis = 15),
+#'         list(xAxis = 25)
+#'       ))
+#'       ,silent=TRUE
+#'       ,itemStyle = list(color='pink', opacity=0.2)
+#'       ,label = list(formatter='X-area', position='insideTop')
 #'       )
-#'       e %>% ecs.exec('p_update')
-#'     })
-#'     observeEvent(input$dels, {
-#'       e <- ecs.proxy('plot')
-#'       e$x$opts$seriesName <- 'newLine'
-#'       #'e$x$opts$seriesIndex <- 4  #' alternative ok
-#'       e %>% ecs.exec('p_del_serie')
-#'     })
-#'     observeEvent(input$delm, {
-#'       e <- ecs.proxy('plot')
-#'       e$x$opts$seriesIndex <- 1
-#'       e$x$opts$delMarks <- c('markArea','markLine')
-#'       e %>% ecs.exec('p_del_marks')
-#'     })
-#'     observeEvent(input$hilit, {
-#'       e <- ecs.proxy('plot')
-#'       e$x$opts <- list(type='highlight', seriesName='4')
-#'       e %>% ecs.exec('p_dispatch')
-#'     })
-#'     observeEvent(input$dnplay, {
-#'       e <- ecs.proxy('plot')
-#'       e$x$opts <- list(type='downplay', seriesName='4')
-#'       e %>% ecs.exec('p_dispatch')
-#'     })
-#'   }
-#' ))
+#'       ,markLine = list(data = list(list(type='average')))
+#'     ), list(
+#'       markPoint = list(data = list(
+#'         list(coord = c(25.5, 143.8)),
+#'         list(coord = c(33.5, 98.1))
+#'       ),
+#'       itemStyle = list(color='forestgreen')
+#'       )
+#'     ))
+#'     p %>% ecs.exec() # ='p_merge'
+#'   })
+#'   observeEvent(input$adds, {
+#'     p <- ecs.proxy('plot')
+#'     p$x$opts$series <- list(list(
+#'       type = 'line', name = 'newLine',
+#'       #encode = list(x='mpg', y='disp')  # for dataset only
+#'       data=list(list(10,100),list(5,200),list(10,400),list(10,200),list(15,150),list(5,300))
+#'     ))
+#'     p %>% ecs.exec('p_update')
+#'   })
+#' 
+#'   observeEvent(input$adata, {
+#'     set.seed(sample(1:444, 1))
+#'     tmp <- apply(unname(data.frame(rnorm(5, 10, 3), rnorm(5, 200, 33))),
+#'                  1, function(x) { list(value=x) })
+#'     p <- ecs.proxy('plot')
+#'     p$x$opts$seriesIndex <- 1
+#'     p$x$opts$data <- tmp
+#'     p %>% ecs.exec('p_append_data')
+#'   })
+#' 
+#'   observeEvent(input$dels, {
+#'     p <- ecs.proxy('plot')
+#'     p$x$opts$seriesName <- 'newLine'
+#'     #'p$x$opts$seriesIndex <- 4  # ok too
+#'     p %>% ecs.exec('p_del_serie')
+#'   })
+#'   observeEvent(input$delm, {
+#'     p <- ecs.proxy('plot')
+#'     p$x$opts$seriesIndex <- 1
+#'     p$x$opts$delMarks <- c('markArea','markLine')
+#'     p %>% ecs.exec('p_del_marks')
+#'   })
+#'   observeEvent(input$hilit, {
+#'     p <- ecs.proxy('plot')
+#'     p$x$opts <- list(type='highlight', seriesName='4')
+#'     p %>% ecs.exec('p_dispatch')
+#'   })
+#'   observeEvent(input$dnplay, {
+#'     p <- ecs.proxy('plot')
+#'     p$x$opts <- list(type='downplay', seriesName='4')
+#'     p %>% ecs.exec('p_dispatch')
+#'   })
+#' } ))
+#'   
 #' }
 #' 
 #' @export
@@ -589,7 +770,7 @@ ec.theme <- function (e, name, code = NULL)
 #' 
 #' @param e An \code{echarty} widget as returned by [ec.init]
 #' @param json Whether to return a JSON, or a \code{list}, default TRUE
-#' @param ... Additional options to pass to \code{\link[jsonlite]{toJSON}}
+#' @param ... Additional arguments to pass to \code{\link[jsonlite]{toJSON}}
 #' @return A JSON string if \code{json} is \code{TRUE} and
 #'  a \code{list} otherwise.
 #'
@@ -623,16 +804,28 @@ ec.inspect <- function(e, json=TRUE, ...) {
 #' Convert JSON string to chart
 #' 
 #' @param txt JSON character string, url, or file, see \code{\link[jsonlite]{fromJSON}}
+#' @param ... Any arguments to pass to internal ec.init
 #' @return An \code{echarty} widget.
 #' 
 #' @details \code{txt} should contain the full list of options required to build a chart.
-#' It is subsequently passed to EchartsJS function \href{https://echarts.apache.org/en/api.html#echartsInstance.setOption}{setOption}.
+#' It is subsequently passed to EChartsJS function \href{https://echarts.apache.org/en/api.html#echartsInstance.setOption}{setOption}.
 #' 
+#' @examples
+#' txt <- '{
+#'   "xAxis": { "type": "category",
+#'      "data": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+#'    },
+#'    "yAxis": { "type": "value" },
+#'    "series": { "type": "line",
+#'      "data": [150, 230, 224, 218, 135, 147, 260]
+#'    } }'
+#' ec.fromJson(txt)
+#'
 #' @export
-ec.fromJson <- function(txt) {
+ec.fromJson <- function(txt, ...) {
   json <- jsonlite::fromJSON(txt, simplifyVector = FALSE)
   
-  e <- ec.init()
+  e <- ec.init(...)
   e$x$opts <- json
   e
 }
