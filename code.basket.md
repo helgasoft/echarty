@@ -6,9 +6,9 @@ Gallery of some interesting charts and their code.
 Custom chart <br />
 <img src='img/cb-1.png' target=_blank alt='profit' />
 <details><summary>View code</summary>
-<p>
 
-```r
+<p>
+<pre>
 # source https://echarts.apache.org/examples/en/editor.html?c=custom-profit
 # GUI translated with echarty::ec.js2r() with rdata and ritem added
 
@@ -49,7 +49,7 @@ p$x$opts <- list(
          data = rdata ))
 )
 p
-```
+</pre>
 
 </p>
 </details>
@@ -58,9 +58,9 @@ p
 Error Bars <br />
 <img src='img/cb-2.png' target=_blank alt='profit' />
 <details><summary>View code</summary>
-<p>
 
-```r
+<p>
+<pre>
 # example by https://github.com/kuzmenkov111
 library(echarty)
 library(data.table)
@@ -95,7 +95,7 @@ q$x$opts$series <- lapply(q$x$opts$series, function(s, i) {
   s
 })
 q   # customized
-```
+</pre>
 
 </p>
 </details>
@@ -106,10 +106,9 @@ Crosstalk in 3D <br />
 
 <img src='img/cb-3.png' target=_blank alt='crosstalk 3D' />
 <details><summary>View code</summary>
+
 <p>
-
-```r
-
+<pre>
 # echarty can highlight 3D points selected by external controls
 library(crosstalk); library(DT); library(htmltools)
 library(echarty.c); library(dplyr); library(tibble)
@@ -137,7 +136,34 @@ bscols( list(
               options=list(deferRender=TRUE, scrollY=300, scroller=TRUE))
   ),  p3
 )
-```
+</pre>
 
 </p>
+</details>
+
+<p>&nbsp;</p>
+Gauge triple
+<details><summary>View code</summary>
+
+```r
+jcode <- "setInterval(function () {
+    opts.series[0].data[0].value = (Math.random() * 100).toFixed(2) - 0;
+    opts.series[0].data[1].value = (Math.random() * 100).toFixed(2) - 0;
+    opts.series[0].data[2].value = (Math.random() * 100).toFixed(2) - 0;
+    chart.setOption(opts, true);
+}, 2000);"
+library(echarty)
+p <- ec.init(js=jcode)
+p$x$opts <- list(series = list(list(type = "gauge", anchor = list(show = TRUE, showAbove = TRUE,
+  size = 18, itemStyle = list(color = "#FAC858")), pointer = list(icon = "path://M2.9,0.7L2.9,0.7c1.4,0,2.6,1.2,2.6,2.6v115c0,1.4-1.2,2.6-2.6,2.6l0,0c-1.4,0-2.6-1.2-2.6-2.6V3.3C0.3,1.9,1.4,0.7,2.9,0.7z",
+  width = 8, length = "80%", offsetCenter = list(0, "8%")), progress = list(show = TRUE,
+  overlap = TRUE, roundCap = TRUE), axisLine = list(roundCap = TRUE), data = list(list(value = 20,
+  name = "完成率", title = list(offsetCenter = list("-40%", "80%")), detail = list(offsetCenter = list("-40%",
+    "95%"))), list(value = 40, name = "达标率", title = list(offsetCenter = list("0%",
+  "80%")), detail = list(offsetCenter = list("0%", "95%"))), list(value = 60, name = "优秀率",
+  title = list(offsetCenter = list("40%", "80%")), detail = list(offsetCenter = list("40%",
+    "95%")))), title = list(fontSize = 14), detail = list(width = 40, height = 14, fontSize = 14,
+  color = "#fff", backgroundColor = "auto", borderRadius = 3, formatter = "{value}%"))))
+p
+```
 </details>
