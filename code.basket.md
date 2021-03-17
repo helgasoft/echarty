@@ -6,6 +6,7 @@ Gallery of some interesting charts and their code.
 Custom chart <br />
 <img src='img/cb-1.png' target=_blank alt='profit' />
 <details><summary>View code</summary>
+<p>
 
 ```r
 # source https://echarts.apache.org/examples/en/editor.html?c=custom-profit
@@ -50,12 +51,14 @@ p$x$opts <- list(
 p
 ```
 
+</p>
 </details>
 
 <p>&nbsp;</p>
 Error Bars <br />
 <img src='img/cb-2.png' target=_blank alt='profit' />
 <details><summary>View code</summary>
+<p>
 
 ```r
 # example by https://github.com/kuzmenkov111
@@ -94,6 +97,7 @@ q$x$opts$series <- lapply(q$x$opts$series, function(s, i) {
 q   # customized
 ```
 
+</p>
 </details>
 
 
@@ -102,8 +106,10 @@ Crosstalk in 3D <br />
 
 <img src='img/cb-3.png' target=_blank alt='crosstalk 3D' />
 <details><summary>View code</summary>
+<p>
 
 ```r
+
 # echarty can highlight 3D points selected by external controls
 library(crosstalk); library(DT); library(htmltools)
 library(echarty.c); library(dplyr); library(tibble)
@@ -133,4 +139,5 @@ bscols( list(
 )
 ```
 
+</p>
 </details>
