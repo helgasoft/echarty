@@ -7,8 +7,8 @@ Custom chart <br />
 <img src='img/cb-1.png' target=_blank alt='profit' />
 <details><summary>View code</summary>
 
-<p>
-<pre>
+
+```r
 # source https://echarts.apache.org/examples/en/editor.html?c=custom-profit
 # GUI translated with echarty::ec.js2r() with rdata and ritem added
 
@@ -49,9 +49,7 @@ p$x$opts <- list(
          data = rdata ))
 )
 p
-</pre>
-
-</p>
+```
 </details>
 
 <p>&nbsp;</p>
@@ -59,8 +57,7 @@ Error Bars <br />
 <img src='img/cb-2.png' target=_blank alt='profit' />
 <details><summary>View code</summary>
 
-<p>
-<pre>
+```r
 # example by https://github.com/kuzmenkov111
 library(echarty)
 library(data.table)
@@ -95,9 +92,7 @@ q$x$opts$series <- lapply(q$x$opts$series, function(s, i) {
   s
 })
 q   # customized
-</pre>
-
-</p>
+```
 </details>
 
 
@@ -107,8 +102,8 @@ Crosstalk in 3D <br />
 <img src='img/cb-3.png' target=_blank alt='crosstalk 3D' />
 <details><summary>View code</summary>
 
-<p>
-<pre>
+
+```r
 # echarty can highlight 3D points selected by external controls
 library(crosstalk); library(DT); library(htmltools)
 library(echarty.c); library(dplyr); library(tibble)
@@ -136,9 +131,7 @@ bscols( list(
               options=list(deferRender=TRUE, scrollY=300, scroller=TRUE))
   ),  p3
 )
-</pre>
-
-</p>
+```
 </details>
 
 <p>&nbsp;</p>
