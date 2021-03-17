@@ -7,7 +7,7 @@ Have the **full functionality** of [ECharts](https://echarts.apache.org/examples
 <br/>  
 
 ## Tutorials
-Tips and tricks to help you get started with **echarty**.
+Tips and tricks to help you get started with **echarty**
 
 [Use Case 1](uc1.md) - Building an interactive map with regional data
 
@@ -20,8 +20,16 @@ Tips and tricks to help you get started with **echarty**.
 [Use Case 5](uc5.html) - Bubbles without troubles with JavaScript - <span style="color:magenta">*live demo*</span>
 
 [Use Case 6](uc6.md) - Grouped, stacked and timelined
+<br />
 
-<br/>  
+
+[Code Basket](code.basket.md) - grab a chart!
+
+<br/> 
+
+## Crosstalk 
+Social media for charts - [see the action](xtalk.html)  &nbsp; &nbsp; <span style="color:magenta">live demo</span>
+<br />
 <br/>
 
 ## Learn by example
@@ -29,7 +37,7 @@ Have fun with **echarty Translator Assistant**  - translate Javascript data to R
 Javascript library ECharts has lots of great [examples](href="https://echarts.apache.org/examples/en/)
 . The goal is to facilitate translation of their JSON-like data (*option* object) to R lists. Give it a go with the following R command:
 ```r
-echarty::ec.js2r()   # echarty v.0.1.1
+echarty::ec.js2r()   # echarty v.0.1.2
 ```
 <br/>
 <br/>
