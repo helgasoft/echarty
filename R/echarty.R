@@ -4,9 +4,10 @@
 #'
 #' Initialize a chart.
 #'
-#' @param df A data.frame to be preset as \href{https://echarts.apache.org/en/option.html#dataset}{dataset}, default NULL
+#' @param df A data.frame to be preset as \href{https://echarts.apache.org/en/option.html#dataset}{dataset}, default NULL \cr
+#'     For crosstalk df should be of type \code{\link[crosstalk]{SharedData}}.
 #' @param group1 Type of grouped series, default 'scatter'. Set to NULL to disable. \cr
-#'      If the grouping is on multiple columns, only the first one is used.
+#'     If the grouping is on multiple columns, only the first one is used.
 #' @param preset Disable(FALSE) or enable (TRUE, default) presets for xAxis, yAxis and first serie.
 #' @param load Name(s) of plugin(s) to load. Could be a character vector or comma-delimited string. default NULL.\cr
 #'   Built-in plugins: \cr \itemize{
@@ -32,18 +33,19 @@
 #'  This command creates one with \code{\link[htmlwidgets]{createWidget}}, then adds some EChartsJS features to it.\cr
 #'  When [ec.init] is chained after a data.frame, a \href{https://echarts.apache.org/en/option.html#dataset}{dataset} is preset. \cr
 #'  When the data.frame is grouped and \emph{group1} is not null, more datasets with legend and series are also preset. Grouped series are of type \code{scatter}. \cr
-#'  Users can delete or overwrite any presets as needed.
+#'  Users can delete or overwrite any presets as needed. \cr
 #' 
 #' @examples
 #'  # basic scatter chart from a data.frame, using presets
 #'  cars %>% ec.init()
 #'  
-#' @import htmlwidgets
+#' @importFrom htmlwidgets createWidget sizingPolicy getDependency JS shinyWidgetOutput shinyRenderWidget
+#' @importFrom crosstalk is.SharedData crosstalkLibs
 #' 
 #' @export
 ec.init <- function( df = NULL, group1 = 'scatter', preset = TRUE, load = NULL,
-  width = NULL, height = NULL, elementId = NULL, 
-  renderer = 'canvas', js = NULL, ...) {
+                     js = NULL, width = NULL, height = NULL, elementId = NULL, 
+                     renderer = 'canvas', ...) {
   
   opts <- list(...)
   
@@ -55,6 +57,18 @@ ec.init <- function( df = NULL, group1 = 'scatter', preset = TRUE, load = NULL,
     if (!('series' %in% names(opts))) opts$series <- list(list())
     opts$series[[1]] <- list(type='scatter')
   }
+
+  
+  if (crosstalk::is.SharedData(df)) {
+    # Using Crosstalk
+    key <- df$key()
+    group <- df$groupName()
+    df <- df$origData()
+  } else {
+    # Not using Crosstalk
+    key <- NULL
+    group <- NULL
+  }
   
   # forward widget options using x
   x <- list(
@@ -65,7 +79,11 @@ ec.init <- function( df = NULL, group1 = 'scatter', preset = TRUE, load = NULL,
     events = list(),
     buttons = list(),
     eval = js,
-    opts = opts
+    opts = opts,
+    settings = list(
+      crosstalk_key = key,
+      crosstalk_group = group
+    )
   )
   
   if (!is.null(df)) {
@@ -110,7 +128,8 @@ ec.init <- function( df = NULL, group1 = 'scatter', preset = TRUE, load = NULL,
       defaultWidth = '100%',
       knitr.figure = FALSE,
       browser.fill = TRUE, padding = 0
-    )
+    ),
+    dependencies = crosstalk::crosstalkLibs()
   )
 
   # check for theme
@@ -534,6 +553,7 @@ ecs.render <- function(expr, env=parent.frame(), quoted=FALSE) {
 #' 
 #' @seealso [ecs.exec] for example.
 #' 
+#' @importFrom shiny getDefaultReactiveDomain
 #' @export
 ecs.proxy <- function(id) {
   proxy <- list(id = id, session = shiny::getDefaultReactiveDomain())

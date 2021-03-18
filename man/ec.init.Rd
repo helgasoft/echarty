@@ -9,16 +9,17 @@ ec.init(
   group1 = "scatter",
   preset = TRUE,
   load = NULL,
+  js = NULL,
   width = NULL,
   height = NULL,
   elementId = NULL,
   renderer = "canvas",
-  js = NULL,
   ...
 )
 }
 \arguments{
-\item{df}{A data.frame to be preset as \href{https://echarts.apache.org/en/option.html#dataset}{dataset}, default NULL}
+\item{df}{A data.frame to be preset as \href{https://echarts.apache.org/en/option.html#dataset}{dataset}, default NULL \cr
+For crosstalk df should be of type \code{\link[crosstalk]{SharedData}}.}
 
 \item{group1}{Type of grouped series, default 'scatter'. Set to NULL to disable. \cr
 If the grouping is on multiple columns, only the first one is used.}
@@ -37,6 +38,8 @@ Built-in plugins: \cr \itemize{
 \item wordcloud - cloud of words, see \href{https://github.com/ecomfe/echarts-wordcloud}{source} \cr
 } Install you own plugins with \link{ec.plugjs}.}
 
+\item{js}{A Javascript expression to evaluate, default NULL.}
+
 \item{width, height}{A valid CSS unit (like \code{'100\%'},
 \code{'500px'}, \code{'auto'}) or a number, which will be coerced to a
 string and have \code{'px'} appended.}
@@ -44,8 +47,6 @@ string and have \code{'px'} appended.}
 \item{elementId}{Id of the widget, default NULL}
 
 \item{renderer}{\code{'canvas'} (default) or \code{'svg'}.}
-
-\item{js}{A Javascript expression to evaluate, default NULL.}
 
 \item{...}{Any other arguments to pass to the widget.}
 }
@@ -60,7 +61,7 @@ Widgets are defined in \href{https://www.htmlwidgets.org/develop_intro.html}{htm
 This command creates one with \code{\link[htmlwidgets]{createWidget}}, then adds some EChartsJS features to it.\cr
 When \link{ec.init} is chained after a data.frame, a \href{https://echarts.apache.org/en/option.html#dataset}{dataset} is preset. \cr
 When the data.frame is grouped and \emph{group1} is not null, more datasets with legend and series are also preset. Grouped series are of type \code{scatter}. \cr
-Users can delete or overwrite any presets as needed.
+Users can delete or overwrite any presets as needed. \cr
 }
 \examples{
  # basic scatter chart from a data.frame, using presets

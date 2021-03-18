@@ -46,14 +46,15 @@ p
 
 
 #------ Pie
-i<-0; data<-list(); for(v in islands[which(islands>60)]) { i<-i+1; 
-data <- append(data, list(list(value=v, name=names(islands)[i]))) }
+is <- sort(islands); is <- is[is>60]
+is <- data.frame(name=names(is), value=as.character(unname(is)))
+data <- apply(unname(is), 1, function(x) list(name=x[1], value=x[2]))
 p <- ec.init()
-p$x$opts <- list(title=list(
-  text="Landmasses over 60,000 mi\u00B2",left='center'),
-  tooltip=list(trigger='item'),
-  series=list(list(type='pie', radius='50\%', data=data, name='mi\u00B2',
-    emphasis=list(itemStyle=list(shadowBlur=10, shadowColor='rgba(0,0,0,0.5)')))))
+p$x$opts <- list(
+  title = list(text = "Landmasses over 60,000 mi\u00B2", left = 'center'),
+  tooltip = list(trigger='item'),
+  series = list(type='pie', radius='50\%', data=data, name='mi\u00B2',
+    emphasis=list(itemStyle=list(shadowBlur=10, shadowColor='rgba(0,0,0,0.5)'))))
 p
 
 #------ Liquidfill plugin
@@ -114,9 +115,9 @@ p$x$opts$series[[1]] <- list(
   type='scatter3D', symbolSize=7, 
   encode=list(x='Sepal.Length', y='Sepal.Width', z='Petal.Length'),
   itemStyle=list(color = htmlwidgets::JS("function(params){
-      if (params.value[4] == 1)    { return '#FE8463'; }
-      else if(params.value[4] == 2){ return '#27727B'; }
-      return '#9BCA63';
+          if (params.value[4] == 1){ return '#FE8463'; }
+     else if (params.value[4] == 2){ return '#27727B'; }
+                                     return '#9BCA63';
   }") )  # [4] is the JS index of column Species
 )
 p

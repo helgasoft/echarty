@@ -1,5 +1,9 @@
 # log history of echarty package development
 
+## v. 0.1.3
+
+- crosstalk support added, send & receive for brush and filter in 2D
+
 ## v. 0.1.2
 
 - ec.data now with three format values
