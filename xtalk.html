@@ -106,10 +106,10 @@ if (window.hljs) {
 
 <p>Crosstalk is poor man’s Shiny. It may not have all the bells and whistles, but has one important advantage - <strong>no server needed</strong>!<br />
 Users can have interactive control of their charts on a simple HTML page. Like the one you are reading now. It is hosted on Github where the only allowed content is HTML and JavaScript.<br />
-Here is the dataflow: (RStudio &gt;) data + R-code &gt; embed in .Rmd file &gt; Knit .Rmd &gt; get .html &gt; host anywhere.<br />
+Here is the dataflow: RStudio(opt.) ► data + R-code ► embed in .Rmd file ► Knit .Rmd ► get .html ► host anywhere.<br />
 Library <em>htmlwidgets</em> takes care of gathering your data,code and libraries into one chunk exported later by knitr in HTML format.</p>
 <p><a href="https://github.com/rstudio/crosstalk">Crosstalk</a> provides two types of cross-widget interactions - linked <strong>brushing</strong> and <strong>filtering</strong>.<br />
-In the proof-of-concept example below we are using several external crosstalk controls. Their capabilities are summarized here, <strong>R</strong> means <em>receive</em> and <strong>S</strong> means <em>send</em>.</p>
+The example below uses several external crosstalk controls. Their capabilities are summarized here, <strong>R</strong> means <em>receive</em> and <strong>S</strong> means <em>send</em>.</p>
 <table>
 <thead>
 <tr class="header">
@@ -176,7 +176,7 @@ In the proof-of-concept example below we are using several external crosstalk co
 <strong>► View code</strong>
 </summary>
 <pre class="r"><code>library(crosstalk); library(d3scatter); library(DT); library(htmltools)
-library(echarty.c); library(dplyr); library(tibble);
+library(echarty); library(dplyr); library(tibble);
 styl &lt;- &#39;width:50%;display:block;float:left;&#39;
 sdf &lt;- mtcars %&gt;% rownames_to_column(var=&#39;name&#39;) %&gt;% relocate(mpg,wt)
 sdf &lt;- SharedData$new(sdf)
@@ -314,15 +314,10 @@ Test: select <strong>5</strong> in checkbox ‘Gears’, then in echarty unselec
 <div id="notes" class="section level3">
 <h3>Notes</h3>
 <p>Echarty with crosstalk has not been tested in Shiny (yet).<br />
-ECharts GL/3D is a <a href="https://echarts.apache.org/en/option-gl.html#series">separate library</a> used as a plugin in echarty. Currently it supports only brush-receive through echarty.</p>
+ECharts GL/3D is a <a href="https://echarts.apache.org/en/option-gl.html#series">separate library</a> used as a plugin. Currently it supports only brush-receive through echarty.</p>
 </div>
-<div id="download" class="section level3">
-<h3>Download</h3>
-<p>The crosstalk code presented here is a preview and has not been integrated officially in echarty yet. You can download the <a href="https://helgasoft.github.io/echarty/echarty.c_0.0.12.zip">binary source</a>. Use the following command in Windows to install</p>
-<pre class="r"><code>install.packages(file.choose(), repos=NULL)  # + select .zip from your download location</code></pre>
-<p>The library name is <strong>echarty.c</strong> and it inherits code from the latest echarty v.0.1.2.</p>
+
 <p><br />  </p>
-</div>
 </div>
 
 

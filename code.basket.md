@@ -3,9 +3,32 @@
 Gallery of some interesting charts and their code.
 
 <br />
+Easy as pie <br />
+<img src='img/cb-0.png' target=_blank alt='pie' />
+<details><summary>► View code</summary>
+
+
+```r
+is <- sort(islands); is <- is[is>60]
+is <- data.frame(name=names(is), value=as.character(unname(is)))
+data <- apply(unname(is), 1, function(x) list(name=x[1], value=x[2]))
+
+library(echarty)
+p <- ec.init() %>% ec.theme('dark-mushroom')
+p$x$opts <- list(
+  title = list(text = "Landmasses over 60,000 mi\u00B2", left = 'center'),
+  tooltip = list(trigger='item'),
+  color = hcl.colors(13, palette = "Spectral"),
+  series = list(type='pie', radius='50%', data=data, name='mi\u00B2',
+                emphasis=list(itemStyle=list(shadowBlur=10, shadowColor='rgba(0,0,0,0.5)'))))
+p
+```
+</details>
+
+<br />
 Custom chart <br />
 <img src='img/cb-1.png' target=_blank alt='profit' />
-<details><summary>View code</summary>
+<details><summary>► View code</summary>
 
 
 ```r
@@ -55,7 +78,7 @@ p
 <p>&nbsp;</p>
 Error Bars <br />
 <img src='img/cb-2.png' target=_blank alt='profit' />
-<details><summary>View code</summary>
+<details><summary>► View code</summary>
 
 ```r
 # example by https://github.com/kuzmenkov111
@@ -100,7 +123,7 @@ q   # customized
 Crosstalk in 3D <br />
 
 <img src='img/cb-3.png' target=_blank alt='crosstalk 3D' />
-<details><summary>View code</summary>
+<details><summary>► View code</summary>
 
 
 ```r
@@ -135,8 +158,11 @@ bscols( list(
 </details>
 
 <p>&nbsp;</p>
-Gauge triple
-<details><summary>View code</summary>
+Gauge triple with real-time animation<br />
+
+<img src='img/cb-5.png' target=_blank alt='gauge3' />
+
+<details><summary>► View code</summary>
 
 ```r
 jcode <- "setInterval(function () {
@@ -146,17 +172,20 @@ jcode <- "setInterval(function () {
     chart.setOption(opts, true);
 }, 2000);"
 library(echarty)
-p <- ec.init(js=jcode)
-p$x$opts <- list(series = list(list(type = "gauge", anchor = list(show = TRUE, showAbove = TRUE,
-  size = 18, itemStyle = list(color = "#FAC858")), pointer = list(icon = "path://M2.9,0.7L2.9,0.7c1.4,0,2.6,1.2,2.6,2.6v115c0,1.4-1.2,2.6-2.6,2.6l0,0c-1.4,0-2.6-1.2-2.6-2.6V3.3C0.3,1.9,1.4,0.7,2.9,0.7z",
-  width = 8, length = "80%", offsetCenter = list(0, "8%")), progress = list(show = TRUE,
-  overlap = TRUE, roundCap = TRUE), axisLine = list(roundCap = TRUE), data = list(list(value = 20,
-  name = "完成率", title = list(offsetCenter = list("-40%", "80%")), detail = list(offsetCenter = list("-40%",
-    "95%"))), list(value = 40, name = "达标率", title = list(offsetCenter = list("0%",
-  "80%")), detail = list(offsetCenter = list("0%", "95%"))), list(value = 60, name = "优秀率",
-  title = list(offsetCenter = list("40%", "80%")), detail = list(offsetCenter = list("40%",
-    "95%")))), title = list(fontSize = 14), detail = list(width = 40, height = 14, fontSize = 14,
-  color = "#fff", backgroundColor = "auto", borderRadius = 3, formatter = "{value}%"))))
+p <- ec.init(js=jcode) %>% ec.theme('dark')
+p$x$opts <- list(series = list(
+    list(type = "gauge", 
+    anchor = list(show = TRUE, showAbove = TRUE,
+    size = 18, itemStyle = list(color = "#FAC858")), 
+    pointer = list(icon = "path://M2.9,0.7L2.9,0.7c1.4,0,2.6,1.2,2.6,2.6v115c0,1.4-1.2,2.6-2.6,2.6l0,0c-1.4,0-2.6-1.2-2.6-2.6V3.3C0.3,1.9,1.4,0.7,2.9,0.7z",
+    width = 8, length = "80%", offsetCenter = list(0, "8%")), 
+    progress = list(show = TRUE,
+      overlap = TRUE, roundCap = TRUE), axisLine = list(roundCap = TRUE), 
+    data = list(
+      list(value = 20, name = "One", title = list(offsetCenter = list("-40%", "80%")), detail = list(offsetCenter = list("-40%","95%"))), 
+      list(value = 40, name = "Two", title = list(offsetCenter = list("0%", "80%")), detail = list(offsetCenter = list("0%", "95%"))), 
+      list(value = 60, name = "Three", title = list(offsetCenter = list("40%", "80%")), detail = list(offsetCenter = list("40%","95%")))), 
+    title = list(fontSize = 14), detail = list(width = 40, height = 14, fontSize = 14, color = "#fff", backgroundColor = "auto", borderRadius = 3, formatter = "{value}%"))))
 p
 ```
 </details>
