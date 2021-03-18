@@ -4,15 +4,21 @@
 # echarty
 
 <!-- badges: start -->
+
+<img src='https://www.r-pkg.org/badges/version/echarty' alt='CRAN' />
+<img src='https://cranlogs.r-pkg.org/badges/last-day/echarty' alt='counter'/>
+[![R-CMD-check](https://github.com/helgasoft/echarty/workflows/R-CMD-check/badge.svg)](https://github.com/helgasoft/echarty/actions)
 <!-- badges: end -->
 
 This package is a thin R wrapper around Javascript library
-[ECharts.js](https://echarts.apache.org/en/index.html) v.5. The R list
+[ECharts](https://echarts.apache.org/en/index.html). The R list
 parameters come directly from [ECharts’
 documentation](https://echarts.apache.org/en/option.html). There are
 just a few extra commands.  
 Users can benefit from the **full functionality** of ECharts to build
-elaborate interactive charts in R and Shiny with minimal coding.
+interactive charts in R and Shiny with minimal coding.  
+Wider connectivity and deployment potential through [crosstalk
+support](https://helgasoft.github.io/echarty/xtalk.html).
 
 ## Installation
 
@@ -21,10 +27,10 @@ We recommend the latest development version. It has important
 
 ``` r
 # install.packages("remotes")
-remotes::install_github("helgasoft/echarty")     # v.0.1.2
+remotes::install_github("helgasoft/echarty")     # v.0.1.3
 ```
 
-Older released version from [CRAN](https://CRAN.R-project.org):
+Older release on [CRAN](https://CRAN.R-project.org):
 
 ``` r
 install.packages("echarty")     # v.0.1.0
@@ -51,13 +57,15 @@ if (interactive()) {
 
 ## Get help
 
-Check the [**WEBSITE**](https://helgasoft.github.io/echarty) for
-detailed tutorials and tips.  
-There are plenty of [code
-examples](https://github.com/helgasoft/echarty/blob/main/R/examples.R)
-included in the package. The easiest way to run them in RStudio is to
-type **?ec.examples** in the Console, then copy/paste any code from Help
-to see the result.  
+<br />
+
+The [**WEBSITE**](https://helgasoft.github.io/echarty) has detailed
+tutorials and tips.  
+<br /> There are plenty of [**code
+examples**](https://github.com/helgasoft/echarty/blob/main/R/examples.R)
+included. The easiest way to run them in RStudio is to type
+**?ec.examples** in the Console, then copy/paste any code from Help to
+see the result.  
 Or run all examples at once with **example(‘ec.examples’)** and they
 will show in the Viewer.
 

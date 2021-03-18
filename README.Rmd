@@ -17,12 +17,14 @@ knitr::opts_chunk$set(
 
 <!-- badges: start -->
 <img src='https://www.r-pkg.org/badges/version/echarty' alt='CRAN' />  <img src='https://cranlogs.r-pkg.org/badges/last-day/echarty' alt='counter'/>
+[![R-CMD-check](https://github.com/helgasoft/echarty/workflows/R-CMD-check/badge.svg)](https://github.com/helgasoft/echarty/actions)
 <!-- badges: end -->
 
 This package is a thin R wrapper around Javascript library [ECharts](https://echarts.apache.org/en/index.html). The R list parameters come directly from [ECharts' documentation](https://echarts.apache.org/en/option.html). There are just a few extra commands.  
 Users can benefit from the **full functionality** of ECharts to build interactive charts in R and Shiny with minimal coding.  
 Wider connectivity and deployment potential through [crosstalk support](https://helgasoft.github.io/echarty/xtalk.html).  
-<br />
+
+
 ## Installation
 
 We recommend the latest development version. It has important [additions](NEWS.md).

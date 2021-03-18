@@ -1,12 +1,12 @@
 .Rproj.user
 .Rhistory
 .RData
+.Rbuildignore/**
 inst/doc
 *.vs/
 .V8history
 .vscode
 .DS_Store
-.Rbuildignore
 *.Rmd
 CRAN-RELEASE
 cran-comments.md
