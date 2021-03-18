@@ -5,9 +5,11 @@
 
 <!-- badges: start -->
 
-<img src='https://www.r-pkg.org/badges/version/echarty' alt='CRAN' />
-<img src='https://cranlogs.r-pkg.org/badges/last-day/echarty' alt='counter'/>
-[![R-CMD-check](https://github.com/helgasoft/echarty/workflows/R-CMD-check/badge.svg)](https://github.com/helgasoft/echarty/actions)
+[![R-CMD-check](https://github.com/helgasoft/echarty/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/helgasoft/echarty/actions/workflows/R-CMD-check.yaml)
+[![CRAN
+status](https://www.r-pkg.org/badges/version/echarty)](https://cran.r-project.org/package=echarty)
+[![CRAN
+downloads](https://cranlogs.r-pkg.org/badges/last-day/echarty)](https://cranlogs.r-pkg.org/badges/last-day/echarty)
 <!-- badges: end -->
 
 This package is a thin R wrapper around Javascript library
