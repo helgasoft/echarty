@@ -2,7 +2,7 @@
 % Please edit documentation in R/echarty.R
 \name{ec.fromJson}
 \alias{ec.fromJson}
-\title{Convert JSON string to chart}
+\title{JSON to chart}
 \usage{
 ec.fromJson(txt, ...)
 }
@@ -19,7 +19,7 @@ Convert JSON string to chart
 }
 \details{
 \code{txt} should contain the full list of options required to build a chart.
-It is subsequently passed to EChartsJS function \href{https://echarts.apache.org/en/api.html#echartsInstance.setOption}{setOption}.
+It is subsequently passed to ECharts function \href{https://echarts.apache.org/en/api.html#echartsInstance.setOption}{setOption}.
 }
 \examples{
 txt <- '{

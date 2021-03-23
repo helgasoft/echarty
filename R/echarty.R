@@ -1,18 +1,18 @@
 # ----------- General --------------
 
-#' Initialize
+#' Initialize command
 #'
-#' Initialize a chart.
+#' Required to build a chart. In most cases this will be the only command necessary.
 #'
 #' @param df A data.frame to be preset as \href{https://echarts.apache.org/en/option.html#dataset}{dataset}, default NULL \cr
 #'     For crosstalk df should be of type \code{\link[crosstalk]{SharedData}}.
 #' @param group1 Type of grouped series, default 'scatter'. Set to NULL to disable. \cr
 #'     If the grouping is on multiple columns, only the first one is used.
-#' @param preset Disable(FALSE) or enable (TRUE, default) presets for xAxis, yAxis and first serie.
+#' @param preset Disable(FALSE) or enable (TRUE, default) presets xAxis,yAxis,serie for 2D, or grid3D,xAxis3D,yAxis3D,zAxis3D for 3D.
 #' @param load Name(s) of plugin(s) to load. Could be a character vector or comma-delimited string. default NULL.\cr
 #'   Built-in plugins: \cr \itemize{
 #'   \item leaflet - Leaflet maps with customizable tiles, see \href{https://github.com/gnijuohz/echarts-leaflet#readme}{source}\cr
-#'   \item custom - renderers for [ecr.band] and ecr.ebars \cr 
+#'   \item custom - renderers for [ecr.band] and [ecr.ebars] \cr 
 #'  } Plugins with one-time installation (popup prompt): \cr \itemize{
 #'   \item 3D - 3D charts and WebGL acceleration, see \href{https://github.com/ecomfe/echarts-gl}{source} and \href{https://echarts.apache.org/en/option-gl.html#series}{docs} \cr
 #'   \item world - world map with country boundaries, see \href{https://github.com/apache/echarts/tree/master/test/data/map/js}{source} \cr
@@ -29,10 +29,10 @@
 #' @param ... Any other arguments to pass to the widget.
 #' @return A widget to plot, or to save and expand with more features.
 #'
-#' @details Widgets are defined in \href{https://www.htmlwidgets.org/develop_intro.html}{htmlwidgets}. 
-#'  This command creates one with \code{\link[htmlwidgets]{createWidget}}, then adds some EChartsJS features to it.\cr
-#'  When [ec.init] is chained after a data.frame, a \href{https://echarts.apache.org/en/option.html#dataset}{dataset} is preset. \cr
-#'  When the data.frame is grouped and \emph{group1} is not null, more datasets with legend and series are also preset. Grouped series are of type \code{scatter}. \cr
+#' @details  Command \emph{ec.init} creates a widget with \code{\link[htmlwidgets]{createWidget}}, then adds some ECharts features to it.\cr
+#'  When \emph{ec.init} is chained after a data.frame, a \href{https://echarts.apache.org/en/option.html#dataset}{dataset} is preset. \cr
+#'  When the data.frame is grouped and \emph{group1} is not null, more datasets with legend and series are also preset. Grouped series are preset as type \emph{scatter}. \cr
+#'  Plugin '3D' presets will not work for 'scatterGL'. Instead, use \emph{preset=FALSE} and set explicitly \emph{xAxis,yAxis}. \cr
 #'  Users can delete or overwrite any presets as needed. \cr
 #' 
 #' @examples
@@ -64,10 +64,10 @@ ec.init <- function( df = NULL, group1 = 'scatter', preset = TRUE, load = NULL,
     key <- df$key()
     group <- df$groupName()
     df <- df$origData()
+    deps <- crosstalk::crosstalkLibs()
   } else {
     # Not using Crosstalk
-    key <- NULL
-    group <- NULL
+    key <- group <- deps <- NULL
   }
   
   # forward widget options using x
@@ -129,7 +129,7 @@ ec.init <- function( df = NULL, group1 = 'scatter', preset = TRUE, load = NULL,
       knitr.figure = FALSE,
       browser.fill = TRUE, padding = 0
     ),
-    dependencies = crosstalk::crosstalkLibs()
+    dependencies = deps
   )
 
   # check for theme
@@ -276,18 +276,21 @@ ec.plugjs <- function(wt=NULL, source=NULL) {
 }
 
 
-#' Get an EChartsJS dataset from a data.frame
+#' ECharts data helper
+#' 
+#' Make ECharts data from a data.frame
 #' 
 #' @param df Chart data in data.frame format, required
 #' @param format A key on how to format the output list \cr \itemize{
-#'  \item 'dataset' list used in \href{https://echarts.apache.org/en/option.html#dataset.source}{dataset} (default),\cr
-#'  \item 'values' list for \href{https://echarts.apache.org/en/option.html#series-scatter.data}{series.data} \cr
-#'  \item 'names' creates named lists useful for named data like \href{https://echarts.apache.org/en/option.html#series-sankey.links}{sankey links}
+#'  \item 'dataset' = list used in \href{https://echarts.apache.org/en/option.html#dataset.source}{dataset} (default), or in \href{https://echarts.apache.org/en/option.html#series-scatter.data}{series.data} but without a header.\cr
+#'  \item 'values' = list for customized \href{https://echarts.apache.org/en/option.html#series-scatter.data}{series.data} \cr
+#'  \item 'names' = named lists useful for named data like \href{https://echarts.apache.org/en/option.html#series-sankey.links}{sankey links}
 #'  }
+#' @param header Whether the data will have a header with column names or not, default TRUE. Set this to FALSE when used in \href{https://echarts.apache.org/en/option.html#series-scatter.data}{series.data}.
 #' @return A list for \emph{dataset.source}, \emph{series.data} or a list of named lists.
 #'
 #' @export
-ec.data <- function(df, format='dataset') {
+ec.data <- function(df, format='dataset', header=TRUE) {
   if (missing(df))
     stop('expecting df as data.frame', call. = FALSE)
   if (!'data.frame' %in% class(df))
@@ -296,7 +299,9 @@ ec.data <- function(df, format='dataset') {
   # TODO: replace purrr with something simpler
   tmp <- purrr::transpose(df)       # named lists
   if (format=='dataset') {
-    datset <- c(list(colnames(df)), lapply(tmp, unname))
+    datset <- lapply(tmp, unname)
+    if (header)
+      datset <- c(list(colnames(df)), datset)
   } else if (format=='values' || isTRUE(format)) {
     datset <- lapply(tmp, function(x) list(value=unlist(unname(x))))
   } else   # ='names'
@@ -478,13 +483,14 @@ ecr.ebars <- function(wt, df, hwidth=6, ...) {
 }
 
 
-#' Translator Assistant 
+#' JS-to-R Translator Assistant 
 #' 
 #' Translate Javascript data objects to R
 #' 
 #' @return none
 #'
-#' @details Learn from Javascript examples of \href{https://echarts.apache.org/examples/en/}{ECharts}
+#' @details Learn from Javascript examples of \href{https://echarts.apache.org/examples/en/}{ECharts}. This Shiny application helps translate JSON-like JavaScript data structures to R lists.\cr
+#'  Additional information is available by clicking the \emph{Info} button inside.
 #' @import shiny
 #' @export
 ec.js2r <- function() {
@@ -493,7 +499,7 @@ ec.js2r <- function() {
     ans <- FALSE
     if (interactive())
       ans <- askYesNo(prompt)
-    if (is.na(ans)) ans <- FALSE  # was cancelled
+    if (is.na(ans)) ans <- FALSE  # user canceled
     if (ans) {
       shiny::runGist('https://gist.github.com/helgasoft/819035e853d9889ba02cb69ecc587f34',quiet=TRUE)
     }
@@ -749,14 +755,14 @@ ec.global <- function(options = NULL) {
 
 #' Themes
 #'
-#' Apply a pre-built theme to a chart
+#' Apply a pre-built or custom coded theme to a chart
 #'
 #' @param e An \code{echarty} widget as returned by [ec.init]
 #' @param name Name of existing theme file (without extension), or name of custom theme defined in \code{code}.
 #' @param code Custom theme code in JSON format, default NULL.
 #' @return An \code{echarty} widget.
 #'
-#' @details Just a few themes are included in folder 'inst/themes'. The entire collection could be found \href{https://github.com/apache/echarts/tree/master/theme}{here} and copied if needed.
+#' @details Just a few themes are included in folder \code{inst/themes}. The entire collection could be found \href{https://github.com/apache/echarts/tree/master/theme}{here} and copied if needed.
 #'
 #' @examples
 #' mtcars %>% ec.init() %>% ec.theme('dark-mushroom')
@@ -785,8 +791,9 @@ ec.theme <- function (e, name, code = NULL)
   e
 }
 
-
-#' Convert chart to JSON
+#' Chart to JSON
+#' 
+#' Convert chart to JSON string
 #' 
 #' @param e An \code{echarty} widget as returned by [ec.init]
 #' @param json Whether to return a JSON, or a \code{list}, default TRUE
@@ -821,6 +828,8 @@ ec.inspect <- function(e, json=TRUE, ...) {
 }
 
 
+#' JSON to chart
+#' 
 #' Convert JSON string to chart
 #' 
 #' @param txt JSON character string, url, or file, see \code{\link[jsonlite]{fromJSON}}
@@ -828,7 +837,7 @@ ec.inspect <- function(e, json=TRUE, ...) {
 #' @return An \code{echarty} widget.
 #' 
 #' @details \code{txt} should contain the full list of options required to build a chart.
-#' It is subsequently passed to EChartsJS function \href{https://echarts.apache.org/en/api.html#echartsInstance.setOption}{setOption}.
+#' It is subsequently passed to ECharts function \href{https://echarts.apache.org/en/api.html#echartsInstance.setOption}{setOption}.
 #' 
 #' @examples
 #' txt <- '{

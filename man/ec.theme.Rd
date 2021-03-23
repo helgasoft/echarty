@@ -17,10 +17,10 @@ ec.theme(e, name, code = NULL)
 An \code{echarty} widget.
 }
 \description{
-Apply a pre-built theme to a chart
+Apply a pre-built or custom coded theme to a chart
 }
 \details{
-Just a few themes are included in folder 'inst/themes'. The entire collection could be found \href{https://github.com/apache/echarts/tree/master/theme}{here} and copied if needed.
+Just a few themes are included in folder \code{inst/themes}. The entire collection could be found \href{https://github.com/apache/echarts/tree/master/theme}{here} and copied if needed.
 }
 \examples{
 mtcars \%>\% ec.init() \%>\% ec.theme('dark-mushroom')

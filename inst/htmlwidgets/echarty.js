@@ -44,7 +44,8 @@ HTMLWidgets.widget({
         }
         if(x.hasOwnProperty('registerMap')){
           for( let map = 0; map < x.registerMap.length; map++){
-            echarts.registerMap(x.registerMap[map].mapName, x.registerMap[map].geoJSON);
+            echarts.registerMap(x.registerMap[map].mapName, 
+                                x.registerMap[map].geoJSON);
           }
         }
         
@@ -74,100 +75,10 @@ HTMLWidgets.widget({
         if (eva2) {
           try {
             eval(eva2);
-          } catch(err) { console.log('Eva2:' + err.message) }
+          } catch(err) { console.log('eva2:' + err.message) }
         }
         
-        /* ---------------- crosstalk ----------------
-          keys are numbered differently depending on the source: 
-              R = 1:n, JS = 0:n   unselect all if sel.count==total
-        */
-    	  // check crosstalk bindings
-      	if ((typeof x.settings.crosstalk_key)!='undefined' && 
-      	    (typeof x.settings.crosstalk_group)!='undefined') {
-      	  //console.log(' no crosstalk found');
-
-      	  console.log(' echarty crosstalk on');
-      	  
-      	  var sel_handle = new crosstalk.SelectionHandle();
-          var ct_filter = new crosstalk.FilterHandle();
-    
-      	  chart.on("brushselected", function(keys) {    // send keys FROM echarty
-      	    let items = [];
-      	    if (keys.batch)
-        	    items = keys.batch[0].selected[0].dataIndex;
-      	    if (items && items.length>0) {
-      	      //console.log('dindex='+items);
-      	      for (let i=0; i < items.length; ++i) ++items[i];
-              sel_handle.set(items);
-      	    }
-          });
-      	  chart.on("brushEnd", function(keys) {    // release selection FROM echarty
-      	    if (keys.areas.length==0)
-      	      sel_handle.set([]);
-      	  })
-      	  
-      	  // Highlight points selected by another widget
-      	  sel_handle.on("change", function(e) {  
-      	    if (e.sender !== sel_handle) {      // get external keys to highlight/brush
-      	      //console.log('brush='+e.value);
-              
-        	    if (e.value.length>0) {
-        	      for (let i=0; i < e.value.length; ++i) --e.value[i];
-        	      chart.dispatchAction({type:'highlight', 
-        	                            seriesIndex:0, dataIndex:e.value });
-        	      sel_handle.save = e.value;
-        	    } else if (sel_handle.save) {   // clear selected
-                chart.dispatchAction({type:'downplay', 
-                                      seriesIndex:0, dataIndex:sel_handle.save }); 
-                sel_handle.save = null;
-              }
-            }
-      	  });
-      	  
-      	  chart.key = x.settings.crosstalk_key;
-      	  
-          sel_handle.setGroup(x.settings.crosstalk_group);
-      
-          // --- filtering ---
-      	  chart.on("selectchanged", function(keys) {
-      	    let items = [];
-            if (keys.selected.length>0)
-        	      items = keys.selected[0].dataIndex;
-        	  //console.log('fselchg=' + items);
-      	    if (keys.isFromClick) {           // send keys FROM echarty
-      	      for (let i=0; i < items.length; ++i) ++items[i];
-      	      if (items.length==0) items = this.key;   // send all keys = filter off
-        	    ct_filter.set(items);
-      	    } else if (keys.fromAction != 'unselect')
-        	    ct_filter.save = items;
-      	  })
-      	  ct_filter.on("change", function(e) {    // only external keys to filter
-      	    if (e.sender == ct_filter) return;
-      	    //console.log('filter='+e.value);
-            if (ct_filter.save) {   // clear selected 
-              chart.dispatchAction({type:'unselect', 
-                                    seriesIndex:0, dataIndex:ct_filter.save });
-              ct_filter.save = null;
-            }
-      	    if (e.value) {
-      	      for (let i=0; i < e.value.length; ++i) --e.value[i];
-      	      if (e.value.length == chart.key.length) {
-                chart.dispatchAction({type:'unselect', 
-                                            seriesIndex:0, dataIndex:e.value });
-                return;
-      	      }
-        	    chart.dispatchAction({type:'select', 
-        	                          seriesIndex:0, dataIndex:e.value });
-        	    ct_filter.save = e.value;  // save to unselect later
-      	    }
-      	  })
-          // Choose group for Filter
-          ct_filter.setGroup(x.settings.crosstalk_group);	  
-      
-      	}   //----------------- end crosstalk
-        
-        
-        // shiny callbacks ----------------------------
+        // shiny callbacks
         if (HTMLWidgets.shinyMode) {
           
           chart.on("brushselected", function(e){
@@ -289,6 +200,98 @@ HTMLWidgets.widget({
         if(x.hasOwnProperty('groupDisconnect')){
           echarts.disconnect(x.groupDisconnect);
         }
+        
+        /* ---------------- crosstalk ----------------
+          keys are numbered differently depending on the source: 
+              R = 1:n, JS = 0:(n-1)   unselect all if sel.count==total
+        */
+    	  // check crosstalk bindings
+      	if ((typeof x.settings)!='undefined' &&
+      	    (typeof x.settings.crosstalk_key)!='undefined' && 
+      	    (typeof x.settings.crosstalk_group)!='undefined' &&
+      	    x.settings.crosstalk_key !=null && 
+      	    x.settings.crosstalk_group !=null) {
+
+      	  console.log(' echarty crosstalk on');
+      	  
+      	  var sel_handle = new crosstalk.SelectionHandle();
+          var ct_filter = new crosstalk.FilterHandle();
+    
+      	  chart.on("brushselected", function(keys) {    // send keys FROM echarty
+      	    let items = [];
+      	    if (keys.batch)
+        	    items = keys.batch[0].selected[0].dataIndex;
+      	    if (items && items.length>0) {
+      	      //console.log('dindex='+items);
+      	      for (let i=0; i < items.length; ++i) ++items[i];
+              sel_handle.set(items);
+      	    }
+          });
+      	  chart.on("brushEnd", function(keys) {    // release selection FROM echarty
+      	    if (keys.areas.length==0)
+      	      sel_handle.set([]);
+      	  })
+      	  
+      	  // Highlight points selected by another widget
+      	  sel_handle.on("change", function(e) {  
+      	    if (e.sender !== sel_handle) {     // get external keys to highlight/brush
+      	      //console.log('brush='+e.value);
+              
+        	    if (e.value.length>0) {
+        	      for (let i=0; i < e.value.length; ++i) --e.value[i];
+        	      chart.dispatchAction({type:'highlight', 
+        	                            seriesIndex:0, dataIndex:e.value });
+        	      sel_handle.save = e.value;
+        	    } else if (sel_handle.save) {   // clear selected
+                chart.dispatchAction({type:'downplay', 
+                                      seriesIndex:0, dataIndex:sel_handle.save }); 
+                sel_handle.save = null;
+              }
+            }
+      	  });
+      	  
+      	  chart.key = x.settings.crosstalk_key;
+      	  
+          sel_handle.setGroup(x.settings.crosstalk_group);
+      
+          // --- filtering ---
+      	  chart.on("selectchanged", function(keys) {
+      	    let items = [];
+            if (keys.selected.length>0)
+        	      items = keys.selected[0].dataIndex;
+        	  //console.log('fselchg=' + items);
+      	    if (keys.isFromClick) {           // send keys FROM echarty
+      	      for (let i=0; i < items.length; ++i) ++items[i];
+      	      if (items.length==0) items = this.key;   // send all keys = filter off
+        	    ct_filter.set(items);
+      	    } else if (keys.fromAction != 'unselect')
+        	    ct_filter.save = items;
+      	  })
+      	  ct_filter.on("change", function(e) {    // only external keys to filter
+      	    if (e.sender == ct_filter) return;
+      	    //console.log('filter='+e.value);
+            if (ct_filter.save) {   // clear selected 
+              chart.dispatchAction({type:'unselect', 
+                                    seriesIndex:0, dataIndex:ct_filter.save });
+              ct_filter.save = null;
+            }
+      	    if (e.value) {
+      	      for (let i=0; i < e.value.length; ++i) --e.value[i];
+      	      if (e.value.length == chart.key.length) {
+                chart.dispatchAction({type:'unselect', 
+                                            seriesIndex:0, dataIndex:e.value });
+                return;
+      	      }
+        	    chart.dispatchAction({type:'select', 
+        	                          seriesIndex:0, dataIndex:e.value });
+        	    ct_filter.save = e.value;  // save to unselect later
+      	    }
+      	  })
+          // Choose group for Filter
+          ct_filter.setGroup(x.settings.crosstalk_group);	  
+      
+      	}   
+      	// ---------------- end crosstalk
 
       },
       
@@ -314,9 +317,10 @@ HTMLWidgets.widget({
 
 function get_e_charts(id){
 
-  var htmlWidgetsObj = HTMLWidgets.find("#" + id);
+  let htmlWidgetsObj = HTMLWidgets.find("#" + id);
+  if (!htmlWidgetsObj) return(null);
 
-  var echarts;
+  let echarts;
 
   if (typeof htmlWidgetsObj != 'undefined') {
     echarts = htmlWidgetsObj.getChart();
@@ -328,6 +332,7 @@ function get_e_charts(id){
 function get_e_charts_opts(id){
 
   let htmlWidgetsObj = HTMLWidgets.find("#" + id);
+  if (!htmlWidgetsObj) return(null);
 
   let opts;
 

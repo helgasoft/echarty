@@ -169,6 +169,7 @@
 #' )
 #' p
 #' 
+#' 
 #' #------ Timeline animation
 #' orng <- Orange
 #' orng$Tree <- paste('tree',as.character(orng$Tree)) # to string
@@ -200,6 +201,7 @@
 #' p$x$opts$series <- series
 #' p$x$opts$options <- options
 #' p
+#' 
 #' 
 #' #------ Groups in a boxplot
 #' # original JS: https://echarts.apache.org/examples/en/editor.html?c=boxplot-multi
@@ -238,6 +240,7 @@
 #' p$x$opts$tooltip <- list(trigger='item', axisPointer=list(type='shadow'))
 #' p$x$opts$dataZoom <- list(list(type='slider',start=50)) 
 #' p
+#' 
 #' 
 #' #------ EChartsJS v.5 feature custom transform - a regression line
 #' # presets for xAxis,yAxis,dataset and series are used
@@ -294,6 +297,7 @@
 #' p$x$opts$tooltip <- list(trigger='item', axisPointer=list(type='shadow'))
 #' p
 #'
+#'
 #' #------ Sunburst
 #' data = list(list(name='Grandpa',children=list(list(name='Uncle Leo',value=15,
 #'      children=list(list(name='Cousin Jack',value=2), list(name='Cousin Mary',value=5,
@@ -307,6 +311,7 @@
 #'   series = list(list(type='sunburst', data=data, radius=list(0, '90%'),label=list(rotate='radial')))
 #' )
 #' p
+#' 
 #' 
 #' #------ registerMap JSON
 #' json <- jsonlite::read_json("https://echarts.apache.org/examples/data/asset/geo/USA.json")
@@ -322,6 +327,7 @@
 #' )
 #' p  
 #' 
+#' 
 #' #------ Gauge
 #' p <- ec.init(preset = FALSE); 
 #' p$x$opts$series[[1]] <- list( 
@@ -329,6 +335,7 @@
 #'   detail = list(formatter = '🧠={value}', fontSize=20), 
 #'   data = list(list(value=85, name='IQ test')) )
 #' p
+#' 
 #' 
 #' #------ Custom gauge with animation
 #' p <- ec.init(js = "setInterval(function () { 
@@ -384,34 +391,47 @@
 #'    
 #' #------ Shiny interactive chart
 #' if (interactive()) {
-#' library(shiny)
-#' library(dplyr)
+#'   library(shiny)
+#'   library(dplyr)
 #' runApp( list(
 #'   ui = fluidPage(
 #'     ecs.output('plot'),
-#'     actionButton('addm', 'Add marks'),
-#'     actionButton('delm', 'Del area+line marks'), HTML('&nbsp; &nbsp; &nbsp; &nbsp;'),
-#'     actionButton('adds', 'Add serie'),
-#'     actionButton('dels', 'Del serie'), HTML('&nbsp; &nbsp; &nbsp; &nbsp;'),
-#'     actionButton('hilit', 'Highlight'),
-#'     actionButton('dnplay', 'Downplay')
+#'     fluidRow( 
+#'       column(4, actionButton('addm', 'Add marks'),
+#'              actionButton('delm', 'Delete marks'),
+#'              br(),span('mark points stay, area/line deletable')
+#'       ),
+#'       column(3, actionButton('adds', 'Add serie'),
+#'              actionButton('dels', 'Del serie')), 
+#'       column(5, actionButton('adata', 'Add data'),
+#'              actionButton('hilit', 'Highlight'),
+#'              actionButton('dnplay', 'Downplay') )
+#'     )
 #'   ),
 #'   server = function(input, output, session){
-#' 
+#'     
 #'     output$plot <- ecs.render({
-#'       p <- mtcars %>% relocate(disp, .after=mpg) %>% group_by(cyl) %>% ec.init()
+#'       p <- ec.init()
+#'       p$x$opts$series <- lapply(mtcars %>% 
+#'         relocate(disp, .after=mpg) %>% group_by(cyl) %>% group_split(), 
+#'         function(s) { list(type='scatter', 
+#'         name=unique(s$cyl), data=ec.data(s, 'values')) })
+#'       p$x$opts$legend <- list(ey='')
+#'       p$x$opts$xAxis <- list(type="value"); p$x$opts$yAxis <- list(ec='')
 #'       p$x$opts$tooltip <- list(list(show=TRUE))
-#'       p$x$opts$series[[1]]$emphasis <- list(focus='series', blurScope='coordinateSystem')
+#'       p$x$opts$series[[1]]$emphasis <- list(
+#'         focus='series', blurScope='coordinateSystem')
 #'       p
 #'     })
-#' 
+#'     
 #'     observeEvent(input$addm, {
 #'       p <- ecs.proxy('plot')
-#'       p$x$opts$series[[1]] = list(
+#'       p$x$opts$series = list( list(
 #'         markPoint = list(data = list(
 #'           list(coord = c(22.5, 140.8)),
 #'           list(coord = c(30.5, 95.1))
-#'         ), itemStyle = list(color='lightblue')
+#'         ), 
+#'         itemStyle = list(color='lightblue')
 #'         )
 #'         ,markArea = list(data = list(list(
 #'           list(xAxis = 15),
@@ -422,21 +442,42 @@
 #'         ,label = list(formatter='X-area', position='insideTop')
 #'         )
 #'         ,markLine = list(data = list(list(type='average')))
-#'       )
-#'       p %>% ecs.exec() # ='p_merge'
+#'       ), list(
+#'         markPoint = list(data = list(
+#'           list(coord = c(25.5, 143.8)),
+#'           list(coord = c(33.5, 98.1))
+#'         ), 
+#'         itemStyle = list(color='forestgreen')
+#'         )
+#'       ))
+#'       p %>% ecs.exec() #' ='p_merge'
 #'     })
+#'     
 #'     observeEvent(input$adds, {
 #'       p <- ecs.proxy('plot')
-#'       p$x$opts$series[[1]] <- list(
+#'       p$x$opts$series <- list(list(
 #'         type = 'line', name = 'newLine',
-#'         encode = list(x='mpg', y='disp')
-#'       )
+#'         #encode = list(x='mpg', y='disp')  # for dataset only
+#'         data = list(list(10,100),list(5,200),list(10,400),
+#'                     list(10,200),list(15,150),list(5,300))
+#'       ))
 #'       p %>% ecs.exec('p_update')
 #'     })
+#'     
+#'     observeEvent(input$adata, {
+#'       set.seed(sample(1:444, 1))
+#'       tmp <- apply(unname(data.frame(rnorm(5, 10, 3), rnorm(5, 200, 33))), 
+#'                    1, function(x) { list(value=x) })
+#'       p <- ecs.proxy('plot')
+#'       p$x$opts$seriesIndex <- 1
+#'       p$x$opts$data <- tmp
+#'       p %>% ecs.exec('p_append_data')
+#'     })
+#'     
 #'     observeEvent(input$dels, {
 #'       p <- ecs.proxy('plot')
 #'       p$x$opts$seriesName <- 'newLine'
-#'       # p$x$opts$seriesIndex <- 4  # alternative ok
+#'       #'p$x$opts$seriesIndex <- 4  # ok too
 #'       p %>% ecs.exec('p_del_serie')
 #'     })
 #'     observeEvent(input$delm, {
@@ -455,8 +496,7 @@
 #'       p$x$opts <- list(type='downplay', seriesName='4')
 #'       p %>% ecs.exec('p_dispatch')
 #'     })
-#'   }
-#' ))
+#'   } ))
 #' }
 #' 
 #' }

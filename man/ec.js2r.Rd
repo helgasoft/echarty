@@ -2,7 +2,7 @@
 % Please edit documentation in R/echarty.R
 \name{ec.js2r}
 \alias{ec.js2r}
-\title{Translator Assistant}
+\title{JS-to-R Translator Assistant}
 \usage{
 ec.js2r()
 }
@@ -13,5 +13,6 @@ none
 Translate Javascript data objects to R
 }
 \details{
-Learn from Javascript examples of \href{https://echarts.apache.org/examples/en/}{ECharts}
+Learn from Javascript examples of \href{https://echarts.apache.org/examples/en/}{ECharts}. This Shiny application helps translate JSON-like JavaScript data structures to R lists.\cr
+Additional information is available by clicking the \emph{Info} button inside.
 }

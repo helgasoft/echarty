@@ -2,7 +2,7 @@
 % Please edit documentation in R/echarty.R
 \name{ec.inspect}
 \alias{ec.inspect}
-\title{Convert chart to JSON}
+\title{Chart to JSON}
 \usage{
 ec.inspect(e, json = TRUE, ...)
 }
@@ -18,7 +18,7 @@ A JSON string if \code{json} is \code{TRUE} and
 a \code{list} otherwise.
 }
 \description{
-Convert chart to JSON
+Convert chart to JSON string
 }
 \note{
 Must be passed as last option.

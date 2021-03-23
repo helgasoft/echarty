@@ -2,7 +2,7 @@
 % Please edit documentation in R/echarty.R
 \name{ec.init}
 \alias{ec.init}
-\title{Initialize}
+\title{Initialize command}
 \usage{
 ec.init(
   df = NULL,
@@ -24,12 +24,12 @@ For crosstalk df should be of type \code{\link[crosstalk]{SharedData}}.}
 \item{group1}{Type of grouped series, default 'scatter'. Set to NULL to disable. \cr
 If the grouping is on multiple columns, only the first one is used.}
 
-\item{preset}{Disable(FALSE) or enable (TRUE, default) presets for xAxis, yAxis and first serie.}
+\item{preset}{Disable(FALSE) or enable (TRUE, default) presets xAxis,yAxis,serie for 2D, or grid3D,xAxis3D,yAxis3D,zAxis3D for 3D.}
 
 \item{load}{Name(s) of plugin(s) to load. Could be a character vector or comma-delimited string. default NULL.\cr
 Built-in plugins: \cr \itemize{
 \item leaflet - Leaflet maps with customizable tiles, see \href{https://github.com/gnijuohz/echarts-leaflet#readme}{source}\cr
-\item custom - renderers for \link{ecr.band} and ecr.ebars \cr
+\item custom - renderers for \link{ecr.band} and \link{ecr.ebars} \cr
 } Plugins with one-time installation (popup prompt): \cr \itemize{
 \item 3D - 3D charts and WebGL acceleration, see \href{https://github.com/ecomfe/echarts-gl}{source} and \href{https://echarts.apache.org/en/option-gl.html#series}{docs} \cr
 \item world - world map with country boundaries, see \href{https://github.com/apache/echarts/tree/master/test/data/map/js}{source} \cr
@@ -54,13 +54,13 @@ string and have \code{'px'} appended.}
 A widget to plot, or to save and expand with more features.
 }
 \description{
-Initialize a chart.
+Required to build a chart. In most cases this will be the only command necessary.
 }
 \details{
-Widgets are defined in \href{https://www.htmlwidgets.org/develop_intro.html}{htmlwidgets}.
-This command creates one with \code{\link[htmlwidgets]{createWidget}}, then adds some EChartsJS features to it.\cr
-When \link{ec.init} is chained after a data.frame, a \href{https://echarts.apache.org/en/option.html#dataset}{dataset} is preset. \cr
-When the data.frame is grouped and \emph{group1} is not null, more datasets with legend and series are also preset. Grouped series are of type \code{scatter}. \cr
+Command \emph{ec.init} creates a widget with \code{\link[htmlwidgets]{createWidget}}, then adds some ECharts features to it.\cr
+When \emph{ec.init} is chained after a data.frame, a \href{https://echarts.apache.org/en/option.html#dataset}{dataset} is preset. \cr
+When the data.frame is grouped and \emph{group1} is not null, more datasets with legend and series are also preset. Grouped series are preset as type \emph{scatter}. \cr
+Plugin '3D' presets will not work for 'scatterGL'. Instead, use \emph{preset=FALSE} and set explicitly \emph{xAxis,yAxis}. \cr
 Users can delete or overwrite any presets as needed. \cr
 }
 \examples{
