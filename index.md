@@ -7,6 +7,8 @@ Have the **full functionality** of [ECharts](https://echarts.apache.org/examples
 <br/>  
 
 ## Gallery
+Enjoy [the gallery](gallery.md) and grab a chart!  
+<br />
 
 ## Tutorials
 Tips and tricks to help you get started with **echarty**
@@ -23,9 +25,6 @@ Tips and tricks to help you get started with **echarty**
 
 [Use Case 6](uc6.md) - Grouped, stacked and timelined
 <br />
-
-
-[**Code Basket**](code.basket.md) - grab a chart!
 
 <br/> 
 

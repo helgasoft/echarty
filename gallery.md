@@ -1,6 +1,6 @@
-## Code Basket
+## Gallery
 
-Gallery of some interesting charts along with their code. The latest version of *echarty* is required. The package has two dozen more examples - type *?ec.examples* to see them in RStudio Help panel.
+ Some interesting charts along with their code. The latest version of *echarty* is required. The package itself has two dozen more examples - type *?ec.examples* to see them in RStudio Help panel.
 
 <br />
 Horizontal bars <br />
