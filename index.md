@@ -6,6 +6,8 @@ The goal of **echarty** is to provide a minimal interface, a "glue", between R a
 Have the **full functionality** of [ECharts](https://echarts.apache.org/examples/en/index.html) in R with minimal overhead!   
 <br/>  
 
+## Gallery
+
 ## Tutorials
 Tips and tricks to help you get started with **echarty**
 
@@ -23,12 +25,12 @@ Tips and tricks to help you get started with **echarty**
 <br />
 
 
-[Code Basket](code.basket.md) - grab a chart!
+[**Code Basket**](code.basket.md) - grab a chart!
 
 <br/> 
 
 ## Crosstalk 
-Social media for charts - [see the action](xtalk.html)  &nbsp; &nbsp; <span style="color:magenta">live demo</span>
+Social media for charts - [drive the action](xtalk.html)  &nbsp; &nbsp; <span style="color:magenta">*live demo*</span>
 <br />
 <br/>
 
@@ -37,7 +39,7 @@ Have fun with **echarty Translator Assistant**  - translate Javascript data to R
 Javascript library ECharts has lots of great [examples](href="https://echarts.apache.org/examples/en/)
 . The goal is to facilitate translation of their JSON-like data (*option* object) to R lists. Give it a go with the following R command:
 ```r
-echarty::ec.js2r()   # echarty v.0.1.2
+echarty::ec.js2r()   # echarty v.0.1.3
 ```
 <br/>
 <br/>

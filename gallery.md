@@ -1,6 +1,29 @@
 ## Code Basket
 
-Gallery of some interesting charts and their code.
+Gallery of some interesting charts along with their code. The latest version of *echarty* is required. The package has two dozen more examples - type *?ec.examples* to see them in RStudio Help panel.
+
+<br />
+Horizontal bars <br />
+<img src='img/cb-33.png' target=_blank alt='vertBars' />
+<details><summary>► View code</summary>
+
+```r
+library(echarty); library(dplyr)
+df <- Orange %>% mutate(Tree=as.character(Tree)) %>%
+      arrange(Tree) %>% group_by(Tree) %>% group_split()
+
+p <- ec.init(preset=FALSE) %>% ec.theme('dark')
+p$x$opts <- list(
+  series = lapply(df, function(t) {
+      list(type='bar', name=unique(t$Tree), data=t$circumference) }),
+  legend = list(ey=''),
+  xAxis = list(ey=''),
+  yAxis = list(data=unique(Orange$age)),
+  tooltip = list(formatter='{c}')
+)
+p
+```
+</details>
 
 <br />
 Easy as pie <br />
@@ -19,8 +42,7 @@ p$x$opts <- list(
   title = list(text = "Landmasses over 60,000 mi\u00B2", left = 'center'),
   tooltip = list(trigger='item'),
   color = hcl.colors(13, palette = "Spectral"),
-  series = list(type='pie', radius='50%', data=data, name='mi\u00B2',
-                emphasis=list(itemStyle=list(shadowBlur=10, shadowColor='rgba(0,0,0,0.5)'))))
+  series = list(type='pie', radius='50%', data=data, name='mi\u00B2'))
 p
 ```
 </details>
@@ -128,13 +150,13 @@ Crosstalk in 3D <br />
 
 ```r
 # echarty can highlight 3D points selected by external controls
-library(crosstalk); library(DT); library(htmltools)
-library(echarty.c); library(dplyr); library(tibble)
+library(crosstalk); library(DT); library(d3scatter); library(htmltools)
+library(echarty); library(dplyr); library(tibble)
 sdf <- mtcars %>% rownames_to_column(var='name') %>% relocate(mpg,wt) 
 sdf <- SharedData$new(sdf)
 
-p3 <- sdf %>% echarty.c::ec.init(load='3D', 
-            title = list(text="3D/GL brush listener")) %>%
+p3 <- sdf %>% ec.init(load='3D', 
+            title = list(text="3D brush listener")) %>%
             ec.theme('dark-mushroom')
 p3$x$opts$series[[1]] <- list(
   type='scatter3D', symbolSize=11,
@@ -187,5 +209,80 @@ p$x$opts <- list(series = list(
       list(value = 60, name = "Three", title = list(offsetCenter = list("40%", "80%")), detail = list(offsetCenter = list("40%","95%")))), 
     title = list(fontSize = 14), detail = list(width = 40, height = 14, fontSize = 14, color = "#fff", backgroundColor = "auto", borderRadius = 3, formatter = "{value}%"))))
 p
+```
+</details>
+
+
+<p>&nbsp;</p>
+scatterGL with 5,000 points<br />
+
+<img src='img/cb-6.png' target=_blank alt='scatterGL' />
+
+<details><summary>► View code</summary>
+
+```r
+# example works also with type='scatter', just ec.data needs to be format='values'
+library(echarty); library(tibble)
+dim <- 2500   # sample data half-quantity - could be 100x more
+slip <- if (dim %% 2) 0.1 else -0.1
+setData <- function(offset) {
+	t <- tibble(x = runif(dim, max=10),
+					y = offset + sin(x) - x * slip * runif(dim))
+	round(t,3)
+}
+sers <- NULL	# two consecutive series, same data shifted vertically
+for(i in 0:1) 
+	sers <- append(sers, list(
+	list(type = 'scatterGL',
+		data = ec.data(setData(i), 'dataset', FALSE),
+		symbolSize=3, large=TRUE,
+		itemStyle=list(opacity=0.4, color=(if (i==0) 'cyan' else 'pink'))
+	)
+	))
+p <- ec.init(load='3D', preset=FALSE)  %>% ec.theme('dark-mushroom') 
+p$x$opts <- list(
+  xAxis = list(ey=''),	  # scatterGL is not 3D, needs 2D axes
+  yAxis = list(ey=''),
+  series = sers,
+  dataZoom = list(type='inside',start=50)
+)
+p
+```
+</details>
+
+
+<p>&nbsp;</p>
+scatter3D with 36,000 points<br />
+
+<img src='img/cb-7.png' target=_blank alt='bunny' />
+
+<details><summary>► View code</summary>
+
+```r
+library(onion); library(echarty)
+data(bunny)
+tmp <- as.data.frame(bunny)
+p <- tmp %>% ec.init(load='3D') %>% ec.theme('dark-mushroom')
+p$x$opts$series[[1]] <- list(type='scatter3D', symbolSize=2)
+p$x$opts$visualMap <- list( 
+      inRange=list(color = rainbow(10)), calculable=TRUE,
+      min=min(tmp$y), max=max(tmp$y), dimension=1)
+p
+```
+</details>
+
+
+<p>&nbsp;</p>
+Bathymetry in 3D<br />
+
+<img src='img/hawaii3dsurf.png' target=_blank alt='bathy' />
+
+<details><summary>► How to run Shiny app &nbsp; &nbsp; <span style="color:magenta">live demo</span></summary>
+
+```r
+# install.packages("remotes")
+remotes::install_github("helgasoft/echarty")     # v.0.1.3
+
+runGist('https://gist.github.com/helgasoft/121d7d3ff7d292990c3e05cfc1cbf24b')
 ```
 </details>
