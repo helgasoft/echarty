@@ -4,10 +4,10 @@
 \alias{ec.inspect}
 \title{Chart to JSON}
 \usage{
-ec.inspect(e, json = TRUE, ...)
+ec.inspect(wt, json = TRUE, ...)
 }
 \arguments{
-\item{e}{An \code{echarty} widget as returned by \link{ec.init}}
+\item{wt}{An \code{echarty} widget as returned by \link{ec.init}}
 
 \item{json}{Whether to return a JSON, or a \code{list}, default TRUE}
 

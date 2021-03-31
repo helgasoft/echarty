@@ -30,9 +30,12 @@
 #'
 #'
 #' #------ Data grouping
-#' iris %>% dplyr::group_by(Species) %>% ec.init()     # by factor column
+#' library(dplyr)
+#' iris %>% group_by(Species) %>% ec.init()       # by factor column
+#' iris %>% mutate(Species=as.character(Species)) %>%
+#'          group_by(Species) %>% ec.init()       # by non-factor column
 #' 
-#' p <- Orange %>% dplyr::group_by(Tree) %>% ec.init() # no factor column
+#' p <- Orange %>% group_by(Tree) %>% ec.init()   # by factor column
 #' p$x$opts$series <- lapply(p$x$opts$series, function(x) { 
 #'   x$symbolSize=10; x$encode=list(x='age', y='circumference'); x } )
 #' p
@@ -417,7 +420,8 @@
 #'         function(s) { list(type='scatter', 
 #'         name=unique(s$cyl), data=ec.data(s, 'values')) })
 #'       p$x$opts$legend <- list(ey='')
-#'       p$x$opts$xAxis <- list(type="value"); p$x$opts$yAxis <- list(ec='')
+#'       p$x$opts$xAxis <- list(type="value"); 
+#'       p$x$opts$yAxis <- list(ec='')
 #'       p$x$opts$tooltip <- list(list(show=TRUE))
 #'       p$x$opts$series[[1]]$emphasis <- list(
 #'         focus='series', blurScope='coordinateSystem')

@@ -24,18 +24,18 @@ support](https://helgasoft.github.io/echarty/xtalk.html).
 
 ## Installation
 
-We recommend the latest development version. It has important
-[additions](NEWS.md).
+<!-- We recommend the latest development version. It has important [additions](NEWS.md).
 
-``` r
+```r
 # install.packages("remotes")
 remotes::install_github("helgasoft/echarty")     # v.0.1.3
 ```
+Older release on -->
 
-Older release on [CRAN](https://CRAN.R-project.org):
+From [CRAN](https://CRAN.R-project.org):
 
 ``` r
-install.packages("echarty")     # v.0.1.0
+install.packages("echarty")     # v.0.1.3
 ```
 
 ## Examples

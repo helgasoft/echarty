@@ -4,10 +4,10 @@
 \alias{ecs.render}
 \title{Shiny: Plot command to render chart}
 \usage{
-ecs.render(expr, env = parent.frame(), quoted = FALSE)
+ecs.render(wt, env = parent.frame(), quoted = FALSE)
 }
 \arguments{
-\item{expr}{An \code{echarty} widget to generate the chart.}
+\item{wt}{An \code{echarty} widget to generate the chart.}
 
 \item{env}{The environment in which to evaluate \code{expr}.}
 

@@ -94,7 +94,6 @@ ec.init <- function( df = NULL, group1 = 'scatter', preset = TRUE, load = NULL,
     # grouping uses transform - a v.5 feature
     if (!is.null(group1) && dplyr::is.grouped_df(df)) {
       grnm <- dplyr::group_vars(df)[[1]]   # group1 means just 1st one
-      #df <- df %>% dplyr::relocate(grnm, .after = dplyr::last_col())
       x$opts$dataset <- list(list(source = ec.data(df)))
       grvals <- unname(unlist(dplyr::group_data(df)[grnm]))
       txfm <- list(); k <- 0
@@ -190,7 +189,7 @@ ec.init <- function( df = NULL, group1 = 'scatter', preset = TRUE, load = NULL,
       wt$x$opts$yAxis3D <- list(list())
       wt$x$opts$zAxis3D <- list(list())
     }
-    wt <- ec.plugjs(wt, 'https://cdn.jsdelivr.net/npm/echarts-gl@2.0.1/dist/echarts-gl.min.js')
+    wt <- ec.plugjs(wt, 'https://cdn.jsdelivr.net/npm/echarts-gl@2.0.2/dist/echarts-gl.min.js')
   }
   if ('world' %in% load) 
     wt <- ec.plugjs(wt, 'https://cdn.jsdelivr.net/npm/echarts@4.9.0/map/js/world.js')
@@ -312,6 +311,68 @@ ec.data <- function(df, format='dataset', header=TRUE) {
 
 
 
+#' Timeline by groups
+#' 
+#' Helper function to build timeline data for a grouped data.frame
+#' 
+#' @param wt An \code{echarty} widget as returned by [ec.init]
+#' @param df A grouped data.frame, required
+#' @param scol Vector of column names(strings) or indexes for series, required
+#' @param xcol Column name or index for the X-axis. Default (NULL) will set X-axis to consecutive numbers.
+#' @param type The series type, default is \emph{'line'}
+#' @param ... Additional attributes to series
+#' @return A widget with timeline and options added
+#' 
+#' @details Timeline axisType is set to 'category'. \cr
+#'   Option titles are built and displayed, user could remove them later.
+#' 
+#' @examples
+#'
+#' p <- ec.init() %>% 
+#'   ec.timegrp(iris %>% dplyr::group_by(Species), 
+#'              c('Sepal.Width','Petal.Length'),
+#'              markPoint = list(data=list(list(type='max'),
+#'                                         list(type='min'))) ) 
+#' p$x$opts$legend <- list(list())  # add legend
+#' p
+#'
+#' @import dplyr
+#' 
+#' @export
+ec.timegrp <- function(wt, df=NULL, scol=NULL, xcol=NULL, type='line', ...) {
+  if (!is.grouped_df(df))
+    stop('df must be a grouped data.frame', call. = FALSE)
+  if (is.null(scol))
+    stop('scol is required', call. = FALSE)
+  # find group column(s)
+  gvars <- df %>% group_vars()
+  df[gvars] <- lapply(df[gvars], as.character)  # convert factors
+  opt <- lapply(df %>% group_split(), function(y) {
+    # nicer looking lines
+    if (!is.null(xcol)) y <- y %>% arrange(across(all_of(xcol)))
+    series <- lapply(y[,scol], function(sr) {
+      dt <- list(); 
+      for(i in 1:length(sr)) { 
+        xx <- if (!is.null(xcol)) unname(y[i,xcol]) else i
+        dt <- append(dt, list(c(xx, sr[i]))) 
+      }
+      list(type=type, data=dt, ...) 
+    })
+    # set series names for legend
+    series <- lapply(1:length(series), function(i) {
+      series[[i]]$name <- names(series[i]); series[[i]] })
+    list(title = list(text = as.character(unique(y[,gvars])), left=40), 
+         series = unname(series))
+  })
+  wt$x$opts$options <- opt
+  
+  steps <- lapply(opt, function(x) { paste(x$title$text,collapse=' ') })
+  wt$x$opts$timeline <- list(data=steps, axisType='category')
+  wt
+}
+
+
+
 #' Area band
 #' 
 #' A 'custom' serie with lower and upper boundaries
@@ -405,10 +466,10 @@ ecr.band <- function(df=NULL, lower=NULL, upper=NULL, two=FALSE, ...) {
 #'  ecr.ebars should be set at the end, after all other series. \cr
 #'
 #' @examples
-#' 
-#' df <- mtcars %>% dplyr::group_by(cyl,gear) %>% dplyr::summarise(mmm=mean(mpg)) %>% 
-#'   dplyr::mutate(low=mmm*(1-0.2*runif(1)), high=mmm*(1+0.2*runif(1))) %>% 
-#'   dplyr::relocate(cyl, .after = last_col())   # move group column away from first three cols
+#' library(dplyr)
+#' df <- mtcars %>% group_by(cyl,gear) %>% summarise(mmm=mean(mpg)) %>% 
+#'   mutate(low=mmm*(1-0.2*runif(1)), high=mmm*(1+0.2*runif(1))) %>% 
+#'   relocate(cyl, .after = last_col())   # move group column away from first three cols
 #' p <- df %>% ec.init(group1='bar', load='custom')
 #' # since this is grouped data, must include the group column 'cyl'
 #' ecr.ebars(p, df[,c('gear','low','high','cyl')])
@@ -533,7 +594,7 @@ ecs.output <- function(outputId, width = '100%', height = '400px') {
 #' 
 #' This is the initial rendering of a chart in the UI.
 #' 
-#' @param expr An \code{echarty} widget to generate the chart.
+#' @param wt An \code{echarty} widget to generate the chart.
 #' @param env The environment in which to evaluate \code{expr}.
 #' @param quoted Is \code{expr} a quoted expression? default FALSE.
 #' @return An output or render function that enables the use of the widget within Shiny applications.
@@ -541,11 +602,11 @@ ecs.output <- function(outputId, width = '100%', height = '400px') {
 #' @seealso [ecs.exec] for example, \code{\link[htmlwidgets]{shinyWidgetOutput}} for return value.
 #' 
 #' @export
-ecs.render <- function(expr, env=parent.frame(), quoted=FALSE) {
+ecs.render <- function(wt, env=parent.frame(), quoted=FALSE) {
   if (!quoted) {
-    expr <- substitute(expr)  # do not add ',env'
+    wt <- substitute(wt)  # do not add ',env' in substitute command
   } # force quoted
-  htmlwidgets::shinyRenderWidget(expr, ecs.output, env, quoted = TRUE)
+  htmlwidgets::shinyRenderWidget(wt, ecs.output, env, quoted = TRUE)
 }
 
 
@@ -757,7 +818,7 @@ ec.global <- function(options = NULL) {
 #'
 #' Apply a pre-built or custom coded theme to a chart
 #'
-#' @param e An \code{echarty} widget as returned by [ec.init]
+#' @param wt An \code{echarty} widget as returned by [ec.init]
 #' @param name Name of existing theme file (without extension), or name of custom theme defined in \code{code}.
 #' @param code Custom theme code in JSON format, default NULL.
 #' @return An \code{echarty} widget.
@@ -771,31 +832,31 @@ ec.global <- function(options = NULL) {
 #'     "backgroundColor": "lemonchiffon"}')
 #' 
 #' @export
-ec.theme <- function (e, name, code = NULL) 
+ec.theme <- function (wt, name, code = NULL) 
 {
   if (missing(name))
     stop('must define theme name', call. = FALSE)
 
-  e$x$theme <- name
+  wt$x$theme <- name
   if (!is.null(code))
-    e$x$themeCode <- code
+    wt$x$themeCode <- code
   else {
-    e$x$themeCode <- NULL
+    wt$x$themeCode <- NULL
     path <- system.file('themes', package = 'echarty')
     dep <- htmltools::htmlDependency(
       name = name,
       version = '1.0.0', src = c(file = path),
       script = paste0(name, '.js'))
-    e$dependencies <- append(e$dependencies, list(dep))
+    wt$dependencies <- append(wt$dependencies, list(dep))
   }
-  e
+  wt
 }
 
 #' Chart to JSON
 #' 
 #' Convert chart to JSON string
 #' 
-#' @param e An \code{echarty} widget as returned by [ec.init]
+#' @param wt An \code{echarty} widget as returned by [ec.init]
 #' @param json Whether to return a JSON, or a \code{list}, default TRUE
 #' @param ... Additional arguments to pass to \code{\link[jsonlite]{toJSON}}
 #' @return A JSON string if \code{json} is \code{TRUE} and
@@ -812,8 +873,8 @@ ec.theme <- function (e, name, code = NULL)
 #' ec.fromJson(json) %>% ec.theme('macarons')
 #'
 #' @export
-ec.inspect <- function(e, json=TRUE, ...) {
-  opts <- e$x$opts
+ec.inspect <- function(wt, json=TRUE, ...) {
+  opts <- wt$x$opts
   
   if (!isTRUE(json)) return(opts)
   params <- list(...)
@@ -864,13 +925,13 @@ ec.fromJson <- function(txt, ...) {
 # ----------- Internal --------------
 
 # needed by widget init
-.preRender <- function(e) {
+.preRender <- function(wt) {
 
   ff <- getOption('ECHARTS_FONT')
   
   if (!is.null(ff))
-    e$x$opts$textStyle <- list(fontFamily = ff)
-  e
+    wt$x$opts$textStyle <- list(fontFamily = ff)
+  wt
 }
 
 # for Shiny actions

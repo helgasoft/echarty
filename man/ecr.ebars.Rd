@@ -29,10 +29,10 @@ ecr.ebars are custom series, so \emph{ec.init(load='custom')} is required.
 ecr.ebars should be set at the end, after all other series. \cr
 }
 \examples{
-
-df <- mtcars \%>\% dplyr::group_by(cyl,gear) \%>\% dplyr::summarise(mmm=mean(mpg)) \%>\% 
-  dplyr::mutate(low=mmm*(1-0.2*runif(1)), high=mmm*(1+0.2*runif(1))) \%>\% 
-  dplyr::relocate(cyl, .after = last_col())   # move group column away from first three cols
+library(dplyr)
+df <- mtcars \%>\% group_by(cyl,gear) \%>\% summarise(mmm=mean(mpg)) \%>\% 
+  mutate(low=mmm*(1-0.2*runif(1)), high=mmm*(1+0.2*runif(1))) \%>\% 
+  relocate(cyl, .after = last_col())   # move group column away from first three cols
 p <- df \%>\% ec.init(group1='bar', load='custom')
 # since this is grouped data, must include the group column 'cyl'
 ecr.ebars(p, df[,c('gear','low','high','cyl')])

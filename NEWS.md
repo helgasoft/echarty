@@ -2,7 +2,9 @@
 
 ## v. 0.1.3
 
-- crosstalk support added, send & receive for brush and filter in 2D
+- crosstalk support added, send & receive for brush and filter actions
+- ec.timegrp added, a helper to build timeline data for a grouped data.frame
+- ec.data with additional parameter *header*
 
 ## v. 0.1.2
 
