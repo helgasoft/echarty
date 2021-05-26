@@ -5,19 +5,20 @@
 We'll need a **map**, some **data**, and **echarty** to bring them together.  
 Map is France by regions, from [here](https://raw.githubusercontent.com/echarts-maps/echarts-countries-js/master/echarts-countries-js/France.js).  
 Data is France population by region, from [here](https://www.ined.fr/en/everything_about_population/data/france/population-structure/regions_departments).  
-Let start by initializing the chart, load the map (as a plugin) and make sure it shows correctly.
+Let start by initializing the chart, load the map as a plugin and make sure it shows correctly.
 
 ```r
 library(echarty)
 url <- 'https://raw.githubusercontent.com/echarts-maps/echarts-countries-js/master/echarts-countries-js/France.js'
-p <- ec.init() %>% ec.plugjs(url)
+# p <- ec.init() %>% ec.plugjs(url)   # alternative
+p <- ec.init(load=url)
 p$x$opts <- list(
    series = list(list(type='map', map='France', roam=TRUE))
 )
 p
 ```
 
-We use *ec.init()* without worrying about presets(xAxis,yAxis) since we rewrite the option *p\$x\$opts* from scratch. Command *ec.depjs()* is to load the map as a plugin. We'll set only one option component - 'series', with its own sub-components - *type, map* and *roam* documented [here](https://echarts.apache.org/en/option.html#series-map). Adding widget '**p**' at the end will display the chart in RStudio's Viewer panel.  
+We use *ec.init()* without worrying about presets(xAxis,yAxis) since we rewrite the option *p\$x\$opts* from scratch. The map is loaded as plugin with command *ec.plugjs* or directly with *ec.init*. We set only one option component - 'series', with its own sub-components - *type, map* and *roam* documented [here](https://echarts.apache.org/en/option.html#series-map). Adding widget '**p**' at the end will display the chart in RStudio's Viewer panel.  
 Run the code. We get a popup prompt *"One-time installation of plugin France.js"*, answer **Yes**. The map is installed with some feedback in the Console panel. And no error, but also ...no map ??!  
 \
 The problem is in the **map name**. In the [docs](https://echarts.apache.org/en/option.html#series-map.map) we see that for file 'china.js' they use *map='china'*. So the easy conclusion by analogy would be to set *map='France'* for 'France.js' ?  
@@ -33,7 +34,7 @@ p$x$opts <- list(
 p
 ```
 
-The map has been already installed, so we do not need to use *ec.depjs()* again. We just load it inside *ec.init()*. We also add a [title](https://echarts.apache.org/en/option.html#title). Running the updated code results in the following chart  
+The map has been already installed, so we just load it by name with *ec.init()*. We also add a [title](https://echarts.apache.org/en/option.html#title). Running the updated code results in the following chart  
 \
 <img src="img/uc1-1.png" alt="chart1"/>  
 \
@@ -51,6 +52,7 @@ wt
 We'll have to do some cleanup, like rename columns, remove spaces and summary row. Then try adding the data to the series.<br />
 
 ```r
+library(rvest)
 wp <- read_html('https://www.ined.fr/en/everything_about_population/data/france/population-structure/regions_departments')
 wt <- wp %>% html_node('#para_nb_1 > div > div > div > table') %>% html_table(header=TRUE)
 names(wt) <- c('region','v1','v2','v3','ppl') # rename columns
@@ -61,15 +63,15 @@ p$x$opts <- list(
   title = list(show=TRUE, text='France'),
   series = list(list(type='map', map='法国', 
     roam=TRUE,
-    data = lapply(ec.data(wt,TRUE), function(x) 
-      list(name=x$value[1], value=x$value[5]))
+    data = lapply(ec.data(wt,'names'), function(x) 
+                     list(name=x$region, value=x$ppl))
   )),
   visualMap = list(type='continuous',calculable=TRUE, max=max(wt$ppl))
 )
 p
 ```
 
-As you can see, we are using *ec.data()* for data conversion from data.frame to a list. Each row becomes a sublist with *name* and *value*. Name is the region name, and value is the number of people ('ppl' is 5th column). <br /> Added also is a *visualMap* which will color the regions depending on their values (population).  
+As you can see, we are using *ec.data()* for data conversion from data.frame to a list. Each row becomes a sublist with *name* and *value*. Name is the region name, and value is the number of people (ppl). <br /> Added also is a *visualMap* which will color the regions depending on their values (population).  
 Running above code brings us this chart  
 \
 <img src="img/uc1-2.png" alt="chart2"/> <br /> 

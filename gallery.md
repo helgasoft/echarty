@@ -3,6 +3,38 @@
  Some interesting charts along with their code. The latest version of *echarty* is required. The package itself has two dozen more examples - type *?ec.examples* to see them in RStudio Help panel.
 
 <br />
+Simple bar, demo for presets <br />
+<img src='img/cb.bar.png' target=_blank alt='bar' />
+<details><summary>► View code</summary>
+
+```r
+library(lubridate)
+df <- data.frame(date=as.Date('2019-12-31') %m+% months(1:13), 
+                 num=runif(13))
+
+#  with presets
+p <- df %>% ec.init() %>% ec.theme('dark')
+p$x$opts$xAxis <- list(type = 'category', 
+                       axisLabel = list(interval=0, rotate=45) )
+p$x$opts$series[[1]]$type <- 'bar'
+p
+
+#  without presets all options are explicitly assigned
+p <- ec.init(preset=FALSE) %>% ec.theme('dark')
+p$x$opts <- list(
+  yAxis = list(ey=''),   # 'ey' is a dummy attribute to set a default axis
+  xAxis = list(type = 'category', 
+               axisLabel = list(interval=0, rotate=45)
+               #, axisTick = list(alignWithLabel=TRUE)
+          ),
+  series = list(list(type='bar', data=ec.data(df, 'values', FALSE)))
+)
+p
+
+```
+</details>
+
+<br />
 Horizontal bars <br />
 <img src='img/cb-33.png' target=_blank alt='vertBars' />
 <details><summary>► View code</summary>
@@ -34,7 +66,7 @@ Easy as pie <br />
 ```r
 is <- sort(islands); is <- is[is>60]
 is <- data.frame(name=names(is), value=as.character(unname(is)))
-data <- apply(unname(is), 1, function(x) list(name=x[1], value=x[2]))
+data <- ec.data(is, 'names')
 
 library(echarty)
 p <- ec.init() %>% ec.theme('dark-mushroom')
@@ -275,14 +307,179 @@ p
 <p>&nbsp;</p>
 Bathymetry in 3D<br />
 
-<img src='img/hawaii3dsurf.png' target=_blank alt='bathy' />
+<img src='img/hawaii3d.png' target=_blank alt='bathy' />
 
 <details><summary>► How to run Shiny app &nbsp; &nbsp; <span style="color:magenta">live demo</span></summary>
 
 ```r
-# install.packages("remotes")
-remotes::install_github("helgasoft/echarty")     # v.0.1.3
-
 runGist('https://gist.github.com/helgasoft/121d7d3ff7d292990c3e05cfc1cbf24b')
 ```
 </details>
+
+<p>&nbsp;</p>
+Custom radar chart<br />
+
+<img src='img/cb-8.png' target=_blank alt='radar1' />
+
+<details><summary>► View code</summary>
+
+```r
+data <- data.frame(
+  name = c('129511','129519','129525','129520','129138'),
+  values = c(12,45,23,50,32), max = rep(60, 5)
+)
+# build a list for rich formatting
+rifo <- lapply(data$name, function(x) { 
+  list(height = 30, 
+       backgroundColor=list(
+  image=paste0('https://image.flaticon.com/icons/png/512/129/',x,'.png')))
+}) 
+names(rifo) <- data$name
+
+p <- data %>% ec.init(preset=FALSE) %>% ec.theme('dark-mushroom')
+p$x$opts$radar <- list(
+  indicator = ec.data(data, 'names'),
+  name = list(formatter=htmlwidgets::JS("function(value){ return '{'+value+'| }'; }"),
+              rich = rifo)
+)
+p$x$opts$series = list( list(
+  type = 'radar',
+  data = list(data$values)
+))
+p
+```
+</details>
+
+<p>&nbsp;</p>
+Grouped boxplot<br />
+<img src='img/cb-9.png' target=_blank alt='boxplot' />
+<details><summary>► View code</summary>
+
+```r
+# original JS: https://echarts.apache.org/examples/en/editor.html?c=boxplot-multi
+library(echarty); library(dplyr)
+grps <- list()   # data in 3 groups
+for (grp in 1:3) {
+  seriesData <- list()
+  for (i in 1:18) {
+    cate <- runif(10, 1, 200)
+    seriesData <- append(seriesData, list(cate))
+  }
+  tmp <- lapply(seriesData, boxplot.stats)
+  grps[[grp]] <- lapply(tmp, function(x) x$stats)
+}
+
+p <- ec.init() %>% ec.theme('bm', code='{
+  "color":["chartreuse","red","cyan"], 
+  "grid":{"backgroundColor":"#333"}, 
+  "backgroundColor":"#333", 
+  "legend":{"textStyle": {"color": "#eeeeee"}} }')
+for (grp in 1:3) {
+  p$x$opts$series[[grp]] <- list(
+    name = paste0('category', grp),
+    type = 'boxplot',
+    data = grps[[grp]]
+  )
+}
+p$x$opts$grid <- list(show=TRUE)
+p$x$opts$xAxis <- list(
+  name='item', type = 'category',
+  boundaryGap = TRUE, axisLine=list(onZero=FALSE),
+  splitArea = list(show=TRUE)
+)
+p$x$opts$yAxis <- list(
+  name = 'value', min=-50, max=250
+)
+p$x$opts$legend$data <- list('category1', 'category2', 'category3')
+p$x$opts$tooltip <- list(trigger='item')
+p$x$opts$dataZoom <- list(list(type='slider',start=50))
+p
+```
+</details>
+
+
+<p>&nbsp;</p>
+Modularity plugin, graph of DOW companies - size by market cap<br />
+<img src='img/cb-10.png' target=_blank alt='dow' />
+<details><summary>► View code</summary>
+
+```r
+# select and drag items to see auto-rearrange effect
+tmp <- jsonlite::fromJSON('https://quote.cnbc.com/quote-html-webservice/quote.htm?noform=1&partnerId=2&fund=1&exthrs=0&output=json&symbolType=issue&symbols=55991|44503|36276|56858|70258|1607179|84090|142105|145043|148633|151846|167459|174239|178782|174614|197606|202757|205141|205778|212856|228324|260531|277095|81364|283359|10808544|283581|286571|89999|522511530&requestMethod=extended')
+df <- tmp$ExtendedQuoteResult$ExtendedQuote$QuickQuote
+wt <- data.frame(tic=df$symbol, name=df$altName, bn=NA, size=NA, 
+      mcap = df$FundamentalData$mktcapView, 
+      rev = df$FundamentalData$revenuettm)
+wt$bn <- round(as.numeric(gsub('M','',wt$mcap, fixed=TRUE))/1000,1) # mkt.cap
+bnMax <- max(wt$bn)
+wt$size <- 30 + wt$bn/bnMax * 140   # size 30 to 140 px depending on mkt.cap
+  
+p <- ec.init(load='gmodular'); 
+p$x$opts <- list(
+  title=list(text='DOW 2021',x='center',y='bottom',
+    backgroundColor='rgba(0,0,0,0)',borderColor='#ccc',    
+    borderWidth=0,padding=5,itemGap=10, 
+    textStyle=list(fontSize=18,fontWeight='bolder',color='#eee'),subtextStyle=list(color='#aaa')),
+  backgroundColor='#000',
+  tooltip=list(trigger='item', formatter= htmlwidgets::JS("function(params){
+        return('<strong>' + params.data.lname +
+                '</strong><br />' + params.data.value + 'bn') }"
+  )),
+  animationDurationUpdate = "function(idx) list(return idx * 100; )",
+  animationEasingUpdate = 'bounceIn',
+  series = list(list(
+    type='graph', layout='force', 
+    force=list(repulsion=250,edgeLength=10),
+    modularity = list(resolution=7, sort=TRUE),
+    roam=TRUE, label=list(show=TRUE),
+    data = lapply(ec.data(wt, 'names'), function(x)
+      list(name = x$tic, lname=x$name, value=x$bn, 
+           symbolSize=x$size, draggable=TRUE 
+      )) ))
+)
+p
+```
+</details>
+
+
+<p>&nbsp;</p>
+World map plugin + geo points/lines in a timeline<br />
+<img src='img/cb-11.geo.gif' target=_blank alt='dow' />
+<details><summary>► View code</summary>
+
+```r
+# inspired by data from https://github.com/etiennebacher
+library(echarty); library(dplyr)
+flights <- read.csv('https://raw.githubusercontent.com/plotly/datasets/master/2011_february_aa_flight_paths.csv')
+# rearrange longitude/latitude data for ECharts
+df <- head(flights) %>% relocate(start_lon,start_lat,end_lon) %>% 
+  group_by(airport1) %>% group_split()
+# timeline options are individual charts
+options <-  lapply(df, function(y) {
+  series <- list(
+    list(type='scatter', coordinateSystem='geo',
+         data = ec.data(y, 'values'), symbolSize = 8),
+    list(type='lines', coordinateSystem='geo',
+         data = lapply(ec.data(y, 'names'), function(x) 
+           list(coords = list(c(x$start_lon, x$start_lat), 
+                              c(x$end_lon, x$end_lat)))
+         ),
+         lineStyle = list(curveness=0.3, width=2, color='red') )
+  )
+  list(title=list(text=unique(y$airport1), top=30),
+       backgroundColor = '#191919',
+       geo = list(map="world", roam=TRUE, center=c(-97.0372, 32.89595), zoom=4), 
+       series = series)
+})
+
+p <- ec.init(preset=FALSE, load='world')
+p$x$opts$yAxis <- list(ey='')
+p$x$opts$xAxis$type <- 'category'
+# timeline labels need to match option titles
+p$x$opts$timeline <- list(data=unlist(lapply(options, 
+      function(x) x$title$text)), axisType='category')
+p$x$opts$options <- options
+p
+```
+</details>
+
