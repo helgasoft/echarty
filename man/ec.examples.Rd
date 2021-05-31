@@ -7,7 +7,7 @@
 ec.examples()
 }
 \value{
-No return value, used for help text
+No return value, used only for help
 }
 \description{
 Learn by example - copy/paste code from Examples below.\cr
@@ -16,7 +16,6 @@ data preparation, conversion, grouping,
 parameter setting, visual fine-tuning,
 custom rendering, plugins attachment,
 Shiny plots & interactions through Shiny proxy.\cr
-Example usage is shown for all commands of this package.
 }
 \examples{
  
@@ -28,6 +27,7 @@ cars \%>\% ec.init()
 #------ Same chart, change theme and save for further processing
 p <- cars \%>\% ec.init() \%>\% ec.theme('dark')
 p
+
 
 #------ JSON back and forth
 tmp <- cars \%>\% ec.init()
@@ -51,14 +51,14 @@ p
 #------ Pie
 is <- sort(islands); is <- is[is>60]
 is <- data.frame(name=names(is), value=as.character(unname(is)))
-data <- apply(unname(is), 1, function(x) list(name=x[1], value=x[2]))
+data <- ec.data(is, 'names')
 p <- ec.init()
 p$x$opts <- list(
   title = list(text = "Landmasses over 60,000 mi\u00B2", left = 'center'),
   tooltip = list(trigger='item'),
-  series = list(type='pie', radius='50\%', data=data, name='mi\u00B2',
-    emphasis=list(itemStyle=list(shadowBlur=10, shadowColor='rgba(0,0,0,0.5)'))))
+  series = list(type='pie', radius='50\%', data=data, name='mi\u00B2'))
 p
+
 
 #------ Liquidfill plugin
 if (interactive()) {
@@ -69,6 +69,7 @@ p$x$opts$series[[1]] <- list(
 )
 p
 }
+
 
 #------ Heatmap
 times <- c(5,1,0,0,0,0,0,0,0,0,0,2,4,1,1,3,4,6,4,4,3,3,2,5,7,0,0,0,0,0,
@@ -93,6 +94,7 @@ p$x$opts <- list( title = list(text='Punch Card Heatmap'),
 )
 p
 
+
 #------ Plugin leaflet
 tmp <- quakes \%>\% dplyr::relocate('long')  # set lon,lat order
 p <- tmp \%>\% ec.init(load='leaflet')
@@ -100,31 +102,37 @@ p$x$opts$legend = list(data=list(list(name='quakes')))
 p$x$opts$series[[1]]$name = 'quakes'
 p$x$opts$series[[1]]$symbolSize = htmlwidgets::JS("function(x){ return x[3];}")
 p
- 
+
+
 #------ Plugin 3D
 if (interactive()) {
-p <- ec.init(load = '3D')
-p$x$opts$series <- list(
-  type = 'surface',
-  data = ec.data(as.data.frame(as.table(volcano)), 'values')  
-)
-p
+ data <- list()
+ for(y in 1:dim(volcano)[2]) for(x in 1:dim(volcano)[1]) 
+   data <- append(data, list(c(x, y, volcano[x,y])))
+ p <- ec.init(load = '3D')
+ p$x$opts$series <- list(type = 'surface',	data = data)
+ p
 }
+
 
 #------ 3D chart with custom coloring
 if (interactive()) {
 p <- iris \%>\% ec.init(load = '3D')
-p$x$opts$series[[1]] <- list(
-  type='scatter3D', symbolSize=7, 
-  encode=list(x='Sepal.Length', y='Sepal.Width', z='Petal.Length'),
+p$x$opts$xAxis3D <- list(name='Petal.Length')
+p$x$opts$yAxis3D <- list(name='Sepal.Width')
+p$x$opts$zAxis3D <- list(name='Sepal.Length')
+p$x$opts$series <- list(list(
+  type='scatter3D', symbolSize=7,
+  encode=list(x='Petal.Length', y='Sepal.Width', z='Sepal.Length'),
   itemStyle=list(color = htmlwidgets::JS("function(params){
-          if (params.value[4] == 1){ return '#FE8463'; }
-     else if (params.value[4] == 2){ return '#27727B'; }
-                                     return '#9BCA63';
+         if (params.value[4] == 'setosa') return '#FE8463'; 
+    else if (params.value[4] == 'virginica'){ return '#27727B'; }
+                                              return '#9BCA63';
   }") )  # [4] is the JS index of column Species
-)
+))
 p
 }
+
 
 #------ Surface data equation with JS code
 if (interactive()) {
@@ -141,6 +149,7 @@ p$x$opts$series[[1]] <- list(
 p
 }
 
+
 #------ Surface with data from a data.frame
 if (interactive()) {
 library(dplyr)
@@ -155,6 +164,7 @@ p$x$opts$series[[1]] <- list(
 p
 }
 
+ 
 #------ Band serie with customization
 # first column ('day') usually goes to the X-axis
 # try also alternative data setting - replace lines @1 & @2 with
@@ -213,42 +223,49 @@ p$x$opts$options <- options
 p
 
 
-#------ Groups in a boxplot
-# original JS: https://echarts.apache.org/examples/en/editor.html?c=boxplot-multi
-grps <- list()   # data in 3 groups
-for (grp in 1:3) {
-  seriesData <- list()
-  for (i in 1:18) {
-    cate <- runif(10, 1, 200)
-    seriesData <- append(seriesData, list(cate))
-  }
-  tmp <- lapply(seriesData, boxplot.stats)
-  grps[[grp]] <- lapply(tmp, function(x) x$stats)
-}
-p <- ec.init() 
-for (grp in 1:3) {
-  p$x$opts$series[[grp]] <- list(
-    name = paste0('category', grp),
-    type = 'boxplot',
-    data = grps[[grp]]
-  )
-}
-p$x$opts$xAxis <- list(
-  type = 'category',
-  data = as.character(1:18),
-  boundaryGap = TRUE, nameGap = 30,
-  splitArea = list(show=TRUE),
-  axisLabel = list(formatter = "exprmt {value}"),
-  splitLine = list(show=FALSE)
+#------ Boxplot
+bdf <- data.frame(vx = sample(LETTERS[1:3], size=20, replace=TRUE), 
+                  vy = rnorm(20)) \%>\% group_by(vx) \%>\% group_split()
+dats <- lapply(bdf, function(x) boxplot.stats(x$vy)$stats )
+p <- ec.init()
+p$x$opts <- list(     # presets are overwritten
+  xAxis = list(ey=''),
+  yAxis = list(type = 'category', data = unique(unlist(lapply(bdf, `[`, , 1))) ),
+  series = list(list(type = 'boxplot', data = dats))
 )
-p$x$opts$yAxis <- list(
-  type = 'value', name = 'Value',
-  min = -200, max = 400,
-  splitArea = list(show=FALSE)  
+p
+
+
+#------ Boxplot transformations through JavaScript
+# original: https://echarts.apache.org/examples/en/editor.html?c=data-transform-aggregate
+boxdf <- data.frame(valX=sample(LETTERS[1:3], size=20, replace=TRUE), valY=rnorm(20))
+p <- boxdf \%>\% ec.init(
+  js = 'echarts.registerTransform(window.ecSimpleTransform.aggregate)',
+  load='https://cdn.jsdelivr.net/npm/echarts-simple-transform/dist/ecSimpleTransform.min.js'
 )
-p$x$opts$legend$data <- list('category1', 'category2', 'category3')
-p$x$opts$tooltip <- list(trigger='item', axisPointer=list(type='shadow'))
-p$x$opts$dataZoom <- list(list(type='slider',start=50)) 
+p$x$opts$yAxis$type <- 'category'
+p$x$opts$dataset[[2]] <- list( id = 'aggregate',
+  transform = list(list(type='ecSimpleTransform:aggregate',
+    config = list(
+      resultDimensions = list(
+        list( name= 'min', from= 'valY', method= 'min' ),
+        list( name= 'Q1', from= 'valY', method= 'Q1' ),
+        list( name= 'median', from= 'valY', method= 'median' ),
+        list( name= 'Q3', from= 'valY', method= 'Q3' ),
+        list( name= 'max', from= 'valY', method= 'max' ),
+        list( name= 'valX', from= 'valX' )
+      ),   groupBy= 'valX'
+    ) ))
+)
+p$x$opts$series <- list(list(
+  type = 'boxplot', 
+  datasetId = 'aggregate',
+  encode=list(
+    x= c('min', 'Q1', 'median', 'Q3', 'max'),
+    y= 'ValX',
+    itemName= 'ValX', tooltip=c('min', 'Q1', 'median', 'Q3', 'max') )
+))
+p$x$opts$tooltip <- list(trigger='axis', confine=TRUE)
 p
 
 
@@ -260,6 +277,7 @@ p$x$opts$dataset[[2]] <- list(transform = list(type='ecStat:regression'))
 p$x$opts$series[[2]] <- list(
   type='line', itemStyle=list(color='red'), datasetIndex=1)
 p 
+
 
 #------ EChartsJS v.5 features transform and sort
 datset <- list(
@@ -309,6 +327,7 @@ p
 
 
 #------ Sunburst
+# see website for different ways to set hierarchical data
 data = list(list(name='Grandpa',children=list(list(name='Uncle Leo',value=15,
      children=list(list(name='Cousin Jack',value=2), list(name='Cousin Mary',value=5,
      children=list(list(name='Jackson',value=2))), list(name='Cousin Ben',value=4))), 
@@ -318,8 +337,9 @@ data = list(list(name='Grandpa',children=list(list(name='Uncle Leo',value=15,
    list(name='Cousin Jenny',value=2))))))
 p <- ec.init()
 p$x$opts <- list(
-  series = list(list(type='sunburst', data=data, radius=list(0, '90\%'),label=list(rotate='radial')))
-)
+  series = list(list(type='sunburst', data=data, 
+                     radius=list(0, '90\%'), label=list(rotate='radial')
+)))
 p
 
 
@@ -328,6 +348,7 @@ json <- jsonlite::read_json("https://echarts.apache.org/examples/data/asset/geo/
 dusa <- USArrests \%>\% dplyr::mutate(states = row.names(.))
 p <- ec.init(preset=FALSE)
 p$x$registerMap <- list(list(mapName = 'USA', geoJSON = json))
+# registerMap supports also maps in SVG format, see website gallery
 p$x$opts <- list(
   visualMap = list(type='continuous', calculable=TRUE, 
                    min=min(dusa$UrbanPop), max=max(dusa$UrbanPop))
@@ -339,11 +360,11 @@ p
 
 
 #------ Gauge
-p <- ec.init(preset = FALSE); 
-p$x$opts$series[[1]] <- list( 
-  type = 'gauge', max=160, min=40,
-  detail = list(formatter = 'ðŸ§ ={value}', fontSize=20), 
-  data = list(list(value=85, name='IQ test')) )
+p <- ec.init(preset=FALSE); 
+p$x$opts$series <- list(list( 
+  type = 'gauge', max = 160, min=40,
+  detail = list(formatter='\U1F9E0={value}'), 
+  data = list(list(value=85, name='IQ test')) ))
 p
 
 
@@ -381,6 +402,7 @@ p$x$opts$series[[1]] <- list( type='sankey',
 )
 p
 
+
 # graph plot with same data ---------------
 p <- ec.init(preset=FALSE, title=list(text="Graph"))
 p$x$opts$series[[1]] <- list( type='graph',
@@ -398,118 +420,30 @@ p$x$opts$series[[1]] <- list( type='graph',
 p$x$opts$tooltip <- list(trigger='item')
 p
 
-   
-#------ Shiny interactive chart
+
+#------ group connect 
+main <- mtcars \%>\% ec.init(height = 200)
+main$x$opts$series[[1]]$name <- "this legend is shared"
+main$x$opts$legend <- list(show=FALSE)
+main$x$group <- 'group1' # same group name for all charts
+
+q1 <- main; q1$x$opts$series[[1]]$encode <- list(y='hp', x='mpg'); 
+q1$x$opts$legend <- list(show=TRUE)  # show first legend to share
+q2 <- main; q2$x$opts$series[[1]]$encode <- list(y='wt', x='mpg'); 
+q3 <- main; q3$x$opts$series[[1]]$encode <- list(y='drat', x='mpg'); 
+q4 <- main; q4$x$opts$series[[1]]$encode <- list(y='qsec', x='mpg'); 
+q4$x$connect <- 'group1'
+# q4$x$disconnect <- 'group1'
+ec.layout(list(q1,q2,q3,q4), cols=2, title='group connect')
+
+
+#------------- Shiny interactive charts demo ---------------
 if (interactive()) {
-  library(shiny)
-  library(dplyr)
-runApp( list(
-  ui = fluidPage(
-    ecs.output('plot'),
-    fluidRow( 
-      column(4, actionButton('addm', 'Add marks'),
-             actionButton('delm', 'Delete marks'),
-             br(),span('mark points stay, area/line deletable')
-      ),
-      column(3, actionButton('adds', 'Add serie'),
-             actionButton('dels', 'Del serie')), 
-      column(5, actionButton('adata', 'Add data'),
-             actionButton('hilit', 'Highlight'),
-             actionButton('dnplay', 'Downplay') )
-    )
-  ),
-  server = function(input, output, session){
-    
-    output$plot <- ecs.render({
-      p <- ec.init()
-      p$x$opts$series <- lapply(mtcars \%>\% 
-        relocate(disp, .after=mpg) \%>\% group_by(cyl) \%>\% group_split(), 
-        function(s) { list(type='scatter', 
-        name=unique(s$cyl), data=ec.data(s, 'values')) })
-      p$x$opts$legend <- list(ey='')
-      p$x$opts$xAxis <- list(type="value"); 
-      p$x$opts$yAxis <- list(ec='')
-      p$x$opts$tooltip <- list(list(show=TRUE))
-      p$x$opts$series[[1]]$emphasis <- list(
-        focus='series', blurScope='coordinateSystem')
-      p
-    })
-    
-    observeEvent(input$addm, {
-      p <- ecs.proxy('plot')
-      p$x$opts$series = list( list(
-        markPoint = list(data = list(
-          list(coord = c(22.5, 140.8)),
-          list(coord = c(30.5, 95.1))
-        ), 
-        itemStyle = list(color='lightblue')
-        )
-        ,markArea = list(data = list(list(
-          list(xAxis = 15),
-          list(xAxis = 25)
-        ))
-        ,silent=TRUE
-        ,itemStyle = list(color='pink', opacity=0.2)
-        ,label = list(formatter='X-area', position='insideTop')
-        )
-        ,markLine = list(data = list(list(type='average')))
-      ), list(
-        markPoint = list(data = list(
-          list(coord = c(25.5, 143.8)),
-          list(coord = c(33.5, 98.1))
-        ), 
-        itemStyle = list(color='forestgreen')
-        )
-      ))
-      p \%>\% ecs.exec() #' ='p_merge'
-    })
-    
-    observeEvent(input$adds, {
-      p <- ecs.proxy('plot')
-      p$x$opts$series <- list(list(
-        type = 'line', name = 'newLine',
-        #encode = list(x='mpg', y='disp')  # for dataset only
-        data = list(list(10,100),list(5,200),list(10,400),
-                    list(10,200),list(15,150),list(5,300))
-      ))
-      p \%>\% ecs.exec('p_update')
-    })
-    
-    observeEvent(input$adata, {
-      set.seed(sample(1:444, 1))
-      tmp <- apply(unname(data.frame(rnorm(5, 10, 3), rnorm(5, 200, 33))), 
-                   1, function(x) { list(value=x) })
-      p <- ecs.proxy('plot')
-      p$x$opts$seriesIndex <- 1
-      p$x$opts$data <- tmp
-      p \%>\% ecs.exec('p_append_data')
-    })
-    
-    observeEvent(input$dels, {
-      p <- ecs.proxy('plot')
-      p$x$opts$seriesName <- 'newLine'
-      #'p$x$opts$seriesIndex <- 4  # ok too
-      p \%>\% ecs.exec('p_del_serie')
-    })
-    observeEvent(input$delm, {
-      p <- ecs.proxy('plot')
-      p$x$opts$seriesIndex <- 1
-      p$x$opts$delMarks <- c('markArea','markLine')
-      p \%>\% ecs.exec('p_del_marks')
-    })
-    observeEvent(input$hilit, {
-      p <- ecs.proxy('plot')
-      p$x$opts <- list(type='highlight', seriesName='4')
-      p \%>\% ecs.exec('p_dispatch')
-    })
-    observeEvent(input$dnplay, {
-      p <- ecs.proxy('plot')
-      p$x$opts <- list(type='downplay', seriesName='4')
-      p \%>\% ecs.exec('p_dispatch')
-    })
-  } ))
+   shiny::runGist('https://gist.github.com/helgasoft/29e8b8f08bda15107ee81aff3614ebb1')
 }
 
+}  # donttest
 }
-
+\seealso{
+\href{https://helgasoft.github.io/echarty/}{website} has many more examples
 }

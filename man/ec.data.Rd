@@ -2,17 +2,17 @@
 % Please edit documentation in R/echarty.R
 \name{ec.data}
 \alias{ec.data}
-\title{ECharts data helper}
+\title{Data helper}
 \usage{
 ec.data(df, format = "dataset", header = TRUE)
 }
 \arguments{
-\item{df}{Chart data in data.frame format, required}
+\item{df}{Chart data in data.frame format, required.}
 
 \item{format}{A key on how to format the output list \cr \itemize{
-\item 'dataset' = list used in \href{https://echarts.apache.org/en/option.html#dataset.source}{dataset} (default), or in \href{https://echarts.apache.org/en/option.html#series-scatter.data}{series.data} but without a header.\cr
+\item 'dataset' = list to be used in \href{https://echarts.apache.org/en/option.html#dataset.source}{dataset} (default), or in \href{https://echarts.apache.org/en/option.html#series-scatter.data}{series.data} but without a header. \cr
 \item 'values' = list for customized \href{https://echarts.apache.org/en/option.html#series-scatter.data}{series.data} \cr
-\item 'names' = named lists useful for named data like \href{https://echarts.apache.org/en/option.html#series-sankey.links}{sankey links}
+\item 'names' = named lists useful for named data like \href{https://echarts.apache.org/en/option.html#series-sankey.links}{sankey links}.
 }}
 
 \item{header}{Whether the data will have a header with column names or not, default TRUE. Set this to FALSE when used in \href{https://echarts.apache.org/en/option.html#series-scatter.data}{series.data}.}

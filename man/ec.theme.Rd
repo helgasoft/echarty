@@ -11,7 +11,7 @@ ec.theme(wt, name, code = NULL)
 
 \item{name}{Name of existing theme file (without extension), or name of custom theme defined in \code{code}.}
 
-\item{code}{Custom theme code in JSON format, default NULL.}
+\item{code}{Custom theme as JSON formatted string, default NULL.}
 }
 \value{
 An \code{echarty} widget.
@@ -20,7 +20,8 @@ An \code{echarty} widget.
 Apply a pre-built or custom coded theme to a chart
 }
 \details{
-Just a few themes are included in folder \code{inst/themes}. The entire collection could be found \href{https://github.com/apache/echarts/tree/master/theme}{here} and copied if needed.
+Just a few built-in themes are included in folder \code{inst/themes}. The entire collection could be found \href{https://github.com/apache/echarts/tree/master/theme}{here} and copied if needed.\cr
+To create custom themes or view predefined ones, visit \href{https://echarts.apache.org/en/theme-builder.html}{this site}.
 }
 \examples{
 mtcars \%>\% ec.init() \%>\% ec.theme('dark-mushroom')

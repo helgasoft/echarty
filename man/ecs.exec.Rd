@@ -10,9 +10,10 @@ ecs.exec(proxy, cmd = "p_merge")
 \item{proxy}{A \link{ecs.proxy} object}
 
 \item{cmd}{Name of command, default is \emph{p_merge}\cr
-Other proxy commands:\cr
+The proxy commands are:\cr
 \emph{p_update} - add new series and axes\cr
 \emph{p_merge} - add serie features like marks\cr
+\emph{p_replace} - replace entire chart \cr
 \emph{p_del_serie} - delete a serie by index or name\cr
 \emph{p_del_marks} - delete marks of a serie\cr
 \emph{p_append_data} - add data to existing series\cr
@@ -48,9 +49,9 @@ server = function(input, output, session) {
   output$plot <- ecs.render({
     p <- ec.init()
     p$x$opts$series <- lapply(mtcars \%>\% relocate(disp, .after=mpg)
-                              \%>\% group_by(cyl) \%>\% group_split(), function(s) {
-                                list(type='scatter', name=unique(s$cyl), data=ec.data(s, 'values'))
-                              })
+      \%>\% group_by(cyl) \%>\% group_split(), function(s) {
+          list(type='scatter', name=unique(s$cyl), data=ec.data(s, 'values'))
+      })
     p$x$opts$legend <- list(ey='')
     p$x$opts$xAxis <- list(type="value"); p$x$opts$yAxis <- list(ec='')
     p$x$opts$tooltip <- list(list(show=TRUE))
@@ -97,7 +98,6 @@ server = function(input, output, session) {
   })
 
   observeEvent(input$adata, {
-    set.seed(sample(1:444, 1))
     tmp <- apply(unname(data.frame(rnorm(5, 10, 3), rnorm(5, 200, 33))),
                  1, function(x) { list(value=x) })
     p <- ecs.proxy('plot')

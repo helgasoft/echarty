@@ -5,9 +5,10 @@
 
 <!-- badges: start -->
 
-[![R-CMD-check](https://github.com/helgasoft/echarty/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/helgasoft/echarty/actions/workflows/R-CMD-check.yaml)
 [![CRAN
 status](https://www.r-pkg.org/badges/version/echarty)](https://cran.r-project.org/package=echarty)
+[![Github status](https://img.shields.io/github/v/release/helgasoft/echarty?label=github)](https://img.shields.io/github/v/release/helgasoft/echarty?label=github)
+[![R-CMD-check](https://github.com/helgasoft/echarty/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/helgasoft/echarty/actions/workflows/R-CMD-check.yaml)
 [![CRAN
 downloads](https://cranlogs.r-pkg.org/badges/last-day/echarty)](https://cranlogs.r-pkg.org/badges/last-day/echarty)
 <!-- badges: end -->
@@ -27,17 +28,17 @@ support](https://helgasoft.github.io/echarty/xtalk.html).
 <!-- We recommend the 
 Older release on -->
 
+Latest development version:
+
+``` r
+# install.packages("remotes")
+remotes::install_github("helgasoft/echarty")
+```
+
 From [CRAN](https://CRAN.R-project.org):
 
 ``` r
 install.packages("echarty")
-```
-
-Latest development version.
-
-``` r
-# install.packages("remotes")
-remotes::install_github("helgasoft/echarty")     # v.0.1.3
 ```
 
 ## Examples
@@ -45,21 +46,18 @@ remotes::install_github("helgasoft/echarty")     # v.0.1.3
 ``` r
 library(echarty)
 
-#  basic chart
+#  basic chart 2D
 cars %>% ec.init()
 
 #  chart with plugin 3D, will prompt for one-time installation
 if (interactive()) {
-  p <- ec.init(load = '3D')
-  p$x$opts$series <- list(
-    type = 'surface',
-    data = ec.data(as.data.frame(as.table(volcano)), TRUE)
-  )
+  p <- iris %>% ec.init(load='3D')
+  p$x$opts$series <- list(list(type='scatter3D'))
   p
 }
 ```
 
-## Get help
+## Get started
 
 <br />
 

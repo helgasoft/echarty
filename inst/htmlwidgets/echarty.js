@@ -44,8 +44,12 @@ HTMLWidgets.widget({
         }
         if(x.hasOwnProperty('registerMap')){
           for( let map = 0; map < x.registerMap.length; map++){
-            echarts.registerMap(x.registerMap[map].mapName, 
-                                x.registerMap[map].geoJSON);
+            if (x.registerMap[map].geoJSON)
+              echarts.registerMap(x.registerMap[map].mapName, 
+                                  x.registerMap[map].geoJSON);
+            else if (x.registerMap[map].svg)
+              echarts.registerMap(x.registerMap[map].mapName, 
+                { svg: x.registerMap[map].svg });
           }
         }
         
@@ -60,7 +64,7 @@ HTMLWidgets.widget({
               tmp = x.eval;
             try {
               eval(tmp);
-            } catch(err) { console.log('Eva1:' + err.message) }
+            } catch(err) { console.log('eva1:' + err.message) }
           }
         }
         
@@ -81,39 +85,40 @@ HTMLWidgets.widget({
         // shiny callbacks
         if (HTMLWidgets.shinyMode) {
           
+          let ecp = ":echartyParse";
           chart.on("brushselected", function(e){
-            Shiny.onInputChange(el.id + '_brush' + ":echartyParse", e);
+            Shiny.onInputChange(el.id + '_brush' + ecp, e);
           });
 
           chart.on("brush", function(e){
-            Shiny.onInputChange(el.id + '_brush_released' + ":echartyParse", e);
+            Shiny.onInputChange(el.id + '_brush_released' + ecp, e);
           });
           
           chart.on("legendselectchanged", function(e){
-            Shiny.onInputChange(el.id + '_legend_change' + ":echartyParse", e.name);
-            Shiny.onInputChange(el.id + '_legend_selected' + ":echartyParse", e.selected);
+            Shiny.onInputChange(el.id + '_legend_change' + ecp, e.name);
+            Shiny.onInputChange(el.id + '_legend_selected' + ecp, e.selected);
           });
           
           chart.on("globalout", function(e){
-            Shiny.onInputChange(el.id + '_global_out' + ":echartyParse", e);
+            Shiny.onInputChange(el.id + '_global_out' + ecp, e);
           });
           
           if(x.hasOwnProperty('capture')){
             chart.on(x.capture, function(e){
-              Shiny.onInputChange(el.id + '_' + x.capture + ":echartyParse", e, {priority: 'event'});
+              Shiny.onInputChange(el.id + '_' + x.capture + ecp, e, {priority: 'event'});
             });
           }
           
           chart.on("click", function(e){
-            Shiny.onInputChange(el.id + '_clicked_data' + ":echartyParse", e.data, {priority: 'event'});
-            Shiny.onInputChange(el.id + '_clicked_row' + ":echartyParse", e.dataIndex + 1, {priority: 'event'});
-            Shiny.onInputChange(el.id + '_clicked_serie' + ":echartyParse", e.seriesName, {priority: 'event'});
+            Shiny.onInputChange(el.id + '_clicked_data' + ecp, e.data, {priority: 'event'});
+            Shiny.onInputChange(el.id + '_clicked_row' + ecp, e.dataIndex + 1, {priority: 'event'});
+            Shiny.onInputChange(el.id + '_clicked_serie' + ecp, e.seriesName, {priority: 'event'});
           });
           
           chart.on("mouseover", function(e){
-            Shiny.onInputChange(el.id + '_mouseover_data' + ":echartyParse", e.data);
-            Shiny.onInputChange(el.id + '_mouseover_row' + ":echartyParse", e.dataIndex + 1);
-            Shiny.onInputChange(el.id + '_mouseover_serie' + ":echartyParse", e.seriesName);
+            Shiny.onInputChange(el.id + '_mouseover_data' + ecp, e.data);
+            Shiny.onInputChange(el.id + '_mouseover_row' + ecp, e.dataIndex + 1);
+            Shiny.onInputChange(el.id + '_mouseover_serie' + ecp, e.seriesName);
           });
           
           $(document).on('shiny:recalculating', function() {
@@ -143,15 +148,6 @@ HTMLWidgets.widget({
           $(document).on('shiny:value', function() {
             chart.hideLoading();
           });
-        }
-        
-        if(x.hasOwnProperty('connect')){
-          var connections = [];
-          for(var c = 0; c < x.connect.length; c++){
-            connections.push(get_e_charts(x.connect[c]));
-          }
-          connections.push(chart);
-          echarts.connect(connections);
         }
         
         // actions
@@ -189,16 +185,24 @@ HTMLWidgets.widget({
           }
         }
         
-        if(x.hasOwnProperty('chartGroup')){
-          chart.group = x.chartGroup;
+        if(x.hasOwnProperty('group')){
+          chart.group = x.group;
         }
         
-        if(x.hasOwnProperty('groupConnect')){
-          echarts.connect(x.groupConnect);
+        if(x.hasOwnProperty('connect')){
+          if (Array.isArray(x.connect)) {
+            let connections = [];
+            for(var c = 0; c < x.connect.length; c++){
+              connections.push(get_e_charts(x.connect[c]));
+            }
+            connections.push(chart);
+            echarts.connect(connections);  
+          } else
+            echarts.connect(x.connect);
         }
         
-        if(x.hasOwnProperty('groupDisconnect')){
-          echarts.disconnect(x.groupDisconnect);
+        if(x.hasOwnProperty('disconnect')){
+          echarts.disconnect(x.disconnect);
         }
         
         /* ---------------- crosstalk ----------------
@@ -378,7 +382,7 @@ if (HTMLWidgets.shinyMode) {
           chart.setOption(data.opts, true);
           break;
           
-        case 'p_update':    // more like 'append serie'
+        case 'p_update':    // used also to 'append serie'
           
           if(!cpts.series)  // add series array if none
             cpts.series = [];
@@ -390,13 +394,13 @@ if (HTMLWidgets.shinyMode) {
             cpts.series.push(serie);
           })
   
-          if (data.opts.legend) {    // legend
+          if (data.opts.legend) {
             if(cpts.legend.length > 0)
               if(data.opts.legend.data)
                 cpts.legend[0].data = cpts.legend[0].data.concat(data.opts.legend.data);
           }
-          if (data.opts.xAxis) {    // x Axis
-            if(cpts.xAxis){
+          if (data.opts.xAxis) {
+            if(cpts.xAxis.length > 0){
               if(cpts.xAxis[0].data){
                 let xaxis = cpts.xAxis[0].data.concat(data.opts.xAxis[0].data);
                 xaxis = xaxis.filter(distinct);
@@ -405,8 +409,8 @@ if (HTMLWidgets.shinyMode) {
             } else
               cpts.xAxis = data.opts.xAxis;
           }
-          if (data.opts.yAxis) {    // y Axis
-            if(cpts.yAxis){
+          if (data.opts.yAxis) {
+            if(cpts.yAxis.length > 0){
               if(cpts.yAxis[0].data){
                 let yaxis = cpts.yAxis[0].data.concat(data.opts.yAxis[0].data);
                 yaxis = yaxis.filter(distinct);
@@ -416,7 +420,10 @@ if (HTMLWidgets.shinyMode) {
           }
           if (data.opts.dataset) 
             cpts.dataset = data.opts.dataset;
-console.log('user.opts='+Object.keys(data.opts))
+            
+          if (data.opts.toolbox) 
+            cpts.toolbox = data.opts.toolbox;
+          //console.log('user.opts='+Object.keys(data.opts))
           chart.setOption(cpts, true);
           break;
           
@@ -441,11 +448,11 @@ console.log('user.opts='+Object.keys(data.opts))
         case 'p_del_serie':
           if (data.opts.seriesName) {
             let series = cpts.series;
-            series.forEach( function(s, index) {
+            series.forEach( function(s, index, object) {
               if(s.name == data.opts.seriesName){
-                this.splice(index, 1);
+                object.splice(index, 1);
               }
-            }, series)
+            })
             cpts.series = series;
           }
           else if (data.opts.seriesIndex)

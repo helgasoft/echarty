@@ -21,7 +21,7 @@ ec.init(
 \item{df}{A data.frame to be preset as \href{https://echarts.apache.org/en/option.html#dataset}{dataset}, default NULL \cr
 For crosstalk df should be of type \code{\link[crosstalk]{SharedData}}.}
 
-\item{group1}{Type of grouped series, default 'scatter'. Set to NULL to disable. \cr
+\item{group1}{Type of grouped series, or type of first ungrouped serie. Default is 'scatter'. Set to NULL to disable. \cr
 If the grouping is on multiple columns, only the first one is used.}
 
 \item{preset}{Disable(FALSE) or enable (TRUE, default) presets xAxis,yAxis,serie for 2D, or grid3D,xAxis3D,yAxis3D,zAxis3D for 3D.}
