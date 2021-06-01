@@ -428,13 +428,13 @@
 #' q3 <- main; q3$x$opts$series[[1]]$encode <- list(y='drat', x='mpg'); 
 #' q4 <- main; q4$x$opts$series[[1]]$encode <- list(y='qsec', x='mpg'); 
 #' q4$x$connect <- 'group1'
-#' # q4$x$disconnect <- 'group1'
+#' # q4$x$disconnect <- 'group1'  # ok too
 #' ec.layout(list(q1,q2,q3,q4), cols=2, title='group connect')
 #' 
 #' 
 #' #------------- Shiny interactive charts demo ---------------
 #' if (interactive()) {
-#'    shiny::runGist('https://gist.github.com/helgasoft/29e8b8f08bda15107ee81aff3614ebb1')
+#'   demo('shiny', package='echarty')
 #' }
 #' 
 #' }  # donttest

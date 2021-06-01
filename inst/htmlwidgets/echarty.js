@@ -431,12 +431,9 @@ if (HTMLWidgets.shinyMode) {
           if (!cpts.series) break;
           if (data.opts.seriesName) {
             // find index by name
-            var idx = 0;
-            cpts.series.forEach(function(serie) {
-              if (serie.name==data.opts.seriesName) data.opts.seriesIndex = idx;
-              idx++;
-            })
-            //console.log('appd ',data.opts.seriesName,'=',data.opts.seriesIndex)
+            let idx = cpts.series.findIndex(item => 
+                item.name === Number(data.opts.seriesName));
+            if (idx > -1) data.opts.seriesIndex = idx;
           }
           if (data.opts.seriesIndex)
             chart.appendData({
@@ -456,7 +453,7 @@ if (HTMLWidgets.shinyMode) {
             cpts.series = series;
           }
           else if (data.opts.seriesIndex)
-            cpts.series = cpts.series.splice(data.opts.seriesIndex, 1);
+            cpts.series.splice(data.opts.seriesIndex, 1);
           chart.setOption(cpts, true);
           break;
         
