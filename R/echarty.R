@@ -40,7 +40,6 @@
 #'  cars %>% ec.init()
 #'  
 #' @importFrom htmlwidgets createWidget sizingPolicy getDependency JS shinyWidgetOutput shinyRenderWidget
-#' @importFrom crosstalk is.SharedData crosstalkLibs
 #' 
 #' @export
 ec.init <- function( df = NULL, group1 = 'scatter', preset = TRUE, load = NULL,
@@ -59,16 +58,24 @@ ec.init <- function( df = NULL, group1 = 'scatter', preset = TRUE, load = NULL,
     #opts$series[[1]] <- list(type='scatter')
   }
 
-  
-  if (crosstalk::is.SharedData(df)) {
-    # Using Crosstalk
-    key <- df$key()
-    group <- df$groupName()
-    df <- df$origData()
-    deps <- crosstalk::crosstalkLibs()
-  } else {
-    # Not using Crosstalk
-    key <- group <- deps <- NULL
+  if (requireNamespace("crosstalk", quietly = TRUE)) {  # replaced ' @importFrom crosstalk is.SharedData crosstalkLibs
+    if (crosstalk::is.SharedData(data)) {
+      crosstalkKey <- as.list(data$key())
+      crosstalkGroup <- data$groupName()
+      data <- data$origData()
+      dependencies <- crosstalk::crosstalkLibs()
+    }
+  }
+
+  key <- group <- deps <- NULL
+  if (requireNamespace("crosstalk", quietly = TRUE)) {
+    if (crosstalk::is.SharedData(df)) {
+      # Using Crosstalk
+      key <- as.list(df$key())
+      group <- df$groupName()
+      df <- df$origData()
+      deps <- crosstalk::crosstalkLibs()
+    }
   }
   
   # forward widget options using x
@@ -148,21 +155,25 @@ ec.init <- function( df = NULL, group1 = 'scatter', preset = TRUE, load = NULL,
   if ('leaflet' %in% load) {
     if (preset) {
       # customizations for leaflet
-      wt$x$opts$dataset <- NULL  # dataset not suitable, data must be in series
       wt$x$opts$xAxis <- NULL
       wt$x$opts$yAxis <- NULL
       urltls <- getOption('ECHARTS_TILES')
       if (is.null(urltls))
         urltls <- 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
       wt$x$opts$leaflet = list(
-        roam = TRUE, 
+        roam = TRUE,
         tiles = list( list(urlTemplate = urltls))
       )
-  
-      # leaflet user data should be ordered (lon,lat)!
-      if (!is.null(df))
-        wt$x$opts$series[[1]]$data <- ec.data(df, 'values')
       wt$x$opts$series[[1]]$coordinateSystem <- 'leaflet'
+      
+      # user should order the leaflet data  (lon,lat)
+      if (!is.null(df)) {
+	      rlo <- range(df[,1])
+	      rla <- range(df[,2])
+	      wt$x$opts$leaflet$center= c(sum(rlo)/2, sum(rla)/2)
+	      wt$x$opts$leaflet$zoom <- 8
+        #wt$x$opts$series[[1]]$data <- ec.data(df, 'dataset', header=FALSE)
+      }
     }
     
     dep <- htmltools::htmlDependency(
@@ -244,8 +255,8 @@ ec.plugjs <- function(wt=NULL, source=NULL) {
     stop('ec.plugjs expecting widget', call. = FALSE)
   if (is.null(source)) return(wt)
   fname <- basename(source)
-  if (!endsWith(fname, '.js'))
-    stop('ec.plugjs expecting .js suffix', call. = FALSE)
+  # if (!endsWith(fname, '.js'))
+  #   stop('ec.plugjs expecting .js suffix', call. = FALSE)
   path <- system.file('js', package = 'echarty')
   ffull <- paste0(path,'/',fname)
   if (!file.exists(ffull)) {
@@ -613,31 +624,6 @@ ecr.ebars <- function(wt, df, hwidth=6, ...) {
 }
 
 
-#' JS-to-R Translator Assistant 
-#' 
-#' Translate Javascript data objects to R
-#' 
-#' @return none
-#'
-#' @details Learn from Javascript examples of \href{https://echarts.apache.org/examples/en/}{ECharts}. This Shiny application helps translate JSON-like JavaScript data structures to R lists.\cr
-#'  Additional information is available by clicking the \emph{Info} button inside.
-#' @import shiny
-#' @export
-ec.js2r <- function() {
-  if (interactive()) {
-    prompt <- paste0('Ready to launch Translation Assistant\n Would you like to proceed ?')
-    ans <- FALSE
-    if (interactive())
-      ans <- askYesNo(prompt)
-    if (is.na(ans)) ans <- FALSE  # user canceled
-    if (ans) {
-      shiny::runGist('https://gist.github.com/helgasoft/819035e853d9889ba02cb69ecc587f34',quiet=TRUE)
-    }
-  }
-  return(NULL)
-}
-
-
 
 # ----------- Shiny --------------
 #'
@@ -653,6 +639,7 @@ ec.js2r <- function() {
 #'
 #' @seealso [ecs.exec] for example, \code{\link[htmlwidgets]{shinyWidgetOutput}} for return value.
 #' 
+#' @importFrom htmlwidgets shinyWidgetOutput
 #' @export
 ecs.output <- function(outputId, width = '100%', height = '400px') {
   htmlwidgets::shinyWidgetOutput(outputId, 'echarty', width, height, package = 'echarty')
@@ -668,8 +655,9 @@ ecs.output <- function(outputId, width = '100%', height = '400px') {
 #' @param quoted Is \code{expr} a quoted expression? default FALSE.
 #' @return An output or render function that enables the use of the widget within Shiny applications.
 #'   
-#' @seealso [ecs.exec] for example, \code{\link[htmlwidgets]{shinyWidgetOutput}} for return value.
+#' @seealso [ecs.exec] for example, \code{\link[htmlwidgets]{shinyRenderWidget}} for return value.
 #' 
+#' @importFrom htmlwidgets shinyRenderWidget
 #' @export
 ecs.render <- function(wt, env=parent.frame(), quoted=FALSE) {
   if (!quoted) {
@@ -689,10 +677,13 @@ ecs.render <- function(wt, env=parent.frame(), quoted=FALSE) {
 #' 
 #' @seealso [ecs.exec] for example.
 #' 
-#' @importFrom shiny getDefaultReactiveDomain
 #' @export
 ecs.proxy <- function(id) {
-  proxy <- list(id = id, session = shiny::getDefaultReactiveDomain())
+  if (requireNamespace("shiny", quietly = TRUE)) {
+    sessi <- shiny::getDefaultReactiveDomain()
+  } else
+    return(invisible(NULL))
+  proxy <- list(id = id, session = sessi)
   class(proxy) <- 'ecsProxy'
   return(proxy)
 }
@@ -718,109 +709,7 @@ ecs.proxy <- function(id) {
 #' 
 #' @examples
 #' if (interactive()) {
-#' 
-#' library(shiny)
-#' runApp( list(
-#' ui = fluidPage(
-#'   ecs.output('plot'),
-#'   fluidRow(
-#'     column(4, actionButton('addm', 'Add marks'),
-#'            actionButton('delm', 'Delete marks'),
-#'            br(),span('mark points stay, area/line deletable')
-#'     ),
-#'     column(3, actionButton('adds', 'Add serie'),
-#'            actionButton('dels', 'Del serie')),
-#'     column(5, actionButton('adata', 'Add data'),
-#'            actionButton('hilit', 'Highlight'),
-#'            actionButton('dnplay', 'Downplay') )
-#'   )
-#' ),
-#' server = function(input, output, session) {
-#' 
-#'   output$plot <- ecs.render({
-#'     p <- ec.init()
-#'     p$x$opts$series <- lapply(mtcars %>% relocate(disp, .after=mpg)
-#'       %>% group_by(cyl) %>% group_split(), function(s) {
-#'           list(type='scatter', name=unique(s$cyl), data=ec.data(s, 'values'))
-#'       })
-#'     p$x$opts$legend <- list(ey='')
-#'     p$x$opts$xAxis <- list(type="value"); p$x$opts$yAxis <- list(ec='')
-#'     p$x$opts$tooltip <- list(list(show=TRUE))
-#'     p$x$opts$series[[1]]$emphasis <- list(focus='series', blurScope='coordinateSystem')
-#'     p
-#'   })
-#' 
-#'   observeEvent(input$addm, {
-#'     p <- ecs.proxy('plot')
-#'     p$x$opts$series = list( list(
-#'       markPoint = list(data = list(
-#'         list(coord = c(22.5, 140.8)),
-#'         list(coord = c(30.5, 95.1))
-#'       ),
-#'       itemStyle = list(color='lightblue')
-#'       )
-#'       ,markArea = list(data = list(list(
-#'         list(xAxis = 15),
-#'         list(xAxis = 25)
-#'       ))
-#'       ,silent=TRUE
-#'       ,itemStyle = list(color='pink', opacity=0.2)
-#'       ,label = list(formatter='X-area', position='insideTop')
-#'       )
-#'       ,markLine = list(data = list(list(type='average')))
-#'     ), list(
-#'       markPoint = list(data = list(
-#'         list(coord = c(25.5, 143.8)),
-#'         list(coord = c(33.5, 98.1))
-#'       ),
-#'       itemStyle = list(color='forestgreen')
-#'       )
-#'     ))
-#'     p %>% ecs.exec() # ='p_merge'
-#'   })
-#'   observeEvent(input$adds, {
-#'     p <- ecs.proxy('plot')
-#'     p$x$opts$series <- list(list(
-#'       type = 'line', name = 'newLine',
-#'       #encode = list(x='mpg', y='disp')  # for dataset only
-#'       data=list(list(10,100),list(5,200),list(10,400),list(10,200),list(15,150),list(5,300))
-#'     ))
-#'     p %>% ecs.exec('p_update')
-#'   })
-#' 
-#'   observeEvent(input$adata, {
-#'     tmp <- apply(unname(data.frame(rnorm(5, 10, 3), rnorm(5, 200, 33))),
-#'                  1, function(x) { list(value=x) })
-#'     p <- ecs.proxy('plot')
-#'     p$x$opts$seriesIndex <- 1
-#'     p$x$opts$data <- tmp
-#'     p %>% ecs.exec('p_append_data')
-#'   })
-#' 
-#'   observeEvent(input$dels, {
-#'     p <- ecs.proxy('plot')
-#'     p$x$opts$seriesName <- 'newLine'
-#'     #'p$x$opts$seriesIndex <- 4  # ok too
-#'     p %>% ecs.exec('p_del_serie')
-#'   })
-#'   observeEvent(input$delm, {
-#'     p <- ecs.proxy('plot')
-#'     p$x$opts$seriesIndex <- 1
-#'     p$x$opts$delMarks <- c('markArea','markLine')
-#'     p %>% ecs.exec('p_del_marks')
-#'   })
-#'   observeEvent(input$hilit, {
-#'     p <- ecs.proxy('plot')
-#'     p$x$opts <- list(type='highlight', seriesName='4')
-#'     p %>% ecs.exec('p_dispatch')
-#'   })
-#'   observeEvent(input$dnplay, {
-#'     p <- ecs.proxy('plot')
-#'     p$x$opts <- list(type='downplay', seriesName='4')
-#'     p %>% ecs.exec('p_dispatch')
-#'   })
-#' } ))
-#'   
+#'    demo(eshiny, package='echarty')
 #' }
 #' 
 #' @export
@@ -839,10 +728,12 @@ ecs.exec <- function(proxy, cmd='p_merge') {
   
   # create web dependencies for JS, if present
   if (!is.null(proxy$dependencies)) {
-    deps <- list(shiny::createWebDependency(
-      htmltools::resolveDependencies( proxy$dependencies )[[1]]
-    ))
-    plist$deps <- deps
+    if (requireNamespace("shiny", quietly = TRUE)) {
+      deps <- list(shiny::createWebDependency(
+        htmltools::resolveDependencies( proxy$dependencies )[[1]]
+      ))
+      plist$deps <- deps
+    }
   }
   
   proxy$session$sendCustomMessage('kahuna', plist)
@@ -1004,29 +895,32 @@ ec.fromJson <- function(txt, ...) {
   wt
 }
 
-# for Shiny actions
-.onAttach <- function(libname, pkgname) {
-  shiny::registerInputHandler('echartyParse', function(data, ...) {
-    jsonlite::fromJSON(jsonlite::toJSON(data, auto_unbox = TRUE))
-  }, force = TRUE)
-  
-  options(
-    'ECHARTS_THEME' = NULL,
-    'ECHARTS_FONT' = NULL,
-    'ECHARTS_TILES' = NULL
-  )
-}
+if (requireNamespace("shiny", quietly = TRUE)) {
 
-.onLoad <- function(libname, pkgname) {
-  shiny::registerInputHandler('echartyParse', function(data, ...) {
-    jsonlite::fromJSON(jsonlite::toJSON(data, auto_unbox = TRUE))
-  }, force = TRUE)
-  
-  options(
-    'ECHARTS_THEME' = NULL,
-    'ECHARTS_FONT' = NULL,
-    'ECHARTS_TILES' = NULL
-  )
+  # for Shiny actions
+  .onAttach <- function(libname, pkgname) {
+    shiny::registerInputHandler('echartyParse', function(data, ...) {
+      jsonlite::fromJSON(jsonlite::toJSON(data, auto_unbox = TRUE))
+    }, force = TRUE)
+    
+    options(
+      'ECHARTS_THEME' = NULL,
+      'ECHARTS_FONT' = NULL,
+      'ECHARTS_TILES' = NULL
+    )
+  }
+
+  .onLoad <- function(libname, pkgname) {
+    shiny::registerInputHandler('echartyParse', function(data, ...) {
+      jsonlite::fromJSON(jsonlite::toJSON(data, auto_unbox = TRUE))
+    }, force = TRUE)
+    
+    options(
+      'ECHARTS_THEME' = NULL,
+      'ECHARTS_FONT' = NULL,
+      'ECHARTS_TILES' = NULL
+    )
+  }
 }
 
 #' Pipe operator

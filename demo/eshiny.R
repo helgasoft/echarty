@@ -1,5 +1,5 @@
 #'-----------  Interactive charts with echarty and Shiny ------------
-#'demo('shiny', package ='echarty')
+#' demo(eshiny, package ='echarty')
 
   devAskNewPage(ask = FALSE)
   library(shiny)
