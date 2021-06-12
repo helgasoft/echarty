@@ -6,7 +6,7 @@ Watching the time go by? A little gem from ECharts examples can help - a finely 
 Looking at the JS code, we see the usual 'option', but also some functions at the bottom. And that's a lot to rewrite in R! Fortunately, there is a better way:  
 Introducing the Echarty Translator Assistant (TA) - run the following R command
 ```r
-echarty::ec.js2r()   # needs version 0.1.1
+demo(js2r, package='echarty')
 ```
 It is a R/Shiny app to help translate data from JS examples to R. Take a moment to familiarize yourself with it and check the **Info** button upper right.  
 We copy only the *option* object from ECharts and paste it in TA, then hit Translate and Plot ... and get an error. This is due to the existance of a **formatter** component. We need to find it in *R code* and replace *formatter=function...)),anchor* with *formatter="@@"),anchor*.  

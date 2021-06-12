@@ -1,11 +1,12 @@
 ## Gallery
 
- Some interesting charts along with their code. The latest version of *echarty* is required. The package itself has two dozen more examples - type *?ec.examples* to see them in RStudio Help panel.
+ Some interesting charts along with their **code**. Several have Live Demos hosted on [RPubs](https://rpubs.com/echarty). The *echarty* package has two dozen more examples - in RStudio type *?ec.examples* to see them in panel Help.
 
-<br />
-Simple bar, demo for presets <br />
+
+### Simple bar  
+demo for presets
 <img src='img/cb.bar.png' target=_blank alt='bar' />
-<details><summary>► View code</summary>
+<details><summary>🔻View code</summary>
 
 ```r
 library(lubridate)
@@ -33,11 +34,11 @@ p
 
 ```
 </details>
+<br />  
 
-<br />
-Horizontal bars <br />
+### Horizontal bars
 <img src='img/cb-33.png' target=_blank alt='vertBars' />
-<details><summary>► View code</summary>
+<details><summary>🔻 View code</summary>
 
 ```r
 library(echarty); library(dplyr)
@@ -56,11 +57,11 @@ p$x$opts <- list(
 p
 ```
 </details>
-
 <br />
-Easy as pie <br />
+
+### Easy as pie
 <img src='img/cb-0.png' target=_blank alt='pie' />
-<details><summary>► View code</summary>
+<details><summary>🔻 View code</summary>
 
 
 ```r
@@ -78,16 +79,16 @@ p$x$opts <- list(
 p
 ```
 </details>
-
 <br />
-Custom chart <br />
+
+### Custom chart
 <img src='img/cb-1.png' target=_blank alt='profit' />
-<details><summary>► View code</summary>
+<details><summary>🔻 View code</summary>
 
 
 ```r
 # source https://echarts.apache.org/examples/en/editor.html?c=custom-profit
-# GUI translated with echarty::ec.js2r() with rdata and ritem added
+# GUI translated with demo(js2r) with rdata and ritem added
 
 library(echarty); library(dplyr)
 data <- list(c(10, 16, 3, "A"), c(16, 18, 15, "B"), c(18, 26, 12, "C"), c(26, 32, 22, "D"), c(32, 56, 7, "E"), c(56, 62, 17, "F"))
@@ -128,11 +129,11 @@ p$x$opts <- list(
 p
 ```
 </details>
+<br />
 
-<p>&nbsp;</p>
-Error Bars <br />
+### Error Bars
 <img src='img/cb-2.png' target=_blank alt='profit' />
-<details><summary>► View code</summary>
+<details><summary>🔻 View code</summary>
 
 ```r
 # example by https://github.com/kuzmenkov111
@@ -171,14 +172,12 @@ q$x$opts$series <- lapply(q$x$opts$series, function(s, i) {
 q   # customized
 ```
 </details>
+<br />
 
-
-<p>&nbsp;</p>
-Crosstalk in 3D <br />
+### Crosstalk in 3D
 
 <img src='img/cb-3.png' target=_blank alt='crosstalk 3D' />
-<details><summary>► View code</summary>
-
+<details><summary>🔻 View code</summary>
 
 ```r
 # echarty can highlight 3D points selected by external controls
@@ -210,13 +209,17 @@ bscols( list(
 )
 ```
 </details>
+<br />
 
-<p>&nbsp;</p>
-Gauge triple with real-time animation<br />
+### Crosstalk 2D
+play with the [<span style="color:magenta">Live Demo</span>](https://rpubs.com/echarty/crosstalk)  
+<br />
+
+### Triple gauge with animation
 
 <img src='img/cb-5.png' target=_blank alt='gauge3' />
 
-<details><summary>► View code</summary>
+<details><summary>🔻 View code</summary>
 
 ```r
 jcode <- "setInterval(function () {
@@ -243,14 +246,13 @@ p$x$opts <- list(series = list(
 p
 ```
 </details>
+<br />
 
-
-<p>&nbsp;</p>
-scatterGL with 5,000 points<br />
+### scatterGL with 5,000 points
 
 <img src='img/cb-6.png' target=_blank alt='scatterGL' />
 
-<details><summary>► View code</summary>
+<details><summary>🔻 View code</summary>
 
 ```r
 # example works also with type='scatter', just ec.data needs to be format='values'
@@ -281,14 +283,13 @@ p$x$opts <- list(
 p
 ```
 </details>
+<br />
 
-
-<p>&nbsp;</p>
-scatter3D with 36,000 points<br />
+### scatter3D with 36,000 points
 
 <img src='img/cb-7.png' target=_blank alt='bunny' />
 
-<details><summary>► View code</summary>
+<details><summary>🔻 View code</summary>
 
 ```r
 library(onion); library(echarty)
@@ -302,26 +303,26 @@ p$x$opts$visualMap <- list(
 p
 ```
 </details>
+<br />
 
-
-<p>&nbsp;</p>
-Bathymetry in 3D<br />
+### Bathymetry in 3D
+up to 100,000 surface points
 
 <img src='img/hawaii3d.png' target=_blank alt='bathy' />
 
-<details><summary>► How to run Shiny app &nbsp; &nbsp; <span style="color:magenta">live demo</span></summary>
+<details><summary>🔻 Shiny app - <span style="color:magenta">Live Demo</span></summary>
 
 ```r
-runGist('https://gist.github.com/helgasoft/121d7d3ff7d292990c3e05cfc1cbf24b')
+shiny::runGist('https://gist.github.com/helgasoft/121d7d3ff7d292990c3e05cfc1cbf24b')
 ```
 </details>
+<br />
 
-<p>&nbsp;</p>
-Custom radar chart<br />
+### Custom radar chart
 
 <img src='img/cb-8.png' target=_blank alt='radar1' />
 
-<details><summary>► View code</summary>
+<details><summary>🔻 View code</summary>
 
 ```r
 data <- data.frame(
@@ -349,11 +350,11 @@ p$x$opts$series = list( list(
 p
 ```
 </details>
+<br />
 
-<p>&nbsp;</p>
-Grouped boxplot<br />
+### Grouped boxplot
 <img src='img/cb-9.png' target=_blank alt='boxplot' />
-<details><summary>► View code</summary>
+<details><summary>🔻 View code</summary>
 
 ```r
 # original JS: https://echarts.apache.org/examples/en/editor.html?c=boxplot-multi
@@ -396,12 +397,12 @@ p$x$opts$dataZoom <- list(list(type='slider',start=50))
 p
 ```
 </details>
+<br />
 
-
-<p>&nbsp;</p>
-Modularity plugin, graph of DOW companies - size by market cap<br />
+### Modularity plugin
+DOW companies - size by market cap<br />
 <img src='img/cb-10.png' target=_blank alt='dow' />
-<details><summary>► View code</summary>
+<details><summary>🔻 View code</summary>
 
 ```r
 # select and drag items to see auto-rearrange effect
@@ -440,12 +441,12 @@ p$x$opts <- list(
 p
 ```
 </details>
+<br />
 
-
-<p>&nbsp;</p>
-World map plugin + geo points/lines in a timeline<br />
+### World map plugin
+ with geo points/lines in a timeline<br />
 <img src='img/cb-11.geo.gif' target=_blank alt='dow' />
-<details><summary>► View code</summary>
+<details><summary>🔻 View code</summary>
 
 ```r
 # inspired by data from https://github.com/etiennebacher
@@ -480,6 +481,57 @@ p$x$opts$timeline <- list(data=unlist(lapply(options,
       function(x) x$title$text)), axisType='category')
 p$x$opts$options <- options
 p
+```
+</details>
+<br />
+
+### Baidu maps 
+a proof-of-concept (POC)  
+[<span style="color:magenta">Live Demo</span>](https://rpubs.com/echarty/bmap)  
+<br />
+
+### Leaflet maps
+and switching chart selection **without Shiny**  
+[<span style="color:magenta">Live Demo</span>](https://rpubs.com/echarty/mapjs)
+<br /> <br />
+
+### Custom SVG map 
+with mouse events &nbsp; &nbsp; &nbsp; [<span style="color:magenta">Live Demo</span>](https://rpubs.com/echarty/svg)
+<img src='img/cb-12.organs.png' target=_blank alt='organs' />
+<details><summary>🔻 View code</summary>
+
+```r
+#' JS source https://echarts.apache.org/examples/en/editor.html?c=geo-organ
+#' p$x$opts from original 'options' translated with demo(js2r)
+#' p$x$on handlers added manually
+#' demo @ https://rpubs.com/echarty/svg
+
+url <- 'https://echarts.apache.org/examples/data/asset/geo/Veins_Medical_Diagram_clip_art.svg'
+svg <- url %>% readLines(encoding='UTF-8') %>% paste0(collapse="")
+p <- ec.init(preset=FALSE) %>% ec.theme('dark-mushroom')
+p$x$registerMap <- list(list(mapName='organs', svg=svg))
+p$x$on <- list(list(event='mouseover', query=list(seriesIndex=0), 
+                    handler=htmlwidgets::JS("function (event) {
+  this.dispatchAction({ type: 'highlight', geoIndex: 0, name: event.name }); }") ),
+               list(event='mouseout', query=list(seriesIndex=0),
+                 handler=htmlwidgets::JS("function (event) {
+  this.dispatchAction({ type: 'downplay', geoIndex: 0, name: event.name }); }") )
+)
+p$x$opts <- list(
+  tooltip = list(ey = ""), 
+  geo = list(left = 10, right = "50%", map = "organs", selectedMode = "multiple",
+             emphasis = list(focus = "self", itemStyle = list(color = NULL), 
+                             label = list(position = "bottom", distance = 0, textBorderColor = "#fff", textBorderWidth = 2)),
+             blur = list(ey = ""), 
+             select = list(itemStyle = list(color = "#b50205"), 
+                           label = list(show = FALSE, textBorderColor = "#fff", textBorderWidth = 2))), 
+  grid = list(left = "60%", top = "20%", bottom = "20%"), 
+  xAxis = list(ey = ""), 
+  yAxis = list(data = list("heart", "large-intestine", "small-intestine", "spleen", "kidney", "lung", "liver")), 
+  series = list(list(type = "bar", emphasis = list(focus = "self"), 
+                     data = list(121, 321, 141, 52, 198, 289, 139))))
+p
+
 ```
 </details>
 

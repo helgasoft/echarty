@@ -104,11 +104,13 @@ if (window.hljs) {
 <div id="crosstalk" class="section level2">
 <h2>Crosstalk</h2>
 
-<p>Crosstalk is poor man’s Shiny. It may not have all the bells and whistles, but has one important advantage - <strong>no server needed</strong>!<br />
-Users can have interactive control of their charts on a simple HTML page. Like the one you are reading now. It is hosted on Github where the only allowed content is HTML and JavaScript.<br />
-Here is the dataflow: RStudio(opt.) ► data + R-code ► embed in .Rmd file ► Knit .Rmd ► get .html ► host anywhere.<br />
+<p>
+Crosstalk is about <strong>selections</strong>. Multiple R htmlwidgets can share a common dataset and exchange record selections. Since all widgets have the data already, the exchange transfers only keys (record IDs). On a more basic level, this is a mechanism of keys exchange between multiple JavasScript libraries on the same web page.<br />
+In R Markdown documents the dataset is frozen, in Shiny applications the dataset could be replaced.
+<br />
+Here is the R Markdown dataflow: RStudio(opt.) open .Rmd file ► embed data + R-code ► Knit .Rmd ► get .html ► host anywhere.<br />
 Library <em>htmlwidgets</em> takes care of gathering your data,code and libraries into one chunk exported later by knitr in HTML format.</p>
-<p><a href="https://github.com/rstudio/crosstalk">Crosstalk</a> provides two types of cross-widget interactions - linked <strong>brushing</strong> and <strong>filtering</strong>.<br />
+<p><a href="https://github.com/rstudio/crosstalk">Crosstalk</a> provides two types of cross-widget interactions - <strong>brushing</strong> and <strong>filtering</strong> selections.<br />
 The example below uses several external crosstalk controls. Their capabilities are summarized here, <strong>R</strong> means <em>receive</em> and <strong>S</strong> means <em>send</em>.</p>
 <table>
 <thead>
@@ -173,7 +175,7 @@ The example below uses several external crosstalk controls. Their capabilities a
 
 <details>
 <summary>
-<strong>► View code</strong>
+<strong>🔻 View code</strong>
 </summary>
 <pre class="r"><code>library(crosstalk); library(d3scatter); library(DT); library(htmltools)
 library(echarty); library(dplyr); library(tibble);
@@ -313,7 +315,7 @@ Test: select <strong>5</strong> in checkbox ‘Gears’, then in echarty unselec
 </div>
 <div id="notes" class="section level3">
 <h3>Notes</h3>
-<p>Echarty with crosstalk has not been tested in Shiny (yet).<br />
+<p>echarty with crosstalk has not been tested in Shiny.<br />
 ECharts GL/3D is a <a href="https://echarts.apache.org/en/option-gl.html#series">separate library</a> used as a plugin. Currently it supports only brush-receive through echarty. There is a code sample in the <a href="gallery.html">gallery</a>.</p>
 </div>
 

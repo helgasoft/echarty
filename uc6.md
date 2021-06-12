@@ -7,10 +7,12 @@ A few noticeable details
 - columns could be rearranged to match the two axes, first column is X, second is Y
 - initializing *ec.init()* with grouped data presets the [dataset](https://echarts.apache.org/en/option.html#dataset) and [legend](https://echarts.apache.org/en/option.html#legend). Here *dataset* is not used, but *legend* is. Otherwise we would have just <code>p<-ec.init()</code>
 - nested grouping with *lapply* is easy!
-- option series need to be converted from data.frame to a list with *ec.data()*
+- option series data is converted from data.frame to a list with *ec.data()*
 - with [timeline](https://echarts.apache.org/en/option.html#timeline) and [options](https://echarts.apache.org/en/option.html#options) present, there is no need to set single [chart series](https://echarts.apache.org/en/option.html#series)
 
-During the making of this example we confirmed an important fact. In current ECharts v.5, **option series** work only with [data](https://echarts.apache.org/en/option.html#series-bar.data), but not with [datasets](https://echarts.apache.org/en/option.html#dataset). So although tempting, [datasetIndex](https://echarts.apache.org/en/option.html#series-bar.datasetIndex) cannot be used in option series.
+<!--
+During the making of this example we confirmed an important fact. In current ECharts v.5, **option series** work only with [data](https://echarts.apache.org/en/option.html#series-bar.data), but not with [datasets](https://echarts.apache.org/en/option.html#dataset). So although tempting, [datasetIndex](https://echarts.apache.org/en/option.html#series-bar.datasetIndex) cannot be used in option series. 
+-->
 
 Data *vv* credit goes to [vituri](https://vituri.github.io).
 ```r
