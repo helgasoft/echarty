@@ -4,13 +4,15 @@
 \alias{ec.plugjs}
 \title{Install Javascript plugin from URL source}
 \usage{
-ec.plugjs(wt = NULL, source = NULL)
+ec.plugjs(wt = NULL, source = NULL, ask = FALSE)
 }
 \arguments{
 \item{wt}{A widget to add dependency to, see \code{\link[htmlwidgets]{createWidget}}}
 
-\item{source}{URL of the uninstalled Javascript plugin, \cr
-or name of an installed plugin file, suffix .js included. Default is NULL.}
+\item{source}{URL or file:// of an uninstalled Javascript plugin, \cr
+or name of an installed plugin file with suffix '.js'. Default is NULL.}
+
+\item{ask}{Whether to ask the user to download source if missing. Default is FALSE}
 }
 \value{
 A widget with JS dependency added if successful, otherwise input wt

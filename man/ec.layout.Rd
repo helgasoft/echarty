@@ -25,8 +25,10 @@ Set multiple charts in rows/columns format
 }
 \examples{
 
-p1 <- cars \%>\% ec.init()
-p2 <- cars \%>\% ec.init() \%>\% ec.theme('dark')
-ec.layout(list(p1,p2), cols=2 )
+if (interactive()) {
+  p1 <- cars \%>\% ec.init()
+  p2 <- cars \%>\% ec.init() \%>\% ec.theme('dark')
+  ec.layout(list(p1,p2), cols=2 )
+}
 
 }

@@ -1,5 +1,11 @@
 # log history of echarty package development
 
+## v. 0.2.1
+
+- upgrade to ECharts v.5.1.2
+- ec.plugjs: new parameter 'ask' to allow/suppress prompts
+- ec.plugjs: parameter 'source' now accepts 'file://' format
+
 ## v. 0.2.0
 
 - removed dependencies for Shiny and crosstalk

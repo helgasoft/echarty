@@ -27,16 +27,17 @@ If the grouping is on multiple columns, only the first one is used.}
 \item{preset}{Disable(FALSE) or enable (TRUE, default) presets xAxis,yAxis,serie for 2D, or grid3D,xAxis3D,yAxis3D,zAxis3D for 3D.}
 
 \item{load}{Name(s) of plugin(s) to load. Could be a character vector or comma-delimited string. default NULL.\cr
+\link{ec.plugjs} will be called internally for each entry, popup prompts controlled by parameter \emph{ask}. \cr
 Built-in plugins: \cr \itemize{
 \item leaflet - Leaflet maps with customizable tiles, see \href{https://github.com/gnijuohz/echarts-leaflet#readme}{source}\cr
 \item custom - renderers for \link{ecr.band} and \link{ecr.ebars} \cr
-} Plugins with one-time installation (popup prompt): \cr \itemize{
+} Plugins with one-time installation: \cr \itemize{
 \item 3D - 3D charts and WebGL acceleration, see \href{https://github.com/ecomfe/echarts-gl}{source} and \href{https://echarts.apache.org/en/option-gl.html#series}{docs} \cr
 \item world - world map with country boundaries, see \href{https://github.com/apache/echarts/tree/master/test/data/map/js}{source} \cr
 \item liquid - liquid fill, see \href{https://github.com/ecomfe/echarts-liquidfill}{source}  \cr
 \item gmodular - graph modularity, see \href{https://github.com/ecomfe/echarts-graph-modularity}{source}  \cr
 \item wordcloud - cloud of words, see \href{https://github.com/ecomfe/echarts-wordcloud}{source} \cr
-} Install you own plugins with \link{ec.plugjs}.}
+} or install you own third-party plugins.}
 
 \item{js}{A Javascript expression to evaluate, default NULL.}
 

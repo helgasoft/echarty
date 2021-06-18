@@ -62,12 +62,12 @@ p
 
 #------ Liquidfill plugin
 if (interactive()) {
-p <- ec.init(load=c('liquid'), preset=FALSE)
-p$x$opts$series[[1]] <- list(
-  type='liquidFill', data=c(0.6, 0.5, 0.4, 0.3), # amplitude=0,
-  waveAnimation=FALSE, animationDuration=0, animationDurationUpdate=0
-)
-p
+ p <- ec.init(load=c('liquid'), preset=FALSE)
+ p$x$opts$series[[1]] <- list(
+   type='liquidFill', data=c(0.6, 0.5, 0.4, 0.3), # amplitude=0,
+   waveAnimation=FALSE, animationDuration=0, animationDurationUpdate=0
+ )
+ p
 }
 
 
@@ -434,8 +434,9 @@ q3 <- main; q3$x$opts$series[[1]]$encode <- list(y='drat', x='mpg');
 q4 <- main; q4$x$opts$series[[1]]$encode <- list(y='qsec', x='mpg'); 
 q4$x$connect <- 'group1'
 # q4$x$disconnect <- 'group1'  # ok too
-ec.layout(list(q1,q2,q3,q4), cols=2, title='group connect')
-
+if (interactive()) {
+  ec.layout(list(q1,q2,q3,q4), cols=2, title='group connect')
+}
 
 #------------- Shiny interactive charts demo ---------------
 if (interactive()) {

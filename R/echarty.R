@@ -10,16 +10,17 @@
 #'     If the grouping is on multiple columns, only the first one is used.
 #' @param preset Disable(FALSE) or enable (TRUE, default) presets xAxis,yAxis,serie for 2D, or grid3D,xAxis3D,yAxis3D,zAxis3D for 3D.
 #' @param load Name(s) of plugin(s) to load. Could be a character vector or comma-delimited string. default NULL.\cr
+#'   [ec.plugjs] will be called internally for each entry, popup prompts controlled by parameter \emph{ask}. \cr
 #'   Built-in plugins: \cr \itemize{
 #'   \item leaflet - Leaflet maps with customizable tiles, see \href{https://github.com/gnijuohz/echarts-leaflet#readme}{source}\cr
 #'   \item custom - renderers for [ecr.band] and [ecr.ebars] \cr 
-#'  } Plugins with one-time installation (popup prompt): \cr \itemize{
+#'  } Plugins with one-time installation: \cr \itemize{
 #'   \item 3D - 3D charts and WebGL acceleration, see \href{https://github.com/ecomfe/echarts-gl}{source} and \href{https://echarts.apache.org/en/option-gl.html#series}{docs} \cr
 #'   \item world - world map with country boundaries, see \href{https://github.com/apache/echarts/tree/master/test/data/map/js}{source} \cr
 #'   \item liquid - liquid fill, see \href{https://github.com/ecomfe/echarts-liquidfill}{source}  \cr
 #'   \item gmodular - graph modularity, see \href{https://github.com/ecomfe/echarts-graph-modularity}{source}  \cr
 #'   \item wordcloud - cloud of words, see \href{https://github.com/ecomfe/echarts-wordcloud}{source} \cr
-#'  } Install you own plugins with [ec.plugjs].
+#'  } or install you own third-party plugins.
 #' @param width,height A valid CSS unit (like \code{'100\%'},
 #'   \code{'500px'}, \code{'auto'}) or a number, which will be coerced to a
 #'   string and have \code{'px'} appended.
@@ -191,6 +192,7 @@ ec.init <- function( df = NULL, group1 = 'scatter', preset = TRUE, load = NULL,
   }
   
   # Plugins implemented as dynamic load on-demand
+  ask <- if (is.null(opts$ask)) TRUE else opts$ask
   if ('3D' %in% load) {
     if (preset) {
       wt$x$opts$xAxis <- NULL   # replace 2D presets with 3D
@@ -201,24 +203,25 @@ ec.init <- function( df = NULL, group1 = 'scatter', preset = TRUE, load = NULL,
       wt$x$opts$yAxis3D <- list(list())
       wt$x$opts$zAxis3D <- list(list())
     }
-    wt <- ec.plugjs(wt, 'https://cdn.jsdelivr.net/npm/echarts-gl@2.0.4/dist/echarts-gl.min.js')
+    wt <- ec.plugjs(wt, 'https://cdn.jsdelivr.net/npm/echarts-gl@2.0.4/dist/echarts-gl.min.js', ask)
   }
   if ('world' %in% load) 
-    wt <- ec.plugjs(wt, 'https://cdn.jsdelivr.net/npm/echarts@4.9.0/map/js/world.js')
+    wt <- ec.plugjs(wt, 'https://cdn.jsdelivr.net/npm/echarts@4.9.0/map/js/world.js', ask)
   
   if ('liquid' %in% load) 
-    wt <- ec.plugjs(wt, 'https://cdn.jsdelivr.net/npm/echarts-liquidfill@3.0.0/dist/echarts-liquidfill.min.js')
+    wt <- ec.plugjs(wt, 'https://cdn.jsdelivr.net/npm/echarts-liquidfill@3.0.0/dist/echarts-liquidfill.min.js', ask)
   
   if ('gmodular' %in% load) 
-    wt <- ec.plugjs(wt, 'https://cdn.jsdelivr.net/npm/echarts-graph-modularity@2.0.0/dist/echarts-graph-modularity.min.js')
+    wt <- ec.plugjs(wt, 'https://cdn.jsdelivr.net/npm/echarts-graph-modularity@2.0.0/dist/echarts-graph-modularity.min.js', ask)
   
   if ('wordcloud' %in% load) 
-    wt <- ec.plugjs(wt, 'https://cdn.jsdelivr.net/npm/echarts-wordcloud@2.0.0/dist/echarts-wordcloud.min.js')
+    wt <- ec.plugjs(wt, 'https://cdn.jsdelivr.net/npm/echarts-wordcloud@2.0.0/dist/echarts-wordcloud.min.js', ask)
   
-  # load unknown installed plugins
+  # load unknown plugins
   unk <- load[! load %in% c('leaflet','custom','3D','world','liquid','gmodular','wordcloud')]
-  for(p in unk) wt <- ec.plugjs(wt, p)
-  
+  if (length(unk)>0) {
+    for(p in unk) wt <- ec.plugjs(wt, p, ask)
+  }
   return(wt)
 }
 
@@ -226,8 +229,9 @@ ec.init <- function( df = NULL, group1 = 'scatter', preset = TRUE, load = NULL,
 #' Install Javascript plugin from URL source
 #' 
 #' @param wt A widget to add dependency to, see \code{\link[htmlwidgets]{createWidget}}
-#' @param source URL of the uninstalled Javascript plugin, \cr
-#'   or name of an installed plugin file, suffix .js included. Default is NULL.
+#' @param source URL or file:// of an uninstalled Javascript plugin, \cr
+#'   or name of an installed plugin file with suffix '.js'. Default is NULL.
+#' @param ask Whether to ask the user to download source if missing. Default is FALSE
 #' @return A widget with JS dependency added if successful, otherwise input wt
 #'
 #' @details When \emph{source} is URL, the plugin file is installed with a popup prompt to the user.\cr
@@ -250,33 +254,35 @@ ec.init <- function( df = NULL, group1 = 'scatter', preset = TRUE, load = NULL,
 #' @importFrom utils askYesNo download.file
 #'
 #' @export
-ec.plugjs <- function(wt=NULL, source=NULL) {
+ec.plugjs <- function(wt=NULL, source=NULL, ask=FALSE) {
   if (missing(wt))
     stop('ec.plugjs expecting widget', call. = FALSE)
   if (is.null(source)) return(wt)
+  if (!startsWith(source, 'http') && !startsWith(source, 'file://'))
+    stop('ec.plugjs expecting source as URL or file://', call. = FALSE)
   fname <- basename(source)
   # if (!endsWith(fname, '.js'))
   #   stop('ec.plugjs expecting .js suffix', call. = FALSE)
   path <- system.file('js', package = 'echarty')
   ffull <- paste0(path,'/',fname)
   if (!file.exists(ffull)) {
-    if (!startsWith(source, 'http'))
-      stop('ec.plugjs expecting URL source', call. = FALSE)
-    prompt <- paste0('One-time installation of plugin\n',fname,'\n Would you like to proceed ?')
-    ans <- FALSE
-    if (interactive())
-      ans <- askYesNo(prompt)
-    if (is.na(ans)) ans <- FALSE  # was cancelled
+    if (ask) {
+      prompt <- paste0('One-time installation of plugin\n',fname,'\n Would you like to proceed ?')
+      ans <- FALSE
+      if (interactive())
+        ans <- askYesNo(prompt)
+      if (is.na(ans)) ans <- FALSE  # was cancelled
+    } else
+      ans <- TRUE
     if (ans) {
       try(withCallingHandlers(
         download.file(source, ffull), # method = "libcurl"),
-        warning = function(w) {
-          cat('ec.plugjs Error:', sub(".+HTTP status was ", "", w))
-          ans <- FALSE
-        }),
-        silent = TRUE)
+        error = function(w) { ans <- FALSE },
+        warning = function(w) { ans <- FALSE }
+            #cat('ec.plugjs Error:', sub(".+HTTP status was ", "", w, source))
+        ))  #,silent=TRUE)
     } 
-    if (!ans) return(wt)
+    if (!ans) return(wt)    # error
   }
   dep <- htmltools::htmlDependency(
     name = fname, version = '1.0.0', src = c(file = path),
@@ -404,9 +410,11 @@ ec.timegrp <- function(wt, df=NULL, scol=NULL, xcol=NULL, type='line', ...) {
 #' @return A container \code{\link[htmltools]{div}} in rmarkdown, otherwise \code{\link[htmltools]{browsable}}
 #' @examples
 #' 
-#' p1 <- cars %>% ec.init()
-#' p2 <- cars %>% ec.init() %>% ec.theme('dark')
-#' ec.layout(list(p1,p2), cols=2 )
+#' if (interactive()) {
+#'   p1 <- cars %>% ec.init()
+#'   p2 <- cars %>% ec.init() %>% ec.theme('dark')
+#'   ec.layout(list(p1,p2), cols=2 )
+#' }
 #' 
 #' @export 
 ec.layout <- function (plots, rows = NULL, cols = NULL, width = "xs", 
