@@ -104,39 +104,32 @@ HTMLWidgets.widget({
           });
           
           if(x.hasOwnProperty('capture')){
+            // for events not included below, like "datazoom"
             chart.on(x.capture, function(e){
               Shiny.onInputChange(el.id + '_' + x.capture + ecp, e, {priority: 'event'});
             });
           }
           
           chart.on("click", function(e){
-            Shiny.onInputChange(el.id + '_clicked_data' + ecp, e.data, {priority: 'event'});
-            Shiny.onInputChange(el.id + '_clicked_row' + ecp, e.dataIndex + 1, {priority: 'event'});
-            Shiny.onInputChange(el.id + '_clicked_serie' + ecp, e.seriesName, {priority: 'event'});
+            Shiny.onInputChange(el.id + '_clicked_data' + ecp, e.data, {priority:'event'});
+            Shiny.onInputChange(el.id + '_clicked_row' + ecp, e.dataIndex + 1, {priority:'event'});
+            Shiny.onInputChange(el.id + '_clicked_serie' + ecp, e.seriesName, {priority:'event'});
           });
           
           chart.on("mouseover", function(e){
-            Shiny.onInputChange(el.id + '_mouseover_data' + ecp, e.data);
-            Shiny.onInputChange(el.id + '_mouseover_row' + ecp, e.dataIndex + 1);
-            Shiny.onInputChange(el.id + '_mouseover_serie' + ecp, e.seriesName);
+            Shiny.onInputChange(el.id + '_mouseover_data' + ecp, e.data, {priority:'event'});
+            Shiny.onInputChange(el.id + '_mouseover_row' + ecp, e.dataIndex + 1, {priority:'event'});
+            Shiny.onInputChange(el.id + '_mouseover_serie' + ecp, e.seriesName, {priority:'event'});
+          });
+          
+          chart.on("mouseout", function(e){
+            Shiny.onInputChange(el.id + '_mouseout_data' + ecp, e.data, {priority:'event'});
+            Shiny.onInputChange(el.id + '_mouseout_row' + ecp, e.dataIndex + 1, {priority:'event'});
+            Shiny.onInputChange(el.id + '_mouseout_serie' + ecp, e.seriesName, {priority:'event'});
           });
           
           $(document).on('shiny:recalculating', function() {
-            
-            if(x.hideWhite === true){
-              var css = '.recalculating {opacity: 1.0 !important; }',
-                  head = document.head || document.getElementsByTagName('head')[0],
-                  style = document.createElement('style');
-              
-              style.type = 'text/css';
-              if (style.styleSheet){
-                style.styleSheet.cssText = css;
-              } else {
-                style.appendChild(document.createTextNode(css));
-              }
-              head.appendChild(style);
-            }
-            
+
             if(x.loading === true){
               chart.showLoading('default', x.loadingOpts);
             } else if(x.loading === false) {
@@ -308,11 +301,9 @@ HTMLWidgets.widget({
       },
 
       resize: function(width, height) {
-
         if(chart){
           chart.resize({width: width, height: height});
         }
-
       }
 
     };
@@ -394,11 +385,6 @@ if (HTMLWidgets.shinyMode) {
             cpts.series.push(serie);
           })
   
-          if (data.opts.legend) {
-            if(cpts.legend.length > 0)
-              if(data.opts.legend.data)
-                cpts.legend[0].data = cpts.legend[0].data.concat(data.opts.legend.data);
-          }
           if (data.opts.xAxis) {
             if(cpts.xAxis.length > 0){
               if(cpts.xAxis[0].data){
@@ -416,18 +402,26 @@ if (HTMLWidgets.shinyMode) {
                 yaxis = yaxis.filter(distinct);
                 cpts.yAxis[0].data = yaxis;
               }
-            }
+            } else
+              cpts.yAxis = data.opts.yAxis;
           }
           if (data.opts.dataset) 
             cpts.dataset = data.opts.dataset;
             
           if (data.opts.toolbox) 
             cpts.toolbox = data.opts.toolbox;
+            
           //console.log('user.opts='+Object.keys(data.opts))
           chart.setOption(cpts, true);
           break;
           
-        case 'p_append_data':       // add data to one serie
+        case 'p_append_data':       // add data to legend or one serie
+        
+          if (data.opts.legend) {
+            if(cpts.legend.length > 0)
+              if(data.opts.legend.data)
+                cpts.legend[0].data = cpts.legend[0].data.concat(data.opts.legend.data);
+          }
           if (!cpts.series) break;
           if (data.opts.seriesName) {
             // find index by name

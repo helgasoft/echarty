@@ -48,6 +48,8 @@ ec.init <- function( df = NULL, group1 = 'scatter', preset = TRUE, load = NULL,
                      renderer = 'canvas', ...) {
   
   opts <- list(...)
+  ask <- if (is.null(opts$ask)) FALSE else opts$ask
+  opts$ask <- NULL
   
   # presets are used as default for examples and testing
   # user can also ignore or replace them
@@ -56,7 +58,6 @@ ec.init <- function( df = NULL, group1 = 'scatter', preset = TRUE, load = NULL,
     if (!('yAxis' %in% names(opts))) opts$yAxis <- list(ey='')
     if (!('series' %in% names(opts))) opts$series <- list(
     	list(type=if (is.null(group1)) 'scatter' else group1) )
-    #opts$series[[1]] <- list(type='scatter')
   }
 
   if (requireNamespace("crosstalk", quietly = TRUE)) {  # replaced ' @importFrom crosstalk is.SharedData crosstalkLibs
@@ -192,7 +193,6 @@ ec.init <- function( df = NULL, group1 = 'scatter', preset = TRUE, load = NULL,
   }
   
   # Plugins implemented as dynamic load on-demand
-  ask <- if (is.null(opts$ask)) TRUE else opts$ask
   if ('3D' %in% load) {
     if (preset) {
       wt$x$opts$xAxis <- NULL   # replace 2D presets with 3D
