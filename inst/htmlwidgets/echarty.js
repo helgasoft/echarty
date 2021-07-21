@@ -2,15 +2,15 @@
 HTMLWidgets.widget({
 
   name: 'echarty',
-
   type: 'output',
 
   factory: function(el, width, height) {
     
     var initialized = false;
 
-    var chart,opts;
-
+    var chart, opts;
+    
+    // does the job of htmlwidgets:::JSEvals and JS_EVAL for proxy
     const evalFun = (sourceOpts) => {
       let opts = Object.assign({}, sourceOpts);
       Object.keys(opts).forEach((key) => {
@@ -198,10 +198,11 @@ HTMLWidgets.widget({
           echarts.disconnect(x.disconnect);
         }
         
-        /* ---------------- crosstalk ----------------
-          keys are numbered differently depending on the source: 
-              R = 1:n, JS = 0:(n-1)   unselect all if sel.count==total
-        */
+        // ---------------- crosstalk ----------------
+        // keys are numbered differently depending on the source: 
+        //      R = 1:n, JS = 0:(n-1)
+        // unselect all if sel.count==total
+        //
     	  // check crosstalk bindings
       	if ((typeof x.settings)!='undefined' &&
       	    (typeof x.settings.crosstalk_key)!='undefined' && 
@@ -345,13 +346,16 @@ function distinct(value, index, self) {
 if (HTMLWidgets.shinyMode) {
 
   Shiny.addCustomMessageHandler('kahuna',
+  
     function(data) {
+      
       var chart = get_e_charts(data.id);
       if (typeof chart == 'undefined') return;
       if (!data.action) return;
       // add JS dependencies if any
       if (data.deps) Shiny.renderDependencies(data.deps);
       let cpts = chart.getOption();
+      //data.opts = evalFun(data.opts);
       
       switch(data.action) {
         
@@ -377,9 +381,9 @@ if (HTMLWidgets.shinyMode) {
           
           if(!cpts.series)  // add series array if none
             cpts.series = [];
-  
+          
           data.opts.series.forEach(function(serie){
-            // for JS_EVAL and renderItem
+            // for renderItem
             if (typeof serie.renderItem == 'string') 
               serie.renderItem = eval(serie.renderItem);
             cpts.series.push(serie);
@@ -405,13 +409,13 @@ if (HTMLWidgets.shinyMode) {
             } else
               cpts.yAxis = data.opts.yAxis;
           }
+
           if (data.opts.dataset) 
             cpts.dataset = data.opts.dataset;
             
           if (data.opts.toolbox) 
             cpts.toolbox = data.opts.toolbox;
             
-          //console.log('user.opts='+Object.keys(data.opts))
           chart.setOption(cpts, true);
           break;
           
@@ -477,6 +481,7 @@ if (HTMLWidgets.shinyMode) {
           break;
           
         default:
+          console.log('unknown command ',data.action);
       }
   });
   

@@ -91,14 +91,37 @@
 #' 
 #' 
 #' #------ Plugin leaflet
-#' tmp <- quakes %>% dplyr::relocate('long')  # set lon,lat order
+#' tmp <- quakes %>% dplyr::relocate('long')  # set in lon,lat order
 #' p <- tmp %>% ec.init(load='leaflet')
 #' p$x$opts$legend = list(data=list(list(name='quakes')))
 #' p$x$opts$series[[1]]$name = 'quakes'
-#' p$x$opts$series[[1]]$symbolSize = htmlwidgets::JS("function(x){ return x[3];}")
+#' p$x$opts$series[[1]]$symbolSize = ec.clmn(4)
 #' p
 #'
 #'
+#' #------ Plugin 'world' with lines and color coding
+#' flights <- NULL
+#' flights <- try(read.csv(paste0('https://raw.githubusercontent.com/plotly/datasets/master/',
+#'                                '2011_february_aa_flight_paths.csv')), silent = TRUE)
+#' if (!is.null(flights)) {
+#'   tmp <- data.frame(airport1 = unique(head(flights,10)$airport1),
+#'                     color = c("#387e78","#eeb422","#d9534f",'magenta'))
+#'   tmp <- head(flights,10) %>% inner_join(tmp)    # add color by airport
+#'   p <- tmp %>% ec.init(load='world')
+#'   p$x$opts$geo$center= c(mean(flights$start_lon), mean(flights$start_lat))
+#'   p$x$opts$series <- list(list(
+#'     type='lines', coordinateSystem='geo',
+#'     data = lapply(ec.data(tmp, 'names'), function(x)
+#'       list(coords = list(c(x$start_lon,x$start_lat),
+#'                          c(x$end_lon,x$end_lat)),
+#'            colr = x$color)
+#'     )
+#'     ,lineStyle = list(curveness=0.3, width=3, color=ec.clmn('colr'))
+#'   ))
+#'   p
+#' }
+#' 
+#' 
 #' #------ Plugin 3D
 #' if (interactive()) {
 #'  data <- list()
@@ -112,18 +135,17 @@
 #'
 #' #------ 3D chart with custom coloring
 #' if (interactive()) {
-#' p <- iris %>% ec.init(load = '3D')
+#' df <- data.frame(Species = unique(iris$Species),
+#'                  color = c("#387e78","#eeb422","#d9534f"))
+#' df <- iris %>% dplyr::inner_join(df)   # add 6th column 'color' for Species
+#' p <- df %>% ec.init(load = '3D')
 #' p$x$opts$xAxis3D <- list(name='Petal.Length')
 #' p$x$opts$yAxis3D <- list(name='Sepal.Width')
 #' p$x$opts$zAxis3D <- list(name='Sepal.Length')
 #' p$x$opts$series <- list(list(
 #'   type='scatter3D', symbolSize=7,
 #'   encode=list(x='Petal.Length', y='Sepal.Width', z='Sepal.Length'),
-#'   itemStyle=list(color = htmlwidgets::JS("function(params){
-#'          if (params.value[4] == 'setosa') return '#FE8463'; 
-#'     else if (params.value[4] == 'virginica'){ return '#27727B'; }
-#'                                               return '#9BCA63';
-#'   }") )  # [4] is the JS index of column Species
+#'   itemStyle=list(color = ec.clmn(6) )  # index of column 'color'
 #' ))
 #' p
 #' }
@@ -162,59 +184,34 @@
 #'  
 #' #------ Band serie with customization
 #' # first column ('day') usually goes to the X-axis
-#' # try also alternative data setting - replace lines @1 & @2 with
-#' #   @1: p <- dats %>% ec.init(load='custom') 
-#' #   @2: encode=list(x='day', y='CAC')
+#' # try also alternative data setting - replace lines *1 with *2
 #' library(dplyr)
 #' dats <- as.data.frame(EuStockMarkets) %>% mutate(day=1:n()) %>%
-#'   relocate(day) %>% slice_head(n=200)
-#' p <- ec.init(load='custom')            # @1
-#' p$x$opts <- list(
-#'   xAxis = list(list()),
-#'   yAxis = list(list()),
-#'   series = list(
-#'     append( ecr.band(dats, 'DAX','FTSE'), list(
-#'       name='band', color='lemonchiffon')),  # band + customize
-#'     list(type='line', name='CAC', color='red', symbolSize=1,
-#'          data = ec.data(dats %>% select(day,CAC), 'values') )  # @2
-#'   ),
-#'   legend = list(data=list(
-#'     list(name='band'), list(name='CAC') )),
-#'   dataZoom = list(list(type='slider',start=50))
+#'           relocate(day) %>% slice_head(n=100)
+#' p <- ec.init(load='custom')             # *1 = unnamed data
+#' #p <- dats %>% ec.init(load='custom')   # *2 = dataset
+#' p$x$opts$series = append(
+#'   ecr.band(dats, 'DAX','FTSE', name='Ftse-Dax', color='lemonchiffon'),
+#'   list(list(type='line', name='CAC', color='red', symbolSize=1,
+#'             data = ec.data(dats %>% select(day,CAC), 'values')   # *1
+#'             #encode=list(x='day', y='CAC')   # *2
+#'   ))
 #' )
+#' p$x$opts$legend <- list(ey='') 
+#' p$x$opts$dataZoom <- list(type='slider', end=50)
 #' p
 #' 
 #' 
 #' #------ Timeline animation
 #' orng <- Orange
-#' orng$Tree <- paste('tree',as.character(orng$Tree)) # to string
-#' series <- list()
-#' options <- list()
-#' z <- 0
-#' for(i in unique(orng$age)) {
-#'   z <- z + 1
-#'   myser <- list()
-#'   for(k in unique(orng$Tree)) {
-#'     if (z==1) series <- append(series,
-#'            list(list(type='bar', label=list(show=TRUE))))
-#'     y <- orng %>% dplyr::filter(age==i, Tree==k) %>% 
-#'       dplyr::select(circumference) %>% unlist()
-#'     myser <- append(myser, list(list(data=list(
-#'       list(name=k, value=as.numeric(y))))))
-#'   }
-#'   options[[z]] <- list(title=list(
-#'     text=paste('Age',i,'days'), left='center'), series=myser
-#'   )
-#' }
-#' p <- ec.init()
-#' p$x$opts$xAxis <- list(list(type='category', name='5 orange trees', nameLocation='center'))
-#' p$x$opts$yAxis <- list(list(type='value', name='circumference (mm)',
-#'                    max=240, nameRotate=90, nameLocation='center',nameGap=33))
-#' p$x$opts$timeline <- list(axisType='category',
-#'                    playInterval=1000, autoPlay=TRUE,
-#'                    data=c(as.character(unique(orng$age))))
-#' p$x$opts$series <- series
-#' p$x$opts$options <- options
+#' p <- Orange %>% dplyr::group_by(age) %>% ec.init(
+#'   timeline=list(type='bar', encode=list(x='Tree', y='circumference'))
+#' )
+#' p$x$opts$timeline <- append(p$x$opts$timeline, list(autoPlay=TRUE))
+#' p$x$opts$options <- lapply(p$x$opts$options, 
+#'                            function(o) { o$title$text <- paste('age',o$title$text,'days'); o })
+#' p$x$opts$xAxis <- list(type='category', name='tree')
+#' p$x$opts$yAxis <- list(max=max(orng$circumference))
 #' p
 #' 
 #'
@@ -223,44 +220,11 @@
 #'                   vy = rnorm(20)) %>% group_by(vx) %>% group_split()
 #' dats <- lapply(bdf, function(x) boxplot.stats(x$vy)$stats )
 #' p <- ec.init()
-#' p$x$opts <- list(     # presets are overwritten
+#' p$x$opts <- list(     # overwrite presets
 #'   xAxis = list(ey=''),
 #'   yAxis = list(type = 'category', data = unique(unlist(lapply(bdf, `[`, , 1))) ),
 #'   series = list(list(type = 'boxplot', data = dats))
 #' )
-#' p
-#' 
-#' 
-#' #------ Boxplot transformations through JavaScript
-#' # original: https://echarts.apache.org/examples/en/editor.html?c=data-transform-aggregate
-#' boxdf <- data.frame(valX=sample(LETTERS[1:3], size=20, replace=TRUE), valY=rnorm(20))
-#' p <- boxdf %>% ec.init(
-#'   js = 'echarts.registerTransform(window.ecSimpleTransform.aggregate)',
-#'   load='https://cdn.jsdelivr.net/npm/echarts-simple-transform/dist/ecSimpleTransform.min.js'
-#' )
-#' p$x$opts$yAxis$type <- 'category'
-#' p$x$opts$dataset[[2]] <- list( id = 'aggregate',
-#'   transform = list(list(type='ecSimpleTransform:aggregate',
-#'     config = list(
-#'       resultDimensions = list(
-#'         list( name= 'min', from= 'valY', method= 'min' ),
-#'         list( name= 'Q1', from= 'valY', method= 'Q1' ),
-#'         list( name= 'median', from= 'valY', method= 'median' ),
-#'         list( name= 'Q3', from= 'valY', method= 'Q3' ),
-#'         list( name= 'max', from= 'valY', method= 'max' ),
-#'         list( name= 'valX', from= 'valX' )
-#'       ),   groupBy= 'valX'
-#'     ) ))
-#' )
-#' p$x$opts$series <- list(list(
-#'   type = 'boxplot', 
-#'   datasetId = 'aggregate',
-#'   encode=list(
-#'     x= c('min', 'Q1', 'median', 'Q3', 'max'),
-#'     y= 'ValX',
-#'     itemName= 'ValX', tooltip=c('min', 'Q1', 'median', 'Q3', 'max') )
-#' ))
-#' p$x$opts$tooltip <- list(trigger='axis', confine=TRUE)
 #' p
 #' 
 #' 
@@ -293,7 +257,7 @@
 #'   )))
 #' p <- ec.init(title = list(
 #'         text='Data transform, multiple-sort bar', 
-#'         subtext='JS source v.5',
+#'         subtext='JS source',
 #'         sublink=paste0('https://echarts.apache.org/next/examples/en/editor.html',
 #'                  '?c=doc-example/data-transform-multiple-sort-bar'), 
 #'         left='center')) 
@@ -352,6 +316,18 @@
 #'    ))
 #' )
 #' p  
+#' 
+#' 
+#' #------ Error Bars on grouped data
+#' library(dplyr)
+#' df <- mtcars %>% group_by(cyl,gear) %>% summarise(yy=round(mean(mpg),2)) %>%
+#'   mutate(low=round(yy-cyl*runif(1),2), high=round(yy+cyl*runif(1),2)) %>%
+#'   relocate(cyl, .after = last_col())   # move group column behind first four cols
+#' p <- df %>% ec.init(group1='bar', load='custom') %>%
+#'   ecr.ebars(df, name = 'eb'
+#'      ,tooltip = list(formatter=ec.clmn('high <b>%d</b><br>low <b>%d</b>', 4,3)))
+#' p$x$opts$tooltip <- list(ey='')
+#' p
 #' 
 #' 
 #' #------ Gauge
@@ -435,7 +411,7 @@
 #' 
 #' #------------- Shiny interactive charts demo ---------------
 #' if (interactive()) {
-#'   demo('shiny', package='echarty')
+#'   demo(eshiny, package='echarty')
 #' }
 #' 
 #' }  # donttest

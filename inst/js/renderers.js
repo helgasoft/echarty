@@ -24,8 +24,8 @@ function riErrorBar(params, api) {
 
   let totSeries = Number(oss[2]);
 
-  let xValue = api.value(0);
-  let highPoint = api.coord([xValue, api.value(1)]);
+  let xValue = api.value(0);  // data order is x,y,low,high
+  let highPoint = api.coord([xValue, api.value(3)]);
   let lowPoint = api.coord([xValue, api.value(2)]);
   let endsWidth = Number(oss[3]);  //api.size([1, 0])[0] * 0.1;
 	

@@ -4,37 +4,38 @@
 \alias{ecr.ebars}
 \title{Error bars}
 \usage{
-ecr.ebars(wt, df, hwidth = 6, ...)
+ecr.ebars(wt, df = NULL, hwidth = 6, ...)
 }
 \arguments{
 \item{wt}{A widget to add error bars to, see \code{\link[htmlwidgets]{createWidget}}}
 
-\item{df}{A data.frame with three or more columns in order x,low,high,etc.}
+\item{df}{NULL(default) or data.frame with four or more columns ordered exactly (x,y,low,high,others).
+When NULL, data is taken from wt's dataset where order should be the same (x,y,low,high,etc)}
 
 \item{hwidth}{Half-width of error bar in pixels, default is 6.}
 
 \item{...}{More parameters for \href{https://echarts.apache.org/en/option.html#series-custom.type}{custom serie}}
 }
 \value{
-A widget with error bars added if successful, otherwise input wt
+A widget with error bars added if successful, otherwise the input wt
 }
 \description{
-Custom series to display error bars for scatter,bar or line series
+Custom series to display error-bars for scatter,bar or line series
 }
 \details{
-Grouped bars are supported, but require the group column to be included in df. \cr
-Complete data frame df could be chained to ec.init to auto-populate the bar series.\cr
-ecr.ebars will add a legend if none is found.\cr
-ecr.ebars are custom series, so \emph{ec.init(load='custom')} is required.
-ecr.ebars should be set at the end, after all other series. \cr
+Grouped series are supported, but require the group column to be included in df. \cr
+ecr.ebars are custom series, so \emph{ec.init(load='custom')} is required. \cr
+ecr.ebars will add a chart legend and its own tooltip if none is provided.\cr
+ecr.ebars should be set at the end, after all other series.
 }
 \examples{
-library(dplyr)
-df <- mtcars \%>\% group_by(cyl,gear) \%>\% summarise(mmm=mean(mpg)) \%>\% 
-  mutate(low=mmm*(1-0.2*runif(1)), high=mmm*(1+0.2*runif(1))) \%>\% 
-  relocate(cyl, .after = last_col())   # move group column away from first three cols
-p <- df \%>\% ec.init(group1='bar', load='custom')
-# since this is grouped data, must include the group column 'cyl'
-ecr.ebars(p, df[,c('gear','low','high','cyl')])
+tmp <- round(rnorm(24, sin(1:24/2)*10, .5))
+df <- data.frame(x = 1:24, val = tmp, 
+                 lower = round(rnorm(24, tmp -10, .5)),
+                 upper = round(rnorm(24, tmp + 5, .8))
+)
+p <- df \%>\% ec.init(load='custom') \%>\% ecr.ebars()
+p$x$opts$tooltip <- list(ey='')
+p
 
 }

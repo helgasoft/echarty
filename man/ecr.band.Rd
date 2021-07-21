@@ -4,46 +4,50 @@
 \alias{ecr.band}
 \title{Area band}
 \usage{
-ecr.band(df = NULL, lower = NULL, upper = NULL, two = FALSE, ...)
+ecr.band(df = NULL, lower = NULL, upper = NULL, type = "polygon", ...)
 }
 \arguments{
-\item{df}{A data.frame with lower and upper numerical columns.}
+\item{df}{A data.frame with lower and upper numerical columns and first column with X coordinates.}
 
-\item{lower}{The column name of band's lower boundary, a string.}
+\item{lower}{The column name(string) of band's lower boundary.}
 
-\item{upper}{The column name of band's upper boundary, a string.}
+\item{upper}{The column name(string) of band's upper boundary.}
 
-\item{two}{Type of rendering - by polygon (FALSE,default), or by two stacked lines (TRUE)}
+\item{type}{Type of rendering  \cr \itemize{
+\item 'stack' - by two \href{https://echarts.apache.org/en/option.html#series-line.stack}{stacked lines}
+\item 'polygon' - by drawing a polygon as polyline (default)
+}}
 
 \item{...}{More parameters for \href{https://echarts.apache.org/en/option.html#series-line.type}{serie}}
 }
 \value{
-One list serie when two=FALSE, or a list of two list series when two=TRUE
+A list of one serie when type='polygon', or two series when type='stack'
 }
 \description{
 A 'custom' serie with lower and upper boundaries
 }
 \details{
-When two=FALSE, the coordinates of the two boundaries are chained into a polygon and displayed as one. Uses absolute cartesian coordinates. \cr
-When two=TRUE, two smooth \emph{stacked} lines are drawn, one with customizable areaStyle. The upper boundary coordinates represent values on top of the lower boundary coordinates.
+When type='polygon', coordinates of the two boundaries are chained into a polygon and displayed as one.\cr
+When type='stack', two smooth \emph{stacked} lines are drawn, one with customizable areaStyle. The upper boundary coordinates should be values added on top of the lower boundary coordinates.\cr
+Type 'stack' needs \emph{xAxis} to be of type 'category'.
 }
 \examples{
-myList <- list(x=LETTERS[1:7],
-               d=c(140, 232, 101, 264, 90, 340, 250),
-               u=c(120, 282, 111, 234, 220, 340, 310),
-               l=c(200, 332, 151, 400, 190, 540, 450))
-data <- as.data.frame(do.call(cbind, myList))
-colnames(data) <- c('x','down','up','coord')
-p <- ec.init(load='custom')
-p$x$opts <- list(
-  xAxis=list(list(type='category', boundaryGap=FALSE, data=data$x)),
-  yAxis=list(list(scale=TRUE)),
-  legend=list(ey=''),
-  series = ecr.band(data, 'down', 'up', two=TRUE, name='band')   # two=TRUE
-  #series = list(ecr.band(data, 'down', 'up', name='polyBand'))  # two=FALSE
+df <- data.frame( x = 1:10, y = runif(10, 5, 10)) \%>\%
+  dplyr::mutate(lwr = y-runif(10, 1, 3), upr = y+runif(10, 2, 4))
+
+p <- df \%>\% ec.init(load='custom')
+p$x$opts$legend <- list(ey='') 
+p$x$opts$xAxis <- list(type='category', boundaryGap=FALSE)
+p$x$opts$series <- list(list(type='line', color='yellow', datasetIndex=0, name='line1'))
+p$x$opts$series <- append( p$x$opts$series,
+     ecr.band(df, 'lwr', 'upr', type='stack', name='stak')
 )
-p$x$opts$series <- append(p$x$opts$series, 
-  list(list(name='line',type='line', lineStyle=list(width=2), data=data$coord)) )
+p$x$opts$tooltip <- list(trigger = 'axis'
+                         ,formatter = htmlwidgets::JS("function(x) {
+  let str='high <b>'+x[2].value[2]+'</b><br>line <b>'+x[0].value[1]+
+   '</b><br>low <b>'+x[1].value[1]+'</b>';
+  return str;
+  }"))
 p
 
 }

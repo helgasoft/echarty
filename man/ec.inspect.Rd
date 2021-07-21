@@ -4,10 +4,12 @@
 \alias{ec.inspect}
 \title{Chart to JSON}
 \usage{
-ec.inspect(wt, json = TRUE, ...)
+ec.inspect(wt, target = NULL, json = TRUE, ...)
 }
 \arguments{
 \item{wt}{An \code{echarty} widget as returned by \link{ec.init}}
+
+\item{target}{NULL(default) or 'data' to show info about chart's embedded data.}
 
 \item{json}{Whether to return a JSON, or a \code{list}, default TRUE}
 
@@ -21,7 +23,7 @@ a \code{list} otherwise.
 Convert chart to JSON string
 }
 \note{
-Must be passed as last option.
+Must be invoked or chained as last command.
 }
 \examples{
 # extract JSON

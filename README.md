@@ -5,9 +5,7 @@
 
 <!-- badges: start -->
 
-[![CRAN
-status](https://www.r-pkg.org/badges/version/echarty)](https://cran.r-project.org/package=echarty)
-[![Github version](https://img.shields.io/github/v/release/helgasoft/echarty?label=github)](https://github.com/helgasoft/echarty/releases)
+
 [![R-CMD-check](https://github.com/helgasoft/echarty/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/helgasoft/echarty/actions/workflows/R-CMD-check.yaml)
 [![size](https://img.shields.io/github/languages/code-size/helgasoft/echarty)](https://github.com/helgasoft/echarty/releases/)
 <!--
@@ -27,9 +25,7 @@ support](https://helgasoft.github.io/echarty/xtalk.html).
 
 ## Installation
 
-<!-- We recommend the 
-Older release on -->
-
+[![Github version](https://img.shields.io/github/v/release/helgasoft/echarty?label=github)](https://github.com/helgasoft/echarty/releases) 
 Latest development version:
 
 ``` r
@@ -37,6 +33,8 @@ Latest development version:
 remotes::install_github("helgasoft/echarty")
 ```
 
+[![CRAN
+status](https://www.r-pkg.org/badges/version/echarty)](https://cran.r-project.org/package=echarty) 
 From [CRAN](https://CRAN.R-project.org):
 
 ``` r
@@ -48,13 +46,11 @@ install.packages("echarty")
 ``` r
 library(echarty)
 
-#  basic chart 2D
+#  2D chart
 cars %>% ec.init()
 
-#  chart with plugin 3D, will prompt for one-time installation
-p <- iris %>% ec.init(load='3D')
-p$x$opts$series <- list(list(type='scatter3D'))
-p
+#  3D chart with GL plugin
+iris %>% ec.init(load='3D')
 ```
 
 ## Get started
