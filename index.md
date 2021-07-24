@@ -2,12 +2,14 @@
 ## Introduction
 
 As decribed in [this paper](https://doi.org/10.1016/j.visinf.2018.04.011), library ECharts' foundation lays on the "*user-configurable declarative object* **option**". [Option](https://echarts.apache.org/en/option.html) is JSON-like data. Building complex charts as data structures is a powerful concept, and also simple and easy-to-use.  
-The goal of **echarty** is to provide a minimal interface, a "glue", between R and ECharts, then stay out of the way and let your R data lists do the talking. There are utilities included to assist with data preparation (*ec.data*, *js2r*), Shiny with proxy (*ecs.\**) and JS plugins (*ec.plugjs*).  
+The goal of **echarty** is to provide a minimal interface, a "glue", between R and ECharts, then let your R data lists build the chart. There are utilities included to assist with data preparation (*ec.data*, *js2r*), Shiny with proxy (*ecs.\**) and JS plugins (*ec.plugjs*).  
 Have the **full functionality** of [ECharts](https://echarts.apache.org/examples/en/index.html) in R with minimal overhead!   
 <br/>  
 
 ## Gallery
 Enjoy [the gallery](gallery.md) and grab a chart!  
+<a href='gallery.html'>
+<div style='white-space: nowrap;'><img src='img/cb-1.png' height='55px'/><img src='img/cb-5.png' height='55px'/><img src='img/cb-6.png' height='55px'/><img src='img/hawaii3d.png' height='55px'/><img src='img/cb-11.geo.gif' height='55px'/><img src='img/cb-12.organs.png' height='55px'/></div></a>
 <br />
 
 ## Tutorials
@@ -34,12 +36,17 @@ Social media for charts - [drive the action](xtalk.html)  &nbsp; &nbsp; <span st
 <br/>
 
 ## Learn by example
-Have fun with **echarty Translator Assistant**  - translate Javascript data to R !  
-Javascript library ECharts has lots of great [examples](https://echarts.apache.org/examples/en/)
-. The goal is to facilitate translation of their JSON-like data (*option* object) to R lists. Give it a go with the following R command:
+Have fun with **Translator Assistant**  - translate Javascript data to R !  
+ECharts has lots of great [examples](https://echarts.apache.org/examples/en/)
+. The goal is to facilitate translation of their JSON-like data (*option* object) to R lists. Give it a go with the following R command
 ```r
 demo(js2r, package='echarty')
 ```
+See what you can do with echarty and Shiny
+```r
+demo(eshiny, package='echarty')
+```
+Or browse some interesting <a href='https://gist.github.com/helgasoft'>code gists</a>.
 <br/>
 <br/>
 

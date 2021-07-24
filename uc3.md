@@ -35,32 +35,30 @@ p
 ## Data frame with nested children
 
 ```r
-level1 <- data.frame(name = "Animals", value = 1)  # top level
-level11 <- data.frame(name = c("Mammals", "Reptiles","Fish"), value = c(100,100,100))   # 2nd level 
-level111 <- data.frame(name = c("Dogs", "Humans"), value = c( 15, 15))    # 3rd level
-level112 <- data.frame(name = c("Snakes", "Lizards"), value = c(30, 40))
-level113 <- data.frame(name = c("Sharks"), value = 30)
-level1131 <- data.frame(name = c("hammerhead", "thresher"), value = c(10,20))   # 4th level
-level113[1, "children"][[1]] <- list(level1131)
-level11[1, "children"][[1]] <- list(level111)
-level11[2, "children"][[1]] <- list(level112)
-level11[3, "children"][[1]] <- list(level113)
-level1[1, "children"][[1]] <- list(level11)
+animl <- data.frame(name = "Animals", value = 1)  # top level
+animl$children <- 
+	list(data.frame(name = c("Mammals", "Reptiles","Fish"), value = c(100,90,60)))
+animl$children[[1]]$children <- c(
+ 	list(data.frame(name = c("Dogs", "Humans"), value = c( 15, 35))),
+ 	list(data.frame(name = c("Snakes", "Lizards"), value = c(30, 40))),
+ 	list(data.frame(name = c("Sharks"), value = 30)) )
+animl$children[[1]]$children[[3]]$children <- 
+	list(data.frame(name = c("hammerhead", "thresher"), value = c(10,20)))
 # -------------------------------------------------
 
 p <- ec.init(preset=FALSE)
 p$x$opts$series <- list(list(type='tree', 
-    data = jsonlite::toJSON(level1), 
+    data = jsonlite::toJSON(animl), 
     label = list(offset=c(0, -12)), 
     symbolSize = htmlwidgets::JS("function(d) { return d; }") ))  # size by value
 p
 
 p$x$opts$series <- list(list(type='treemap', 
-    data=jsonlite::toJSON(level11), leafDepth=1)) 
+    data=jsonlite::toJSON(animl), leafDepth=1)) 
 p
 
 p$x$opts$series <- list(list(type='sunburst', 
-    data=jsonlite::toJSON(level11), 
+    data=jsonlite::toJSON(animl$children[[1]]), 
     radius=c(0, '90%'), label=list(rotate='radial') ))
 p
 
@@ -72,7 +70,7 @@ p
 ```r
 df <- data.frame(parents = c("","Reptiles", "Reptiles", "Mammals", "Mammals", "Fish", "Sharks", "Sharks", "Animals", "Animals", "Animals"),
                  children = c("Animals", "Snakes", "Lizards", "Dogs", "Humans", "Sharks", "hammerhead", "thresher", "Reptiles", "Mammals", "Fish"),
-                 value = c(55, 30, 40, 15, 15, 30, 10, 20, 100, 100, 100)) 
+                 value = c(55, 30, 40, 15, 35, 30, 10, 20, 90, 100, 60)) 
 library(data.tree)
 tmp <- data.tree::FromDataFrameNetwork(df)
 json <- data.tree::ToListExplicit(tmp, unname=TRUE)
@@ -91,7 +89,7 @@ p
 
 p$x$opts$series <- list(list(type='treemap', 
     data=json$children[[1]]$children, leafDepth=1))
-p$x$opts$tooltip <- list(ey='')   # ey is a dummy parameter, we want the same empty object in JS - "tooltip:{ey:''}"
+p$x$opts$tooltip <- list(ey='')   # ey is a dummy parameter, in JS becomes object "tooltip:{ey:''}"
 p
 ```
 

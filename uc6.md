@@ -25,7 +25,7 @@ vv = iris %>% mutate(Year = rep(2020:2022, 50)) %>%
 vv <- vv %>% relocate(Species,value) %>% mutate(Species=as.character(Species))
 options <-  lapply(vv %>% group_by(Year) %>% group_split(), function(y) {
   series <- lapply(y %>% group_by(name) %>% group_split(), function(s) {
-     list(type = 'bar', stack = 'grp', data = ec.data(s,TRUE))
+     list(type = 'bar', stack = 'grp', data = ec.data(s,'values'))
   })
   list(title=list(text=unique(y$Year), top=30), series = series)
 })

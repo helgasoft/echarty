@@ -4,20 +4,18 @@
 
 
 ### Simple bar  
-demo for presets
-<img src='img/cb.bar.png' target=_blank alt='bar' />
+demo for presets  
+<img src='img/cb.bar.png' alt='bar' />
 <details><summary>🔻View code</summary>
 
 ```r
 library(lubridate)
-df <- data.frame(date=as.Date('2019-12-31') %m+% months(1:13), 
+df <- data.frame(date=as.character(as.Date('2019-12-31') %m+% months(1:13)), 
                  num=runif(13))
 
-#  with presets
-p <- df %>% ec.init() %>% ec.theme('dark')
-p$x$opts$xAxis <- list(type = 'category', 
-                       axisLabel = list(interval=0, rotate=45) )
-p$x$opts$series[[1]]$type <- 'bar'
+#  with presets and df chained
+p <- df %>% ec.init(group1='bar') %>% ec.theme('dark')
+p$x$opts$xAxis <- list(type = 'category')
 p
 
 #  without presets all options are explicitly assigned
@@ -36,8 +34,14 @@ p
 </details>
 <br />  
 
+### Data models 
+how to store data in echarty - 
+[<span style="color:magenta">Live Demo</span>](https://rpubs.com/echarty/data-models) with code  
+<a href='https://rpubs.com/echarty/data-models' target=_blank> <img src='img/cb-datam.png' alt='data models' /></a>
+<br><br>
+
 ### Horizontal bars
-<img src='img/cb-33.png' target=_blank alt='vertBars' />
+<img src='img/cb-33.png' alt='vertBars' />
 <details><summary>🔻 View code</summary>
 
 ```r
@@ -60,29 +64,27 @@ p
 <br />
 
 ### Easy as pie
-<img src='img/cb-0.png' target=_blank alt='pie' />
+<img src='img/cb-0.png' alt='pie' />
 <details><summary>🔻 View code</summary>
 
 
 ```r
-is <- sort(islands); is <- is[is>60]
-is <- data.frame(name=names(is), value=as.character(unname(is)))
-data <- ec.data(is, 'names')
+isl <- data.frame(name=names(islands), value=islands) %>% filter(value>60) %>% arrange(value)
 
 library(echarty)
-p <- ec.init() %>% ec.theme('dark-mushroom')
+p <- ec.init()
 p$x$opts <- list(
   title = list(text = "Landmasses over 60,000 mi\u00B2", left = 'center'),
   tooltip = list(trigger='item'),
-  color = hcl.colors(13, palette = "Spectral"),
-  series = list(type='pie', radius='50%', data=data, name='mi\u00B2'))
+  series = list(type='pie', data=ec.data(isl, 'names')),
+  backgroundColor = '#191919')
 p
 ```
 </details>
 <br />
 
 ### Custom chart
-<img src='img/cb-1.png' target=_blank alt='profit' />
+<img src='img/cb-1.png' alt='profit' />
 <details><summary>🔻 View code</summary>
 
 
@@ -132,7 +134,7 @@ p
 <br />
 
 ### Error Bars
-<img src='img/cb-2.png' target=_blank alt='profit' />
+<img src='img/cb-2.png' alt='profit' />
 <details><summary>🔻 View code</summary>
 
 ```r
@@ -174,9 +176,43 @@ q   # customized
 </details>
 <br />
 
+### Triple gauge with animation
+
+<img src='img/cb-5.png' alt='gauge3' />
+
+<details><summary>🔻 View code</summary>
+
+```r
+jcode <- "setInterval(function () {
+    opts.series[0].data[0].value = (Math.random() * 100).toFixed(2) - 0;
+    opts.series[0].data[1].value = (Math.random() * 100).toFixed(2) - 0;
+    opts.series[0].data[2].value = (Math.random() * 100).toFixed(2) - 0;
+    chart.setOption(opts, true);
+}, 2000);"
+library(echarty)
+p <- ec.init(js=jcode) %>% ec.theme('dark')
+p$x$opts <- list(series = list(
+    list(type = "gauge", 
+    anchor = list(show = TRUE, showAbove = TRUE,
+    size = 18, itemStyle = list(color = "#FAC858")), 
+    pointer = list(icon = "path://M2.9,0.7L2.9,0.7c1.4,0,2.6,1.2,2.6,2.6v115c0,1.4-1.2,2.6-2.6,2.6l0,0c-1.4,0-2.6-1.2-2.6-2.6V3.3C0.3,1.9,1.4,0.7,2.9,0.7z",
+    width = 8, length = "80%", offsetCenter = list(0, "8%")), 
+    progress = list(show = TRUE,
+      overlap = TRUE, roundCap = TRUE), axisLine = list(roundCap = TRUE), 
+    data = list(
+      list(value = 20, name = "One", title = list(offsetCenter = list("-40%", "80%")), detail = list(offsetCenter = list("-40%","95%"))), 
+      list(value = 40, name = "Two", title = list(offsetCenter = list("0%", "80%")), detail = list(offsetCenter = list("0%", "95%"))), 
+      list(value = 60, name = "Three", title = list(offsetCenter = list("40%", "80%")), detail = list(offsetCenter = list("40%","95%")))), 
+    title = list(fontSize = 14), detail = list(width = 40, height = 14, fontSize = 14, color = "#fff", backgroundColor = "auto", borderRadius = 3, formatter = "{value}%"))))
+p
+```
+</details>
+<br />
+<a id='3D'></a>
+
 ### Crosstalk in 3D
 
-<img src='img/cb-3.png' target=_blank alt='crosstalk 3D' />
+<img src='img/cb-3.png' alt='crosstalk 3D' />
 <details><summary>🔻 View code</summary>
 
 ```r
@@ -215,49 +251,18 @@ bscols( list(
 play with the [<span style="color:magenta">Live Demo</span>](https://rpubs.com/echarty/crosstalk)  
 <br />
 
-### Triple gauge with animation
 
-<img src='img/cb-5.png' target=_blank alt='gauge3' />
+### scatterGL
+plugin **3D**, test with 5,000 points
 
-<details><summary>🔻 View code</summary>
-
-```r
-jcode <- "setInterval(function () {
-    opts.series[0].data[0].value = (Math.random() * 100).toFixed(2) - 0;
-    opts.series[0].data[1].value = (Math.random() * 100).toFixed(2) - 0;
-    opts.series[0].data[2].value = (Math.random() * 100).toFixed(2) - 0;
-    chart.setOption(opts, true);
-}, 2000);"
-library(echarty)
-p <- ec.init(js=jcode) %>% ec.theme('dark')
-p$x$opts <- list(series = list(
-    list(type = "gauge", 
-    anchor = list(show = TRUE, showAbove = TRUE,
-    size = 18, itemStyle = list(color = "#FAC858")), 
-    pointer = list(icon = "path://M2.9,0.7L2.9,0.7c1.4,0,2.6,1.2,2.6,2.6v115c0,1.4-1.2,2.6-2.6,2.6l0,0c-1.4,0-2.6-1.2-2.6-2.6V3.3C0.3,1.9,1.4,0.7,2.9,0.7z",
-    width = 8, length = "80%", offsetCenter = list(0, "8%")), 
-    progress = list(show = TRUE,
-      overlap = TRUE, roundCap = TRUE), axisLine = list(roundCap = TRUE), 
-    data = list(
-      list(value = 20, name = "One", title = list(offsetCenter = list("-40%", "80%")), detail = list(offsetCenter = list("-40%","95%"))), 
-      list(value = 40, name = "Two", title = list(offsetCenter = list("0%", "80%")), detail = list(offsetCenter = list("0%", "95%"))), 
-      list(value = 60, name = "Three", title = list(offsetCenter = list("40%", "80%")), detail = list(offsetCenter = list("40%","95%")))), 
-    title = list(fontSize = 14), detail = list(width = 40, height = 14, fontSize = 14, color = "#fff", backgroundColor = "auto", borderRadius = 3, formatter = "{value}%"))))
-p
-```
-</details>
-<br />
-
-### scatterGL with 5,000 points
-
-<img src='img/cb-6.png' target=_blank alt='scatterGL' />
+<img src='img/cb-6.png' alt='scatterGL' />
 
 <details><summary>🔻 View code</summary>
 
 ```r
 # example works also with type='scatter', just ec.data needs to be format='values'
 library(echarty); library(tibble)
-dim <- 2500   # sample data half-quantity - could be 100x more
+dim <- 2500   # sample data half-quantity, could be 100x more
 slip <- if (dim %% 2) 0.1 else -0.1
 setData <- function(offset) {
 	t <- tibble(x = runif(dim, max=10),
@@ -285,9 +290,10 @@ p
 </details>
 <br />
 
-### scatter3D with 36,000 points
+### scatter3D
+plugin **3D**, test with 36,000 points
 
-<img src='img/cb-7.png' target=_blank alt='bunny' />
+<img src='img/cb-7.png' alt='bunny' />
 
 <details><summary>🔻 View code</summary>
 
@@ -308,7 +314,7 @@ p
 ### Bathymetry in 3D
 up to 100,000 surface points
 
-<img src='img/hawaii3d.png' target=_blank alt='bathy' />
+<img src='img/hawaii3d.png' alt='bathy' />
 
 <details><summary>🔻 Shiny app - <span style="color:magenta">Live Demo</span></summary>
 
@@ -318,9 +324,9 @@ shiny::runGist('https://gist.github.com/helgasoft/121d7d3ff7d292990c3e05cfc1cbf2
 </details>
 <br />
 
-### Custom radar chart
+### Radar chart customized
 
-<img src='img/cb-8.png' target=_blank alt='radar1' />
+<img src='img/cb-8.png' alt='radar1' />
 
 <details><summary>🔻 View code</summary>
 
@@ -353,7 +359,7 @@ p
 <br />
 
 ### Grouped boxplot
-<img src='img/cb-9.png' target=_blank alt='boxplot' />
+<img src='img/cb-9.png' alt='boxplot' />
 <details><summary>🔻 View code</summary>
 
 ```r
@@ -401,7 +407,7 @@ p
 
 ### Modularity plugin
 DOW companies - size by market cap<br />
-<img src='img/cb-10.png' target=_blank alt='dow' />
+<img src='img/cb-10.png' alt='dow' />
 <details><summary>🔻 View code</summary>
 
 ```r
@@ -422,10 +428,6 @@ p$x$opts <- list(
     borderWidth=0,padding=5,itemGap=10, 
     textStyle=list(fontSize=18,fontWeight='bolder',color='#eee'),subtextStyle=list(color='#aaa')),
   backgroundColor='#000',
-  tooltip=list(trigger='item', formatter= htmlwidgets::JS("function(params){
-        return('<strong>' + params.data.lname +
-                '</strong><br />' + params.data.value + 'bn') }"
-  )),
   animationDurationUpdate = "function(idx) list(return idx * 100; )",
   animationEasingUpdate = 'bounceIn',
   series = list(list(
@@ -436,16 +438,99 @@ p$x$opts <- list(
     data = lapply(ec.data(wt, 'names'), function(x)
       list(name = x$tic, lname=x$name, value=x$bn, 
            symbolSize=x$size, draggable=TRUE 
-      )) ))
+      )) )),
+  tooltip = list(formatter= ec.clmn('<b>%s</b><br>%s bn','lname','value'))
 )
 p
 ```
 </details>
 <br />
 
+
+### Graph
+Circular layout diagram for 'Les Miserables' characters<br />
+<img src='img/cb-graph.png' alt='dow' />
+<details><summary>🔻 View code</summary>
+
+```r
+# https://echarts.apache.org/examples/en/editor.html?c=graph-circular-layout
+
+les <- jsonlite::fromJSON('https://echarts.apache.org/examples/data/asset/data/les-miserables.json')
+les$categories$name <- as.character(1:9)
+p <- ec.init(preset=FALSE, title=list(text='Les Miserables',top='bottom',left='right')) 
+p$x$opts$series <- list(list(
+  type='graph', layout='circular',
+  circular = list(rotateLabel=TRUE),
+  nodes = ec.data(les$nodes, 'names'), 
+  links = ec.data(les$links, 'names'), 
+  categories = ec.data(les$categories, 'names'),
+  roam = TRUE, label=list(position='right', formatter='{b}'),
+  lineStyle = list(color='source', curveness=0.3)
+))
+p$x$opts$series[[1]]$nodes <- lapply(p$x$opts$series[[1]]$nodes, function(n) {
+  n$label <- list(show=n$symbolSize > 30); n })  # labels for most important
+p$x$opts$legend <- list(data=c(les$categories$name), textStyle=list(color='#ccc'))
+p$x$opts$tooltip <- list(ii='')
+p$x$opts$backgroundColor <- '#191919'
+p
+```
+</details>
+<br />
+
+### ecStat
+Statistical tools plugin in echarty &nbsp; &nbsp; &nbsp; [<span style="color:magenta">Live Demo</span>](https://rpubs.com/echarty/ecStat)
+<a href='https://rpubs.com/echarty/ecStat'>
+<img src='img/cb-cluster.png' alt='dow' /></a>
+
+<br />
+
+
+<a id='maps'></a>
+
+### Custom SVG map 
+with mouse events &nbsp; &nbsp; &nbsp; [<span style="color:magenta">Live Demo</span>](https://rpubs.com/echarty/svg)
+<img src='img/cb-12.organs.png' alt='organs' />
+<details><summary>🔻 View code</summary>
+
+```r
+#' JS source https://echarts.apache.org/examples/en/editor.html?c=geo-organ
+#' p$x$opts from original 'options' translated with demo(js2r)
+#' p$x$on handlers added manually
+#' demo @ https://rpubs.com/echarty/svg
+
+url <- 'https://echarts.apache.org/examples/data/asset/geo/Veins_Medical_Diagram_clip_art.svg'
+svg <- url %>% readLines(encoding='UTF-8') %>% paste0(collapse="")
+p <- ec.init(preset=FALSE) %>% ec.theme('dark-mushroom')
+p$x$registerMap <- list(list(mapName='organs', svg=svg))
+p$x$on <- list(list(event='mouseover', query=list(seriesIndex=0), 
+                    handler=htmlwidgets::JS("function (event) {
+  this.dispatchAction({ type: 'highlight', geoIndex: 0, name: event.name }); }") ),
+               list(event='mouseout', query=list(seriesIndex=0),
+                 handler=htmlwidgets::JS("function (event) {
+  this.dispatchAction({ type: 'downplay', geoIndex: 0, name: event.name }); }") )
+)
+p$x$opts <- list(
+  tooltip = list(ey = ""), 
+  geo = list(left = 10, right = "50%", map = "organs", selectedMode = "multiple",
+             emphasis = list(focus = "self", itemStyle = list(color = NULL), 
+                             label = list(position = "bottom", distance = 0, textBorderColor = "#fff", textBorderWidth = 2)),
+             blur = list(ey = ""), 
+             select = list(itemStyle = list(color = "#b50205"), 
+                           label = list(show = FALSE, textBorderColor = "#fff", textBorderWidth = 2))), 
+  grid = list(left = "60%", top = "20%", bottom = "20%"), 
+  xAxis = list(ey = ""), 
+  yAxis = list(data = list("heart", "large-intestine", "small-intestine", "spleen", "kidney", "lung", "liver")), 
+  series = list(list(type = "bar", emphasis = list(focus = "self"), 
+                     data = list(121, 321, 141, 52, 198, 289, 139))))
+p
+
+```
+</details>
+<br>
+
 ### World map plugin
  with geo points/lines in a timeline<br />
-<img src='img/cb-11.geo.gif' target=_blank alt='dow' />
+<img src='img/cb-11.geo.gif' alt='dow' />
 <details><summary>🔻 View code</summary>
 
 ```r
@@ -494,44 +579,3 @@ a proof-of-concept (POC)
 and switching chart selection **without Shiny**  
 [<span style="color:magenta">Live Demo</span>](https://rpubs.com/echarty/mapjs)
 <br /> <br />
-
-### Custom SVG map 
-with mouse events &nbsp; &nbsp; &nbsp; [<span style="color:magenta">Live Demo</span>](https://rpubs.com/echarty/svg)
-<img src='img/cb-12.organs.png' target=_blank alt='organs' />
-<details><summary>🔻 View code</summary>
-
-```r
-#' JS source https://echarts.apache.org/examples/en/editor.html?c=geo-organ
-#' p$x$opts from original 'options' translated with demo(js2r)
-#' p$x$on handlers added manually
-#' demo @ https://rpubs.com/echarty/svg
-
-url <- 'https://echarts.apache.org/examples/data/asset/geo/Veins_Medical_Diagram_clip_art.svg'
-svg <- url %>% readLines(encoding='UTF-8') %>% paste0(collapse="")
-p <- ec.init(preset=FALSE) %>% ec.theme('dark-mushroom')
-p$x$registerMap <- list(list(mapName='organs', svg=svg))
-p$x$on <- list(list(event='mouseover', query=list(seriesIndex=0), 
-                    handler=htmlwidgets::JS("function (event) {
-  this.dispatchAction({ type: 'highlight', geoIndex: 0, name: event.name }); }") ),
-               list(event='mouseout', query=list(seriesIndex=0),
-                 handler=htmlwidgets::JS("function (event) {
-  this.dispatchAction({ type: 'downplay', geoIndex: 0, name: event.name }); }") )
-)
-p$x$opts <- list(
-  tooltip = list(ey = ""), 
-  geo = list(left = 10, right = "50%", map = "organs", selectedMode = "multiple",
-             emphasis = list(focus = "self", itemStyle = list(color = NULL), 
-                             label = list(position = "bottom", distance = 0, textBorderColor = "#fff", textBorderWidth = 2)),
-             blur = list(ey = ""), 
-             select = list(itemStyle = list(color = "#b50205"), 
-                           label = list(show = FALSE, textBorderColor = "#fff", textBorderWidth = 2))), 
-  grid = list(left = "60%", top = "20%", bottom = "20%"), 
-  xAxis = list(ey = ""), 
-  yAxis = list(data = list("heart", "large-intestine", "small-intestine", "spleen", "kidney", "lung", "liver")), 
-  series = list(list(type = "bar", emphasis = list(focus = "self"), 
-                     data = list(121, 321, 141, 52, 198, 289, 139))))
-p
-
-```
-</details>
-
