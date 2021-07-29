@@ -1,11 +1,16 @@
 # history of echarty package development
 
+## v. 0.3.1
+
+- _ec.init_ param _timeline_ renamed to _tl.series_
+- tweaks in docs, examples and _echarty.js_
+
 ## v. 0.3.0
 
 - _ec.timegrp_ merged into _ec.init_ and removed
 - _ec.init_ can now build timeline, parameters simplified
 - _ecr.ebars_ now supports dataset, has default tooltip
-- _ecr.band_ changed parameter to 'type', improved tooltip support
+- _ecr.band_ changed parameter 'two' to 'type', improved tooltip support
 - _ec.inspect_ expanded with new parameter 'data'
 - _eshiny_ demo updated: brush parameters, new zoom capture
 - new _ec.clmn_ to reference data column(s) in formatter,color,symbolSize,etc.

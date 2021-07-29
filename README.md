@@ -5,7 +5,6 @@
 
 <!-- badges: start -->
 
-
 [![R-CMD-check](https://github.com/helgasoft/echarty/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/helgasoft/echarty/actions/workflows/R-CMD-check.yaml)
 [![size](https://img.shields.io/github/languages/code-size/helgasoft/echarty)](https://github.com/helgasoft/echarty/releases/)
 <!--
@@ -13,15 +12,19 @@
 downloads](https://cranlogs.r-pkg.org/badges/last-day/echarty)](https://cranlogs.r-pkg.org/badges/last-day/echarty)   -->
 <!-- badges: end -->
 
+<a href='https://helgasoft.github.io/echarty'><img src="man/figs/echarty.gallery.png" alt="echarty.gallery" /></a>
+
 This package is a thin R wrapper around Javascript library
-[ECharts](https://echarts.apache.org/en/index.html). The R list
-parameters come directly from [ECharts’
+[ECharts](https://echarts.apache.org/en/index.html). The list
+parameters in R replicate [ECharts’
 documentation](https://echarts.apache.org/en/option.html). There are
-just a few extra commands.  
-Users can benefit from the **full functionality** of ECharts to build
-interactive charts in R and Shiny with minimal coding.  
+just a few additional commands.  
+Users can benefit from ECharts' **full functionality** to build
+interactive charts in R and Shiny with minimal overhead.  
+
 Wider connectivity and deployment potential through [crosstalk
-support](https://helgasoft.github.io/echarty/xtalk.html).
+support](https://helgasoft.github.io/echarty/xtalk.html).  
+
 
 ## Installation
 
@@ -55,22 +58,18 @@ iris %>% ec.init(load='3D')
 
 ## Get started
 
-<br />
-
-The [**WEBSITE**](https://helgasoft.github.io/echarty) has detailed
-tutorials and tips.  
-<br /> There are plenty of [**code
+The [**WEBSITE**](https://helgasoft.github.io/echarty) has a gallery with code and tutorials.  
+<br /> The package has plenty of [**code
 examples**](https://github.com/helgasoft/echarty/blob/main/R/examples.R)
-included. The easiest way to run them in RStudio is to type
-**?ec.examples** in the Console, then copy/paste any code from Help to
+included. Type
+**?ec.examples** in the RStudio Console, then copy/paste any code from Help to
 see the result.  
-Or run all examples at once with **example(‘ec.examples’)** and they
-will show in the Viewer.
-
+<!--
 Do not hesitate to ask questions in
 [Discussions](https://github.com/helgasoft/echarty/discussions) or
 report problems in
 [Issues](https://github.com/helgasoft/echarty/issues).
+-->
 
 Now you can start building [**beautiful
 charts**](https://echarts.apache.org/examples/en/index.html) (and

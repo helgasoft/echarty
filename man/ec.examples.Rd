@@ -208,15 +208,14 @@ p
 
 
 #------ Timeline animation
-orng <- Orange
 p <- Orange \%>\% dplyr::group_by(age) \%>\% ec.init(
-  timeline=list(type='bar', encode=list(x='Tree', y='circumference'))
+  tl.series=list(type='bar', encode=list(x='Tree', y='circumference'))
 )
 p$x$opts$timeline <- append(p$x$opts$timeline, list(autoPlay=TRUE))
 p$x$opts$options <- lapply(p$x$opts$options, 
                            function(o) { o$title$text <- paste('age',o$title$text,'days'); o })
 p$x$opts$xAxis <- list(type='category', name='tree')
-p$x$opts$yAxis <- list(max=max(orng$circumference))
+p$x$opts$yAxis <- list(max=max(Orange$circumference))
 p
 
 

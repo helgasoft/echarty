@@ -73,14 +73,14 @@ HTMLWidgets.widget({
         
         opts = evalFun(x.opts);
         
-        if(x.draw === true)
-          chart.setOption(opts);
-        
         if (eva2) {
           try {
             eval(eva2);
           } catch(err) { console.log('eva2:' + err.message) }
         }
+        
+        if(x.draw === true)
+          chart.setOption(opts);
         
         // shiny callbacks
         if (HTMLWidgets.shinyMode) {

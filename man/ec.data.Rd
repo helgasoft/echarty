@@ -21,5 +21,8 @@ ec.data(df, format = "dataset", header = TRUE)
 A list for \emph{dataset.source}, \emph{series.data} or a list of named lists.
 }
 \description{
-Make ECharts data from a data.frame
+Make data lists from a data.frame
+}
+\seealso{
+some live \href{https://rpubs.com/echarty/data-models}{code samples}
 }

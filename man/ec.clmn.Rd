@@ -26,10 +26,10 @@ tmp <- data.frame(Species = as.vector(unique(iris$Species)),
 df <- iris \%>\% dplyr::inner_join(tmp)   # add 6th column 'emoji'
 p <- df \%>\% dplyr::group_by(Species) \%>\% ec.init()
 p$x$opts$series <- list(list(
-  type='scatter', label=list(show=TRUE, formatter=ec.clmn(6))
+  type='scatter', label=list(show=TRUE, formatter = ec.clmn(6))  # 6th column
 ))
-p$x$opts$tooltip <- list(
-  formatter=ec.clmn('species <b>\%d</b><br>s.len <b>\%d</b><br>s.wid <b>\%d</b>',5,1,2))
+p$x$opts$tooltip <- list(formatter=
+   ec.clmn('species <b>\%d</b><br>s.len <b>\%d</b><br>s.wid <b>\%d</b>', 5,1,2))
 p
 
 }

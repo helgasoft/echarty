@@ -11,27 +11,16 @@
 #'     If the grouping is on multiple columns, only the first one is used.
 #' @param preset Disable(FALSE) or enable (TRUE, default) presets xAxis,yAxis,serie for 2D, or grid3D,xAxis3D,yAxis3D,zAxis3D for 3D.
 #' @param load Name(s) of plugin(s) to load. Could be a character vector or comma-delimited string. default NULL.\cr
-#'   [ec.plugjs] will be called internally for each entry, popup prompts controlled by parameter \emph{ask}. \cr
-#'   Built-in plugins: \cr \itemize{
-#'   \item leaflet - Leaflet maps with customizable tiles, see \href{https://github.com/gnijuohz/echarts-leaflet#readme}{source}\cr
-#'   \item custom - renderers for [ecr.band] and [ecr.ebars] \cr 
-#'  } Plugins with one-time installation: \cr \itemize{
-#'   \item 3D - 3D charts and WebGL acceleration, see \href{https://github.com/ecomfe/echarts-gl}{source} and \href{https://echarts.apache.org/en/option-gl.html#series}{docs} \cr
-#'   \item world - world map with country boundaries, see \href{https://github.com/apache/echarts/tree/master/test/data/map/js}{source} \cr
-#'   \item liquid - liquid fill, see \href{https://github.com/ecomfe/echarts-liquidfill}{source}  \cr
-#'   \item gmodular - graph modularity, see \href{https://github.com/ecomfe/echarts-graph-modularity}{source}  \cr
-#'   \item wordcloud - cloud of words, see \href{https://github.com/ecomfe/echarts-wordcloud}{source} \cr
-#'  } or install you own third-party plugins.
 #' @param width,height A valid CSS unit (like \code{'100\%'},
 #'   \code{'500px'}, \code{'auto'}) or a number, which will be coerced to a
 #'   string and have \code{'px'} appended.
-#' @param timeline A list to build a timeline or NULL(default). The list defines timeline series and their \href{https://echarts.apache.org/en/option.html#series}{parameters}. \cr
-#'  The only required series parameter is \href{https://echarts.apache.org/en/option.html#series-line.encode}{encode}.
+#' @param tl.series A list to build a timeline or NULL(default). The list defines options \href{https://echarts.apache.org/en/option.html#series}{series} and their attributes. \cr
+#'  The only required attribute is \href{https://echarts.apache.org/en/option.html#series-line.encode}{encode}. 
 #'  \emph{encode} defines which data columns names(not indexes) to use for axes X and Y: \cr
 #'   Set \emph{x} and \emph{y} when coordinateSystem is \emph{'cartesian2d'}, \cr
 #'   Set \emph{lng} and \emph{lat} when coordinateSystem is \emph{'geo'}, \cr
 #'   Set \emph{radius} and \emph{angle} when coordinateSystem is \emph{'polar'}.\cr
-#'   Parameter \emph{coordinateSystem} is set to \emph{'cartesian2d'} by default.
+#'   Attribute \emph{coordinateSystem} is set to \emph{'cartesian2d'} by default. Auto-generated \emph{timeline} and \emph{options} will be preset for the chart as well.
 #' @param ... other arguments to pass to the widget. \cr
 #'   Custom widget arguments include: \cr \itemize{
 #'   \item js - a string with a Javascript expression to evaluate
@@ -47,6 +36,18 @@
 #'  Plugin '3D' presets will not work for 'scatterGL'. Instead, use \emph{preset=FALSE} and set explicitly \emph{xAxis,yAxis}. \cr
 #'  Plugins 'leaflet' and 'world' preset zoom=6 and center to the mean of all coordinates. \cr
 #'  Users can delete or overwrite any presets as needed. \cr
+#'  [ec.plugjs] will be called internally for each \emph{load} entry, popup prompts controlled by parameter \emph{ask}. \cr
+#'   Built-in plugins: \cr \itemize{
+#'   \item leaflet - Leaflet maps with customizable tiles, see \href{https://github.com/gnijuohz/echarts-leaflet#readme}{source}\cr
+#'   \item custom - renderers for [ecr.band] and [ecr.ebars] \cr 
+#'  } Plugins with one-time installation: \cr \itemize{
+#'   \item 3D - 3D charts and WebGL acceleration, see \href{https://github.com/ecomfe/echarts-gl}{source} and \href{https://echarts.apache.org/en/option-gl.html#series}{docs} \cr
+#'   \item world - world map with country boundaries, see \href{https://github.com/apache/echarts/tree/master/test/data/map/js}{source} \cr
+#'   \item liquid - liquid fill, see \href{https://github.com/ecomfe/echarts-liquidfill}{source}  \cr
+#'   \item gmodular - graph modularity, see \href{https://github.com/ecomfe/echarts-graph-modularity}{source}  \cr
+#'   \item wordcloud - cloud of words, see \href{https://github.com/ecomfe/echarts-wordcloud}{source} \cr
+#'  } or install you own third-party plugins.
+#'  Parameter 'js' accepts a vector of one or two strings. The first one is executed before chart initialization, the second - after. Chart object 'opts' is exposed in the second script.
 #' 
 #' @examples
 #'  # basic scatter chart from a data.frame, using presets
@@ -54,7 +55,7 @@
 #'  
 #'  # a timeline with two series and autoPlay
 #' p <- iris %>% dplyr::group_by(Species) %>% ec.init(
-#'   timeline=list(
+#'   tl.series=list(
 #'     encode=list(x=NULL, y=c('Sepal.Width', 'Petal.Length')),
 #'     markPoint = list(data=list(list(type='max'), list(type='min')))
 #'   )
@@ -68,7 +69,7 @@
 #' 
 #' @export
 ec.init <- function( df=NULL, preset=TRUE, group1='scatter', load=NULL,
-                     timeline=NULL,
+                     tl.series=NULL,
                      width=NULL, height=NULL, ...) {
   
   opts <- list(...)
@@ -201,7 +202,7 @@ ec.init <- function( df=NULL, preset=TRUE, group1='scatter', load=NULL,
 	      #rlo <- range(df[,1])
 	      #rla <- range(df[,2])
 	      #wt$x$opts$leaflet$center= c(sum(rlo)/2, sum(rla)/2)
-	      wt$x$opts$leaflet$center= c(mean(df[,1]), mean(df[,2]))
+	      wt$x$opts$leaflet$center= c(mean(unlist(df[,1])), mean(unlist(df[,2])))
 	      wt$x$opts$leaflet$zoom <- 6
       }
     }
@@ -259,27 +260,30 @@ ec.init <- function( df=NULL, preset=TRUE, group1='scatter', load=NULL,
   }
   
   # timeline is last to execute
-  if (!is.null(timeline)) {
+  if (!is.null(tl.series)) {
     if (!is.grouped_df(df))
-      stop('timeline requires a grouped data.frame', call. = FALSE)
+      stop('tl.series requires a grouped data.frame', call. = FALSE)
 
-    if (is.null(timeline$encode))
-      stop('encode is required for timeline', call. = FALSE)
+    if (is.null(tl.series$encode))
+      stop('encode is required for tl.series', call. = FALSE)
 
     # add missing defaults
-    if (is.null(timeline$type)) timeline$type <- 'line'
-    if (is.null(timeline$coordinateSystem)) timeline$coordinateSystem <- 'cartesian2d'
-    if (timeline$coordinateSystem=='cartesian2d') { xtem <-'x'; ytem <- 'y' }
-    if (timeline$coordinateSystem=='polar') { xtem <-'radius'; ytem <- 'angle' }
-    if (timeline$coordinateSystem=='geo') { 
+    if (is.null(tl.series$type)) tl.series$type <- 'line'
+    #if (is.null(tl.series$coordinateSystem)) tl.series$coordinateSystem <- 'cartesian2d' # not for gauge
+    if (is.null(tl.series$coordinateSystem) ||
+        tl.series$coordinateSystem=='cartesian2d') { xtem <-'x'; ytem <- 'y' }
+    else if (tl.series$coordinateSystem=='polar') { xtem <-'radius'; ytem <- 'angle' }
+    else if (tl.series$coordinateSystem %in% c('geo','leaflet')) { 
       xtem <-'lng'; ytem <- 'lat'
-      wt$x$opts$geo$center <- c(mean(unlist(df[,timeline$encode$lng])),
-                                mean(unlist(df[,timeline$encode$lat])))
+      center <- c(mean(unlist(df[,tl.series$encode$lng])),
+                  mean(unlist(df[,tl.series$encode$lat])))
+      if (tl.series$coordinateSystem=='geo') wt$x$opts$geo$center <- center
+      if (tl.series$coordinateSystem=='leaflet') wt$x$opts$leaflet$center <- center
     }
-    if (is.null(unlist(timeline$encode[xtem]))) {   
+    if (is.null(unlist(tl.series$encode[xtem]))) {   
       # append col XcolX 1:max for each group 
       df <- df %>% group_modify(~ { .x %>% mutate(XcolX = 1:nrow(.)) })
-      timeline$encode[xtem] <- 'XcolX'    # instead of relocate(XcolX)
+      tl.series$encode[xtem] <- 'XcolX'    # instead of relocate(XcolX)
       # replace only source, transforms stay
       wt$x$opts$dataset[[1]] <- list(source=ec.data(df))
     }
@@ -299,8 +303,8 @@ ec.init <- function( df=NULL, preset=TRUE, group1='scatter', load=NULL,
       #if (!is.null(xcol)) gp <- gp %>% arrange(across(all_of(xcol)))
       
       # multiple series for each Y
-      series <- lapply(unname(unlist(timeline$encode[ytem])), function(sname) {
-        append(list(datasetIndex=di, name=sname), timeline)
+      series <- lapply(unname(unlist(tl.series$encode[ytem])), function(sname) {
+        append(list(datasetIndex=di, name=sname), tl.series)
       })
       series <- lapply(series, function(s) {
         s$encode[ytem] <- s$name   # replace multiple with one
@@ -355,6 +359,7 @@ ec.plugjs <- function(wt=NULL, source=NULL, ask=FALSE) {
   if (!startsWith(source, 'http') && !startsWith(source, 'file://'))
     stop('ec.plugjs expecting source as URL or file://', call. = FALSE)
   fname <- basename(source)
+  fname <- unlist(strsplit(fname, '?', fixed=TRUE))[1]  # when 'X.js?key=Y'
   # if (!endsWith(fname, '.js'))
   #   stop('ec.plugjs expecting .js suffix', call. = FALSE)
   path <- system.file('js', package = 'echarty')
@@ -389,7 +394,7 @@ ec.plugjs <- function(wt=NULL, source=NULL, ask=FALSE) {
 
 #' Data helper
 #' 
-#' Make ECharts data from a data.frame
+#' Make data lists from a data.frame
 #' 
 #' @param df Chart data in data.frame format, required. 
 #' @param format A key on how to format the output list \cr \itemize{
@@ -400,6 +405,7 @@ ec.plugjs <- function(wt=NULL, source=NULL, ask=FALSE) {
 #' @param header Whether the data will have a header with column names or not, default TRUE. Set this to FALSE when used in \href{https://echarts.apache.org/en/option.html#series-scatter.data}{series.data}.
 #' @return A list for \emph{dataset.source}, \emph{series.data} or a list of named lists.
 #'
+#' @seealso some live \href{https://rpubs.com/echarty/data-models}{code samples}
 #' @export
 ec.data <- function(df, format='dataset', header=TRUE) {
   if (missing(df))
@@ -449,10 +455,10 @@ ec.data <- function(df, format='dataset', header=TRUE) {
 #' df <- iris %>% dplyr::inner_join(tmp)   # add 6th column 'emoji'
 #' p <- df %>% dplyr::group_by(Species) %>% ec.init()
 #' p$x$opts$series <- list(list(
-#'   type='scatter', label=list(show=TRUE, formatter=ec.clmn(6))
+#'   type='scatter', label=list(show=TRUE, formatter = ec.clmn(6))  # 6th column
 #' ))
-#' p$x$opts$tooltip <- list(
-#'   formatter=ec.clmn('species <b>%d</b><br>s.len <b>%d</b><br>s.wid <b>%d</b>',5,1,2))
+#' p$x$opts$tooltip <- list(formatter=
+#'    ec.clmn('species <b>%d</b><br>s.len <b>%d</b><br>s.wid <b>%d</b>', 5,1,2))
 #' p
 #' 
 #' @export
@@ -475,9 +481,9 @@ ec.clmn <- function(col=NULL, ...) {
       else {   #  multiple numeric, they could be in x, x.data, x.value
         tmp <- paste(tmp, collapse=',')
         ret <- paste0(sub('@','%d',spf), 
-                      "let ss=[",tmp,"], isd=x.data.length>0, isv=x.value!=null; ",
-                      "ss=ss.map(e => isd ? x.data[e] : isv ? x.value[e] : x[e]);",
-                      "let c = sprintf(`",col,"`, ss); return c; ")
+          "let ss=[",tmp,"]; ",
+          "ss=ss.map(e => x.value!=null ? x.value[e] : x.data!=null ? x.data[e] : x[e]);",
+          "let c = sprintf(`",col,"`, ss); return c; ")
       }
     }
   }
@@ -485,8 +491,7 @@ ec.clmn <- function(col=NULL, ...) {
     if (length(args) > 0) # { cat(length(args));
       warning('col is numeric, others are ignored', call.=FALSE)
     col <- as.numeric(col) - 1   # from R to JavaScript counting
-    ret <- paste0('let c = (x.data.length>0) ? x.data[',col,
-                  '] : x[',col,']; return c;')
+    ret <- paste0('let c = (x.data) ? x.data[',col,'] : x[',col,']; return c;')
   }
   #cat(ret)
   htmlwidgets::JS(paste0('function(x) {', ret, '}'))
