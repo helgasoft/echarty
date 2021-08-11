@@ -414,7 +414,7 @@ using heatmap chart
 <details><summary>🔻 View code</summary>
 
 ```r
-library(echarty)
+library(echarty); library(dplyr)
 # prepare and calculate data
 mtx <- cor(infert %>% dplyr::mutate(education=as.numeric(education)))
 order <- corrplot::corrmatOrder(mtx)
@@ -440,8 +440,11 @@ p
 using bar chart  
 <img src='img/cb-histogram.png' alt='histogram' />
 <details><summary>🔻 View code</summary>
+
 ```r
+library(echarty); library(dplyr)
 do.histogram <- function(x, breaks='Sturges') {
+  # get histogram data from input 'x'
   histo <- hist(x, plot=FALSE, breaks)
   tmp <- data.frame(x=histo$mids, y=histo$counts)
   tmp
