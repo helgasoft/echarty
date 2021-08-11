@@ -287,6 +287,8 @@ ec.init <- function( df=NULL, preset=TRUE, group1='scatter', load=NULL,
       # replace only source, transforms stay
       wt$x$opts$dataset[[1]] <- list(source=ec.data(df))
     }
+    if (is.null(unlist(tl.series$encode[ytem])))
+      stop("encode 'y' is required for tl.series", call.=FALSE)
     
     # dataset is already in, now set everything else
     #wt$x$opts$xAxis <- list(type='category')  # geo,leaf do not like
@@ -299,15 +301,15 @@ ec.init <- function( df=NULL, preset=TRUE, group1='scatter', load=NULL,
     di <- 0
     optl <- lapply(df %>% group_split(), function(gp) {
       di <<- di+1
-      # nicer looking lines when X sorted
+      # nicer looking lines with sorted X 
       #if (!is.null(xcol)) gp <- gp %>% arrange(across(all_of(xcol)))
       
-      # multiple series for each Y
+      # multiple series for each Y, like y=c('col1', 'col3')
       series <- lapply(unname(unlist(tl.series$encode[ytem])), function(sname) {
         append(list(datasetIndex=di, name=sname), tl.series)
       })
       series <- lapply(series, function(s) {
-        s$encode[ytem] <- s$name   # replace multiple with one
+        s$encode[ytem] <- s$name   # replace multiple col.names with one
         s
       })
 
@@ -612,7 +614,8 @@ ecr.band <- function(df=NULL, lower=NULL, upper=NULL, type='polygon', ...) {
                   "{offset: 1, color: 'rgba(135, 0, 157)'}])")
     astyle <- list(opacity = 0.8, color = htmlwidgets::JS(colr))
     
-    slow <- list(type='line', stack='band', ...)
+    slow <- list(type='line', ...)
+    if (is.null(slow$stack)) slow$stack <- 'band'
     if (is.null(slow$showSymbol)) slow$showSymbol <- FALSE
     if (is.null(slow$smooth)) slow$smooth <- TRUE
     if (is.null(slow$lineStyle)) slow$lineStyle <- list(width=0)
@@ -621,7 +624,8 @@ ecr.band <- function(df=NULL, lower=NULL, upper=NULL, type='polygon', ...) {
     if (!is.null(slow$areaStyle)) slow$areaStyle <- NULL
     else supr$areaStyle <- astyle
     # save realHI data for tooltip, 'hi' is just difference
-    tmp <- data.frame(x = df[, 1], lo=df[lower][[1]], 
+    fstc <- colnames(df)[1]   # first column name
+    tmp <- data.frame(x = df[fstc][[1]], lo=df[lower][[1]], 
                       hi = df[upper][[1]] - df[lower][[1]], realHI = df[upper][[1]] )
     slow$data <- ec.data(tmp[,c('x','lo')], "values")
     supr$data <- ec.data(tmp[,c('x','hi','realHI')], "values")

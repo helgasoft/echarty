@@ -16,10 +16,10 @@ downloads](https://cranlogs.r-pkg.org/badges/last-day/echarty)](https://cranlogs
 
 This package is a thin R wrapper around Javascript library
 [ECharts](https://echarts.apache.org/en/index.html). The list
-parameters in R replicate [ECharts’
+parameters in R replicate [ECharts
 documentation](https://echarts.apache.org/en/option.html). There are
 just a few additional commands.  
-Users can benefit from ECharts' **full functionality** to build
+Users can benefit from ECharts **full functionality** to build
 interactive charts in R and Shiny with minimal overhead.  
 
 Wider connectivity and deployment potential through [crosstalk
