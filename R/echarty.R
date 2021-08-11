@@ -608,6 +608,8 @@ ecr.band <- function(df=NULL, lower=NULL, upper=NULL, type='polygon', ...) {
     stop("df must be a data.frame", call. = FALSE)
   if (!is.numeric(df[lower][[1]]) || !is.numeric(df[upper][[1]]))
     stop("lower and upper must be numeric", call. = FALSE)
+  
+  fstc <- colnames(df)[1]   # first column name
   if (type=='stack') {
     colr <- paste("new echarts.graphic.LinearGradient(0, 0, 0, 1, [", 
                   "{offset: 0, color: 'rgba(255, 0, 135)'},", 
@@ -616,15 +618,14 @@ ecr.band <- function(df=NULL, lower=NULL, upper=NULL, type='polygon', ...) {
     
     slow <- list(type='line', ...)
     if (is.null(slow$stack)) slow$stack <- 'band'
+    if (is.null(slow$name)) slow$name <- 'band'
     if (is.null(slow$showSymbol)) slow$showSymbol <- FALSE
     if (is.null(slow$smooth)) slow$smooth <- TRUE
     if (is.null(slow$lineStyle)) slow$lineStyle <- list(width=0)
-    if (is.null(slow$name)) slow$name <- 'band'
     supr <- slow
     if (!is.null(slow$areaStyle)) slow$areaStyle <- NULL
     else supr$areaStyle <- astyle
     # save realHI data for tooltip, 'hi' is just difference
-    fstc <- colnames(df)[1]   # first column name
     tmp <- data.frame(x = df[fstc][[1]], lo=df[lower][[1]], 
                       hi = df[upper][[1]] - df[lower][[1]], realHI = df[upper][[1]] )
     slow$data <- ec.data(tmp[,c('x','lo')], "values")
@@ -634,8 +635,8 @@ ecr.band <- function(df=NULL, lower=NULL, upper=NULL, type='polygon', ...) {
   else {   # polygon
     ld <- nrow(df[upper])
     l2 <- unname(unlist(df[upper])[order(ld:1)])
-    tmp <- data.frame(x = c(df[1:ld, 1], df[ld:1, 1]), y = c(df[lower][[1]], 
-                                                             l2))
+    tmp <- data.frame(x = unname(unlist(c(df[1:ld, fstc], df[ld:1, fstc]))), 
+                      y = c(df[lower][[1]],  l2))
     serios <- list(type = "custom", renderItem = htmlwidgets::JS("riPolygon"), 
                    data = ec.data(tmp, "values"), ...)
     if (is.null(serios$itemStyle)) serios$itemStyle <- list(borderWidth = 0.5)
