@@ -331,7 +331,6 @@ shiny::runGist('https://gist.github.com/helgasoft/121d7d3ff7d292990c3e05cfc1cbf2
 ### Radar chart customized
 
 <img src='img/cb-8.png' alt='radar1' />
-
 <details><summary>🔻 View code</summary>
 
 ```r
@@ -410,7 +409,7 @@ p
 <br />
 
 ### Correlation matrix
-using heatmap chart
+using heatmap chart  
 <img src='img/cb-correlation.png' alt='correlation' />
 <details><summary>🔻 View code</summary>
 
@@ -438,7 +437,7 @@ p
 <br />
 
 ### Histogram
-using bar chart
+using bar chart  
 <img src='img/cb-histogram.png' alt='histogram' />
 <details><summary>🔻 View code</summary>
 ```r
