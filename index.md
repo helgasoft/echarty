@@ -7,13 +7,13 @@ Have the **full functionality** of [ECharts](https://echarts.apache.org/examples
 <br/>  
 
 ## Gallery
-Enjoy [the gallery](gallery.md) and grab a chart!  
-<a href='gallery.html'>
-<div style='white-space: nowrap;'><img src='img/cb-1.png' height='55px'/><img src='img/cb-5.png' height='55px'/><img src='img/cb-6.png' height='55px'/><img src='img/hawaii3d.png' height='55px'/><img src='img/cb-11.geo.gif' height='55px'/><img src='img/cb-12.organs.png' height='55px'/></div></a>
-<br />
+Enjoy [the gallery](gallery.md) and grab some chart code!  
+Best place to get started with **echarty**
+<a href='gallery.html'><img src='img/echarty.gallery.png'/></a>
+<br /><br />
 
 ## Tutorials
-Tips and tricks to help you get started with **echarty**
+More detailed step-by-step examples with tips and tricks.
 
 [Use Case 1](uc1.md) - Building an interactive map with regional data
 
@@ -36,15 +36,15 @@ Social media for charts - [drive the action](xtalk.html)  &nbsp; &nbsp; <span st
 <br/>
 
 ## Learn by example
-Have fun with **Translator Assistant**  - translate Javascript data to R !  
-ECharts has lots of great [examples](https://echarts.apache.org/examples/en/)
+See what you can do with echarty and **Shiny**
+```r
+demo(eshiny, package='echarty')
+```
+Have fun with **Translator Assistant**  - translate Javascript data to R! 
+&nbsp; ECharts has lots of great [examples](https://echarts.apache.org/examples/en/)
 . The goal is to facilitate translation of their JSON-like data (*option* object) to R lists. Give it a go with the following R command
 ```r
 demo(js2r, package='echarty')
-```
-See what you can do with echarty and Shiny
-```r
-demo(eshiny, package='echarty')
 ```
 Or browse some interesting <a href='https://gist.github.com/helgasoft'>code gists</a>.
 <br/>

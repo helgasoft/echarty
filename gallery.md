@@ -9,6 +9,7 @@ demo for presets
 <details><summary>🔻View code</summary>
 
 ```r
+library(echarty); library(dplyr)
 library(lubridate)
 df <- data.frame(date=as.character(as.Date('2019-12-31') %m+% months(1:13)), 
                  num=runif(13))
@@ -21,12 +22,13 @@ p
 #  without presets all options are explicitly assigned
 p <- ec.init(preset=FALSE) %>% ec.theme('dark')
 p$x$opts <- list(
-  yAxis = list(ey=''),   # 'ey' is a dummy attribute to set a default axis
+  yAxis = list(ii=''),   # 'ii' is a dummy attribute to set default axis
   xAxis = list(type = 'category', 
                axisLabel = list(interval=0, rotate=45)
-               #, axisTick = list(alignWithLabel=TRUE)
+               #, axisTick=list(alignWithLabel=TRUE)
           ),
-  series = list(list(type='bar', data=ec.data(df, 'values', FALSE)))
+  series = list(list(
+    type='bar', data=ec.data(df, 'values', FALSE)))
 )
 p
 
@@ -52,12 +54,14 @@ df <- Orange %>% mutate(Tree=as.character(Tree)) %>%
 p <- ec.init(preset=FALSE) %>% ec.theme('dark')
 p$x$opts <- list(
   series = lapply(df, function(t) {
-      list(type='bar', name=unique(t$Tree), data=t$circumference) }),
-  legend = list(ey=''),
-  xAxis = list(ey=''),
-  yAxis = list(data=unique(Orange$age)),
-  tooltip = list(formatter='{c}')
+    list(type='bar', name=unique(t$Tree), data=t$circumference) }),
+  legend = list(ii=''),
+  xAxis = list(name='tree circumference in mm', nameLocation='center', nameGap=22),
+  yAxis = list(data=unique(Orange$age), name='age in days'),
+  tooltip = list(formatter='circumference={c} mm')
 )
+l <- length(p$x$opts$series)
+p$x$opts$series[[l]]$name <- paste(p$x$opts$series[[l]]$name, ' trees')
 p
 ```
 </details>
@@ -405,13 +409,80 @@ p
 </details>
 <br />
 
+### Correlation matrix
+using heatmap chart
+<img src='img/cb-correlation.png' alt='correlation' />
+<details><summary>🔻 View code</summary>
+
+```r
+library(echarty)
+# prepare and calculate data
+mtx <- cor(infert %>% dplyr::mutate(education=as.numeric(education)))
+order <- corrplot::corrmatOrder(mtx)
+mtx <- mtx[order, order]
+df <- as.data.frame(as.table(mtx))
+for(i in 1:2) df[,i] <- as.character(df[,i])
+
+p <- ec.init(preset=FALSE) %>% ec.theme('dark')
+p$x$opts <- list( 
+  title = list(text='Correlation - infertility after abortion'),
+  xAxis = list(type='category', data=unique(colnames(mtx)), axisLabel=list(rotate=45)),
+  yAxis = list(type='category', data=unique(colnames(mtx))),
+  series = list(list(type = 'heatmap', data= ec.data(df,'values') )),
+  visualMap = list(min=-1, max=1, calculable=TRUE, orient='vertical',left='right'
+    ,inRange=list( color=c('#313695', '#4575b4', '#74add1', '#abd9e9', '#e0f3f8', '#ffffbf', '#fee090', '#fdae61', '#f46d43', '#d73027', '#a50026')) )
+)
+p
+```
+</details>
+<br />
+
+### Histogram
+using bar chart
+<img src='img/cb-histogram.png' alt='histogram' />
+<details><summary>🔻 View code</summary>
+```r
+do.histogram <- function(x, breaks='Sturges') {
+  histo <- hist(x, plot=FALSE, breaks)
+  tmp <- data.frame(x=histo$mids, y=histo$counts)
+  tmp
+}
+p <- do.histogram(rnorm(44)) %>% ec.init(group1='bar') %>% ec.theme('dark')
+p
+
+# with normal distribution line added
+hh <- do.histogram(rnorm(44))
+p <- hh %>% ec.init(group1='bar') %>% ec.theme('dark')
+nrm <- dnorm(hh$x, mean=mean(hh$x), sd=sd(hh$x))  # normal distribution
+p$x$opts$xAxis <- list(list(ii=''), list(data=c(1:length(nrm))))
+p$x$opts$yAxis <- list(list(ii=''), list(ii=''))
+p$x$opts$series <- append(p$x$opts$series, 
+  list(list(type='line', data=nrm, xAxisIndex=1, yAxisIndex=1, color='yellow')))
+p
+
+# same with timeline
+hh <- data.frame()
+for(i in 1:5) {
+  tmp <- do.histogram(rnorm(44)) %>% mutate(time=rep(i,n()))
+  hh <- rbind(hh, tmp)
+}
+p <- hh %>% group_by(time) %>% 
+  ec.init(tl.series=list(type='bar', encode=list(x='x',y='y'))) %>% 
+  ec.theme('dark')
+p
+```
+</details>
+<br />
+
+
 ### Modularity plugin
 DOW companies - size by market cap<br />
 <img src='img/cb-10.png' alt='dow' />
 <details><summary>🔻 View code</summary>
 
 ```r
-# select and drag items to see auto-rearrange effect
+# click and drag items to see auto-rearrange effect
+library(echarty); library(dplyr)
 tmp <- jsonlite::fromJSON('https://quote.cnbc.com/quote-html-webservice/quote.htm?noform=1&partnerId=2&fund=1&exthrs=0&output=json&symbolType=issue&symbols=55991|44503|36276|56858|70258|1607179|84090|142105|145043|148633|151846|167459|174239|178782|174614|197606|202757|205141|205778|212856|228324|260531|277095|81364|283359|10808544|283581|286571|89999|522511530&requestMethod=extended')
 df <- tmp$ExtendedQuoteResult$ExtendedQuote$QuickQuote
 wt <- data.frame(tic=df$symbol, name=df$altName, bn=NA, size=NA, 
@@ -454,7 +525,7 @@ Circular layout diagram for 'Les Miserables' characters<br />
 
 ```r
 # https://echarts.apache.org/examples/en/editor.html?c=graph-circular-layout
-
+library(echarty); library(dplyr)
 les <- jsonlite::fromJSON('https://echarts.apache.org/examples/data/asset/data/les-miserables.json')
 les$categories$name <- as.character(1:9)
 p <- ec.init(preset=FALSE, title=list(text='Les Miserables',top='bottom',left='right')) 
@@ -497,7 +568,7 @@ with mouse events &nbsp; &nbsp; &nbsp; [<span style="color:magenta">Live Demo</s
 #' p$x$opts from original 'options' translated with demo(js2r)
 #' p$x$on handlers added manually
 #' demo @ https://rpubs.com/echarty/svg
-
+library(echarty); library(dplyr)
 url <- 'https://echarts.apache.org/examples/data/asset/geo/Veins_Medical_Diagram_clip_art.svg'
 svg <- url %>% readLines(encoding='UTF-8') %>% paste0(collapse="")
 p <- ec.init(preset=FALSE) %>% ec.theme('dark-mushroom')

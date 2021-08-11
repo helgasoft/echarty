@@ -2,7 +2,7 @@
 <br />
 
 An interesting [question](https://twitter.com/rdatasculptor/status/1363235363200892930) by [rdatasculptor](https://twitter.com/rdatasculptor).  
-Will sankey chart work with timeline ?  Never tried, let's do it now.  
+Will sankey chart work with timeline ?   
 To speed things up, we go to echarty's examples. In the Console type **?ec.examples**, then in Help panel, hit Ctrl/F and seach for 'sankey'. We find the following code  
 <br />
 
@@ -36,6 +36,7 @@ We will **not** try to change nodes or edges on each step, just **edge values**.
 The GUI part starts with chart initialization with *ec.init()*, then setting chart parameters which here are series, timeline and options.  
 Parameter *timeline* defines labels for the timeline legend.  
 Parameter *options* (ill-named) defines the timeline series.  
+Note: command *ec.init* can set timeline options through parameter *tl.series*, but that requires grouped dataframe data, which is not the case in this example.  
 The complete code is below. We've added also series *levels* to fine-tune visuals on each step, especially colors. Without *levels* node colors would change on each step, which is confusing. 
 <br />
 <br />
@@ -53,24 +54,30 @@ st <- function() ec.data(sankey, 'values')  # data.frame to list
 nodes <- lapply(st(), function(x) list(name = x$value[1]))
 edo <- function(x) list(source=as.character(x$value[2]),  
                         target=as.character(x$value[3]), value=x$value[4])
-edges1 <- lapply(st(), edo)
+edges <- list()
+edges[[1]] <- lapply(st(), edo)
 sankey$value <- c(4, 5, 4, 7, 8)
-edges2 = lapply(st(), edo)
+edges[[2]] <- lapply(st(), edo)
 sankey$value <- c(2, 7, 6, 5, 4)
-edges3 = lapply(st(), edo)
+edges[[3]] <- lapply(st(), edo)
+
+options <- list()
+for(i in 1:3) {
+  options <- append(options,
+    list(list(title = list(text=paste0('step',i)), 
+              series= list(list(type='sankey', data=nodes, edges=edges[[i]]))))
+  )
+}
 # optional serie levels to keep colors persistent
 i <- -1
 levcol = lapply(list('blue','red','green','brown','yellow'),
-					 function(clr) { i<<-i+1; list(depth=i, itemStyle=list(color=clr)) })
+		 function(clr) { i<<-i+1; list(depth=i, itemStyle=list(color=clr)) })
 
 p <- ec.init(preset=FALSE)
 p$x$opts <- list(
-	series = list(list(type='sankey', data = nodes, edges = edges1, levels = levcol	)),
+	series = list(list(type='sankey', data = nodes, edges = edges[[1]], levels = levcol	)),
   timeline = list(axisType='category', data=list('s1','s2','s3')),
-  options = list(
-    list(title=list(text='step1'), series=list(list(type='sankey', data=nodes, edges=edges1))),
-    list(title=list(text='step2'), series=list(list(type='sankey', data=nodes, edges=edges2))),
-    list(title=list(text='step3'), series=list(list(type='sankey', data=nodes, edges=edges3))))
+  options = options
 )
 p
 ```
