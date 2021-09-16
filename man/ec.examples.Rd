@@ -251,9 +251,9 @@ datset <- list(
     list('Jasmin Krause', 52, 'Musician', 287, '2011-02-14'),
     list('Li Lei', 37, 'Teacher', 219, '2011-02-18'),
     list('Karle Neumann', 25, 'Engineer', 253, '2011-04-02'),
-    list('Adrian GroÃŸ', 19, 'Teacher', NULL, '2011-01-16'),
+    list('Adrian Groß', 19, 'Teacher', NULL, '2011-01-16'),
     list('Mia Neumann', 71, 'Engineer', 165, '2011-03-19'),
-    list('BÃ¶hm Fuchs', 36, 'Musician', 318, '2011-02-24'),
+    list('Böhm Fuchs', 36, 'Musician', 318, '2011-02-24'),
     list('Han Meimei', 67, 'Engineer', 366, '2011-03-12'))),
   list(transform = list(type= 'sort', config=list(
     list(dimension='profession', order='desc'),

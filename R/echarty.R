@@ -23,10 +23,12 @@
 #'   Attribute \emph{coordinateSystem} is set to \emph{'cartesian2d'} by default. Auto-generated \emph{timeline} and \emph{options} will be preset for the chart as well.
 #' @param ... other arguments to pass to the widget. \cr
 #'   Custom widget arguments include: \cr \itemize{
-#'   \item js - a string with a Javascript expression to evaluate
-#'   \item renderer - 'canvas'(default) or 'svg'
 #'   \item elementId - Id of the widget, default is NULL(auto-generated)
-#'   \item ask - the \emph{plugjs} parameter when \emph{load} is present, TRUE or FALSE(default)
+#'   \item ask - the \emph{plugjs} parameter when \emph{load} is present, FALSE by default
+#'   \item js - single string or a two-strings vector with JavaScript expressions to evaluate. First is evaluated before and second after chart initialization. Chart object 'opts' is exposed for the second script.
+#'   \item renderer - 'canvas'(default) or 'svg'
+#'   \item locale - 'EN'(default) or 'ZH' or other, see \href{https://echarts.apache.org/en/api.html#echarts.init}{here}
+#'   \item useDirtyRect - enable dirty rectangle rendering or not, FALSE by default, see \href{https://echarts.apache.org/en/api.html#echarts.init}{here}
 #' }
 #' @return A widget to plot, or to save and expand with more features.
 #'
@@ -47,7 +49,6 @@
 #'   \item gmodular - graph modularity, see \href{https://github.com/ecomfe/echarts-graph-modularity}{source}  \cr
 #'   \item wordcloud - cloud of words, see \href{https://github.com/ecomfe/echarts-wordcloud}{source} \cr
 #'  } or install you own third-party plugins.
-#'  Parameter 'js' accepts a vector of one or two strings. The first one is executed before chart initialization, the second - after. Chart object 'opts' is exposed in the second script.
 #' 
 #' @examples
 #'  # basic scatter chart from a data.frame, using presets
@@ -73,12 +74,14 @@ ec.init <- function( df=NULL, preset=TRUE, group1='scatter', load=NULL,
                      width=NULL, height=NULL, ...) {
   
   opts <- list(...)
+  elementId <- if (is.null(opts$elementId)) NULL else opts$elementId
+  js <- if (is.null(opts$js)) NULL else opts$js
   ask <- if (is.null(opts$ask)) FALSE else opts$ask
   renderer <- if (is.null(opts$renderer)) 'canvas' else tolower(opts$renderer)
-  js <- if (!is.null(opts$js)) opts$js else NULL
-  elementId <- if (is.null(opts$elementId)) NULL else opts$elementId
+  locale <- if (is.null(opts$locale)) 'EN' else toupper(opts$locale)
+  useDirtyRect <- if (is.null(opts$useDirtyRect)) FALSE else opts$useDirtyRect
   # remove the above since they are not valid ECharts options
-  opts$ask <- opts$js <- opts$renderer <- opts$elementId <- NULL
+  opts$ask <- opts$js <- opts$renderer <- opts$locale <- opts$useDirtyRect <- opts$elementId <- NULL
   
   # presets are used as default for examples and testing
   # user can also ignore or replace them
@@ -114,6 +117,8 @@ ec.init <- function( df=NULL, preset=TRUE, group1='scatter', load=NULL,
     theme = '',
     draw = TRUE,
     renderer = renderer,
+    locale = locale,
+    useDirtyRect = useDirtyRect,
     mapping = list(),
     events = list(),
     buttons = list(),
@@ -232,7 +237,7 @@ ec.init <- function( df=NULL, preset=TRUE, group1='scatter', load=NULL,
       wt$x$opts$yAxis3D <- list(list())
       wt$x$opts$zAxis3D <- list(list())
     }
-    wt <- ec.plugjs(wt, 'https://cdn.jsdelivr.net/npm/echarts-gl@2.0.6/dist/echarts-gl.min.js', ask)
+    wt <- ec.plugjs(wt, 'https://cdn.jsdelivr.net/npm/echarts-gl@2.0.8/dist/echarts-gl.min.js', ask)
   }
   if ('world' %in% load) {
     wt <- ec.plugjs(wt, 'https://cdn.jsdelivr.net/npm/echarts@4.9.0/map/js/world.js', ask)
@@ -447,7 +452,7 @@ ec.data <- function(df, format='dataset', header=TRUE) {
 #' @param ... Comma separated list of column indexes or names, when \emph{col} is \emph{sprintf}. This allows formatting of multiple columns, as for a tooltip.
 #' 
 #' @details Column indexes are counted in R and start at 1.\cr
-#' \emph{col} as sprintf supports only two placeholders - %d for numeric and %s for string.\cr
+#' \emph{col} as sprintf supports only two placeholders - %d for column indexes and %s for column names.\cr
 #' \emph{col} as sprintf can contain double quotes, but not single or backquotes.\cr
 #' Useful to set formatter, color, symbolSize, etc.
 #' 

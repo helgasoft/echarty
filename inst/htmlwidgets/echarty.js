@@ -64,19 +64,19 @@ HTMLWidgets.widget({
               tmp = x.eval;
             try {
               eval(tmp);
-            } catch(err) { console.log('eva1:' + err.message) }
+            } catch(err) { console.log('eva1: ' + err.message) }
           }
         }
         
         chart = echarts.init(document.getElementById(el.id), x.theme, 
-                            {renderer: x.renderer});
+        	{renderer: x.renderer, locale: x.locale, useDirtyRect: x.useDirtyRect});
         
         opts = evalFun(x.opts);
         
         if (eva2) {
           try {
             eval(eva2);
-          } catch(err) { console.log('eva2:' + err.message) }
+          } catch(err) { console.log('eva2: ' + err.message) }
         }
         
         if(x.draw === true)

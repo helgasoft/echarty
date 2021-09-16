@@ -16,13 +16,13 @@ Helper function to address data column(s) by index or name
 }
 \details{
 Column indexes are counted in R and start at 1.\cr
-\emph{col} as sprintf supports only two placeholders - \%d for numeric and \%s for string.\cr
+\emph{col} as sprintf supports only two placeholders - \%d for column indexes and \%s for column names.\cr
 \emph{col} as sprintf can contain double quotes, but not single or backquotes.\cr
 Useful to set formatter, color, symbolSize, etc.
 }
 \examples{
 tmp <- data.frame(Species = as.vector(unique(iris$Species)),
-                  emoji = c('\U0001F33B','\U0001F335','\U0001F33A')) # ðŸŒ»,ðŸŒµ,ðŸŒº
+                  emoji = c('\U0001F33B','\U0001F335','\U0001F33A')) # 🌻,🌵,🌺
 df <- iris \%>\% dplyr::inner_join(tmp)   # add 6th column 'emoji'
 p <- df \%>\% dplyr::group_by(Species) \%>\% ec.init()
 p$x$opts$series <- list(list(

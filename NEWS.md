@@ -1,5 +1,9 @@
 # history of echarty package development
 
+## v. 0.3.1.2
+
+- _ec.init_ added ECharts parameters _locale_ and _useDirtyRect_
+
 ## v. 0.3.1
 
 - _ec.init_ param _timeline_ renamed to _tl.series_

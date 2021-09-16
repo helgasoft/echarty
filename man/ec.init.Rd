@@ -41,10 +41,12 @@ string and have \code{'px'} appended.}
 
 \item{...}{other arguments to pass to the widget. \cr
 Custom widget arguments include: \cr \itemize{
-\item js - a string with a Javascript expression to evaluate
-\item renderer - 'canvas'(default) or 'svg'
 \item elementId - Id of the widget, default is NULL(auto-generated)
-\item ask - the \emph{plugjs} parameter when \emph{load} is present, TRUE or FALSE(default)
+\item ask - the \emph{plugjs} parameter when \emph{load} is present, FALSE by default
+\item js - single string or a two-strings vector with JavaScript expressions to evaluate. First is evaluated before and second after chart initialization. Chart object 'opts' is exposed for the second script.
+\item renderer - 'canvas'(default) or 'svg'
+\item locale - 'EN'(default) or 'ZH' or other, see \href{https://echarts.apache.org/en/api.html#echarts.init}{here}
+\item useDirtyRect - enable dirty rectangle rendering or not, FALSE by default, see \href{https://echarts.apache.org/en/api.html#echarts.init}{here}
 }}
 }
 \value{
@@ -71,7 +73,6 @@ Built-in plugins: \cr \itemize{
 \item gmodular - graph modularity, see \href{https://github.com/ecomfe/echarts-graph-modularity}{source}  \cr
 \item wordcloud - cloud of words, see \href{https://github.com/ecomfe/echarts-wordcloud}{source} \cr
 } or install you own third-party plugins.
-Parameter 'js' accepts a vector of one or two strings. The first one is executed before chart initialization, the second - after. Chart object 'opts' is exposed in the second script.
 }
 \examples{
  # basic scatter chart from a data.frame, using presets
