@@ -228,14 +228,19 @@ ec.init <- function( df=NULL, preset=TRUE, group1='scatter', load=NULL,
   
   # Plugins implemented as dynamic load on-demand
   if ('3D' %in% load) {
-    if (preset) {
-      wt$x$opts$xAxis <- NULL   # replace 2D presets with 3D
+    if (preset) {       # replace 2D presets with 3D
+      wt$x$opts$xAxis <- NULL   
       wt$x$opts$yAxis <- NULL
-      wt$x$opts$series[[1]] <- list(type='scatter3D')  #NULL
       wt$x$opts$grid3D  <- list(list())
       wt$x$opts$xAxis3D <- list(list())
       wt$x$opts$yAxis3D <- list(list())
       wt$x$opts$zAxis3D <- list(list())
+      if (!is.null(group1) && dplyr::is.grouped_df(df)) {
+        # make all series scatter3D
+        wt$x$opts$series <- lapply(wt$x$opts$series,
+          function(s) { s$type='scatter3D'; s })
+      } else
+        wt$x$opts$series[[1]] <- list(type='scatter3D')  
     }
     wt <- ec.plugjs(wt, 'https://cdn.jsdelivr.net/npm/echarts-gl@2.0.8/dist/echarts-gl.min.js', ask)
   }
@@ -244,13 +249,14 @@ ec.init <- function( df=NULL, preset=TRUE, group1='scatter', load=NULL,
     if (preset) {
       wt$x$opts$xAxis <- NULL
       wt$x$opts$yAxis <- NULL
-      wt$x$opts$geo = list(map='world', roam=TRUE, zoom=6)
+      wt$x$opts$series <- list(list(type='map', map='world', roam=TRUE))
+      #wt$x$opts$geo = list(map='world', roam=TRUE)  # duplicate of series
       # if (!is.null(df))  # cancelled: dont know if first 2 cols are lng,lat
       #   wt$x$opts$geo$center= c(mean(unlist(df[,1])), mean(unlist(df[,2])))
     }
   }
   if ('liquid' %in% load) 
-    wt <- ec.plugjs(wt, 'https://cdn.jsdelivr.net/npm/echarts-liquidfill@3.0.0/dist/echarts-liquidfill.min.js', ask)
+    wt <- ec.plugjs(wt, 'https://cdn.jsdelivr.net/npm/echarts-liquidfill@3.1.0/dist/echarts-liquidfill.min.js', ask)
   
   if ('gmodular' %in% load) 
     wt <- ec.plugjs(wt, 'https://cdn.jsdelivr.net/npm/echarts-graph-modularity@2.0.0/dist/echarts-graph-modularity.min.js', ask)
@@ -448,7 +454,8 @@ ec.data <- function(df, format='dataset', header=TRUE) {
 #' 
 #' Helper function to address data column(s) by index or name
 #' 
-#' @param col A column index(number), column name(string) or a \code{\link[base]{sprintf}} format string. \cr
+#' @param col A column index(number), column name(string) or a \code{\link[base]{sprintf}} format string. 
+#' @param scale A decimal/integer number to multiply the column value by. Only when \emph{col} is a single index.
 #' @param ... Comma separated list of column indexes or names, when \emph{col} is \emph{sprintf}. This allows formatting of multiple columns, as for a tooltip.
 #' 
 #' @details Column indexes are counted in R and start at 1.\cr
@@ -469,11 +476,12 @@ ec.data <- function(df, format='dataset', header=TRUE) {
 #' p
 #' 
 #' @export
-ec.clmn <- function(col=NULL, ...) {
+ec.clmn <- function(col=NULL, scale=1, ...) {
   if (is.null(col)) stop('col is required', call.=FALSE)
+  if (is.null(scale)) scale=1
   args <- list(...)
   if (is.na(suppressWarnings(as.numeric(col)))) {   # col is string
-    if (length(args)==0)
+    if (length(args)==0) 
       ret <- paste0('return x.data.',col,';')
     else {          # col a sprintf
       spf <- paste("var sprintf = (str, argv) => !argv.length ? str :",
@@ -488,22 +496,21 @@ ec.clmn <- function(col=NULL, ...) {
       else {   #  multiple numeric, they could be in x, x.data, x.value
         tmp <- paste(tmp, collapse=',')
         ret <- paste0(sub('@','%d',spf), 
-          "let ss=[",tmp,"]; ",
-          "ss=ss.map(e => x.value!=null ? x.value[e] : x.data!=null ? x.data[e] : x[e]);",
-          "let c = sprintf(`",col,"`, ss); return c; ")
+                      "let ss=[",tmp,"]; ",
+                      "ss=ss.map(e => x.value!=null ? x.value[e] : x.data!=null ? x.data[e] : x[e]);",
+                      "let c = sprintf(`",col,"`, ss); return c; ")
       }
     }
   }
-  else {  # col is numeric thus solitary parameter
+  else {  # col is solitary numeric
     if (length(args) > 0) # { cat(length(args));
       warning('col is numeric, others are ignored', call.=FALSE)
     col <- as.numeric(col) - 1   # from R to JavaScript counting
-    ret <- paste0('let c = (x.data) ? x.data[',col,'] : x[',col,']; return c;')
+    scl <- if (scale==1) 'return c;' else paste0('return (parseFloat(c)*',scale,');')
+    ret <- paste0('let c = (x.data) ? x.data[',col,'] : x[',col,']; ',scl)
   }
-  #cat(ret)
   htmlwidgets::JS(paste0('function(x) {', ret, '}'))
 }
-
 
 #' Charts layout
 #' 

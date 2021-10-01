@@ -198,100 +198,99 @@ HTMLWidgets.widget({
           echarts.disconnect(x.disconnect);
         }
         
-        // ---------------- crosstalk ----------------
+    // ---------------- crosstalk ----------------
         // keys are numbered differently depending on the source: 
         //      R = 1:n, JS = 0:(n-1)
         // unselect all if sel.count==total
-        //
-    	  // check crosstalk bindings
-      	if ((typeof x.settings)!='undefined' &&
+
+    	// check crosstalk bindings
+    if ((typeof x.settings)!='undefined' &&
       	    (typeof x.settings.crosstalk_key)!='undefined' && 
       	    (typeof x.settings.crosstalk_group)!='undefined' &&
       	    x.settings.crosstalk_key !=null && 
       	    x.settings.crosstalk_group !=null) {
 
-      	  console.log(' echarty crosstalk on');
-      	  
-      	  var sel_handle = new crosstalk.SelectionHandle();
-          var ct_filter = new crosstalk.FilterHandle();
-    
-      	  chart.on("brushselected", function(keys) {    // send keys FROM echarty
-      	    let items = [];
-      	    if (keys.batch)
-        	    items = keys.batch[0].selected[0].dataIndex;
-      	    if (items && items.length>0) {
-      	      //console.log('dindex='+items);
-      	      for (let i=0; i < items.length; ++i) ++items[i];
-              sel_handle.set(items);
-      	    }
-          });
-      	  chart.on("brushEnd", function(keys) {    // release selection FROM echarty
-      	    if (keys.areas.length==0)
-      	      sel_handle.set([]);
-      	  })
-      	  
-      	  // Highlight points selected by another widget
-      	  sel_handle.on("change", function(e) {  
-      	    if (e.sender !== sel_handle) {     // get external keys to highlight/brush
-      	      //console.log('brush='+e.value);
-              
-        	    if (e.value.length>0) {
-        	      for (let i=0; i < e.value.length; ++i) --e.value[i];
-        	      chart.dispatchAction({type:'highlight', 
-        	                            seriesIndex:0, dataIndex:e.value });
-        	      sel_handle.save = e.value;
-        	    } else if (sel_handle.save) {   // clear selected
-                chart.dispatchAction({type:'downplay', 
-                                      seriesIndex:0, dataIndex:sel_handle.save }); 
-                sel_handle.save = null;
-              }
-            }
-      	  });
-      	  
-      	  chart.key = x.settings.crosstalk_key;
-      	  
-          sel_handle.setGroup(x.settings.crosstalk_group);
+    	console.log(' echarty crosstalk on');
+    	
+    	var sel_handle = new crosstalk.SelectionHandle();
+    	var ct_filter = new crosstalk.FilterHandle();
+    	
+    	chart.on("brushselected", function(keys) {    // send keys FROM echarty
+    		let items = [];
+    		if (keys.batch)
+    			items = keys.batch[0].selected[0].dataIndex;
+    		if (items && items.length>0) {
+    		//console.log('dindex='+items);
+    			for (let i=0; i < items.length; ++i) ++items[i];
+    			sel_handle.set(items);
+    		}
+    	});
+    	chart.on("brushEnd", function(keys) {    // release selection FROM echarty
+    		if (keys.areas.length==0)
+    			sel_handle.set([]);
+    	})
+    	
+          	  // Highlight points selected by another widget
+    	sel_handle.on("change", function(e) {  
+    	    if (e.sender !== sel_handle) {     // get external keys to highlight/brush
+                  
+            	if (e.value.length>0) {
+            	      for (let i=0; i < e.value.length; ++i) --e.value[i];
+            	      chart.dispatchAction({type:'highlight', 
+            	                            seriesIndex:0, dataIndex:e.value });
+            	      sel_handle.save = e.value;
+            	} 
+            	else if (sel_handle.save) {   // clear selected
+    			chart.dispatchAction({type:'downplay', 
+    				seriesIndex:0, dataIndex:sel_handle.save }); 
+    			sel_handle.save = null;
+    		}
+    	    }
+    	});
+          	  
+    	chart.key = x.settings.crosstalk_key;
+    	
+    	sel_handle.setGroup(x.settings.crosstalk_group);
+    	
+    	// --- filtering ---
+    	chart.on("selectchanged", function(keys) {
+    		let items = [];
+    		if (keys.selected.length>0)
+    		      items = keys.selected[0].dataIndex;
+    		  //console.log('fselchg=' + items);
+    		if (keys.isFromClick) {           // send keys FROM echarty
+    		for (let i=0; i < items.length; ++i) ++items[i];
+    		if (items.length==0) items = this.key;   // send all keys = filter off
+    		    ct_filter.set(items);
+    		} else if (keys.fromAction != 'unselect')
+    		    ct_filter.save = items;
+    	})
+    	ct_filter.on("change", function(e) {    // only external keys to filter
+    		if (e.sender == ct_filter) return;
+    		//console.log('filter='+e.value);
+    		if (ct_filter.save) {   // clear selected 
+    		chart.dispatchAction({type:'unselect', 
+    		                    seriesIndex:0, dataIndex:ct_filter.save });
+    		ct_filter.save = null;
+    		}
+    		if (e.value) {
+    			for (let i=0; i < e.value.length; ++i) --e.value[i];
+    			if (e.value.length == chart.key.length) {
+    			chart.dispatchAction({type:'unselect', 
+    			                            seriesIndex:0, dataIndex:e.value });
+    			return;
+    			}
+    			    chart.dispatchAction({type:'select', 
+    			                          seriesIndex:0, dataIndex:e.value });
+    			    ct_filter.save = e.value;  // save to unselect later
+    		}
+    	})
+    	// Choose group for Filter
+    	ct_filter.setGroup(x.settings.crosstalk_group);	  
       
-          // --- filtering ---
-      	  chart.on("selectchanged", function(keys) {
-      	    let items = [];
-            if (keys.selected.length>0)
-        	      items = keys.selected[0].dataIndex;
-        	  //console.log('fselchg=' + items);
-      	    if (keys.isFromClick) {           // send keys FROM echarty
-      	      for (let i=0; i < items.length; ++i) ++items[i];
-      	      if (items.length==0) items = this.key;   // send all keys = filter off
-        	    ct_filter.set(items);
-      	    } else if (keys.fromAction != 'unselect')
-        	    ct_filter.save = items;
-      	  })
-      	  ct_filter.on("change", function(e) {    // only external keys to filter
-      	    if (e.sender == ct_filter) return;
-      	    //console.log('filter='+e.value);
-            if (ct_filter.save) {   // clear selected 
-              chart.dispatchAction({type:'unselect', 
-                                    seriesIndex:0, dataIndex:ct_filter.save });
-              ct_filter.save = null;
-            }
-      	    if (e.value) {
-      	      for (let i=0; i < e.value.length; ++i) --e.value[i];
-      	      if (e.value.length == chart.key.length) {
-                chart.dispatchAction({type:'unselect', 
-                                            seriesIndex:0, dataIndex:e.value });
-                return;
-      	      }
-        	    chart.dispatchAction({type:'select', 
-        	                          seriesIndex:0, dataIndex:e.value });
-        	    ct_filter.save = e.value;  // save to unselect later
-      	    }
-      	  })
-          // Choose group for Filter
-          ct_filter.setGroup(x.settings.crosstalk_group);	  
-      
-      	}   
-      	// ---------------- end crosstalk
+    }   // ---------------- end crosstalk
 
-      },
+	},   // end renderValue
       
       getChart: function(){
         return chart;
@@ -302,9 +301,8 @@ HTMLWidgets.widget({
       },
 
       resize: function(width, height) {
-        if(chart){
+        if (chart)
           chart.resize({width: width, height: height});
-        }
       }
 
     };
@@ -362,11 +360,15 @@ if (HTMLWidgets.shinyMode) {
         case 'p_js':
           try {
             eval(data.opts.code);
-          } catch(err) { console.log('eval action:' + err.message) }
+          } catch(err) { console.log('p_js action:' + err.message) }
           break;
         
         case 'p_resize':
-          chart.resize();
+          // see https://echarts.apache.org/en/api.html#echartsInstance.resize
+          if (data.opts.resizeOpts)
+            chart.resize(data.opts.resizeOpts);
+          else
+            chart.resize()
           break;
           
         case 'p_merge':

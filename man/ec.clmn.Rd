@@ -4,10 +4,12 @@
 \alias{ec.clmn}
 \title{Data column}
 \usage{
-ec.clmn(col = NULL, ...)
+ec.clmn(col = NULL, scale = 1, ...)
 }
 \arguments{
-\item{col}{A column index(number), column name(string) or a \code{\link[base]{sprintf}} format string. \cr}
+\item{col}{A column index(number), column name(string) or a \code{\link[base]{sprintf}} format string.}
+
+\item{scale}{A decimal/integer number to multiply the column value by. Only when \emph{col} is a single index.}
 
 \item{...}{Comma separated list of column indexes or names, when \emph{col} is \emph{sprintf}. This allows formatting of multiple columns, as for a tooltip.}
 }

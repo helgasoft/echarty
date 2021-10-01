@@ -1,5 +1,13 @@
 # history of echarty package development
 
+## v. 0.3.1.3
+
+- _ec.init_: fix '3D' presets for groups and 'world' presets
+- _ec.clmn_: added new parameter _scale_
+- _echarty.js_ add resize parameter [resizeOpts](https://echarts.apache.org/en/api.html#echartsInstance.resize)
+- updates to examples.R
+- upgrade ECharts to v.5.2.1, liquidfill to v.3.1.0
+
 ## v. 0.3.1.2
 
 - _ec.init_ added ECharts parameters _locale_ and _useDirtyRect_

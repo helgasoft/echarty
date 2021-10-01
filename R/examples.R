@@ -91,11 +91,23 @@
 #' 
 #' 
 #' #------ Plugin leaflet
-#' tmp <- quakes %>% dplyr::relocate('long')  # set in lon,lat order
+#' tmp <- quakes %>% dplyr::relocate('long') %>%  # set order to lon,lat
+#'   dplyr::mutate(size= exp(mag)/20)             # add accented size
 #' p <- tmp %>% ec.init(load='leaflet')
-#' p$x$opts$legend = list(data=list(list(name='quakes')))
 #' p$x$opts$series[[1]]$name = 'quakes'
-#' p$x$opts$series[[1]]$symbolSize = ec.clmn(4)
+#' p$x$opts$series[[1]]$symbolSize = ec.clmn(6)   # size column
+#' p$x$opts$legend = list(zz='')
+#' p
+#'
+#'
+#' #------ Plugin 'world' with visualMap
+#' cns <- data.frame(
+#'   country = c('United States','China','Russia','Brazil','Canada','Algeria','Sudan','Australia'),
+#'   value = runif(8, 1, 100) 
+#' )
+#' p <- cns %>% ec.init(load= 'world')
+#' p$x$opts$visualMap <- list(calculable= TRUE, max= 100)
+#' p$x$opts$toolbox <- list(feature= list(restore= list()))
 #' p
 #'
 #'
@@ -120,6 +132,22 @@
 #'   ))
 #'   p
 #' }
+#' 
+#' 
+#' #------ registerMap JSON
+#' json <- jsonlite::read_json("https://echarts.apache.org/examples/data/asset/geo/USA.json")
+#' dusa <- USArrests %>% dplyr::mutate(states = row.names(.))
+#' p <- ec.init(preset=FALSE)
+#' p$x$registerMap <- list(list(mapName = 'USA', geoJSON = json))
+#' #   registerMap supports also maps in SVG format, see website gallery
+#' p$x$opts <- list(
+#'   visualMap = list(type='continuous', calculable=TRUE, 
+#'                    min=min(dusa$UrbanPop), max=max(dusa$UrbanPop))
+#'   ,series = list( list(type='map', map='USA', name='UrbanPop', roam=TRUE,
+#'        data = lapply(ec.data(dusa,'names'), function(x) list(name=x$states, value=x$UrbanPop))
+#'    ))
+#' )
+#' p  
 #' 
 #' 
 #' #------ Plugin 3D
@@ -197,7 +225,7 @@
 #'             #encode=list(x='day', y='CAC')   # *2
 #'   ))
 #' )
-#' p$x$opts$legend <- list(ey='') 
+#' p$x$opts$legend <- list(zz='') 
 #' p$x$opts$dataZoom <- list(type='slider', end=50)
 #' p
 #' 
@@ -215,14 +243,19 @@
 #' 
 #'
 #' #------ Boxplot
-#' bdf <- data.frame(vx = sample(LETTERS[1:3], size=20, replace=TRUE), 
-#'                   vy = rnorm(20)) %>% group_by(vx) %>% group_split()
-#' dats <- lapply(bdf, function(x) boxplot.stats(x$vy)$stats )
+#' library(dplyr)
+#' bdf <- data.frame(vx= sample(LETTERS[1:3], size= 20, replace= TRUE), 
+#' 		     vy= rnorm(20)) %>% group_by(vx) %>% group_split()
+#' dats <- lapply(bdf, function(x) round(boxplot.stats(x$vy)$stats, 4) )
 #' p <- ec.init()
 #' p$x$opts <- list(     # overwrite presets
-#'   xAxis = list(ey=''),
-#'   yAxis = list(type = 'category', data = unique(unlist(lapply(bdf, `[`, , 1))) ),
-#'   series = list(list(type = 'boxplot', data = dats))
+#' 	xAxis = list(zz=''),
+#' 	yAxis = list(type = 'category', data= unique(unlist(lapply(bdf, `[`, , 1))) ),
+#' 	series = list(list(type= 'boxplot', data= dats, 
+#' 			itemStyle= list(color= '#b8c5f2'),
+#' 			encode= list(tooltip= c('min', 'Q1', 'median', 'Q3', 'max'))
+#'	))
+#' 	,tooltip = list(trigger= 'item')
 #' )
 #' p
 #' 
@@ -301,22 +334,6 @@
 #' p
 #' 
 #' 
-#' #------ registerMap JSON
-#' json <- jsonlite::read_json("https://echarts.apache.org/examples/data/asset/geo/USA.json")
-#' dusa <- USArrests %>% dplyr::mutate(states = row.names(.))
-#' p <- ec.init(preset=FALSE)
-#' p$x$registerMap <- list(list(mapName = 'USA', geoJSON = json))
-#' # registerMap supports also maps in SVG format, see website gallery
-#' p$x$opts <- list(
-#'   visualMap = list(type='continuous', calculable=TRUE, 
-#'                    min=min(dusa$UrbanPop), max=max(dusa$UrbanPop))
-#'   ,series = list( list(type='map', map='USA', name='UrbanPop', roam=TRUE,
-#'        data = lapply(ec.data(dusa,'names'), function(x) list(name=x$states, value=x$UrbanPop))
-#'    ))
-#' )
-#' p  
-#' 
-#' 
 #' #------ Error Bars on grouped data
 #' library(dplyr)
 #' df <- mtcars %>% group_by(cyl,gear) %>% summarise(yy=round(mean(mpg),2)) %>%
@@ -325,7 +342,7 @@
 #' p <- df %>% ec.init(group1='bar', load='custom') %>%
 #'   ecr.ebars(df, name = 'eb'
 #'      ,tooltip = list(formatter=ec.clmn('high <b>%d</b><br>low <b>%d</b>', 4,3)))
-#' p$x$opts$tooltip <- list(ey='')
+#' p$x$opts$tooltip <- list(zz='')
 #' p
 #' 
 #' 
