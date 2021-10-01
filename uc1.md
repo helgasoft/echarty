@@ -8,7 +8,7 @@ Data is France population by region, from [here](https://www.ined.fr/en/everythi
 Let start by initializing the chart, load the map as a plugin and make sure it shows correctly.
 
 ```r
-library(echarty)
+library(echarty); library(dplyr)
 url <- 'https://raw.githubusercontent.com/echarts-maps/echarts-countries-js/master/echarts-countries-js/France.js'
 # p <- ec.init() %>% ec.plugjs(url)   # alternative
 p <- ec.init(load=url)
@@ -26,7 +26,7 @@ Actually map name and file name may have nothing in common. We'll need to dig in
 Open *France.js* in a text editor and look for *'registerMap('*. It turns out the name right after is '法国' - Chinese for 'France'. Let's update the code:
 
 ```r
-p <- ec.init(load='France.js')
+p <- ec.init(load='file://France.js')
 p$x$opts <- list(
   title = list(show=TRUE, text='France'),
   series = list(list(type='map', map='法国', roam=TRUE))
@@ -34,7 +34,7 @@ p$x$opts <- list(
 p
 ```
 
-The map has been already installed, so we just load it by name with *ec.init()*. We also add a [title](https://echarts.apache.org/en/option.html#title). Running the updated code results in the following chart  
+The map has been already installed, so we just load it by name ('file://France.js'). We also add a [title](https://echarts.apache.org/en/option.html#title). Running the updated code results in the following chart  
 \
 <img src="img/uc1-1.png" alt="chart1"/>  
 \
@@ -80,7 +80,7 @@ Ok, there is some color, but why most of the regions are blank?
 It's again a data problem. The region names from the map and those from the web page do not match completely. It's more difficult to change the map, so we'll update the wt data.frame instead. To replace region names, let use conditional *mutate* from *dplyr*:
 
 ```r
-library(dplyr)
+library(dplyr); library(rvest)
 wp <- read_html('https://www.ined.fr/en/everything_about_population/data/france/population-structure/regions_departments/')
 wt <- wp %>% html_node('#para_nb_1 > div > div > div > table') %>% html_table(header=TRUE)
 names(wt) <- c('region','v1','v2','v3','ppl') # rename columns
@@ -99,7 +99,9 @@ wt <- wt %>% mutate(region = case_when(
   region=='Provence-Alpes-Côte d’Azur'  ~"Provence-Alpes-Côte d'Azur",
   region=='Bourgogne- Franche-Comté'    ~'Bourgogne-Franche-Comté',
   TRUE ~ region))
-p <- ec.init(load='France.js')
+
+library(echarty)
+p <- ec.init(load='file://France.js')
 p$x$opts <- list(
   title = list(show=TRUE, text='France Population'),
   backgroundColor = 'whitesmoke',
@@ -125,6 +127,6 @@ Wasn't too hard, was it? Share your thoughts in [Discussions](https://github.com
 \
 \
 Oh wait, the boss just got another (always brilliant) idea:  
-"Could you get the total population number from the summary row and add it as subtitle?"  
+"Could you get the total population number from the summary row and add it as subtitle?"...
 
 <br />   <br />   <br />   <br />  

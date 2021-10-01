@@ -362,45 +362,55 @@ p
 <br />
 
 ### Grouped boxplot
+boxplot calculations in R or ECharts
 <img src='img/cb-9.png' alt='boxplot' />
 <details><summary>🔻 View code</summary>
 
 ```r
-# original JS: https://echarts.apache.org/examples/en/editor.html?c=boxplot-multi
 library(echarty); library(dplyr)
-grps <- list()   # data in 3 groups
+
+# 1) boxplot calculation in R ---------------------
+
+p <- ec.init()
+p$x$opts$series <- list(
+	list(type='boxplot', name='mpg', data=list(boxplot.stats(mtcars$mpg)$stats)), 
+	list(type='boxplot', name='hp',  data=list(boxplot.stats(mtcars$hp)$stats)), 
+	list(type='boxplot', name='disp',data=list(boxplot.stats(mtcars$disp)$stats))
+)	
+p$x$opts$xAxis <- list(type = 'category')
+p$x$opts$legend <- list(ii='')
+p
+
+# 2) boxplot calculation in ECharts ---------------------
+#    source: https://echarts.apache.org/examples/en/editor.html?c=boxplot-multi
+
+grps <- list()     # data is 3 groups of 18 experiments
 for (grp in 1:3) {
-  seriesData <- list()
-  for (i in 1:18) {
-    cate <- runif(10, 1, 200)
-    seriesData <- append(seriesData, list(cate))
-  }
-  tmp <- lapply(seriesData, boxplot.stats)
-  grps[[grp]] <- lapply(tmp, function(x) x$stats)
+	seriesData <- list()
+	for (i in 1:18) {
+		cate <- runif(10, 1, 200)
+		seriesData <- append(seriesData, list(cate))
+	}
+	grps[[grp]] <- seriesData
 }
 
 p <- ec.init() %>% ec.theme('bm', code='{
-  "color":["chartreuse","red","cyan"], 
-  "grid":{"backgroundColor":"#333"}, 
-  "backgroundColor":"#333", 
-  "legend":{"textStyle": {"color": "#eeeeee"}} }')
-for (grp in 1:3) {
-  p$x$opts$series[[grp]] <- list(
-    name = paste0('category', grp),
-    type = 'boxplot',
-    data = grps[[grp]]
-  )
-}
-p$x$opts$grid <- list(show=TRUE)
-p$x$opts$xAxis <- list(
-  name='item', type = 'category',
-  boundaryGap = TRUE, axisLine=list(onZero=FALSE),
-  splitArea = list(show=TRUE)
+      "color":["chartreuse","red","cyan"], 
+      "grid":{"backgroundColor":"#333"}, 
+      "backgroundColor":"#333", 
+      "legend":{"textStyle": {"color": "#eeeeee"}} }')
+p$x$opts$dataset <- list(
+  list(source=grps[[1]]), list(source=grps[[2]]), list(source=grps[[3]]),
+	list(fromDatasetIndex=0, transform=list(type='boxplot', config=list(itemNameFormatter='expr {value}'))),
+	list(fromDatasetIndex=1, transform=list(type='boxplot', config=list(itemNameFormatter='expr {value}'))),
+	list(fromDatasetIndex=2, transform=list(type='boxplot', config=list(itemNameFormatter='expr {value}')))
 )
-p$x$opts$yAxis <- list(
-  name = 'value', min=-50, max=250
-)
-p$x$opts$legend$data <- list('category1', 'category2', 'category3')
+p$x$opts$series[[1]] <- list(type = 'boxplot', datasetIndex=3, name='c1')
+p$x$opts$series[[2]] <- list(type = 'boxplot', datasetIndex=4, name='c2')
+p$x$opts$series[[3]] <- list(type = 'boxplot', datasetIndex=5, name='c3')
+p$x$opts$xAxis <- list(type = 'category', axisLine=list(onZero=FALSE),
+  splitArea = list(show=TRUE))
+p$x$opts$legend <- list(ii='')
 p$x$opts$tooltip <- list(trigger='item')
 p$x$opts$dataZoom <- list(list(type='slider',start=50))
 p
