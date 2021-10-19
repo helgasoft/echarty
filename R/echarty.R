@@ -252,7 +252,7 @@ ec.init <- function( df=NULL, preset=TRUE, group1='scatter', load=NULL,
     if (preset) {
       wt$x$opts$xAxis <- NULL
       wt$x$opts$yAxis <- NULL
-      #wt$x$opts$series <- list(list(type='map', map='world', roam=TRUE))
+      wt$x$opts$series <- list(list(type='map', geoIndex=0))
       wt$x$opts$geo = list(map='world', roam=TRUE)  # may duplicate series
       # if (!is.null(df))  # cancelled: dont know if first 2 cols are lng,lat
       #   wt$x$opts$geo$center= c(mean(unlist(df[,1])), mean(unlist(df[,2])))
@@ -343,25 +343,24 @@ ec.init <- function( df=NULL, preset=TRUE, group1='scatter', load=NULL,
 #' Install Javascript plugin from URL source
 #' 
 #' @param wt A widget to add dependency to, see \code{\link[htmlwidgets]{createWidget}}
-#' @param source URL or file:// of an uninstalled Javascript plugin, \cr
-#'   or name of an installed plugin file with suffix '.js'. Default is NULL.
-#' @param ask Whether to ask the user to download source if missing. Default is FALSE
+#' @param source URL or file:// of a Javascript plugin, \cr
+#'   file name suffix is '.js'. Default is NULL.
+#' @param ask Whether to ask the user to download source if missing. Default is FALSE.
 #' @return A widget with JS dependency added if successful, otherwise input wt
 #'
-#' @details When \emph{source} is URL, the plugin file is installed with a popup prompt to the user.\cr
-#'   When \emph{source} is just a file name (xxx.js), it is assumed installed and only a dependency is added. The latter option is for internal usage by echarty.
+#' @details When \emph{source} is URL, the plugin file is installed with an optional popup prompt.\cr
+#'   When \emph{source} is a file name (file://xxx.js), it is assumed installed and only a dependency is added.
 #'   
 #' @examples
 #' # import map plugin and display two (lon,lat) locations
 #' p <- ec.init() %>% ec.plugjs(
 #'   'https://raw.githubusercontent.com/apache/echarts/master/test/data/map/js/china-contour.js')
 #' p$x$opts <- list(
-#'   geo = list(map='china-contour', roam=TRUE),
-#'   legend = list(data = list(list(name = 'Geo'))),
-#'   series = list(list( name = 'Geo',
-#'     type = 'scatter', coordinateSystem = 'geo',
-#'     symbolSize = 9, itemStyle = list(color='red'),
-#'     data = list(list(value=c(113, 40)), list(value=c(118, 39))) ))
+#'   geo = list(map= 'china-contour', roam= TRUE),
+#'   series = list(list( name= 'Geo',
+#'     type= 'scatter', coordinateSystem= 'geo',
+#'     symbolSize= 9, itemStyle= list(color= 'red'),
+#'     data= list(list(value= c(113, 40)), list(value= c(118, 39))) ))
 #' )
 #' p
 #'
