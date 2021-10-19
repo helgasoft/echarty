@@ -14,16 +14,16 @@ HTMLWidgets.widget({
     const evalFun = (sourceOpts) => {
       let opts = Object.assign({}, sourceOpts);
       Object.keys(opts).forEach((key) => {
-        if (opts[key] !== null) {
-          if (typeof opts[key] === 'object') {
+        if (opts[key] == null) return;
+        if (typeof opts[key] === 'object') {
             evalFun(opts[key]);
             return;
-          }
-          if (typeof opts[key] === 'string') {
-            try {
-              opts[key] = eval('(' + opts[key] + ')');
-            } catch { }
-          }
+        } else {
+            // filter by 'function', otherwise all data values get evaluated
+            if (typeof opts[key] === 'string' && opts[key].startsWith('function'))
+              try {
+                opts[key] = eval('(' + opts[key] + ')');
+              } catch { }
         }
       });
       return(opts);
@@ -53,15 +53,16 @@ HTMLWidgets.widget({
           }
         }
         
-        let eva2 = null;
-        if (x.hasOwnProperty('eval')) {
-          if (x.eval) {
+        let eva2 = eva3 = null;
+        if (x.hasOwnProperty('jcode')) {
+          if (x.jcode) {
             let tmp = null;
-            if (Array.isArray(x.eval)) {
-              tmp = x.eval[0];
-              eva2 = x.eval[1];
+            if (Array.isArray(x.jcode)) {
+              tmp = x.jcode[0];
+              eva2 = x.jcode[1];
+              eva3 = x.jcode[2];
             } else
-              tmp = x.eval;
+              tmp = x.jcode;
             try {
               eval(tmp);
             } catch(err) { console.log('eva1: ' + err.message) }
@@ -71,9 +72,9 @@ HTMLWidgets.widget({
         chart = echarts.init(document.getElementById(el.id), x.theme, 
         	{renderer: x.renderer, locale: x.locale, useDirtyRect: x.useDirtyRect});
         
-        opts = evalFun(x.opts);
+        opts = x.opts; //evalFun(x.opts);
         
-        if (eva2) {
+        if (eva2) {	// to change opts
           try {
             eval(eva2);
           } catch(err) { console.log('eva2: ' + err.message) }
@@ -81,6 +82,12 @@ HTMLWidgets.widget({
         
         if(x.draw === true)
           chart.setOption(opts);
+        
+        if (eva3) {	// to use chart object
+          try {
+            eval(eva3);
+          } catch(err) { console.log('eva3: ' + err.message) }
+        }
         
         // shiny callbacks
         if (HTMLWidgets.shinyMode) {
@@ -353,8 +360,7 @@ if (HTMLWidgets.shinyMode) {
       // add JS dependencies if any
       if (data.deps) Shiny.renderDependencies(data.deps);
       let cpts = chart.getOption();
-      //data.opts = evalFun(data.opts);
-      
+
       switch(data.action) {
         
         case 'p_js':

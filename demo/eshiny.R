@@ -1,7 +1,6 @@
 #'-----------  Interactive charts with echarty and Shiny ------------
 #' demo(eshiny, package ='echarty')
 
-devAskNewPage(ask = FALSE)
 library(shiny)
 library(dplyr)
 library(echarty)
@@ -23,59 +22,60 @@ ui <- fluidPage(
     tags$style(HTML(" .ital { font-style: italic; } .sml { font-size: smaller; }"))
     #,tags$script(js)
   ),
-  titlePanel("Demo: echarty + Shiny"),
+  titlePanel("Shiny + echarty"),
   fluidRow(ecs.output('plot')),
   fluidRow(
-    column(4, actionButton('addm', 'Add marks'),
-           actionButton('delm', 'Delete marks'),
+    column(4, span(strong('Marks')), actionButton('addm', 'Add'),
+           actionButton('delm', 'Delete'),
            br(),span('mark points stay, area/line deletable', class='sml')
     ),
-    column(3, actionButton('adds1', 'Add serie'),
-           actionButton('dels', 'Del serie')),
+    column(3, span(strong('Serie')), actionButton('adds1', 'Add'),
+            actionButton('dels1', 'Del'),
+            actionButton("modserie", label = "Modify last")),
     column(5, actionButton('adata', 'Add data'),
            actionButton('hilit', 'Highlight'),
            actionButton('dnplay', 'Downplay') )
   ),
   
   fluidRow( hr(),
-            column(2,
-                   actionButton("addserie_radar", label = "Add radar"),
-                   br(),actionButton("addserie_pie", label = "Add pie"),
-                   br(),actionButton("addserie_funnel", label = "Add funnel"),
-                   br(),actionButton("addserie_boxplot", label = "Add boxplot"),
-                   p(HTML('&nbsp;')),
-                   actionButton("delserie_radar", label = "Del radar"),
-                   br(),actionButton("delserie_pie", label = "Del pie"),
-                   br(),actionButton("delserie_funnel", label = "Del funnel"),
-                   br(),actionButton("delserie_boxplot", label = "Del boxplot"),
-                   p(HTML('&nbsp;')),
-                   tags$div(style="display:inline-block",title="Replace a chart",
-                            actionButton("replace.btn", label = "Replace"))
-            ),
-            column(2, ecs.output("radar")),
-            column(2, ecs.output("pie")),
-            column(2, ecs.output("funnel")),
-            column(4, ecs.output("boxplot", height='350px'),
-                   span('Zoom range:'), strong(textOutput('tzoom', inline=TRUE))
-            )
+      column(2,
+         actionButton("add_radar", label = "Add radar"),
+         br(),actionButton("add_pie", label = "Add pie"),
+         br(),actionButton("add_funnel", label = "Add funnel"),
+         br(),actionButton("add_boxplot", label = "Add boxplot"),
+         p(HTML('&nbsp;')),
+         actionButton("del_radar", label = "Del radar"),
+         br(),actionButton("del_pie", label = "Del pie"),
+         br(),actionButton("del_funnel", label = "Del funnel"),
+         br(),actionButton("del_boxplot", label = "Del boxplot"),
+         p(HTML('&nbsp;')),
+         tags$div(style="display:inline-block",title="Replace a chart",
+                  actionButton("replace.btn", label = "Replace"))
+      ),
+      column(2, ecs.output("radar")),
+      column(2, ecs.output("pie")),
+      column(2, ecs.output("funnel")),
+      column(4, ecs.output("boxplot", height='350px'),
+             span('Zoom range:'), strong(textOutput('tzoom', inline=TRUE))
+      )
   ),
   fluidRow( hr(),
-            column(2,  
-                   actionButton("addserie", label = "Add serie"),
-                   actionButton("delserie", label = "Del serie"), 
-                   br(), #div('Selection events'), #p(HTML('&nbsp;'))
-                   br(),
-                   span('Mouse events'),span('(vertical bars only)', class='sml'),
-                   br(), strong(textOutput('vmouse')),
-                   br(), 
-                   div('Vert.brush:', class='ital'), 
-                   strong(textOutput('vbrush')),
-                   br(),
-                   div('Horiz.brush:', class='ital'), 
-                   strong(textOutput('hbrush'))
-            ),
-            column(5, ecs.output("barplot_vert")),
-            column(5, ecs.output("barplot_horiz"))
+      column(2,  
+         actionButton("addserie", label = "Add serie"),
+         actionButton("delserie", label = "Del serie"), 
+         br(), #div('Selection events'), #p(HTML('&nbsp;'))
+         br(),
+         span('Mouse events'),span('(vertical bars only)', class='sml'),
+         br(), strong(textOutput('vmouse')),
+         br(), 
+         div('Vert.brush:', class='ital'), 
+         strong(textOutput('vbrush')),
+         br(),
+         div('Horiz.brush:', class='ital'), 
+         strong(textOutput('hbrush'))
+      ),
+      column(5, ecs.output("barplot_vert")),
+      column(5, ecs.output("barplot_horiz"))
   )
 )
 
@@ -164,6 +164,22 @@ server <- function(input, output, session) {
     p %>% ecs.exec('p_update')
   })
   
+  observeEvent(input$dels1, {
+    p <- ecs.proxy('plot')
+    p$x$opts$seriesName <- paste0('line',adds1)
+    #p$x$opts$seriesIndex <- max(3, 2 + adds1)  # ok too (JS counts from 0)
+    if (adds1>0) adds1 <<- adds1 - 1
+    p %>% ecs.exec('p_del_serie')
+  })
+  
+  observeEvent(input$modserie, {
+    if (adds1==0) return()
+    p <- ecs.proxy('plot')
+    sname <- paste0('line',adds1)
+    p$x$opts$series <- list(name=sname, symbolSize=15, lineStyle=list(width=4, type='dotted'))
+    p %>% ecs.exec('p_merge')
+  })
+  
   observeEvent(input$adata, {
     tmp <- apply(unname(data.frame(rnorm(5, 10, 3), rnorm(5, 200, 33))),
                  1, function(x) { list(value=x) })
@@ -172,14 +188,6 @@ server <- function(input, output, session) {
     # p$x$opts$seriesIndex <- 1   # same, works
     p$x$opts$data <- tmp
     p %>% ecs.exec('p_append_data')
-  })
-  
-  observeEvent(input$dels, {
-    p <- ecs.proxy('plot')
-    p$x$opts$seriesName <- paste0('line',adds1)
-    #p$x$opts$seriesIndex <- max(3, 2 + adds1)  # ok too (JS counts from 0)
-    if (adds1>0) adds1 <<- adds1 - 1
-    p %>% ecs.exec('p_del_serie')
   })
   observeEvent(input$delm, {
     p <- ecs.proxy('plot')
@@ -198,7 +206,7 @@ server <- function(input, output, session) {
     p %>% ecs.exec('p_dispatch')
   })
   
-  # ---------------- add pie,funnel,radar
+  # ------------- pie,funnel,radar ----
   output$radar <- ecs.render({
     p <- ec.init()
     p$x$opts <- list(
@@ -246,7 +254,7 @@ server <- function(input, output, session) {
   })
   
   
-  observeEvent(input$addserie_radar,{
+  observeEvent(input$add_radar,{
     if (length(lifo$r)>4) return()
     serie_name <- sample(LETTERS, size = 5) %>% paste0(collapse = "")
     radar_serie <- base_df %>% mutate(value = runif(n = 3, min = 0, max = 5))
@@ -260,7 +268,7 @@ server <- function(input, output, session) {
     lifo$r <<- c(lifo$r, serie_name)
   })
   
-  observeEvent(input$addserie_pie,{
+  observeEvent(input$add_pie,{
     if (length(lifo$s)>4) return()
     serie_name <- sample(LETTERS, size = 5) %>% paste0(collapse = "")
     pos <- length(lifo$s) * 15 + 15
@@ -275,7 +283,7 @@ server <- function(input, output, session) {
     lifo$s <<- c(lifo$s, serie_name)
   })
   
-  observeEvent(input$addserie_funnel,{
+  observeEvent(input$add_funnel,{
     if (length(lifo$t)>4) return()
     serie_name <- sample(LETTERS, size=5) %>% paste0(collapse = "")
     pos <- length(lifo$t) * 80
@@ -288,7 +296,7 @@ server <- function(input, output, session) {
     lifo$t <<- c(lifo$t, serie_name)
   })
   
-  observeEvent(input$addserie_boxplot,{
+  observeEvent(input$add_boxplot,{
     if (length(lifo$b)>4) return()
     serie_name <- sample(LETTERS, size = 5) %>% paste0(collapse = "")
     boxplot_df <<- boxplot_df %>% mutate(ValY = rnorm(20))
@@ -307,7 +315,7 @@ server <- function(input, output, session) {
     lifo$b <<- c(lifo$b, serie_name)
   })
   
-  observeEvent(input$delserie_radar,{
+  observeEvent(input$del_radar,{
     if (length(lifo$r)==0) return()
     p <- ecs.proxy("radar")
     p$x$opts$seriesName <- lifo$r[length(lifo$r)]
@@ -315,21 +323,21 @@ server <- function(input, output, session) {
     p %>% ecs.exec('p_del_serie')
     lifo$r <<- lifo$r[-length(lifo$r)]
   })
-  observeEvent(input$delserie_pie,{
+  observeEvent(input$del_pie,{
     if (length(lifo$s)==0) return()
     p <- ecs.proxy("pie")
     p$x$opts$seriesName <- lifo$s[length(lifo$s)]
     p %>% ecs.exec('p_del_serie')
     lifo$s <<- lifo$s[-length(lifo$s)]
   })
-  observeEvent(input$delserie_funnel,{
+  observeEvent(input$del_funnel,{
     if (length(lifo$t)==0) return()
     p <- ecs.proxy("funnel")
     p$x$opts$seriesName <- lifo$t[length(lifo$t)]
     p %>% ecs.exec('p_del_serie')
     lifo$t <<- lifo$t[-length(lifo$t)]
   })
-  observeEvent(input$delserie_boxplot,{
+  observeEvent(input$del_boxplot,{
     if (length(lifo$b)==0) return()
     p <- ecs.proxy("boxplot")
     p$x$opts$seriesName <- lifo$b[length(lifo$b)]
@@ -355,7 +363,7 @@ server <- function(input, output, session) {
     output$tzoom <- renderText('')
   })
   
-  # ------------- add serie
+  # ------------- bar series ------
   output$barplot_vert <- ecs.render({
     p <- ec.init()
     p$x$opts <- list(
@@ -368,7 +376,7 @@ server <- function(input, output, session) {
     )
     p$x$on <- list(list(event='mouseover', 
                         handler=htmlwidgets::JS("function (event) {
-          document.getElementById('vmouse').innerHTML = event.name+'_'+event.seriesName; }") ),
+          document.getElementById('vmouse').innerHTML = event.seriesName+'_'+event.name; }") ),
                    list(event='mouseout',
                         handler=htmlwidgets::JS("function (event) {
           document.getElementById('vmouse').innerHTML = ''; }") )
@@ -425,17 +433,22 @@ server <- function(input, output, session) {
     output$hbrush <- renderText('')
   })
   
+  brushcap <- function(sele) {
+    out <- lapply(sele, function(x) {
+     if (length(x$dataIndex[[1]])==0) return(NA)  # toolbar clicked or selection cleared
+     ifx <- paste(x$dataIndex[[1]]+1, collapse=',')
+     bars <- eval(parse(text = paste('base_df$ValX[c(',ifx,')]') ))
+     paste0(x$seriesName,': ', paste(bars, collapse='+') )
+   })
+    unlist(out)
+  }
   observeEvent(input$barplot_vert_brush, {
-    tmp <- unlist(lapply(input$barplot_vert_brush$batch$selected, 
-                         function(x) paste0(base_df$ValX[unlist(x$dataIndex)+1],'_',x$seriesName)))
-    if (startsWith(tmp[1], '_')) tmp <- ''   # click on toolbar
-    output$vbrush <- renderText(tmp)
+    tmp <- brushcap(input$barplot_vert_brush$batch$selected)
+    output$vbrush <- renderText(na.omit(tmp))
   })
   observeEvent(input$barplot_horiz_brush, {
-    tmp <- unlist(lapply(input$barplot_horiz_brush$batch$selected, 
-                         function(x) paste0(base_df$ValX[unlist(x$dataIndex)+1],'_',x$seriesName)))
-    if (startsWith(tmp[1], '_')) tmp <- ''   # click on toolbar
-    output$hbrush <- renderText(tmp)
+    tmp <- brushcap(input$barplot_horiz_brush$batch$selected)
+    output$hbrush <- renderText(na.omit(tmp))
   })
 }
 

@@ -64,15 +64,9 @@ examples**](https://github.com/helgasoft/echarty/blob/main/R/examples.R)
 included. Type
 **?ec.examples** in the RStudio Console, then copy/paste any code from Help to
 see the result.  
-<!--
-Do not hesitate to ask questions in
-[Discussions](https://github.com/helgasoft/echarty/discussions) or
-report problems in
-[Issues](https://github.com/helgasoft/echarty/issues).
--->
 
 Now you can start building [**beautiful
-charts**](https://echarts.apache.org/examples/en/index.html) (and
+ECharts**](https://echarts.apache.org/examples/en/index.html) (and
 [**more**](https://www.makeapie.com)) with R and Shiny!
 
  <br />

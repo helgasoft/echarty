@@ -25,7 +25,10 @@
 #'   Custom widget arguments include: \cr \itemize{
 #'   \item elementId - Id of the widget, default is NULL(auto-generated)
 #'   \item ask - the \emph{plugjs} parameter when \emph{load} is present, FALSE by default
-#'   \item js - single string or a two-strings vector with JavaScript expressions to evaluate. First is evaluated before and second after chart initialization. Chart object 'opts' is exposed for the second script.
+#'   \item js - single string or a vector with JavaScript expressions to evaluate.\cr 
+#'      First expression is evaluated before chart initialization. \cr
+#'      Second is evaluated with an exposed object \emph{opts}. \cr
+#'      Third is evaluated with an exposed object \emph{chart} after \emph{opts} have been set.
 #'   \item renderer - 'canvas'(default) or 'svg'
 #'   \item locale - 'EN'(default) or 'ZH' or other, see \href{https://echarts.apache.org/en/api.html#echarts.init}{here}
 #'   \item useDirtyRect - enable dirty rectangle rendering or not, FALSE by default, see \href{https://echarts.apache.org/en/api.html#echarts.init}{here}
@@ -122,7 +125,7 @@ ec.init <- function( df=NULL, preset=TRUE, group1='scatter', load=NULL,
     mapping = list(),
     events = list(),
     buttons = list(),
-    eval = js,
+    jcode = js,
     opts = opts,
     settings = list(
       crosstalk_key = key,
@@ -249,8 +252,8 @@ ec.init <- function( df=NULL, preset=TRUE, group1='scatter', load=NULL,
     if (preset) {
       wt$x$opts$xAxis <- NULL
       wt$x$opts$yAxis <- NULL
-      wt$x$opts$series <- list(list(type='map', map='world', roam=TRUE))
-      #wt$x$opts$geo = list(map='world', roam=TRUE)  # duplicate of series
+      #wt$x$opts$series <- list(list(type='map', map='world', roam=TRUE))
+      wt$x$opts$geo = list(map='world', roam=TRUE)  # may duplicate series
       # if (!is.null(df))  # cancelled: dont know if first 2 cols are lng,lat
       #   wt$x$opts$geo$center= c(mean(unlist(df[,1])), mean(unlist(df[,2])))
     }
@@ -455,8 +458,8 @@ ec.data <- function(df, format='dataset', header=TRUE) {
 #' Helper function to address data column(s) by index or name
 #' 
 #' @param col A column index(number), column name(string) or a \code{\link[base]{sprintf}} format string. 
-#' @param scale A decimal/integer number to multiply the column value by. Only when \emph{col} is a single index.
 #' @param ... Comma separated list of column indexes or names, when \emph{col} is \emph{sprintf}. This allows formatting of multiple columns, as for a tooltip.
+#' @param scale A multiplier (decimal/integer) for column values. Only when \emph{col} is a single column identifier, ignored otherwise.
 #' 
 #' @details Column indexes are counted in R and start at 1.\cr
 #' \emph{col} as sprintf supports only two placeholders - %d for column indexes and %s for column names.\cr
@@ -476,38 +479,38 @@ ec.data <- function(df, format='dataset', header=TRUE) {
 #' p
 #' 
 #' @export
-ec.clmn <- function(col=NULL, scale=1, ...) {
+ec.clmn <- function(col=NULL, ..., scale=1) {
   if (is.null(col)) stop('col is required', call.=FALSE)
   if (is.null(scale)) scale=1
+  scl <- if (scale==1) 'return c;' else paste0('return (parseFloat(c)*',scale,');')
   args <- list(...)
   if (is.na(suppressWarnings(as.numeric(col)))) {   # col is string
-    if (length(args)==0) 
-      ret <- paste0('return x.data.',col,';')
-    else {          # col a sprintf
+    if (length(args)==0)  # col is solitary name
+      ret <- paste0('let c=(!x.data) ? `no data` : x.data.',col,'; ',scl)
+    else {      # col a sprintf
       spf <- paste("var sprintf = (str, argv) => !argv.length ? str :",
                    "sprintf(str = str.replace('@', argv.shift()), argv); ")
       tmp <- suppressWarnings(as.numeric(args) -1)
       if (all(is.na(tmp))) {   # multiple non-numeric strings
         tmp <- sapply(args, function(s) toString(paste0('x.data.', s)) )
         tmp <- paste(tmp, collapse=',')
-        ret <- paste0(sub('@','%s',spf),'let ss=[',tmp,']; ',
-                      'let c = sprintf(`',col,'`, ss); return c;')
+        ret <- paste0(sub('@','%s',spf),' if (!x.data) return `no data`; else { let ss=[',tmp,']; ',
+                     'let c = sprintf(`',col,'`, ss); return c; }')
       }
       else {   #  multiple numeric, they could be in x, x.data, x.value
         tmp <- paste(tmp, collapse=',')
         ret <- paste0(sub('@','%d',spf), 
-                      "let ss=[",tmp,"]; ",
-                      "ss=ss.map(e => x.value!=null ? x.value[e] : x.data!=null ? x.data[e] : x[e]);",
-                      "let c = sprintf(`",col,"`, ss); return c; ")
+          "let ss=[",tmp,"]; ",
+          "ss=ss.map(e => x.value!=null ? x.value[e] : x.data!=null ? x.data[e] : x[e]);",
+          "let c = sprintf(`",col,"`, ss); return c; ")
       }
     }
   }
-  else {  # col is solitary numeric
-    if (length(args) > 0) # { cat(length(args));
+  else {      # col is solitary numeric
+    if (length(args) > 0)
       warning('col is numeric, others are ignored', call.=FALSE)
     col <- as.numeric(col) - 1   # from R to JavaScript counting
-    scl <- if (scale==1) 'return c;' else paste0('return (parseFloat(c)*',scale,');')
-    ret <- paste0('let c = (x.data) ? x.data[',col,'] : x[',col,']; ',scl)
+    ret <- paste0('let c = x.value!=null ? x.value[',col,'] : x.data!=null ? x.data[',col,'] : x[',col,']; ',scl)
   }
   htmlwidgets::JS(paste0('function(x) {', ret, '}'))
 }
@@ -849,7 +852,7 @@ ecs.proxy <- function(id) {
 #' @param cmd Name of command, default is \emph{p_merge}\cr
 #'   The proxy commands are:\cr
 #' \emph{p_update} - add new series and axes\cr
-#' \emph{p_merge} - add serie features like marks\cr
+#' \emph{p_merge} - modify or add series features like style,marks,etc.\cr
 #' \emph{p_replace} - replace entire chart \cr
 #' \emph{p_del_serie} - delete a serie by index or name\cr
 #' \emph{p_del_marks} - delete marks of a serie\cr

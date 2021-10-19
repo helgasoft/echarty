@@ -12,7 +12,7 @@ ecs.exec(proxy, cmd = "p_merge")
 \item{cmd}{Name of command, default is \emph{p_merge}\cr
 The proxy commands are:\cr
 \emph{p_update} - add new series and axes\cr
-\emph{p_merge} - add serie features like marks\cr
+\emph{p_merge} - modify or add series features like style,marks,etc.\cr
 \emph{p_replace} - replace entire chart \cr
 \emph{p_del_serie} - delete a serie by index or name\cr
 \emph{p_del_marks} - delete marks of a serie\cr

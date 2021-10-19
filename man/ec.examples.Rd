@@ -100,7 +100,8 @@ tmp <- quakes \%>\% dplyr::relocate('long') \%>\%  # set order to lon,lat
   dplyr::mutate(size= exp(mag)/20)             # add accented size
 p <- tmp \%>\% ec.init(load='leaflet')
 p$x$opts$series[[1]]$name = 'quakes'
-p$x$opts$series[[1]]$symbolSize = ec.clmn(6)   # size column
+p$x$opts$series[[1]]$symbolSize = ec.clmn(6, scale=2)   # size column
+p$x$opts$tooltip = list(formatter=ec.clmn('magnitude \%d',4))
 p$x$opts$legend = list(zz='')
 p
 
@@ -124,8 +125,9 @@ if (!is.null(flights)) {
   tmp <- data.frame(airport1 = unique(head(flights,10)$airport1),
                     color = c("#387e78","#eeb422","#d9534f",'magenta'))
   tmp <- head(flights,10) \%>\% inner_join(tmp)    # add color by airport
-  p <- tmp \%>\% ec.init(load='world')
-  p$x$opts$geo$center= c(mean(flights$start_lon), mean(flights$start_lat))
+  p <- ec.init(load='world')
+  p$x$opts$geo$center <- c(mean(flights$start_lon), mean(flights$start_lat))
+  p$x$opts$geo$zoom <- 7
   p$x$opts$series <- list(list(
     type='lines', coordinateSystem='geo',
     data = lapply(ec.data(tmp, 'names'), function(x)
@@ -141,18 +143,17 @@ if (!is.null(flights)) {
 
 #------ registerMap JSON
 json <- jsonlite::read_json("https://echarts.apache.org/examples/data/asset/geo/USA.json")
-dusa <- USArrests \%>\% dplyr::mutate(states = row.names(.))
+dusa <- USArrests \%>\% mutate(states = row.names(.))
 p <- ec.init(preset=FALSE)
-p$x$registerMap <- list(list(mapName = 'USA', geoJSON = json))
+p$x$registerMap <- list(list(mapName= 'USA', geoJSON= json))
 #   registerMap supports also maps in SVG format, see website gallery
-p$x$opts <- list(
-  visualMap = list(type='continuous', calculable=TRUE, 
-                   min=min(dusa$UrbanPop), max=max(dusa$UrbanPop))
-  ,series = list( list(type='map', map='USA', name='UrbanPop', roam=TRUE,
-       data = lapply(ec.data(dusa,'names'), function(x) list(name=x$states, value=x$UrbanPop))
-   ))
-)
-p  
+p$x$opts$visualMap <- list(type= 'continuous', calculable= TRUE, 
+                           min= min(dusa$UrbanPop), max= max(dusa$UrbanPop))
+p$x$opts$series <- list(list(type= 'map', map= 'USA', 
+   roam= TRUE, zoom= 3, left= -100, top= -30,
+   data= lapply(ec.data(dusa,'names'), function(x) list(name=x$states, value=x$UrbanPop))
+))
+p
 
 
 #------ Plugin 3D
@@ -170,16 +171,18 @@ if (interactive()) {
 if (interactive()) {
 df <- data.frame(Species = unique(iris$Species),
                  color = c("#387e78","#eeb422","#d9534f"))
-df <- iris \%>\% dplyr::inner_join(df)   # add 6th column 'color' for Species
-p <- df \%>\% ec.init(load = '3D')
+df <- iris \%>\% dplyr::inner_join(df) \%>\%   # add 6th column 'color' for Species
+      mutate(size= log(Petal.Width*10))    # add 7th accented size
+p <- df \%>\% ec.init(load= '3D')
 p$x$opts$xAxis3D <- list(name='Petal.Length')
 p$x$opts$yAxis3D <- list(name='Sepal.Width')
 p$x$opts$zAxis3D <- list(name='Sepal.Length')
-p$x$opts$series <- list(list(
-  type='scatter3D', symbolSize=7,
+p$x$opts$series <- list(list( name='Iris in 3D',
+  type='scatter3D', symbolSize=ec.clmn(7, scale=10), 
   encode=list(x='Petal.Length', y='Sepal.Width', z='Sepal.Length'),
-  itemStyle=list(color = ec.clmn(6) )  # index of column 'color'
+  itemStyle=list(color = ec.clmn(6) )      # index of column 'color'
 ))
+p$x$opts$legend <- list(ii='')
 p
 }
 

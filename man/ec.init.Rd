@@ -43,7 +43,10 @@ string and have \code{'px'} appended.}
 Custom widget arguments include: \cr \itemize{
 \item elementId - Id of the widget, default is NULL(auto-generated)
 \item ask - the \emph{plugjs} parameter when \emph{load} is present, FALSE by default
-\item js - single string or a two-strings vector with JavaScript expressions to evaluate. First is evaluated before and second after chart initialization. Chart object 'opts' is exposed for the second script.
+\item js - single string or a vector with JavaScript expressions to evaluate.\cr
+First expression is evaluated before chart initialization. \cr
+Second is evaluated with an exposed object \emph{opts}. \cr
+Third is evaluated with an exposed object \emph{chart} after \emph{opts} have been set.
 \item renderer - 'canvas'(default) or 'svg'
 \item locale - 'EN'(default) or 'ZH' or other, see \href{https://echarts.apache.org/en/api.html#echarts.init}{here}
 \item useDirtyRect - enable dirty rectangle rendering or not, FALSE by default, see \href{https://echarts.apache.org/en/api.html#echarts.init}{here}
