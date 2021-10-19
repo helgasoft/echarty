@@ -1,6 +1,6 @@
 # history of echarty package development
 
-## v. 0.3.1.4
+## v. 0.3.2
 
 - _ec.init_: _js_ parameter has now 3 levels of execution
 - _ec.clmn_: fix order of parameters, add message for missing data
