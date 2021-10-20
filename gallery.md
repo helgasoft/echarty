@@ -269,7 +269,7 @@ play with the [<span style="color:magenta">Live Demo</span>](https://rpubs.com/e
 
 
 ### scatterGL
-plugin **3D**, test with 5,000 points
+plugin **3D**, test with 5,000 points  
 <img src='img/cb-6.png' alt='scatterGL' />
 <details><summary>🔻 View code</summary>
 
@@ -305,7 +305,7 @@ p
 <br />
 
 ### scatter3D
-plugin **3D**, test with 36,000 points
+plugin **3D**, test with 36,000 points  
 <img src='img/cb-7.png' alt='bunny' />
 <details><summary>🔻 View code</summary>
 
@@ -324,7 +324,7 @@ p
 <br />
 
 ### Bathymetry in 3D
-up to 100,000 surface points
+up to 100,000 surface points  
 <img src='img/hawaii3d.png' alt='bathy' />
 <details><summary>🔻 Shiny app - <span style="color:magenta">Live Demo</span></summary>
 
@@ -568,8 +568,8 @@ p
 
 
 ### ecStat
-Statistical tools plugin in echarty &nbsp; &nbsp; &nbsp; [<span style="color:magenta">Live Demo</span>](https://rpubs.com/echarty/ecStat)
-<a href='https://rpubs.com/echarty/ecStat'>
+Statistical tools plugin in echarty &nbsp; &nbsp; &nbsp; [<span style="color:magenta">Live Demo</span>](https://rpubs.com/echarty/ecStat)  
+<a href='https://rpubs.com/echarty/ecStat' target=_blank>
 <img src='img/cb-cluster.png' alt='dow' /></a>
 <br />
 
@@ -578,7 +578,7 @@ Statistical tools plugin in echarty &nbsp; &nbsp; &nbsp; [<span style="color:mag
 Animated transition between two charts 
 <img src='img/morph.gif' alt='morph' /></a>
 <details><summary>🔻 Info</summary>
-Made with ECharts <a href='https://github.com/100pah/echarts-simple-transform'>ecSimpleTransform</a> library and echarty. Code up for <a href='https://www.paypal.com/paypalme/helgasoft/19'>sale $19</a>, delivered to your Paypal email.
+Made with ECharts <a href='https://github.com/100pah/echarts-simple-transform' target=_blank>ecSimpleTransform</a> library and echarty. Code up for <a href='https://www.paypal.com/paypalme/helgasoft/19' target=_blank>sale $19</a>, delivered to your Paypal email.
 </details>
 <br />
 
@@ -671,19 +671,19 @@ p
 
 
 ### Baidu maps 
-a proof-of-concept (POC)  
+a proof-of-concept (no code)  
 [<span style="color:magenta">Live Demo</span>](https://rpubs.com/echarty/bmap)  
 <br />
 
 ### Leaflet maps
 and switching chart selection **without Shiny**  
-[<span style="color:magenta">Live Demo</span>](https://rpubs.com/echarty/mapjs)
+[<span style="color:magenta">Live Demo</span>](https://rpubs.com/echarty/mapjs) 
 <br /><br />
 
 ### World map
-with live data, color coding filter, pan/zoom  
-[<span style="color:magenta">Live Demo</span>
-<img src='img/cb-speed.png' alt='world_speed' />](https://rpubs.com/echarty/inet)  
+with live data, color coding filter, pan/zoom  &nbsp; &nbsp; &nbsp; 
+[<span style="color:magenta">Live Demo</span>](https://rpubs.com/echarty/inet)  
+[<img src='img/cb-speed.png' alt='world_speed' />](https://rpubs.com/echarty/inet)
 
 <br />
 
@@ -694,6 +694,6 @@ with vehicle trajectory playback
 		Your browser does not support the video tag.
 </video>
 <details><summary>🔻 Info</summary>
-Made with ECharts <a href='https://github.com/plainheart/echarts-extension-amap'>Amap extension</a> library and echarty. Code up for <a href='https://www.paypal.com/paypalme/helgasoft/19'>sale $19</a>, delivered to your Paypal email.
+Made with ECharts <a href='https://github.com/plainheart/echarts-extension-amap' target=_blank>Amap extension</a> library and echarty. Code up for <a href='https://www.paypal.com/paypalme/helgasoft/19' target=_blank>sale $19</a>, delivered to your Paypal email.
 </details>
 <br />
