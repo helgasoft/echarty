@@ -71,7 +71,6 @@ p
 <img src='img/cb-0.png' alt='pie' />
 <details><summary>🔻 View code</summary>
 
-
 ```r
 isl <- data.frame(name=names(islands), value=islands) %>% filter(value>60) %>% arrange(value)
 
@@ -87,10 +86,25 @@ p
 </details>
 <br />
 
+### Parallel chart
+<img src='img/cb-parallel.png' alt='parallel' />
+<details><summary>🔻 View code</summary>
+
+```r
+p <- iris %>% group_by(Species) %>% 
+  ec.init(group1='parallel') %>% ec.theme('dark-mushroom')
+p$x$opts$series <- lapply(p$x$opts$series, function(x) { 
+  x$smooth=TRUE; x$lineStyle=list(width=3); x })  # update preset series
+p$x$opts$color <- rainbow(10)
+p
+# note: parallel presets are coming after v.0.3.2
+```
+</details>
+<br />
+
 ### Custom chart
 <img src='img/cb-1.png' alt='profit' />
 <details><summary>🔻 View code</summary>
-
 
 ```r
 # source https://echarts.apache.org/examples/en/editor.html?c=custom-profit
@@ -181,9 +195,7 @@ q   # customized
 <br />
 
 ### Triple gauge with animation
-
 <img src='img/cb-5.png' alt='gauge3' />
-
 <details><summary>🔻 View code</summary>
 
 ```r
@@ -258,9 +270,7 @@ play with the [<span style="color:magenta">Live Demo</span>](https://rpubs.com/e
 
 ### scatterGL
 plugin **3D**, test with 5,000 points
-
 <img src='img/cb-6.png' alt='scatterGL' />
-
 <details><summary>🔻 View code</summary>
 
 ```r
@@ -296,9 +306,7 @@ p
 
 ### scatter3D
 plugin **3D**, test with 36,000 points
-
 <img src='img/cb-7.png' alt='bunny' />
-
 <details><summary>🔻 View code</summary>
 
 ```r
@@ -317,9 +325,7 @@ p
 
 ### Bathymetry in 3D
 up to 100,000 surface points
-
 <img src='img/hawaii3d.png' alt='bathy' />
-
 <details><summary>🔻 Shiny app - <span style="color:magenta">Live Demo</span></summary>
 
 ```r
@@ -328,8 +334,8 @@ shiny::runGist('https://gist.github.com/helgasoft/121d7d3ff7d292990c3e05cfc1cbf2
 </details>
 <br />
 
-### Radar chart customized
 
+### Radar chart customized
 <img src='img/cb-8.png' alt='radar1' />
 <details><summary>🔻 View code</summary>
 
@@ -560,11 +566,20 @@ p
 </details>
 <br />
 
+
 ### ecStat
 Statistical tools plugin in echarty &nbsp; &nbsp; &nbsp; [<span style="color:magenta">Live Demo</span>](https://rpubs.com/echarty/ecStat)
 <a href='https://rpubs.com/echarty/ecStat'>
 <img src='img/cb-cluster.png' alt='dow' /></a>
+<br />
 
+
+### Morphing
+Animated transition between two charts 
+<img src='img/morph.gif' alt='morph' /></a>
+<details><summary>🔻 Info</summary>
+Made with ECharts <a href='https://github.com/100pah/echarts-simple-transform'>ecSimpleTransform</a> library and echarty. Code up for <a href='https://www.paypal.com/paypalme/helgasoft/19'>sale $19</a>, delivered to your Paypal email.
+</details>
 <br />
 
 
@@ -611,6 +626,7 @@ p
 </details>
 <br>
 
+
 ### World map plugin
  with geo points/lines in a timeline<br />
 <img src='img/cb-11.geo.gif' alt='dow' />
@@ -653,6 +669,7 @@ p
 </details>
 <br />
 
+
 ### Baidu maps 
 a proof-of-concept (POC)  
 [<span style="color:magenta">Live Demo</span>](https://rpubs.com/echarty/bmap)  
@@ -661,4 +678,22 @@ a proof-of-concept (POC)
 ### Leaflet maps
 and switching chart selection **without Shiny**  
 [<span style="color:magenta">Live Demo</span>](https://rpubs.com/echarty/mapjs)
-<br /> <br />
+<br /><br />
+
+### World map
+with live data, color coding filter, pan/zoom  
+[<span style="color:magenta">Live Demo</span>
+<img src='img/cb-speed.png' alt='world_speed' />](https://rpubs.com/echarty/inet)  
+
+<br />
+
+### 3D map animation
+with vehicle trajectory playback
+<video id="video1" preload="auto" loop="loop" 
+		src="img/amap.mp4" type="video/mp4" muted="muted" controls>
+		Your browser does not support the video tag.
+</video>
+<details><summary>🔻 Info</summary>
+Made with ECharts <a href='https://github.com/plainheart/echarts-extension-amap'>Amap extension</a> library and echarty. Code up for <a href='https://www.paypal.com/paypalme/helgasoft/19'>sale $19</a>, delivered to your Paypal email.
+</details>
+<br />

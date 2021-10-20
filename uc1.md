@@ -2,7 +2,7 @@
 
 ## Building an interactive map with regional data
 \
-We'll need a **map**, some **data**, and **echarty** to bring them together.  
+We'll need a **map**, some **data** - and **echarty** to bring them together.  
 Map is France by regions, from [here](https://raw.githubusercontent.com/echarts-maps/echarts-countries-js/master/echarts-countries-js/France.js).  
 Data is France population by region, from [here](https://www.ined.fr/en/everything_about_population/data/france/population-structure/regions_departments).  
 Let start by initializing the chart, load the map as a plugin and make sure it shows correctly.
@@ -101,7 +101,8 @@ wt <- wt %>% mutate(region = case_when(
   TRUE ~ region))
 
 library(echarty)
-p <- ec.init(load='file://France.js')
+url <- 'https://raw.githubusercontent.com/echarts-maps/echarts-countries-js/master/echarts-countries-js/France.js'
+p <- ec.init(load=url)
 p$x$opts <- list(
   title = list(show=TRUE, text='France Population'),
   backgroundColor = 'whitesmoke',
