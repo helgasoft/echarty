@@ -27,6 +27,7 @@ Set multiple charts in rows/columns format
 For 3-4 charts one would use multiple series with a \href{https://echarts.apache.org/en/option.html#grid}{grid}. For greater number of charts \emph{ec.layout} come in handy.
 }
 \examples{
+options(browser = 'firefox')
 tmp <- lapply(list('dark','macarons','gray','jazz','dark-mushroom'),
               function(x) cars \%>\% ec.init() \%>\% ec.theme(x) )
 ec.layout(tmp, cols=2 )
