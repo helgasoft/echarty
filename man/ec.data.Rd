@@ -15,7 +15,8 @@ ec.data(df, format = "dataset", header = TRUE)
 \item 'names' = named lists useful for named data like \href{https://echarts.apache.org/en/option.html#series-sankey.links}{sankey links}.
 }}
 
-\item{header}{Whether the data will have a header with column names or not, default TRUE. Set this to FALSE when used in \href{https://echarts.apache.org/en/option.html#series-scatter.data}{series.data}.}
+\item{header}{Boolean to include the column names header or not, default TRUE.
+Set this to FALSE when used in \href{https://echarts.apache.org/en/option.html#series-scatter.data}{series.data}.}
 }
 \value{
 A list for \emph{dataset.source}, \emph{series.data} or a list of named lists.

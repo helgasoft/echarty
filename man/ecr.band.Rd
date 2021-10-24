@@ -36,7 +36,7 @@ df <- data.frame( x = 1:10, y = runif(10, 5, 10)) \%>\%
   dplyr::mutate(lwr = y-runif(10, 1, 3), upr = y+runif(10, 2, 4))
 
 p <- df \%>\% ec.init(load='custom')
-p$x$opts$legend <- list(ey='') 
+p$x$opts$legend <- list(ii='') 
 p$x$opts$xAxis <- list(type='category', boundaryGap=FALSE)
 p$x$opts$series <- list(list(type='line', color='yellow', datasetIndex=0, name='line1'))
 p$x$opts$series <- append( p$x$opts$series,

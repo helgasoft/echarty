@@ -12,7 +12,7 @@ ec.plugjs(wt = NULL, source = NULL, ask = FALSE)
 \item{source}{URL or file:// of a Javascript plugin, \cr
 file name suffix is '.js'. Default is NULL.}
 
-\item{ask}{Whether to ask the user to download source if missing. Default is FALSE.}
+\item{ask}{Boolean, to ask the user to download source if missing. Default is FALSE.}
 }
 \value{
 A widget with JS dependency added if successful, otherwise input wt

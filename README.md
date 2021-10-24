@@ -69,15 +69,16 @@ Now you can start building [**beautiful
 ECharts**](https://echarts.apache.org/examples/en/index.html) (and
 [**more**](https://www.makeapie.com)) with R and Shiny!
 
- <br />
+<br />
 <p align="center">
+<a href='https://helgasoft.github.io/echarty/gallery.html#maps' target='_blank'>
 <img src="man/figs/ssPolarStack.png" alt="Polar Stack" width="180"/>
 <img src="man/figs/ssBars.gif" width="180"/>
 <img src="man/figs/ssThemeRiver.png" width="180"/>
 <img src="man/figs/ssBunny.gif" width="180"/> <br />
-<img src="man/figs/ssVolcano.png" width="180"/>
+<img src="man/figs/ssMorph.gif" width="180"/>
 <img src="man/figs/ssRose.png" width="180"/>
-<img src="man/figs/ssGeomap.png" width="180"/>
-<img src="man/figs/ssStackBar.png" width="180"/> <br />Made with
-echarty. Powered by ECharts.
+<img src="man/figs/ssSpeed.png" width="180"/>
+<img src="man/figs/ssStackBar.png" width="180"/></a> 
+<br />Made with echarty. Powered by ECharts.
 </p>

@@ -101,7 +101,7 @@ tmp <- quakes \%>\% dplyr::relocate('long') \%>\%  # set order to lon,lat
 p <- tmp \%>\% ec.init(load='leaflet')
 p$x$opts$series[[1]]$name = 'quakes'
 p$x$opts$series[[1]]$symbolSize = ec.clmn(6, scale=2)   # size column
-p$x$opts$tooltip = list(formatter=ec.clmn('magnitude \%d',4))
+p$x$opts$tooltip = list(formatter=ec.clmn('magnitude \%@', 'mag'))
 p$x$opts$legend = list(zz='')
 p
 
@@ -347,9 +347,9 @@ library(dplyr)
 df <- mtcars \%>\% group_by(cyl,gear) \%>\% summarise(yy=round(mean(mpg),2)) \%>\%
   mutate(low=round(yy-cyl*runif(1),2), high=round(yy+cyl*runif(1),2)) \%>\%
   relocate(cyl, .after = last_col())   # move group column behind first four cols
-p <- df \%>\% ec.init(group1='bar', load='custom') \%>\%
+p <- df \%>\% ec.init(ctype='bar', load='custom') \%>\%
   ecr.ebars(df, name = 'eb'
-     ,tooltip = list(formatter=ec.clmn('high <b>\%d</b><br>low <b>\%d</b>', 4,3)))
+     ,tooltip = list(formatter=ec.clmn('high <b>\%@</b><br>low <b>\%@</b>', 4,3)))
 p$x$opts$tooltip <- list(zz='')
 p
 

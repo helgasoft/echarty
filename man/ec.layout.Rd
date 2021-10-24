@@ -23,12 +23,12 @@ A container \code{\link[htmltools]{div}} in rmarkdown, otherwise \code{\link[htm
 \description{
 Set multiple charts in rows/columns format
 }
-\examples{
-
-if (interactive()) {
-  p1 <- cars \%>\% ec.init()
-  p2 <- cars \%>\% ec.init() \%>\% ec.theme('dark')
-  ec.layout(list(p1,p2), cols=2 )
+\details{
+For 3-4 charts one would use multiple series with a \href{https://echarts.apache.org/en/option.html#grid}{grid}. For greater number of charts \emph{ec.layout} come in handy.
 }
+\examples{
+tmp <- lapply(list('dark','macarons','gray','jazz','dark-mushroom'),
+              function(x) cars \%>\% ec.init() \%>\% ec.theme(x) )
+ec.layout(tmp, cols=2 )
 
 }

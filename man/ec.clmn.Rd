@@ -9,29 +9,32 @@ ec.clmn(col = NULL, ..., scale = 1)
 \arguments{
 \item{col}{A column index(number), column name(string) or a \code{\link[base]{sprintf}} format string.}
 
-\item{...}{Comma separated list of column indexes or names, when \emph{col} is \emph{sprintf}. This allows formatting of multiple columns, as for a tooltip.}
+\item{...}{When \emph{col} is \emph{sprintf}, comma separated column indexes or names, but not both.  This allows formatting of multiple columns, as for a tooltip.}
 
-\item{scale}{A multiplier (decimal/integer) for column values. Only when \emph{col} is a single column identifier, ignored otherwise.}
+\item{scale}{A multiplier number for column values. Only when \emph{col} is a single column index or name, ignored otherwise.}
+}
+\value{
+A JavaScript code string (usually a function) marked as executable, see \code{\link[htmlwidgets]{JS}}.
 }
 \description{
 Helper function to address data column(s) by index or name
 }
 \details{
 Column indexes are counted in R and start at 1.\cr
-\emph{col} as sprintf supports only two placeholders - \%d for column indexes and \%s for column names.\cr
+\emph{col} as sprintf has the same placeholder \emph{\%@} for both column indexes or column names.\cr
 \emph{col} as sprintf can contain double quotes, but not single or backquotes.\cr
-Useful to set formatter, color, symbolSize, etc.
+Useful for attributes like formatter, color, symbolSize.
 }
 \examples{
 tmp <- data.frame(Species = as.vector(unique(iris$Species)),
-                  emoji = c('\U0001F33B','\U0001F335','\U0001F33A')) # 🌻,🌵,🌺
+                  emoji = c('\U0001F33B','\U0001F335','\U0001F33A'))
 df <- iris \%>\% dplyr::inner_join(tmp)   # add 6th column 'emoji'
 p <- df \%>\% dplyr::group_by(Species) \%>\% ec.init()
 p$x$opts$series <- list(list(
   type='scatter', label=list(show=TRUE, formatter = ec.clmn(6))  # 6th column
 ))
 p$x$opts$tooltip <- list(formatter=
-   ec.clmn('species <b>\%d</b><br>s.len <b>\%d</b><br>s.wid <b>\%d</b>', 5,1,2))
+   ec.clmn('species <b>\%@</b><br>s.len <b>\%@</b><br>s.wid <b>\%@</b>', 5,1,2))
 p
 
 }

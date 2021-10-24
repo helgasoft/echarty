@@ -1,5 +1,12 @@
 # history of echarty package development
 
+## v.1.4.0
+
+- _ec.init_: renamed 'group1' to 'ctype', add presets for parallel chart, improved presets for xAxis
+- _ec.paxis_ new helper for parallelAxis
+- _ec.clmn_ placeholders %d %s replaced with %@
+- added initial unit tests
+
 ## v. 0.3.2
 
 - _ec.init_: _js_ parameter has now 3 levels of execution

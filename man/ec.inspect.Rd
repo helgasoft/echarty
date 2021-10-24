@@ -11,7 +11,7 @@ ec.inspect(wt, target = NULL, json = TRUE, ...)
 
 \item{target}{NULL(default) or 'data' to show info about chart's embedded data.}
 
-\item{json}{Whether to return a JSON, or a \code{list}, default TRUE}
+\item{json}{Boolean whether to return a JSON, or a \code{list}, default TRUE}
 
 \item{...}{Additional arguments to pass to \code{\link[jsonlite]{toJSON}}}
 }

@@ -35,7 +35,7 @@ df <- data.frame(x = 1:24, val = tmp,
                  upper = round(rnorm(24, tmp + 5, .8))
 )
 p <- df \%>\% ec.init(load='custom') \%>\% ecr.ebars()
-p$x$opts$tooltip <- list(ey='')
+p$x$opts$tooltip <- list(ii='')
 p
 
 }
