@@ -31,7 +31,6 @@ options <-  lapply(vv %>% group_by(Year) %>% group_split(), function(y) {
 })
 
 p <- vv %>% group_by(name) %>% ec.init()
-p$x$opts$xAxis$type <- 'category'
 p$x$opts$timeline <- list(data=unique(vv$Year), axisType='category')
 p$x$opts$options <- options
 p

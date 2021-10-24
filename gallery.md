@@ -15,8 +15,7 @@ df <- data.frame(date=as.character(as.Date('2019-12-31') %m+% months(1:13)),
                  num=runif(13))
 
 #  with presets and df chained
-p <- df %>% ec.init(group1='bar') %>% ec.theme('dark')
-p$x$opts$xAxis <- list(type = 'category')
+p <- df %>% ec.init(ctype='bar') %>% ec.theme('dark')
 p
 
 #  without presets all options are explicitly assigned
@@ -92,12 +91,11 @@ p
 
 ```r
 p <- iris %>% group_by(Species) %>% 
-  ec.init(group1='parallel') %>% ec.theme('dark-mushroom')
+  ec.init(ctype='parallel') %>% ec.theme('dark-mushroom')
 p$x$opts$series <- lapply(p$x$opts$series, function(x) { 
   x$smooth=TRUE; x$lineStyle=list(width=3); x })  # update preset series
 p$x$opts$color <- rainbow(10)
 p
-# note: parallel presets are coming after v.0.3.2
 ```
 </details>
 <br />
@@ -136,8 +134,8 @@ ritem <- "function renderItem(params, api) {
 p <- ec.init() %>% ec.theme('dark-mushroom')      # only 2 commands used
 p$x$opts <- list(
     title = list(text = "Profit", left = "center"),
-    tooltip = list(ey = ""),
-    xAxis = list(scale = TRUE), yAxis = list(ey = ""),
+    tooltip = list(zz = ""),
+    xAxis = list(scale = TRUE), yAxis = list(zz = ""),
     series = list(list(type = "custom",
          renderItem = htmlwidgets::JS(ritem),
          label = list(show = TRUE, position = "top"),
@@ -174,7 +172,7 @@ stackbar <- stackbar %>% mutate(xlbl=paste0(Year,' (N=',all,')'))
 stackbar <- stackbar %>% relocate(xlbl,perc)  # move in front as natural X & Y columns
 stackbar <- stackbar %>% group_by(Category)   # both ec.init & ecr.ebars need grouped data
 #  --- 2. plot
-q <- stackbar %>% ec.init(group1='bar', load='custom') %>%
+q <- stackbar %>% ec.init(ctype='bar', load='custom') %>%
      ec.theme('dark-mushroom') %>%
      ecr.ebars(stackbar[,c('xlbl','low','up','Category')],    # only columns for x,low,high,category
                hwidth = 9)    # (optional) half-width of err.bar in pixels
@@ -235,7 +233,7 @@ p
 # echarty can highlight 3D points selected by external controls
 library(crosstalk); library(DT); library(d3scatter); library(htmltools)
 library(echarty); library(dplyr); library(tibble)
-sdf <- mtcars %>% rownames_to_column(var='name') %>% relocate(mpg,wt) 
+sdf <- mtcars %>% rownames_to_column(var='name') %>% relocate(mpg,wt,hp) 
 sdf <- SharedData$new(sdf)
 
 p3 <- sdf %>% ec.init(load='3D', 
@@ -243,15 +241,10 @@ p3 <- sdf %>% ec.init(load='3D',
             ec.theme('dark-mushroom')
 p3$x$opts$series[[1]] <- list(
   type='scatter3D', symbolSize=11,
-  encode=list(x='mpg', y='wt', z='hp'),
   itemStyle=list(color = htmlwidgets::JS("function(params){
-    let cyl=params.value[3]; return (cyl==4 ? 'RoyalBlue' : cyl==6 ? 'OrangeRed':'green');}") ),
-  emphasis = list(focus='self', blurScope='series', itemStyle=list(color='red')),
-  blur = list(opacity = 0.2)
+    let cyl=params.value[4]; return (cyl==4 ? 'RoyalBlue' : cyl==6 ? 'OrangeRed':'green');}") ),
+  emphasis = list(focus='self', blurScope='series', itemStyle=list(color='red'))
 )
-p3$x$opts$xAxis3D <- list(name='mpg')
-p3$x$opts$yAxis3D <- list(name='wt')
-p3$x$opts$zAxis3D <- list(name='hp')
 
 bscols( list(
     d3scatter(sdf, ~mpg, ~wt, ~factor(cyl), width="100%", height=300),br(),
@@ -294,8 +287,8 @@ for(i in 0:1)
 	))
 p <- ec.init(load='3D', preset=FALSE)  %>% ec.theme('dark-mushroom') 
 p$x$opts <- list(
-  xAxis = list(ey=''),	  # scatterGL is not 3D, needs 2D axes
-  yAxis = list(ey=''),
+  xAxis = list(zz=''),	  # scatterGL is not 3D, needs 2D axes
+  yAxis = list(zz=''),
   series = sers,
   dataZoom = list(type='inside',start=50)
 )
@@ -433,20 +426,17 @@ using heatmap chart
 library(echarty); library(dplyr)
 # prepare and calculate data
 mtx <- cor(infert %>% dplyr::mutate(education=as.numeric(education)))
-order <- corrplot::corrmatOrder(mtx)
+order <- corrplot::corrMatOrder(mtx)
 mtx <- mtx[order, order]
 df <- as.data.frame(as.table(mtx))
 for(i in 1:2) df[,i] <- as.character(df[,i])
 
-p <- ec.init(preset=FALSE) %>% ec.theme('dark')
-p$x$opts <- list( 
-  title = list(text='Correlation - infertility after abortion'),
-  xAxis = list(type='category', data=unique(colnames(mtx)), axisLabel=list(rotate=45)),
-  yAxis = list(type='category', data=unique(colnames(mtx))),
-  series = list(list(type = 'heatmap', data= ec.data(df,'values') )),
-  visualMap = list(min=-1, max=1, calculable=TRUE, orient='vertical',left='right'
-    ,inRange=list( color=c('#313695', '#4575b4', '#74add1', '#abd9e9', '#e0f3f8', '#ffffbf', '#fee090', '#fdae61', '#f46d43', '#d73027', '#a50026')) )
-)
+# ECharts heatmap expects dataset columns in a certain order: relocate
+p <- df %>% relocate(Var2) %>% ec.init(ctype='heatmap') %>% ec.theme('dark')
+p$x$opts$title = list(text='Infertility after abortion correlation')
+p$x$opts$xAxis$axisLabel <- list(rotate=45)
+p$x$opts$visualMap <- list(min=-1, max=1, orient='vertical',left='right'
+  ,calculable=TRUE, inRange=list( color=heat.colors(11)) )
 p
 ```
 </details>
@@ -465,12 +455,12 @@ do.histogram <- function(x, breaks='Sturges') {
   tmp <- data.frame(x=histo$mids, y=histo$counts)
   tmp
 }
-p <- do.histogram(rnorm(44)) %>% ec.init(group1='bar') %>% ec.theme('dark')
+p <- do.histogram(rnorm(44)) %>% ec.init(ctype='bar') %>% ec.theme('dark')
 p
 
 # with normal distribution line added
 hh <- do.histogram(rnorm(44))
-p <- hh %>% ec.init(group1='bar') %>% ec.theme('dark')
+p <- hh %>% ec.init(ctype='bar') %>% ec.theme('dark')
 nrm <- dnorm(hh$x, mean=mean(hh$x), sd=sd(hh$x))  # normal distribution
 p$x$opts$xAxis <- list(list(ii=''), list(data=c(1:length(nrm))))
 p$x$opts$yAxis <- list(list(ii=''), list(ii=''))
@@ -528,7 +518,7 @@ p$x$opts <- list(
       list(name = x$tic, lname=x$name, value=x$bn, 
            symbolSize=x$size, draggable=TRUE 
       )) )),
-  tooltip = list(formatter= ec.clmn('<b>%s</b><br>%s bn','lname','value'))
+  tooltip = list(formatter= ec.clmn('<b>%@</b><br>%@ bn','lname','value'))
 )
 p
 ```
@@ -608,15 +598,15 @@ p$x$on <- list(list(event='mouseover', query=list(seriesIndex=0),
   this.dispatchAction({ type: 'downplay', geoIndex: 0, name: event.name }); }") )
 )
 p$x$opts <- list(
-  tooltip = list(ey = ""), 
+  tooltip = list(zz = ""), 
   geo = list(left = 10, right = "50%", map = "organs", selectedMode = "multiple",
              emphasis = list(focus = "self", itemStyle = list(color = NULL), 
                              label = list(position = "bottom", distance = 0, textBorderColor = "#fff", textBorderWidth = 2)),
-             blur = list(ey = ""), 
+             blur = list(zz = ""), 
              select = list(itemStyle = list(color = "#b50205"), 
                            label = list(show = FALSE, textBorderColor = "#fff", textBorderWidth = 2))), 
   grid = list(left = "60%", top = "20%", bottom = "20%"), 
-  xAxis = list(ey = ""), 
+  xAxis = list(zz = ""), 
   yAxis = list(data = list("heart", "large-intestine", "small-intestine", "spleen", "kidney", "lung", "liver")), 
   series = list(list(type = "bar", emphasis = list(focus = "self"), 
                      data = list(121, 321, 141, 52, 198, 289, 139))))
@@ -636,7 +626,7 @@ p
 # inspired by data from https://github.com/etiennebacher
 library(echarty); library(dplyr)
 flights <- read.csv('https://raw.githubusercontent.com/plotly/datasets/master/2011_february_aa_flight_paths.csv')
-# rearrange longitude/latitude data for ECharts
+# set first two columns to longitude/latitude as default for ECharts
 df <- head(flights) %>% relocate(start_lon,start_lat,end_lon) %>% 
   group_by(airport1) %>% group_split()
 # timeline options are individual charts
@@ -658,7 +648,7 @@ options <-  lapply(df, function(y) {
 })
 
 p <- ec.init(preset=FALSE, load='world')
-p$x$opts$yAxis <- list(ey='')
+p$x$opts$yAxis <- list(zz='')
 p$x$opts$xAxis$type <- 'category'
 # timeline labels need to match option titles
 p$x$opts$timeline <- list(data=unlist(lapply(options, 
