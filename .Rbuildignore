@@ -20,3 +20,4 @@ README.md
 ^man/figs$
 ^\.ccache$
 ^tic\.R$
+^codecov\.yml$

@@ -20,11 +20,12 @@ Imports:
   shiny (>= 1.7.0),
   jsonlite
 Suggests:
-  magrittr,
-  crosstalk,
-  rmarkdown,
-  knitr,
-  testthat (>= 3.0.0)
+    magrittr,
+    crosstalk,
+    rmarkdown,
+    knitr,
+    testthat (>= 3.0.0),
+    covr
 RoxygenNote: 7.1.2
 Roxygen: list(markdown = TRUE)
 URL: https://github.com/helgasoft/echarty
