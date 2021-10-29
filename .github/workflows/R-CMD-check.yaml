@@ -22,7 +22,7 @@ jobs:
           - {os: windows-latest, r: 'release'}
           - {os: ubuntu-latest,   r: 'devel', http-user-agent: 'release'}
           - {os: ubuntu-latest,   r: 'release'}
-          - {os: ubuntu-latest,   r: 'oldrel-1'}
+#         - {os: ubuntu-latest,   r: 'oldrel-1'}  # R < v.4.1.0 will not work because of pipe |>
 
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}

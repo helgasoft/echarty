@@ -5,12 +5,12 @@
 
 <!-- badges: start -->
 
-[![R-CMD-check](https://github.com/helgasoft/echarty/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/helgasoft/echarty/actions/workflows/R-CMD-check.yaml)
+[![R-CMD-check](https://github.com/helgasoft/echarty/workflows/R-CMD-check/badge.svg)](https://github.com/helgasoft/echarty/actions)
 [![size](https://img.shields.io/github/languages/code-size/helgasoft/echarty)](https://github.com/helgasoft/echarty/releases/)
 <!--
 [![CRAN
 downloads](https://cranlogs.r-pkg.org/badges/last-day/echarty)](https://cranlogs.r-pkg.org/badges/last-day/echarty)   -->
-[![R-CMD-check](https://github.com/helgasoft/echarty/workflows/R-CMD-check/badge.svg)](https://github.com/helgasoft/echarty/actions)
+
 <!-- badges: end -->
 
 <a href='https://helgasoft.github.io/echarty'><img src="man/figs/echarty.gallery.png" alt="echarty.gallery" /></a>
