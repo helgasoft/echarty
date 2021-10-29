@@ -15,13 +15,17 @@
 #'   \code{'500px'}, \code{'auto'}) or a number, which will be coerced to a
 #'   string and have \code{'px'} appended.
 #' @param tl.series A list to build a timeline or NULL(default). The list defines options \href{https://echarts.apache.org/en/option.html#series}{series} and their attributes. \cr
-#'  The only required attribute is \href{https://echarts.apache.org/en/option.html#series-line.encode}{encode}. 
+#'  Requires a grouped data.frame \emph{df}.
+#'  The only indispensable attribute is \href{https://echarts.apache.org/en/option.html#series-line.encode}{encode}. 
 #'  \emph{encode} defines which data columns names(not indexes) to use for the axes: \itemize{
-#'   \item set \emph{x} and \emph{y} when coordinateSystem is \emph{'cartesian2d'}
-#'   \item set \emph{lng} and \emph{lat} when coordinateSystem is \emph{'geo'}
-#'   \item set \emph{radius} and \emph{angle} when coordinateSystem is \emph{'polar'}
+#'   \item set \emph{x} and \emph{y} for coordinateSystem \emph{'cartesian2d'}
+#'   \item set \emph{lng} and \emph{lat} for coordinateSystem \emph{'geo'}
+#'   \item set \emph{radius} and \emph{angle} for coordinateSystem \emph{'polar'}
+#'   \item set \emph{value} and \emph{itemName} for \emph{'pie'} chart.
 #'   }
-#'   Attribute \emph{coordinateSystem} is set to \emph{'cartesian2d'} by default. Auto-generated \emph{timeline} and \emph{options} will be preset for the chart as well.
+#'   Attribute \emph{coordinateSystem} is not set by default and depends on chart \emph{type}.\cr
+#'   Auto-generated \emph{timeline} and \emph{options} will be preset for the chart as well.\cr
+#'   \emph{tl.series} cannot be used for hierarchical charts like graph,tree,treemap,sankey. Chart options/timeline have to be built directly, see \href{https://helgasoft.github.io/echarty/uc4.html}{example}.
 #' @param ... other arguments to pass to the widget. \cr
 #'   Custom widget arguments include: \cr \itemize{
 #'   \item elementId - Id of the widget, default is NULL(auto-generated)
@@ -56,10 +60,10 @@
 #' 
 #' @examples
 #'  # basic scatter chart from a data.frame, using presets
-#' cars %>% ec.init()
+#' cars |> ec.init()
 #'  
 #'  # a timeline with two series and autoPlay
-#' p <- iris %>% dplyr::group_by(Species) %>% ec.init(
+#' p <- iris |> dplyr::group_by(Species) |> ec.init(
 #'   tl.series=list(
 #'     encode=list(x=NULL, y=c('Sepal.Width', 'Petal.Length')),
 #'     markPoint = list(data=list(list(type='max'), list(type='min')))
@@ -154,8 +158,6 @@ ec.init <- function( df=NULL, preset=TRUE, ctype='scatter', load=NULL,
       x$opts$legend = list(data=list())
       for(nm in grvals) { 
         k <- k+1
-        #srch4 <- nm
-        #if ('factor' %in% class(grvals)) srch4 <- k
         txfm <- append(txfm, list(list(transform = list(
           type='filter', config=list(dimension=grnm, '='=nm)))))
         x$opts$series[[k]] <- list(
@@ -204,7 +206,7 @@ ec.init <- function( df=NULL, preset=TRUE, ctype='scatter', load=NULL,
   )
 
   # check for theme
-  theme <- getOption('ECHARTS_THEME')   # default
+  theme <- getOption('echarty.theme')   # default
   if (!is.null(theme)) {
     wt <- ec.theme(wt, theme)
   }
@@ -221,7 +223,7 @@ ec.init <- function( df=NULL, preset=TRUE, ctype='scatter', load=NULL,
       # customizations for leaflet
       wt$x$opts$xAxis <- NULL
       wt$x$opts$yAxis <- NULL
-      urltls <- getOption('ECHARTS_TILES')
+      urltls <- getOption('echarty.tiles')
       if (is.null(urltls))
         urltls <- 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
       wt$x$opts$leaflet = list(
@@ -309,18 +311,26 @@ ec.init <- function( df=NULL, preset=TRUE, ctype='scatter', load=NULL,
     # add missing defaults
     if (is.null(tl.series$type)) tl.series$type <- 'line'
     #if (is.null(tl.series$coordinateSystem)) tl.series$coordinateSystem <- 'cartesian2d' # not for gauge
-    if (is.null(tl.series$coordinateSystem) ||
-        tl.series$coordinateSystem=='cartesian2d') { xtem <-'x'; ytem <- 'y' }
-    else if (tl.series$coordinateSystem=='polar') { xtem <-'radius'; ytem <- 'angle' }
+    # not in any coordinate system: 'pie','funnel','gauge','graph', tree/treemap/sankey
+    if (is.null(tl.series$coordinateSystem))
+      tl.series$coordinateSystem <- 'unknown'
+    if (tl.series$type == 'pie') {
+      xtem <- 'value'; ytem <- 'itemName' }
+    if (tl.series$type %in% c('line','scatter','bar'))
+      tl.series$coordinateSystem <- 'cartesian2d'
+    if (tl.series$coordinateSystem=='cartesian2d') { 
+      xtem <- 'x'; ytem <- 'y' }
+    else if (tl.series$coordinateSystem=='polar') { 
+      xtem <- 'radius'; ytem <- 'angle' }
     else if (tl.series$coordinateSystem %in% c('geo','leaflet')) { 
-      xtem <-'lng'; ytem <- 'lat'
+      xtem <- 'lng'; ytem <- 'lat'
       center <- c(mean(unlist(df[,tl.series$encode$lng])),
                   mean(unlist(df[,tl.series$encode$lat])))
       if (tl.series$coordinateSystem=='geo') wt$x$opts$geo$center <- center
       if (tl.series$coordinateSystem=='leaflet') wt$x$opts$leaflet$center <- center
     }
-    if (is.null(unlist(tl.series$encode[xtem]))) {   
-      # append col XcolX 1:max for each group 
+    if (is.null(unlist(tl.series$encode[xtem]))) {
+      # append col XcolX 1:max for each group
       df <- df %>% group_modify(~ { .x %>% mutate(XcolX = 1:nrow(.)) })
       tl.series$encode[xtem] <- 'XcolX'    # instead of relocate(XcolX)
       # replace only source, transforms stay
@@ -344,8 +354,9 @@ ec.init <- function( df=NULL, preset=TRUE, ctype='scatter', load=NULL,
       #if (!is.null(xcol)) gp <- gp %>% arrange(across(all_of(xcol)))
       
       # multiple series for each Y, like y=c('col1', 'col3')
-      series <- lapply(unname(unlist(tl.series$encode[ytem])), function(sname) {
-        append(list(datasetIndex=di, name=sname), tl.series)
+      series <- lapply(unname(unlist(tl.series$encode[ytem])), 
+        function(sname) {
+          append(list(datasetIndex=di, name=sname), tl.series)
       })
       series <- lapply(series, function(s) {
         s$encode[ytem] <- s$name   # replace multiple col.names with one
@@ -360,6 +371,14 @@ ec.init <- function( df=NULL, preset=TRUE, ctype='scatter', load=NULL,
     
     steps <- lapply(optl, function(x) { paste(x$title$text, collapse=' ') })
     wt$x$opts$timeline <- list(data=steps, axisType='category')
+  }
+  
+  snip <- getOption('echarty.short')
+  if (!is.null(snip) && snip) {
+    snip <- wt$x$opts
+    snip$saved <- wt
+    snip$saved$opts <- NULL
+    wt <- snip
   }
   return(wt)
 }
@@ -415,9 +434,10 @@ ec.data <- function(df, format='dataset', header=TRUE) {
 #' 
 #' Helper function to address data column(s) by index or name
 #' 
-#' @param col A column index(number), column name(string) or a \code{\link[base]{sprintf}} format string. 
-#' @param ... When \emph{col} is \emph{sprintf}, comma separated column indexes or names, but not both.  This allows formatting of multiple columns, as for a tooltip.
-#' @param scale A multiplier number for column values. Only when \emph{col} is a single column index or name, ignored otherwise.
+#' @param col A single column index(number) or column name(string), \cr
+#'    or a \code{\link[base]{sprintf}} format string. 
+#' @param ... Only when \emph{col} is \emph{sprintf}: comma separated column indexes or names(strings), but not both.  This allows formatting of multiple columns, as for a tooltip.
+#' @param scale Only when \emph{col} is a single column index or name: a multiplier number for column values.
 #' @return A JavaScript code string (usually a function) marked as executable, see \code{\link[htmlwidgets]{JS}}.
 #'  
 #' @details Column indexes are counted in R and start at 1.\cr
@@ -428,12 +448,12 @@ ec.data <- function(df, format='dataset', header=TRUE) {
 #' @examples
 #' tmp <- data.frame(Species = as.vector(unique(iris$Species)),
 #'                   emoji = c('\U0001F33B','\U0001F335','\U0001F33A'))
-#' df <- iris %>% dplyr::inner_join(tmp)   # add 6th column 'emoji'
-#' p <- df %>% dplyr::group_by(Species) %>% ec.init()
+#' df <- iris |> dplyr::inner_join(tmp)   # add 6th column 'emoji'
+#' p <- df |> dplyr::group_by(Species) |> ec.init()
 #' p$x$opts$series <- list(list(
-#'   type='scatter', label=list(show=TRUE, formatter = ec.clmn(6))  # 6th column
+#'   type='scatter', label=list(show=TRUE, formatter = ec.clmn(6))  # ref 6th column
 #' ))
-#' p$x$opts$tooltip <- list(formatter=
+#' p$x$opts$tooltip <- list(formatter=          # sprintf + ref multiple columns
 #'    ec.clmn('species <b>%@</b><br>s.len <b>%@</b><br>s.wid <b>%@</b>', 5,1,2))
 #' p
 #' 
@@ -457,10 +477,12 @@ ec.clmn <- function(col=NULL, ..., scale=1) {
         t1 <- paste(args, collapse='`,`')
         ret <- paste0( spf,       
 "if (!x.data) return `no data`;
-let args=[`",t1,"`], ss=null;
-let pos= !x.dimensionNames ? args.map(z => x.dimensionNames.indexOf(z)) : null;
+let args=[`",t1,"`], ss=pos=[];
+if (x.dimensionNames && x.dimensionNames.length>0) 
+  pos= args.map(z => x.dimensionNames.indexOf(z));
 if (!x.data.length) {
-  ss= (!x.data.value) ? pos.map(p => x.data.value[p]) : [",t0,"]; 
+  ss= (x.data.value && x.data.value.length>0) 
+     ? pos.map(p => x.data.value[p]) : [",t0,"]; 
 } else {
   ss= pos.map(p => x.data[p]); }
 let c=sprintf(`",col,"`,ss); return c;"
@@ -504,10 +526,10 @@ let c = sprintf(`",col,"`, ss); return c; ")
 #'      Type 'stack' needs \emph{xAxis} to be of type 'category'.
 #' 
 #' @examples 
-#' df <- data.frame( x = 1:10, y = runif(10, 5, 10)) %>%
+#' df <- data.frame( x = 1:10, y = runif(10, 5, 10)) |>
 #'   dplyr::mutate(lwr = y-runif(10, 1, 3), upr = y+runif(10, 2, 4))
 #' 
-#' p <- df %>% ec.init(load='custom')
+#' p <- df |> ec.init(load='custom')
 #' p$x$opts$legend <- list(ii='') 
 #' p$x$opts$xAxis <- list(type='category', boundaryGap=FALSE)
 #' p$x$opts$series <- list(list(type='line', color='yellow', datasetIndex=0, name='line1'))
@@ -584,6 +606,7 @@ ecr.band <- function(df=NULL, lower=NULL, upper=NULL, type='polygon', ...) {
 #'  Grouped series are supported, but require the group column to be included in df. \cr
 #'  ecr.ebars are custom series, so \emph{ec.init(load='custom')} is required. \cr
 #'  ecr.ebars will add a chart legend and its own tooltip if none is provided.\cr
+#'  ecr.ebars with name attribute will show separate in the legend \cr
 #'  ecr.ebars should be set at the end, after all other series.
 #'
 #' @examples
@@ -592,7 +615,7 @@ ecr.band <- function(df=NULL, lower=NULL, upper=NULL, type='polygon', ...) {
 #'                  lower = round(rnorm(24, tmp -10, .5)),
 #'                  upper = round(rnorm(24, tmp + 5, .8))
 #' )
-#' p <- df %>% ec.init(load='custom') %>% ecr.ebars()
+#' p <- df |> ec.init(load='custom') |> ecr.ebars()
 #' p$x$opts$tooltip <- list(ii='')
 #' p
 #' 
@@ -675,13 +698,13 @@ ecr.ebars <- function(wt, df=NULL, hwidth=6, ...) {
         name <- unlist(unique(unname(gp[,grnm])))
         oneSerie(name, gp)
       })
+      wt$x$opts$xAxis$type <- 'category'
     }
     else
       cser <- list(oneSerie(names(df)[2], df))
   }
   wt$x$opts$series <- append(wt$x$opts$series, cser)
   if (!("legend" %in% names(wt$x$opts))) wt$x$opts$legend <- list(pt='')
-  wt$x$opts$xAxis$type <- 'category'
   wt
 }
 
@@ -820,7 +843,7 @@ ecs.exec <- function(proxy, cmd='p_merge') {
 #' @examples
 #' options(browser = 'firefox')
 #' tmp <- lapply(list('dark','macarons','gray','jazz','dark-mushroom'),
-#'               function(x) cars %>% ec.init() %>% ec.theme(x) )
+#'               function(x) cars |> ec.init() |> ec.theme(x) )
 #' ec.layout(tmp, cols=2 )
 #' 
 #' @export 
@@ -878,7 +901,7 @@ ec.layout <- function (plots, rows = NULL, cols = NULL, width = "xs",
 #' @param ... Additional arguments for \href{https://echarts.apache.org/en/option.html#parallelAxis}{parallelAxis}.
 #' @return A list, see format in \href{https://echarts.apache.org/en/option.html#parallelAxis}{parallelAxis}.
 #' @examples
-#' iris %>% dplyr::group_by(Species) %>% ec.init(ctype='parallel')
+#' iris |> dplyr::group_by(Species) |> ec.init(ctype='parallel')
 #' 
 #' p <- ec.init(preset=FALSE) 
 #' p$x$opts$parallelAxis <- ec.paxis(mtcars, 
@@ -919,37 +942,6 @@ ec.paxis <- function (df=NULL, minmax=TRUE, cols=NULL, ...) {
 }                   
 
 
-#' Global options
-#' 
-#' Set a global theme, font and/or tile URL
-#'
-#' @param options A list of options: \cr
-#'     theme = name of theme file (without extension), from folder /inst/themes\cr
-#'     font = font family name \cr
-#'     urltiles = tiles URL template for leaflet maps
-#' @return none, setting values only
-#' 
-#' @details To get these values in code use \code{\link[base]{getOption}}. 
-#' Revert back to default by setting them to NULL.
-#' More list components could be added in the future.
-#'
-#' @examples
-#' ec.global(list(theme = 'dark'))
-#' cars %>% ec.init()
-#' ec.global(list(theme = NULL))
-#' cars %>% ec.init()
-#' 
-#' @export
-ec.global <- function(options = NULL) {
-  if (is.null(options)) return()
-  options(
-    'ECHARTS_THEME' = options$theme,
-    'ECHARTS_FONT' = options$font,
-    'ECHARTS_TILES' = options$urltiles
-  )
-}
-
-
 #' Themes
 #'
 #' Apply a pre-built or custom coded theme to a chart
@@ -963,8 +955,8 @@ ec.global <- function(options = NULL) {
 #'   To create custom themes or view predefined ones, visit \href{https://echarts.apache.org/en/theme-builder.html}{this site}.
 #'
 #' @examples
-#' mtcars %>% ec.init() %>% ec.theme('dark-mushroom')
-#' cars %>% ec.init() %>% ec.theme('mine', code=
+#' mtcars |> ec.init() |> ec.theme('dark-mushroom')
+#' cars |> ec.init() |> ec.theme('mine', code=
 #'   '{"color": ["green","#eeaa33"], 
 #'     "backgroundColor": "lemonchiffon"}')
 #' 
@@ -1004,11 +996,11 @@ ec.theme <- function (wt, name, code = NULL)
 #'
 #' @examples
 #' # extract JSON
-#' json <- cars %>% ec.init() %>% ec.inspect()
+#' json <- cars |> ec.init() |> ec.inspect()
 #' json
 #'
 #' # get from JSON and modify plot
-#' ec.fromJson(json) %>% ec.theme('macarons')
+#' ec.fromJson(json) |> ec.theme('macarons')
 #'
 #' @export
 ec.inspect <- function(wt, target=NULL, json=TRUE, ...) {
@@ -1084,6 +1076,44 @@ ec.fromJson <- function(txt, ...) {
 }
 
 
+#' Options list shortcut
+#' 
+#' Utility to improve readability and typing speed
+#' 
+#' @param wt A widget to be converted to option list \cr
+#'    OR an option list to plot
+#' @details 
+#' On initialization, pipe _ec.snip_ after [ec.init], \cr
+#'   or set for the entire R session with \code{options('echarty.short'=TRUE)}.
+#'
+#' @examples 
+#' p <- cars |> ec.init() |> ec.snip()
+#' p$dataZoom <- list(start=70)   # instead of p$x$opts$dataZoom
+#' p$legend  <- list(zz='')       # instead of p$x$opts$tooltip
+#' ec.snip(p)                     # instead of just p
+#' 
+#' @export
+ec.snip <- function(wt) {
+  if (missing(wt))
+    stop('expecting wt as htmlwidget or list', call.=FALSE)
+
+  #if (is.null(wt$saved)) {
+  if ('echarty' %in% class(wt)) {
+    # prepare for shorthand writing
+    op <- wt$x$opts
+    op$saved <- wt
+    op$saved$opts <- NULL
+    op
+  } 
+  else {
+    # return the chart widget to plot
+    p <- wt$saved
+    wt$saved <- NULL
+    p$x$opts <- wt
+    p
+  }
+}
+
 
 # ----------- Internal --------------
 
@@ -1097,11 +1127,12 @@ ec.fromJson <- function(txt, ...) {
 #' @return A widget with JS dependency added if successful, otherwise input wt
 #'
 #' @details When \emph{source} is URL, the plugin file is installed with an optional popup prompt.\cr
-#'   When \emph{source} is a file name (file://xxx.js), it is assumed installed and only a dependency is added.
+#'   When \emph{source} is a file name (file://xxx.js), it is assumed installed and only a dependency is added.\cr
+#'   Called internally by [ec.init]. It is recommended to use \emph{ec.init(load=...)} instead of \emph{ec.plugjs}.
 #'   
 #' @examples
 #' # import map plugin and display two (lon,lat) locations
-#' p <- ec.init() %>% ec.plugjs(
+#' p <- ec.init() |> ec.plugjs(
 #'   'https://raw.githubusercontent.com/apache/echarts/master/test/data/map/js/china-contour.js')
 #' p$x$opts <- list(
 #'   geo = list(map= 'china-contour', roam= TRUE),
@@ -1157,53 +1188,42 @@ ec.plugjs <- function(wt=NULL, source=NULL, ask=FALSE) {
 # needed by widget init
 .preRender <- function(wt) {
 
-  ff <- getOption('ECHARTS_FONT')
-  
+  ff <- getOption('echarty.font')
   if (!is.null(ff))
     wt$x$opts$textStyle <- list(fontFamily = ff)
   wt
 }
 
 if (requireNamespace("shiny", quietly = TRUE)) {
-
+  
   # for Shiny actions
   .onAttach <- function(libname, pkgname) {
-    shiny::registerInputHandler('echartyParse', function(data, ...) {
-      jsonlite::fromJSON(jsonlite::toJSON(data, auto_unbox = TRUE))
-    }, force = TRUE)
-    
-    options(
-      'ECHARTS_THEME' = NULL,
-      'ECHARTS_FONT' = NULL,
-      'ECHARTS_TILES' = NULL
-    )
+      shiny::registerInputHandler('echartyParse', function(data, ...) {
+        jsonlite::fromJSON(jsonlite::toJSON(data, auto_unbox = TRUE))
+      }, force = TRUE)
   }
-
+  
   .onLoad <- function(libname, pkgname) {
-    shiny::registerInputHandler('echartyParse', function(data, ...) {
-      jsonlite::fromJSON(jsonlite::toJSON(data, auto_unbox = TRUE))
-    }, force = TRUE)
-    
-    options(
-      'ECHARTS_THEME' = NULL,
-      'ECHARTS_FONT' = NULL,
-      'ECHARTS_TILES' = NULL
-    )
+      shiny::registerInputHandler('echartyParse', function(data, ...) {
+        jsonlite::fromJSON(jsonlite::toJSON(data, auto_unbox = TRUE))
+      }, force = TRUE)
   }
+  
 }
 
-#' Pipe operator
-#'
-#' Imported from magrittr
-#'
-#' @name %>%
-#' @return A value of the lhs (left-hand-side) object prepared for rhs (right-hand-side) function/call.
-#' @rdname pipe
-#' @keywords internal
-#' @export
-#' @importFrom magrittr %>%
-#' @usage lhs \%>\% rhs
-NULL
+#  ------------- Global Options -----------------
+#' 
+#' echarty uses the following global options: \cr \itemize{
+#'  \item echarty.theme = name of theme file (without extension), from folder /inst/themes
+#'  \item echarty.font = font family name 
+#'  \item echarty.urltiles = tiles URL template for leaflet maps 
+#'  \item echarty.short = a boolean flag, see [ec.snip]
+#' }
+#' @examples 
+#' options('echarty.short'=TRUE)  # set
+#' getOption('echarty.short')     # get
+#' options('echarty.short'=NULL)  # remove
+
 
 
 #  ------------- Licence -----------------

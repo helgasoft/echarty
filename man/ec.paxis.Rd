@@ -22,7 +22,7 @@ A list, see format in \href{https://echarts.apache.org/en/option.html#parallelAx
 Create 'parallelAxis' for a parallel chart
 }
 \examples{
-iris \%>\% dplyr::group_by(Species) \%>\% ec.init(ctype='parallel')
+iris |> dplyr::group_by(Species) |> ec.init(ctype='parallel')
 
 p <- ec.init(preset=FALSE) 
 p$x$opts$parallelAxis <- ec.paxis(mtcars, 

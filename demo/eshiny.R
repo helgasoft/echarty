@@ -1,9 +1,10 @@
 #'-----------  Interactive charts with echarty and Shiny ------------
-#' demo(eshiny, package ='echarty')
-
-library(shiny)
-library(dplyr)
-library(echarty)
+#' run with command demo(eshiny, package ='echarty')
+#' 
+tryCatch ({
+  library(shiny)
+  library(dplyr)
+  library(echarty)
 
 base_df <- data.frame(ValX = c("A", "B", "C"), ValY = 1:3)
 boxplot_df <- data.frame(ValX = sample(LETTERS[1:3], size = 20, replace = TRUE), 
@@ -80,10 +81,12 @@ ui <- fluidPage(
 )
 
 server <- function(input, output, session) {
+  
   init.boxplot <- function(p) {
     sname <- 'boxplo1'
     bgrp <- boxplot_df %>% group_by(ValX) %>% group_split()
     dats <- lapply(bgrp, function(x) boxplot.stats(x$ValY)$stats)
+    # for zoom display
     session$userData$rng <- data.frame(sn=sname, limits=range(dats))
     p$x$opts$xAxis = list(ey='')
     p$x$opts$yAxis <- list(
@@ -168,14 +171,14 @@ server <- function(input, output, session) {
     p <- ecs.proxy('plot')
     p$x$opts$seriesName <- paste0('line',adds1)
     #p$x$opts$seriesIndex <- max(3, 2 + adds1)  # ok too (JS counts from 0)
-    if (adds1>0) adds1 <<- adds1 - 1
     p %>% ecs.exec('p_del_serie')
+    if (adds1>0) adds1 <<- adds1 - 1
   })
   
   observeEvent(input$modserie, {
     if (adds1==0) return()
-    p <- ecs.proxy('plot')
     sname <- paste0('line',adds1)
+    p <- ecs.proxy('plot')
     p$x$opts$series <- list(name=sname, symbolSize=15, lineStyle=list(width=4, type='dotted'))
     p %>% ecs.exec('p_merge')
   })
@@ -343,6 +346,7 @@ server <- function(input, output, session) {
     p$x$opts$seriesName <- lifo$b[length(lifo$b)]
     p %>% ecs.exec('p_del_serie')
     lifo$b <<- lifo$b[-length(lifo$b)]
+    # for zoom display
     session$userData$rng <- 
       session$userData$rng[which(session$userData$rng$sn != p$x$opts$seriesName),]
   })
@@ -453,3 +457,11 @@ server <- function(input, output, session) {
 }
 
 shinyApp(ui = ui, server = server)
+
+}, 
+error  = function(e) cat(e$message)
+#warning= function(w) cat(w$message)
+)
+  
+
+

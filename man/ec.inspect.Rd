@@ -27,10 +27,10 @@ Must be invoked or chained as last command.
 }
 \examples{
 # extract JSON
-json <- cars \%>\% ec.init() \%>\% ec.inspect()
+json <- cars |> ec.init() |> ec.inspect()
 json
 
 # get from JSON and modify plot
-ec.fromJson(json) \%>\% ec.theme('macarons')
+ec.fromJson(json) |> ec.theme('macarons')
 
 }

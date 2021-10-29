@@ -29,7 +29,7 @@ For 3-4 charts one would use multiple series with a \href{https://echarts.apache
 \examples{
 options(browser = 'firefox')
 tmp <- lapply(list('dark','macarons','gray','jazz','dark-mushroom'),
-              function(x) cars \%>\% ec.init() \%>\% ec.theme(x) )
+              function(x) cars |> ec.init() |> ec.theme(x) )
 ec.layout(tmp, cols=2 )
 
 }

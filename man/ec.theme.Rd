@@ -24,8 +24,8 @@ Just a few built-in themes are included in folder \code{inst/themes}. The entire
 To create custom themes or view predefined ones, visit \href{https://echarts.apache.org/en/theme-builder.html}{this site}.
 }
 \examples{
-mtcars \%>\% ec.init() \%>\% ec.theme('dark-mushroom')
-cars \%>\% ec.init() \%>\% ec.theme('mine', code=
+mtcars |> ec.init() |> ec.theme('dark-mushroom')
+cars |> ec.init() |> ec.theme('mine', code=
   '{"color": ["green","#eeaa33"], 
     "backgroundColor": "lemonchiffon"}')
 

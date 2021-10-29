@@ -1,5 +1,13 @@
 # history of echarty package development
 
+## v.1.4.1
+
+- replaced magrittr %>% dependency with R native pipe |>
+- added _ec.snip_ as option for better code readability
+- removed _ec.global_, use options('echarty.xxx') instead
+- added _shiny_ dependency to avoid CRAN warnings
+- added more unit tests
+
 ## v.1.4.0
 
 - _ec.init_: renamed 'group1' to 'ctype', add presets for parallel chart, improved presets for xAxis

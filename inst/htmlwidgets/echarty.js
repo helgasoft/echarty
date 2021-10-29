@@ -94,45 +94,45 @@ HTMLWidgets.widget({
           
           let ecp = ":echartyParse";
           chart.on("brushselected", function(e){
-            Shiny.onInputChange(el.id + '_brush' + ecp, e);
+            Shiny.setInputValue(el.id + '_brush' + ecp, e, {priority: 'event'});
           });
 
           chart.on("brush", function(e){
-            Shiny.onInputChange(el.id + '_brush_released' + ecp, e);
+            Shiny.setInputValue(el.id + '_brush_released' + ecp, e, {priority: 'event'});
           });
           
           chart.on("legendselectchanged", function(e){
-            Shiny.onInputChange(el.id + '_legend_change' + ecp, e.name);
-            Shiny.onInputChange(el.id + '_legend_selected' + ecp, e.selected);
+            Shiny.setInputValue(el.id + '_legend_change' + ecp, e.name, {priority: 'event'});
+            Shiny.setInputValue(el.id + '_legend_selected' + ecp, e.selected, {priority: 'event'});
           });
           
           chart.on("globalout", function(e){
-            Shiny.onInputChange(el.id + '_global_out' + ecp, e);
+            Shiny.setInputValue(el.id + '_global_out' + ecp, e, {priority: 'event'});
           });
           
           if(x.hasOwnProperty('capture')){
             // for events not included below, like "datazoom"
             chart.on(x.capture, function(e){
-              Shiny.onInputChange(el.id + '_' + x.capture + ecp, e, {priority: 'event'});
+              Shiny.setInputValue(el.id + '_' + x.capture + ecp, e, {priority: 'event'});
             });
           }
           
           chart.on("click", function(e){
-            Shiny.onInputChange(el.id + '_clicked_data' + ecp, e.data, {priority:'event'});
-            Shiny.onInputChange(el.id + '_clicked_row' + ecp, e.dataIndex + 1, {priority:'event'});
-            Shiny.onInputChange(el.id + '_clicked_serie' + ecp, e.seriesName, {priority:'event'});
+            Shiny.setInputValue(el.id + '_clicked_data' + ecp, e.data, {priority:'event'});
+            Shiny.setInputValue(el.id + '_clicked_row' + ecp, e.dataIndex + 1, {priority:'event'});
+            Shiny.setInputValue(el.id + '_clicked_serie' + ecp, e.seriesName, {priority:'event'});
           });
           
           chart.on("mouseover", function(e){
-            Shiny.onInputChange(el.id + '_mouseover_data' + ecp, e.data, {priority:'event'});
-            Shiny.onInputChange(el.id + '_mouseover_row' + ecp, e.dataIndex + 1, {priority:'event'});
-            Shiny.onInputChange(el.id + '_mouseover_serie' + ecp, e.seriesName, {priority:'event'});
+            Shiny.setInputValue(el.id + '_mouseover_data' + ecp, e.data, {priority:'event'});
+            Shiny.setInputValue(el.id + '_mouseover_row' + ecp, e.dataIndex + 1, {priority:'event'});
+            Shiny.setInputValue(el.id + '_mouseover_serie' + ecp, e.seriesName, {priority:'event'});
           });
           
           chart.on("mouseout", function(e){
-            Shiny.onInputChange(el.id + '_mouseout_data' + ecp, e.data, {priority:'event'});
-            Shiny.onInputChange(el.id + '_mouseout_row' + ecp, e.dataIndex + 1, {priority:'event'});
-            Shiny.onInputChange(el.id + '_mouseout_serie' + ecp, e.seriesName, {priority:'event'});
+            Shiny.setInputValue(el.id + '_mouseout_data' + ecp, e.data, {priority:'event'});
+            Shiny.setInputValue(el.id + '_mouseout_row' + ecp, e.dataIndex + 1, {priority:'event'});
+            Shiny.setInputValue(el.id + '_mouseout_serie' + ecp, e.seriesName, {priority:'event'});
           });
           
           $(document).on('shiny:recalculating', function() {

@@ -7,11 +7,12 @@
 ec.clmn(col = NULL, ..., scale = 1)
 }
 \arguments{
-\item{col}{A column index(number), column name(string) or a \code{\link[base]{sprintf}} format string.}
+\item{col}{A single column index(number) or column name(string), \cr
+or a \code{\link[base]{sprintf}} format string.}
 
-\item{...}{When \emph{col} is \emph{sprintf}, comma separated column indexes or names, but not both.  This allows formatting of multiple columns, as for a tooltip.}
+\item{...}{Only when \emph{col} is \emph{sprintf}: comma separated column indexes or names(strings), but not both.  This allows formatting of multiple columns, as for a tooltip.}
 
-\item{scale}{A multiplier number for column values. Only when \emph{col} is a single column index or name, ignored otherwise.}
+\item{scale}{Only when \emph{col} is a single column index or name: a multiplier number for column values.}
 }
 \value{
 A JavaScript code string (usually a function) marked as executable, see \code{\link[htmlwidgets]{JS}}.
@@ -28,12 +29,12 @@ Useful for attributes like formatter, color, symbolSize.
 \examples{
 tmp <- data.frame(Species = as.vector(unique(iris$Species)),
                   emoji = c('\U0001F33B','\U0001F335','\U0001F33A'))
-df <- iris \%>\% dplyr::inner_join(tmp)   # add 6th column 'emoji'
-p <- df \%>\% dplyr::group_by(Species) \%>\% ec.init()
+df <- iris |> dplyr::inner_join(tmp)   # add 6th column 'emoji'
+p <- df |> dplyr::group_by(Species) |> ec.init()
 p$x$opts$series <- list(list(
-  type='scatter', label=list(show=TRUE, formatter = ec.clmn(6))  # 6th column
+  type='scatter', label=list(show=TRUE, formatter = ec.clmn(6))  # ref 6th column
 ))
-p$x$opts$tooltip <- list(formatter=
+p$x$opts$tooltip <- list(formatter=          # sprintf + ref multiple columns
    ec.clmn('species <b>\%@</b><br>s.len <b>\%@</b><br>s.wid <b>\%@</b>', 5,1,2))
 p
 

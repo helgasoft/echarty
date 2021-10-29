@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# echarty
+# <img src="man/figs/logo.png" width='70px' alt="" /> echarty
 
 <!-- badges: start -->
 

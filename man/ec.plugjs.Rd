@@ -22,11 +22,12 @@ Install Javascript plugin from URL source
 }
 \details{
 When \emph{source} is URL, the plugin file is installed with an optional popup prompt.\cr
-When \emph{source} is a file name (file://xxx.js), it is assumed installed and only a dependency is added.
+When \emph{source} is a file name (file://xxx.js), it is assumed installed and only a dependency is added.\cr
+Called internally by \link{ec.init}. It is recommended to use \emph{ec.init(load=...)} instead of \emph{ec.plugjs}.
 }
 \examples{
 # import map plugin and display two (lon,lat) locations
-p <- ec.init() \%>\% ec.plugjs(
+p <- ec.init() |> ec.plugjs(
   'https://raw.githubusercontent.com/apache/echarts/master/test/data/map/js/china-contour.js')
 p$x$opts <- list(
   geo = list(map= 'china-contour', roam= TRUE),

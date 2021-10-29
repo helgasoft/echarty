@@ -28,13 +28,17 @@ If the grouping is on multiple columns, only the first one is used.}
 \item{load}{Name(s) of plugin(s) to load. Could be a character vector or comma-delimited string. default NULL.}
 
 \item{tl.series}{A list to build a timeline or NULL(default). The list defines options \href{https://echarts.apache.org/en/option.html#series}{series} and their attributes. \cr
-The only required attribute is \href{https://echarts.apache.org/en/option.html#series-line.encode}{encode}.
+Requires a grouped data.frame \emph{df}.
+The only indispensable attribute is \href{https://echarts.apache.org/en/option.html#series-line.encode}{encode}.
 \emph{encode} defines which data columns names(not indexes) to use for the axes: \itemize{
-\item set \emph{x} and \emph{y} when coordinateSystem is \emph{'cartesian2d'}
-\item set \emph{lng} and \emph{lat} when coordinateSystem is \emph{'geo'}
-\item set \emph{radius} and \emph{angle} when coordinateSystem is \emph{'polar'}
+\item set \emph{x} and \emph{y} for coordinateSystem \emph{'cartesian2d'}
+\item set \emph{lng} and \emph{lat} for coordinateSystem \emph{'geo'}
+\item set \emph{radius} and \emph{angle} for coordinateSystem \emph{'polar'}
+\item set \emph{value} and \emph{itemName} for \emph{'pie'} chart.
 }
-Attribute \emph{coordinateSystem} is set to \emph{'cartesian2d'} by default. Auto-generated \emph{timeline} and \emph{options} will be preset for the chart as well.}
+Attribute \emph{coordinateSystem} is not set by default and depends on chart \emph{type}.\cr
+Auto-generated \emph{timeline} and \emph{options} will be preset for the chart as well.\cr
+\emph{tl.series} cannot be used for hierarchical charts like graph,tree,treemap,sankey. Chart options/timeline have to be built directly, see \href{https://helgasoft.github.io/echarty/uc4.html}{example}.}
 
 \item{width, height}{A valid CSS unit (like \code{'100\%'},
 \code{'500px'}, \code{'auto'}) or a number, which will be coerced to a
@@ -80,10 +84,10 @@ Built-in plugins: \cr \itemize{
 }
 \examples{
  # basic scatter chart from a data.frame, using presets
-cars \%>\% ec.init()
+cars |> ec.init()
  
  # a timeline with two series and autoPlay
-p <- iris \%>\% dplyr::group_by(Species) \%>\% ec.init(
+p <- iris |> dplyr::group_by(Species) |> ec.init(
   tl.series=list(
     encode=list(x=NULL, y=c('Sepal.Width', 'Petal.Length')),
     markPoint = list(data=list(list(type='max'), list(type='min')))

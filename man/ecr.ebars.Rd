@@ -26,6 +26,7 @@ Custom series to display error-bars for scatter,bar or line series
 Grouped series are supported, but require the group column to be included in df. \cr
 ecr.ebars are custom series, so \emph{ec.init(load='custom')} is required. \cr
 ecr.ebars will add a chart legend and its own tooltip if none is provided.\cr
+ecr.ebars with name attribute will show separate in the legend \cr
 ecr.ebars should be set at the end, after all other series.
 }
 \examples{
@@ -34,7 +35,7 @@ df <- data.frame(x = 1:24, val = tmp,
                  lower = round(rnorm(24, tmp -10, .5)),
                  upper = round(rnorm(24, tmp + 5, .8))
 )
-p <- df \%>\% ec.init(load='custom') \%>\% ecr.ebars()
+p <- df |> ec.init(load='custom') |> ecr.ebars()
 p$x$opts$tooltip <- list(ii='')
 p
 

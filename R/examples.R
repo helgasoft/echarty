@@ -17,29 +17,90 @@
 #' \donttest{
 #' 
 #' #------ Basic scatter chart, instant display
-#' cars %>% ec.init()
+#' cars |> ec.init()
 #' 
 #' #------ Same chart, change theme and save for further processing
-#' p <- cars %>% ec.init() %>% ec.theme('dark')
+#' p <- cars |> ec.init() |> ec.theme('dark')
 #' p
 #' 
 #' 
 #' #------ JSON back and forth
-#' tmp <- cars %>% ec.init()
+#' tmp <- cars |> ec.init()
 #' tmp
-#' json <- tmp %>% ec.inspect()
-#' ec.fromJson(json) %>% ec.theme("dark")
+#' json <- tmp |> ec.inspect()
+#' ec.fromJson(json) |> ec.theme("dark")
 #'
 #'
 #' #------ Data grouping
 #' library(dplyr)
-#' iris %>% group_by(Species) %>% ec.init()       # by factor column
-#' iris %>% mutate(Species=as.character(Species)) %>%
-#'          group_by(Species) %>% ec.init()       # by non-factor column
+#' iris |> mutate(Species=as.character(Species)) |>
+#'          group_by(Species) |> ec.init()       # by non-factor column
 #' 
-#' p <- Orange %>% group_by(Tree) %>% ec.init()   # by factor column
+#' p <- Orange |> group_by(Tree) |> ec.init()   # by factor column
 #' p$x$opts$series <- lapply(p$x$opts$series, function(x) { 
 #'   x$symbolSize=10; x$encode=list(x='age', y='circumference'); x } )
+#' p
+#' 
+#' 
+#' #------ Plugin leaflet
+#' tmp <- quakes |> dplyr::relocate('long') |>  # set order to lon,lat
+#'   dplyr::mutate(size= exp(mag)/20) |> head(100)   # add accented size
+#' p <- tmp |> ec.init(load='leaflet')
+#' p$x$opts$series[[1]]$name = 'quakes'
+#' p$x$opts$series[[1]]$symbolSize = ec.clmn(6, scale=2)   # size column
+#' p$x$opts$tooltip = list(formatter=ec.clmn('magnitude %@', 'mag'))
+#' p$x$opts$legend = list(show=TRUE)
+#' p
+#'
+#'
+#' #------ Plugin 'world' with visualMap
+#' cns <- data.frame(
+#'   country = c('United States','China','Russia','Brazil','Canada','Algeria','Sudan','Australia'),
+#'   value = runif(8, 1, 100) 
+#' )
+#' p <- cns |> ec.init(load= 'world')
+#' p$x$opts$visualMap <- list(calculable= TRUE, max= 100)
+#' p$x$opts$toolbox <- list(feature= list(restore= list()))
+#' p
+#'
+#'
+#' #------ Plugin 'world' with lines and color coding
+#' flights <- NULL
+#' flights <- try(read.csv(paste0('https://raw.githubusercontent.com/plotly/datasets/master/',
+#'                                '2011_february_aa_flight_paths.csv')), silent = TRUE)
+#' if (!is.null(flights)) {
+#'   tmp <- data.frame(airport1 = unique(head(flights,10)$airport1),
+#'                     color = c("#387e78","#eeb422","#d9534f",'magenta'))
+#'   tmp <- head(flights,10) |> inner_join(tmp)    # add color by airport
+#'   p <- ec.init(load='world')
+#'   p$x$opts$geo$center <- c(mean(flights$start_lon), mean(flights$start_lat))
+#'   p$x$opts$geo$zoom <- 7
+#'   p$x$opts$series <- list(list(
+#'     type='lines', coordinateSystem='geo',
+#'     data = lapply(ec.data(tmp, 'names'), function(x)
+#'       list(coords = list(c(x$start_lon,x$start_lat),
+#'                          c(x$end_lon,x$end_lat)),
+#'            colr = x$color)
+#'     )
+#'     ,lineStyle = list(curveness=0.3, width=3, color=ec.clmn('colr'))
+#'   ))
+#'   p
+#' }
+#' 
+#' 
+#' #------ registerMap JSON
+#' json <- jsonlite::read_json("https://echarts.apache.org/examples/data/asset/geo/USA.json")
+#' dusa <- USArrests
+#' dusa$states <- row.names(dusa)
+#' p <- ec.init(preset=FALSE)
+#' p$x$registerMap <- list(list(mapName= 'USA', geoJSON= json))
+#' #   registerMap supports also maps in SVG format, see website gallery
+#' p$x$opts$visualMap <- list(type= 'continuous', calculable= TRUE, 
+#'                            min= min(dusa$UrbanPop), max= max(dusa$UrbanPop))
+#' p$x$opts$series <- list(list(type= 'map', map= 'USA', 
+#'    roam= TRUE, zoom= 3, left= -100, top= -30,
+#'    data= lapply(ec.data(dusa,'names'), function(x) list(name=x$states, value=x$UrbanPop))
+#' ))
 #' p
 #'
 #'
@@ -90,67 +151,6 @@
 #' p
 #' 
 #' 
-#' #------ Plugin leaflet
-#' tmp <- quakes %>% dplyr::relocate('long') %>%  # set order to lon,lat
-#'   dplyr::mutate(size= exp(mag)/20)             # add accented size
-#' p <- tmp %>% ec.init(load='leaflet')
-#' p$x$opts$series[[1]]$name = 'quakes'
-#' p$x$opts$series[[1]]$symbolSize = ec.clmn(6, scale=2)   # size column
-#' p$x$opts$tooltip = list(formatter=ec.clmn('magnitude %@', 'mag'))
-#' p$x$opts$legend = list(zz='')
-#' p
-#'
-#'
-#' #------ Plugin 'world' with visualMap
-#' cns <- data.frame(
-#'   country = c('United States','China','Russia','Brazil','Canada','Algeria','Sudan','Australia'),
-#'   value = runif(8, 1, 100) 
-#' )
-#' p <- cns %>% ec.init(load= 'world')
-#' p$x$opts$visualMap <- list(calculable= TRUE, max= 100)
-#' p$x$opts$toolbox <- list(feature= list(restore= list()))
-#' p
-#'
-#'
-#' #------ Plugin 'world' with lines and color coding
-#' flights <- NULL
-#' flights <- try(read.csv(paste0('https://raw.githubusercontent.com/plotly/datasets/master/',
-#'                                '2011_february_aa_flight_paths.csv')), silent = TRUE)
-#' if (!is.null(flights)) {
-#'   tmp <- data.frame(airport1 = unique(head(flights,10)$airport1),
-#'                     color = c("#387e78","#eeb422","#d9534f",'magenta'))
-#'   tmp <- head(flights,10) %>% inner_join(tmp)    # add color by airport
-#'   p <- ec.init(load='world')
-#'   p$x$opts$geo$center <- c(mean(flights$start_lon), mean(flights$start_lat))
-#'   p$x$opts$geo$zoom <- 7
-#'   p$x$opts$series <- list(list(
-#'     type='lines', coordinateSystem='geo',
-#'     data = lapply(ec.data(tmp, 'names'), function(x)
-#'       list(coords = list(c(x$start_lon,x$start_lat),
-#'                          c(x$end_lon,x$end_lat)),
-#'            colr = x$color)
-#'     )
-#'     ,lineStyle = list(curveness=0.3, width=3, color=ec.clmn('colr'))
-#'   ))
-#'   p
-#' }
-#' 
-#' 
-#' #------ registerMap JSON
-#' json <- jsonlite::read_json("https://echarts.apache.org/examples/data/asset/geo/USA.json")
-#' dusa <- USArrests %>% mutate(states = row.names(.))
-#' p <- ec.init(preset=FALSE)
-#' p$x$registerMap <- list(list(mapName= 'USA', geoJSON= json))
-#' #   registerMap supports also maps in SVG format, see website gallery
-#' p$x$opts$visualMap <- list(type= 'continuous', calculable= TRUE, 
-#'                            min= min(dusa$UrbanPop), max= max(dusa$UrbanPop))
-#' p$x$opts$series <- list(list(type= 'map', map= 'USA', 
-#'    roam= TRUE, zoom= 3, left= -100, top= -30,
-#'    data= lapply(ec.data(dusa,'names'), function(x) list(name=x$states, value=x$UrbanPop))
-#' ))
-#' p
-#' 
-#' 
 #' #------ Plugin 3D
 #' if (interactive()) {
 #'  data <- list()
@@ -162,23 +162,18 @@
 #' }
 #'
 #'
-#' #------ 3D chart with custom coloring
+#' #------ 3D chart with custom item size, improved readability with ec.snip
 #' if (interactive()) {
-#' df <- data.frame(Species = unique(iris$Species),
-#'                  color = c("#387e78","#eeb422","#d9534f"))
-#' df <- iris %>% dplyr::inner_join(df) %>%   # add 6th column 'color' for Species
-#'       mutate(size= log(Petal.Width*10))    # add 7th accented size
-#' p <- df %>% ec.init(load= '3D')
-#' p$x$opts$xAxis3D <- list(name='Petal.Length')
-#' p$x$opts$yAxis3D <- list(name='Sepal.Width')
-#' p$x$opts$zAxis3D <- list(name='Sepal.Length')
-#' p$x$opts$series <- list(list( name='Iris in 3D',
-#'   type='scatter3D', symbolSize=ec.clmn(7, scale=10), 
-#'   encode=list(x='Petal.Length', y='Sepal.Width', z='Sepal.Length'),
-#'   itemStyle=list(color = ec.clmn(6) )      # index of column 'color'
-#' ))
-#' p$x$opts$legend <- list(ii='')
-#' p
+#' p <- iris |> group_by(Species) |>
+#'      mutate(size= log(Petal.Width*10)) |>  # add 6th column accented size
+#'      ec.init(load= '3D') |> ec.snip()
+#' p$xAxis3D <- list(name='Petal.Length')
+#' p$yAxis3D <- list(name='Sepal.Width')
+#' p$zAxis3D <- list(name='Sepal.Length')
+#' p$series <- lapply(p$series, function(s) {  # update preset series
+#'                    s$symbolSize <- ec.clmn(6, scale=10); s })
+#' p$legend <- list(show=TRUE)
+#' ec.snip(p)
 #' }
 #'
 #'
@@ -204,7 +199,7 @@
 #' data <- expand.grid(
 #'   x = seq(0, 2, by = 0.1),
 #'   y = seq(0, 1, by = 0.1)
-#' ) %>% mutate(z = x * (y ^ 2)) %>% select(x,y,z)
+#' ) |> mutate(z = x * (y ^ 2)) |> select(x,y,z)
 #' p <- ec.init(load='3D')
 #' p$x$opts$series[[1]] <- list(
 #'   type = 'surface',
@@ -217,42 +212,61 @@
 #' # first column ('day') usually goes to the X-axis
 #' # try also alternative data setting - replace lines *1 with *2
 #' library(dplyr)
-#' dats <- as.data.frame(EuStockMarkets) %>% mutate(day=1:n()) %>%
-#'           relocate(day) %>% slice_head(n=100)
+#' dats <- as.data.frame(EuStockMarkets) |> mutate(day=1:n()) |>
+#'           relocate(day) |> slice_head(n=100)
 #' p <- ec.init(load='custom')             # *1 = unnamed data
-#' #p <- dats %>% ec.init(load='custom')   # *2 = dataset
+#' #p <- dats |> ec.init(load='custom')   # *2 = dataset
 #' p$x$opts$series = append(
 #'   ecr.band(dats, 'DAX','FTSE', name='Ftse-Dax', color='lemonchiffon'),
 #'   list(list(type='line', name='CAC', color='red', symbolSize=1,
-#'             data = ec.data(dats %>% select(day,CAC), 'values')   # *1
+#'             data = ec.data(dats |> select(day,CAC), 'values')   # *1
 #'             #encode=list(x='day', y='CAC')   # *2
 #'   ))
 #' )
-#' p$x$opts$legend <- list(zz='') 
+#' p$x$opts$legend <- list(show=TRUE) 
 #' p$x$opts$dataZoom <- list(type='slider', end=50)
 #' p
 #' 
 #' 
-#' #------ Timeline animation
-#' p <- Orange %>% dplyr::group_by(age) %>% ec.init(
+#' #------ Timeline animation and ec.snip
+#' p <- Orange |> dplyr::group_by(age) |> ec.init(
 #'   tl.series=list(type='bar', encode=list(x='Tree', y='circumference'))
-#' )
-#' p$x$opts$timeline <- append(p$x$opts$timeline, list(autoPlay=TRUE))
-#' p$x$opts$options <- lapply(p$x$opts$options, 
-#'                            function(o) { o$title$text <- paste('age',o$title$text,'days'); o })
-#' p$x$opts$xAxis <- list(type='category', name='tree')
-#' p$x$opts$yAxis <- list(max=max(Orange$circumference))
-#' p
+#' ) |> ec.snip()
+#' p$timeline <- append(p$timeline, list(autoPlay=TRUE))
+#' p$options <- lapply(p$options, 
+#'          function(o) { o$title$text <- paste('age',o$title$text,'days'); o })
+#' p$xAxis <- list(type='category', name='tree')
+#' p$yAxis <- list(max=max(Orange$circumference))
+#' ec.snip(p)
 #' 
+#' 
+#' #------ Timeline with pies, idea & data by https://github.com/rdatasculptor
+#' df <- data.frame(group=c(1,1,1,1,2,2,2,2),
+#'        type=c("type1","type1","type2","type2","type1","type1","type2","type2"),
+#'        value=c(5,2,2,1,4,3,1,4),
+#'        label=c("name1","name2","name3","name4","name1","name2","name3","name4"),
+#'        color=c("blue","purple","red","gold","blue","purple","red","gold")
+#' )
+#' p <- df |> group_by(group) |> ec.init( preset=FALSE,
+#'        tl.series= list(type="pie", roseType= "radius",
+#'                        encode=list(value='value', itemName='type') 
+#' ))
+#' p$x$opts$options <- lapply(p$x$opts$options, function(s) {
+#'   s$series[[1]]$itemStyle <- list(color=ec.clmn(5))
+#'   s$series[[1]]$label <- list(formatter=ec.clmn(4));  s
+#' })
+#' p$x$opts$legend <- list(selectedMode= "single")
+#' p
+#'
 #'
 #' #------ Boxplot
 #' library(dplyr)
 #' bdf <- data.frame(vx= sample(LETTERS[1:3], size= 20, replace= TRUE), 
-#' 		     vy= rnorm(20)) %>% group_by(vx) %>% group_split()
+#' 		     vy= rnorm(20)) |> group_by(vx) |> group_split()
 #' dats <- lapply(bdf, function(x) round(boxplot.stats(x$vy)$stats, 4) )
 #' p <- ec.init()
 #' p$x$opts <- list(     # overwrite presets
-#' 	xAxis = list(zz=''),
+#' 	xAxis = list(show=TRUE),
 #' 	yAxis = list(type = 'category', data= unique(unlist(lapply(bdf, `[`, , 1))) ),
 #' 	series = list(list(type= 'boxplot', data= dats, 
 #' 			itemStyle= list(color= '#b8c5f2'),
@@ -266,7 +280,7 @@
 #' #------ EChartsJS v.5 feature custom transform - a regression line
 #' # presets for xAxis,yAxis,dataset and series are used
 #' dset <- data.frame(x=1:10, y=sample(1:100,10))
-#' p <- dset %>% ec.init(js='echarts.registerTransform(ecStat.transform.regression)')
+#' p <- dset |> ec.init(js='echarts.registerTransform(ecStat.transform.regression)')
 #' p$x$opts$dataset[[2]] <- list(transform = list(type='ecStat:regression'))
 #' p$x$opts$series[[2]] <- list(
 #'   type='line', itemStyle=list(color='red'), datasetIndex=1)
@@ -339,13 +353,13 @@
 #' 
 #' #------ Error Bars on grouped data
 #' library(dplyr)
-#' df <- mtcars %>% group_by(cyl,gear) %>% summarise(yy=round(mean(mpg),2)) %>%
-#'   mutate(low=round(yy-cyl*runif(1),2), high=round(yy+cyl*runif(1),2)) %>%
+#' df <- mtcars |> group_by(cyl,gear) |> summarise(yy=round(mean(mpg),2)) |>
+#'   mutate(low=round(yy-cyl*runif(1),2), high=round(yy+cyl*runif(1),2)) |>
 #'   relocate(cyl, .after = last_col())   # move group column behind first four cols
-#' p <- df %>% ec.init(ctype='bar', load='custom') %>%
+#' p <- df |> ec.init(ctype='bar', load='custom') |>
 #'   ecr.ebars(df, name = 'eb'
 #'      ,tooltip = list(formatter=ec.clmn('high <b>%@</b><br>low <b>%@</b>', 4,3)))
-#' p$x$opts$tooltip <- list(zz='')
+#' p$x$opts$tooltip <- list(show=TRUE)
 #' p
 #' 
 #' 
@@ -412,7 +426,7 @@
 #' 
 #' 
 #' #------ group connect 
-#' main <- mtcars %>% ec.init(height = 200)
+#' main <- mtcars |> ec.init(height = 200)
 #' main$x$opts$series[[1]]$name <- "this legend is shared"
 #' main$x$opts$legend <- list(show=FALSE)
 #' main$x$group <- 'group1' # same group name for all charts
@@ -429,13 +443,11 @@
 #' }
 #' 
 #' #------------- Shiny interactive charts demo ---------------
-#' if (interactive()) {
-#'   demo(eshiny, package='echarty')
-#' }
+#' #  run command: demo(eshiny, package='echarty')
 #' 
 #' }  # donttest
 #' @export 
 ec.examples <- function(){
-  cat("copy/paste code from ?ec.examples Help\n Or run all examples at once with example('ec.examples') and they'll show up in the Viewer.")
+  cat("copy/paste code from ?ec.examples Help\n Or run all examples at once with example('ec.examples') to see in the Viewer.")
 }
 
