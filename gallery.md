@@ -21,7 +21,7 @@ p
 #  without presets all options are explicitly assigned
 p <- ec.init(preset=FALSE) %>% ec.theme('dark')
 p$x$opts <- list(
-  yAxis = list(ii=''),   # 'ii' is a dummy attribute to set default axis
+  yAxis = list(show=TRUE),
   xAxis = list(type = 'category', 
                axisLabel = list(interval=0, rotate=45)
                #, axisTick=list(alignWithLabel=TRUE)
@@ -54,7 +54,7 @@ p <- ec.init(preset=FALSE) %>% ec.theme('dark')
 p$x$opts <- list(
   series = lapply(df, function(t) {
     list(type='bar', name=unique(t$Tree), data=t$circumference) }),
-  legend = list(ii=''),
+  legend = list(show=TRUE),
   xAxis = list(name='tree circumference in mm', nameLocation='center', nameGap=22),
   yAxis = list(data=unique(Orange$age), name='age in days'),
   tooltip = list(formatter='circumference={c} mm')
@@ -92,8 +92,8 @@ p
 ```r
 p <- iris %>% group_by(Species) %>% 
   ec.init(ctype='parallel') %>% ec.theme('dark-mushroom')
-p$x$opts$series <- lapply(p$x$opts$series, function(x) { 
-  x$smooth=TRUE; x$lineStyle=list(width=3); x })  # update preset series
+p$x$opts$series <- lapply(p$x$opts$series, function(s) { 
+  s$smooth=TRUE; s$lineStyle=list(width=3); s })  # update preset series
 p$x$opts$color <- rainbow(10)
 p
 ```
@@ -287,8 +287,8 @@ for(i in 0:1)
 	))
 p <- ec.init(load='3D', preset=FALSE)  %>% ec.theme('dark-mushroom') 
 p$x$opts <- list(
-  xAxis = list(zz=''),	  # scatterGL is not 3D, needs 2D axes
-  yAxis = list(zz=''),
+  xAxis = list(show=TRUE),	  # scatterGL is not 3D, needs 2D axes
+  yAxis = list(show=TRUE),
   series = sers,
   dataZoom = list(type='inside',start=50)
 )
@@ -372,15 +372,30 @@ library(echarty); library(dplyr)
 
 p <- ec.init()
 p$x$opts$series <- list(
-	list(type='boxplot', name='mpg', data=list(boxplot.stats(mtcars$mpg)$stats)), 
-	list(type='boxplot', name='hp',  data=list(boxplot.stats(mtcars$hp)$stats)), 
-	list(type='boxplot', name='disp',data=list(boxplot.stats(mtcars$disp)$stats))
+  list(type='boxplot', name='mpg', data=list(boxplot.stats(mtcars$mpg)$stats)), 
+  list(type='boxplot', name='hp',  data=list(boxplot.stats(mtcars$hp)$stats)), 
+  list(type='boxplot', name='disp',data=list(boxplot.stats(mtcars$disp)$stats))
 )	
 p$x$opts$xAxis <- list(type = 'category')
-p$x$opts$legend <- list(ii='')
+p$x$opts$legend <- list(show=TRUE)
 p
 
 # 2) boxplot calculation in ECharts ---------------------
+df <- mtcars[,c(1,3,4)] |> mutate(mpg=mpg*10)
+p <- ec.init()
+p$x$opts$dataset <- list(
+  list(source= ec.data(data.frame(t(df)), header=FALSE)),
+  list(transform= list(type='boxplot')),
+  list(fromDatasetIndex=1, fromTransformResult= 1))
+p$x$opts$series <- list(
+  list(name= 'boxplot', type= 'boxplot', datasetIndex= 1),
+  list(name= 'outlier', type= 'scatter', encode= list(x=1, y=0), datasetIndex= 2)
+)
+p$x$opts$yAxis <- list(type= 'category', boundaryGap=TRUE)
+p$x$opts$legend <- list(show=TRUE)
+p
+
+# 3) grouped boxplot in ECharts ---------------------
 #    source: https://echarts.apache.org/examples/en/editor.html?c=boxplot-multi
 
 grps <- list()     # data is 3 groups of 18 experiments
@@ -400,16 +415,16 @@ p <- ec.init() %>% ec.theme('bm', code='{
       "legend":{"textStyle": {"color": "#eeeeee"}} }')
 p$x$opts$dataset <- list(
   list(source=grps[[1]]), list(source=grps[[2]]), list(source=grps[[3]]),
-	list(fromDatasetIndex=0, transform=list(type='boxplot', config=list(itemNameFormatter='expr {value}'))),
-	list(fromDatasetIndex=1, transform=list(type='boxplot', config=list(itemNameFormatter='expr {value}'))),
-	list(fromDatasetIndex=2, transform=list(type='boxplot', config=list(itemNameFormatter='expr {value}')))
+  list(fromDatasetIndex=0, transform=list(type='boxplot', config=list(itemNameFormatter='expr {value}'))),
+  list(fromDatasetIndex=1, transform=list(type='boxplot', config=list(itemNameFormatter='expr {value}'))),
+  list(fromDatasetIndex=2, transform=list(type='boxplot', config=list(itemNameFormatter='expr {value}')))
 )
 p$x$opts$series[[1]] <- list(type = 'boxplot', datasetIndex=3, name='c1')
 p$x$opts$series[[2]] <- list(type = 'boxplot', datasetIndex=4, name='c2')
 p$x$opts$series[[3]] <- list(type = 'boxplot', datasetIndex=5, name='c3')
 p$x$opts$xAxis <- list(type = 'category', axisLine=list(onZero=FALSE),
   splitArea = list(show=TRUE))
-p$x$opts$legend <- list(ii='')
+p$x$opts$legend <- list(show=TRUE)
 p$x$opts$tooltip <- list(trigger='item')
 p$x$opts$dataZoom <- list(list(type='slider',start=50))
 p
@@ -462,8 +477,8 @@ p
 hh <- do.histogram(rnorm(44))
 p <- hh %>% ec.init(ctype='bar') %>% ec.theme('dark')
 nrm <- dnorm(hh$x, mean=mean(hh$x), sd=sd(hh$x))  # normal distribution
-p$x$opts$xAxis <- list(list(ii=''), list(data=c(1:length(nrm))))
-p$x$opts$yAxis <- list(list(ii=''), list(ii=''))
+p$x$opts$xAxis <- list(list(show=TRUE), list(data=c(1:length(nrm))))
+p$x$opts$yAxis <- list(list(show=TRUE), list(show=TRUE))
 p$x$opts$series <- append(p$x$opts$series, 
   list(list(type='line', data=nrm, xAxisIndex=1, yAxisIndex=1, color='yellow')))
 p
@@ -549,7 +564,7 @@ p$x$opts$series <- list(list(
 p$x$opts$series[[1]]$nodes <- lapply(p$x$opts$series[[1]]$nodes, function(n) {
   n$label <- list(show=n$symbolSize > 30); n })  # labels for most important
 p$x$opts$legend <- list(data=c(les$categories$name), textStyle=list(color='#ccc'))
-p$x$opts$tooltip <- list(ii='')
+p$x$opts$tooltip <- list(show=TRUE)
 p$x$opts$backgroundColor <- '#191919'
 p
 ```
@@ -648,8 +663,6 @@ options <-  lapply(df, function(y) {
 })
 
 p <- ec.init(preset=FALSE, load='world')
-p$x$opts$yAxis <- list(zz='')
-p$x$opts$xAxis$type <- 'category'
 # timeline labels need to match option titles
 p$x$opts$timeline <- list(data=unlist(lapply(options, 
       function(x) x$title$text)), axisType='category')

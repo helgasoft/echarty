@@ -1,7 +1,7 @@
 # Use Case 4 - Sankey with timeline
 <br />
 
-Will sankey chart work with timeline ? An interesting question by [rdatasculptor](https://twitter.com/rdatasculptor).  
+Will sankey chart work with timeline ? An interesting question by [rdatasculptor](https://github.com/rdatasculptor).  
 To speed things up, we go to echarty's examples. In the Console type **?ec.examples**, then in Help panel, hit Ctrl/F and seach for 'sankey'. We find the following code  
 <br />
 
