@@ -10,6 +10,7 @@
 <!--
 [![CRAN
 downloads](https://cranlogs.r-pkg.org/badges/last-day/echarty)](https://cranlogs.r-pkg.org/badges/last-day/echarty)   -->
+[![R-CMD-check](https://github.com/helgasoft/echarty/workflows/R-CMD-check/badge.svg)](https://github.com/helgasoft/echarty/actions)
 <!-- badges: end -->
 
 <a href='https://helgasoft.github.io/echarty'><img src="man/figs/echarty.gallery.png" alt="echarty.gallery" /></a>
@@ -71,7 +72,7 @@ ECharts**](https://echarts.apache.org/examples/en/index.html) (and
 
 <br />
 <p align="center">
-<a href='https://helgasoft.github.io/echarty/gallery.html#maps' target='_blank'>
+<a href='https://helgasoft.github.io/echarty/gallery.html' target='_blank'>
 <img src="man/figs/ssPolarStack.png" alt="Polar Stack" width="180"/>
 <img src="man/figs/ssBars.gif" width="180"/>
 <img src="man/figs/ssThemeRiver.png" width="180"/>
