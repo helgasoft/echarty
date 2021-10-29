@@ -13,6 +13,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
 <style>
 #header nav { background:#353535; }
+.centro { display: flex; justify-content: center; align-items: center; }
 /* overwrite silly nav hiding in style.css */
 @media print, screen and (max-width: 480px){#header{margin-top:0} section{margin-top:70px} nav{display:block}} 
 </style>
@@ -41,14 +42,15 @@
     <div class="wrapper">
 
       <section>
-        <div id="title"><img src="img/logo.png" width='80px' alt="" />
+        <div id="title">
+          <div class='centro'> <img src="img/logo.png" width='80px' alt="" /> </div>
           <h1>{{ site.title | default: site.github.repository_name }}</h1>
           <p>{{ site.description | default: site.github.project_tagline }}</p>
           <hr>
-          <div style="display: flex; justify-content: center; align-items: center;">
-          <a href='https://cran.r-project.org/package=echarty'><img src='https://www.r-pkg.org/badges/version/echarty' alt='CRAN' /></a> &nbsp; 
-          <a href='https://github.com/helgasoft/echarty/releases'><img src='https://cranlogs.r-pkg.org/badges/last-day/echarty' alt='counter'/></a>
-        </div>
+          <div class='centro'>
+            <a href='https://cran.r-project.org/package=echarty'><img src='https://www.r-pkg.org/badges/version/echarty' alt='CRAN' /></a> &nbsp; 
+            <a href='https://github.com/helgasoft/echarty/releases'><img src='https://cranlogs.r-pkg.org/badges/last-day/echarty' alt='counter'/></a>
+          </div>
           <!--
           <span class="credits left">Project maintained by <a href="{{ site.github.owner_url }}">{{ site.github.owner_name }}</a></span>
           <span class="credits right">Hosted on GitHub Pages &mdash; Theme by <a href="https://twitter.com/mattgraham">mattgraham</a></span>
