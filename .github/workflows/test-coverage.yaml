@@ -13,6 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      COVERALLS_TOKEN: Cg7KguANwXoWDGLzKR1PLDchjn7qjgiqb
 
     steps:
       - uses: actions/checkout@v2
