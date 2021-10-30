@@ -27,5 +27,5 @@ jobs:
           extra-packages: covr
 
       - name: Test coverage
-        run: covr::coveralls(service_name='drone')
+        run: covr::coveralls(service_name='travis-pro', repo_token=${{ env.COVERALLS_REPO_TOKEN }})
         shell: Rscript {0}
