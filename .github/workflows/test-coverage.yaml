@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
-      COVERALLS_TOKEN: Cg7KguANwXoWDGLzKR1PLDchjn7qjgiqb
+      COVERALLS_TOKEN: ${{ secrets.COVERALLS_TOKEN }}
 
     steps:
       - uses: actions/checkout@v2
@@ -27,5 +27,5 @@ jobs:
           extra-packages: covr
 
       - name: Test coverage
-        run: covr::coveralls()
+        run: covr::coveralls(service_name='drone')
         shell: Rscript {0}
