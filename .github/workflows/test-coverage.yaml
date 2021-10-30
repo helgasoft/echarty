@@ -26,25 +26,6 @@ jobs:
         with:
           extra-packages: covr
 
-      - name: Enable Repo on Coveralls
-        id: enable_coveralls
-        run: |
-          curl -s -H "Accept: application/json" \
-            -H "Content-Type: application/json" \
-            -H "Authorization: token $COVERALLS_TOKEN" \
-            -d '{"repo": {"service": "github","name": "'$GITHUB_REPOSITORY'"}}' \
-            -X POST https://coveralls.io/api/repos
-     
-      - name: Get Coveralls Repo Token
-        id: get_coverall_repo_token
-        run: |
-          echo "COVERALLS_REPO_TOKEN=$(\
-            curl -s -H "Accept: application/json" \
-            -H "Content-Type: application/json" \
-            -H "Authorization: token $COVERALLS_TOKEN" \
-            https://coveralls.io/api/repos/github/$GITHUB_REPOSITORY \
-            | jq '.token')" >> $GITHUB_ENV
-
       - name: Generate and Upload R Package Coverage
-        run: covr::coveralls(service_name='drone', repo_token=${{ env.COVERALLS_REPO_TOKEN }})
+        run: covr::coveralls(service_name='travis-pro', repo_token=${{ env.COVERALLS_REPO_TOKEN }})
         shell: Rscript {0}
