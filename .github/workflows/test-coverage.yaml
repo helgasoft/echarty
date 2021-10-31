@@ -46,5 +46,5 @@ jobs:
             | jq '.token')" >> $GITHUB_ENV
 
       - name: Generate and Upload R Package Coverage
-        run: covr::coveralls(service_name='drone', repo_token=${{ env.COVERALLS_REPO_TOKEN }})
+        run: covr::coveralls(service_name='travis-pro', repo_token=${{ env.COVERALLS_REPO_TOKEN }})
         shell: Rscript {0}
