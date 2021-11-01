@@ -257,7 +257,7 @@ bscols( list(
 <br />
 
 ### Crosstalk 2D
-play with the [<span style="color:magenta">Live Demo</span>](https://rpubs.com/echarty/crosstalk)  
+play with the [<span style="color:magenta">Live Demo</span>](https://rpubs.com/echarty/crosstalk) with code 
 <br />
 
 
@@ -573,7 +573,7 @@ p
 
 
 ### ecStat
-Statistical tools plugin in echarty &nbsp; &nbsp; &nbsp; [<span style="color:magenta">Live Demo</span>](https://rpubs.com/echarty/ecStat)  
+Statistical tools plugin in echarty &nbsp; &nbsp; &nbsp; [<span style="color:magenta">Live Demo</span>](https://rpubs.com/echarty/ecStat) with code 
 <a href='https://rpubs.com/echarty/ecStat' target=_blank>
 <img src='img/cb-cluster.png' alt='dow' /></a>
 <br />
@@ -674,18 +674,18 @@ p
 
 
 ### Baidu maps 
-a proof-of-concept (no code)  
-[<span style="color:magenta">Live Demo</span>](https://rpubs.com/echarty/bmap)  
+a proof-of-concept   
+[<span style="color:magenta">Live Demo</span>](https://rpubs.com/echarty/bmap) (no code)  
 <br />
 
 ### Leaflet maps
 and switching chart selection **without Shiny**  
-[<span style="color:magenta">Live Demo</span>](https://rpubs.com/echarty/mapjs) 
+[<span style="color:magenta">Live Demo</span>](https://rpubs.com/echarty/mapjs) with code
 <br /><br />
 
 ### World map
 with live data, color coding filter, pan/zoom  &nbsp; &nbsp; &nbsp; 
-[<span style="color:magenta">Live Demo</span>](https://rpubs.com/echarty/inet)  
+[<span style="color:magenta">Live Demo</span>](https://rpubs.com/echarty/inet) with code  
 [<img src='img/cb-speed.png' alt='world_speed' />](https://rpubs.com/echarty/inet)
 
 <br />
