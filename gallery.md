@@ -297,6 +297,7 @@ p
 </details>
 <br />
 
+
 ### scatter3D
 plugin **3D**, test with 36,000 points  
 <img src='img/cb-7.png' alt='bunny' />
@@ -316,8 +317,9 @@ p
 </details>
 <br />
 
+
 ### Bathymetry in 3D
-up to 100,000 surface points  
+up to 100,000 surface points. Good performance test for CPU/GPU.  
 <img src='img/hawaii3d.png' alt='bathy' />
 <details><summary>🔻 Shiny app - <span style="color:magenta">Live Demo</span></summary>
 
@@ -428,6 +430,82 @@ p$x$opts$legend <- list(show=TRUE)
 p$x$opts$tooltip <- list(trigger='item')
 p$x$opts$dataZoom <- list(list(type='slider',start=50))
 p
+```
+</details>
+<br />
+
+<a id='boxplot'></a>
+### Boxplot + scatter overlay
+a horizontal chart with tooltips  
+<img src='img/cb-pumpkin.png' alt='box+scatter' />
+<details><summary>🔻 View code</summary>
+
+```r
+#' inspired by https://juliasilge.com/blog/giant-pumpkins/
+library(tidyverse)
+pumpkins_raw <- readr::read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2021/2021-10-19/pumpkins.csv")
+pumpkins <-
+	pumpkins_raw %>%
+	separate(id, into = c("year", "type")) %>%
+	mutate(across(c(year, weight_lbs), parse_number)) %>% #, ott, place
+	filter(type == "P") %>%
+	select(country, weight_lbs, year) %>% #, place, ott, gpc_site, year
+	mutate(country = fct_lump(country, n = 10) )
+
+tmp <- tidyr::pivot_wider(pumpkins, names_from=year, 
+								  values_from=weight_lbs )
+for(i in 2013:2016) 
+	tmp <- tmp %>% tidyr::unnest_wider(as.character(i), names_repair='unique')
+
+tmp$rmean <- apply(tmp[, -1], 1, function(x) median(unlist(x), na.rm=TRUE))
+tmp <- tmp[order(tmp$rmean), ]
+rnames <- as.character(tmp$country)
+tmp <- as.data.frame(t(within(tmp, rm(country,rmean))))
+tt <- lapply(tmp, function(u) unname(na.omit(unlist(u))))
+tt <- unname(lapply(tt, c))   # trick to remove attributes
+yax <- paste(rnames, collapse="','")   # for Y axis labels
+yax <- paste0("function (params) { return ['",yax,"'][params.value]; }")
+
+library(echarty)
+p <- ec.init() |> ec.theme('dark-mushroom') |> ec.snip()
+p$title <- list(
+	list(text="Giant Pumpkins", subtext='inspiration',
+		  sublink='https://juliasilge.com/blog/giant-pumpkins/') 
+	,list(text=paste(nrow(pumpkins),'records for 2013:2021'), 
+			textStyle= list(fontSize= 12), left= '60%', top= '90%' )
+)
+p$xAxis <- list(name='weigth (lbs)', min=0, 
+					 nameLocation='center', nameGap=20)
+p$yAxis <- list(
+	list(type= 'category'), 
+	list(type= 'value', max=11, show=FALSE))
+p$dataset <- list(
+	list(source= tt),
+	list(transform= list(type='boxplot',
+				config=list(itemNameFormatter= htmlwidgets::JS(yax))
+	)),
+	list(fromDatasetIndex= 1, fromTransformResult= 1)
+)
+p$series <- list(      # use ECharts built-in boxplot
+	list(name= 'boxplot', type= 'boxplot', datasetIndex= 1
+		  ,color='LightGrey', itemStyle= list(color='DimGray'), 
+		  boxWidth=c(13,50) )
+)
+i <- 0.5
+sers <- lapply(p$dataset[[1]]$source, function(xx) {
+	yy <- jitter(rep(i, length(xx)), amount=0.2); i <<- i + 1
+	xx <- jitter(xx, amount=0.2)
+	data <- list()
+	for(j in 1:length(xx)) data <- append(data, list(list(xx[j], yy[j])))
+	list(name='data', type= 'scatter', data=data, yAxisIndex=1, 
+		  symbolSize=3, itemStyle=list(opacity=0.3), color=heat.colors(11)[i-0.5])
+})
+p$series <- append(p$series, sers)
+p$legend <- list(show=TRUE)
+p$tooltip <- list(show=TRUE, 
+	formatter=htmlwidgets::JS("function(c) { return (c.value[0].toFixed()+' lbs');}"))
+ec.snip(p)
+
 ```
 </details>
 <br />
@@ -583,7 +661,9 @@ Statistical tools plugin in echarty &nbsp; &nbsp; &nbsp; [<span style="color:mag
 Animated transition between two charts 
 <img src='img/morph.gif' alt='morph' /></a>
 <details><summary>🔻 Info</summary>
-Made with ECharts <a href='https://github.com/100pah/echarts-simple-transform' target=_blank>ecSimpleTransform</a> library and echarty. Code up for <a href='https://www.paypal.com/paypalme/helgasoft/19' target=_blank>sale $19</a>, delivered to your Paypal email.
+Made with ECharts <a href='https://github.com/100pah/echarts-simple-transform' target=_blank>ecSimpleTransform</a> library and echarty.  
+
+Code up for <a href='https://www.paypal.com/paypalme/helgasoft/19' target=_blank>sale $19</a>, delivered to your Paypal email.
 </details>
 <br />
 
@@ -697,6 +777,9 @@ with vehicle trajectory playback
 		Your browser does not support the video tag.
 </video>
 <details><summary>🔻 Info</summary>
-Made with ECharts <a href='https://github.com/plainheart/echarts-extension-amap' target=_blank>Amap extension</a> library and echarty. Code up for <a href='https://www.paypal.com/paypalme/helgasoft/19' target=_blank>sale $19</a>, delivered to your Paypal email.
+Made with ECharts <a href='https://github.com/plainheart/echarts-extension-amap' target=_blank>Amap extension</a> library and echarty.   
+
+More JavaScript than R for now, with plans to translate more in R. Playback On/Off controlled by mouse button on top.  
+Code up for <a href='https://www.paypal.com/paypalme/helgasoft/19' target=_blank>sale $19</a>, delivered to your Paypal email.
 </details>
 <br />
