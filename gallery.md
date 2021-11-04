@@ -447,9 +447,9 @@ pumpkins_raw <- readr::read_csv("https://raw.githubusercontent.com/rfordatascien
 pumpkins <-
 	pumpkins_raw %>%
 	separate(id, into = c("year", "type")) %>%
-	mutate(across(c(year, weight_lbs), parse_number)) %>% #, ott, place
+	mutate(across(c(year, weight_lbs), parse_number)) %>% 
 	filter(type == "P") %>%
-	select(country, weight_lbs, year) %>% #, place, ott, gpc_site, year
+	select(country, weight_lbs, year) %>% 
 	mutate(country = fct_lump(country, n = 10) )
 
 tmp <- tidyr::pivot_wider(pumpkins, names_from=year, 
@@ -770,16 +770,4 @@ with live data, color coding filter, pan/zoom  &nbsp; &nbsp; &nbsp;
 
 <br />
 
-### 3D map animation
-with vehicle trajectory playback
-<video id="video1" preload="auto" loop="loop" 
-		src="img/amap.mp4" type="video/mp4" muted="muted" controls>
-		Your browser does not support the video tag.
-</video>
-<details><summary>🔻 Info</summary>
-Made with ECharts <a href='https://github.com/plainheart/echarts-extension-amap' target=_blank>Amap extension</a> library and echarty.   
 
-More JavaScript than R for now, with plans to translate more in R. Playback On/Off controlled by mouse button on top.  
-Code up for <a href='https://www.paypal.com/paypalme/helgasoft/19' target=_blank>sale $19</a>, delivered to your Paypal email.
-</details>
-<br />
