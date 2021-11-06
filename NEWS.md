@@ -1,6 +1,6 @@
 # history of echarty package development
 
-## v.1.4.1
+## v.1.4.2 (former v.1.4.1)
 
 - replaced magrittr %>% dependency with R native pipe |>
 - added _ec.snip_ as option for better code readability
