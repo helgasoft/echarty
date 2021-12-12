@@ -1,11 +1,20 @@
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@echarty_R">
+<meta name="twitter:title" content="echarty - Minimal R/Shiny Interface to ECharts.js">
+<meta name="twitter:description" content="The goal of echarty is to provide a minimal interface, a 'glue', between R and ECharts, then let your R data lists build the chart. There are utilities included to assist with data preparation (ec.data), Shiny with proxy (ecs.*) and JS plugins (ec.plugjs).
+Have the full functionality of ECharts in R with minimal overhead!">
+<meta name="twitter:image" content="https://helgasoft.github.io/echarty/img/echarty.gallery.png">
+
+  
 
 ## Introduction
-
-Building complex charts as data structures is a powerful concept, also simple and easy to use.  As decribed in [this paper](https://doi.org/10.1016/j.visinf.2018.04.011), library ECharts' foundation lays on the "*user-configurable declarative object* **option**". [Option](https://echarts.apache.org/en/option.html) is JSON-like data.  
 
 The goal of **echarty** is to provide a minimal interface, a "glue", between R and ECharts, then let your R data lists build the chart. There are utilities included to assist with data preparation (*ec.data*, *js2r*), Shiny with proxy (*ecs.\**) and JS plugins (*ec.plugjs*).  
 Have the **full functionality** of [ECharts](https://echarts.apache.org/examples/en/index.html) in R with minimal overhead!   
 <br/>  
+<!-- 
+Building complex charts as data structures is a powerful concept, also simple and easy to use.  As decribed in [this paper](https://doi.org/10.1016/j.visinf.2018.04.011), library ECharts' foundation lays on the "*user-configurable declarative object* **option**". [Option](https://echarts.apache.org/en/option.html) is JSON-like data.  
+-->
 
 ## Gallery
 Enjoy [the gallery](gallery.md) and grab some chart code!  

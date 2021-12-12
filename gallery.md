@@ -267,32 +267,34 @@ plugin **3D**, test with 5,000 points
 <details><summary>🔻 View code</summary>
 
 ```r
-# example works also with type='scatter', just ec.data needs to be format='values'
-library(echarty); library(tibble)
-dim <- 2500   # sample data half-quantity, could be 100x more
+# example works also with slower type='scatter', with ec.data(dat, format='values')
+# ------ 1) prepare data
+library(tibble)
+dim <- 2500   # sample data half-quantity, could be much more
 slip <- if (dim %% 2) 0.1 else -0.1
 setData <- function(offset) {
-	t <- tibble(x = runif(dim, max=10),
-					y = offset + sin(x) - x * slip * runif(dim))
-	round(t,3)
-}
-sers <- NULL	# two consecutive series, same data shifted vertically
-for(i in 0:1) 
-	sers <- append(sers, list(
-	list(type = 'scatterGL',
-		data = ec.data(setData(i), 'dataset', FALSE),
-		symbolSize=3, large=TRUE,
-		itemStyle=list(opacity=0.4, color=(if (i==0) 'cyan' else 'pink'))
-	)
-	))
-p <- ec.init(load='3D', preset=FALSE)  %>% ec.theme('dark-mushroom') 
+  t <- tibble(x = runif(dim, max=10),
+              y = offset + sin(x) - x * slip * runif(dim))
+  round(t,3)
+}	
+# two sets, same data shifted vertically
+dat <- rbind(setData(0), setData(1))
+
+# ------ 2) show data
+library(echarty)
+p <- ec.init(load='3D') |> ec.theme('dark-mushroom') 
 p$x$opts <- list(
-  xAxis = list(show=TRUE),	  # scatterGL is not 3D, needs 2D axes
+  title= list(text=paste('scatterGL -',nrow(dat),'points + zoom')),
+  xAxis = list(show=TRUE),
   yAxis = list(show=TRUE),
-  series = sers,
+  series= list(type= 'scatterGL', data= ec.data(dat, 'dataset', FALSE),
+               symbolSize=3, large=TRUE,
+               itemStyle=list(opacity=0.4, color='cyan')
+  ),
   dataZoom = list(type='inside',start=50)
 )
 p
+
 ```
 </details>
 <br />
@@ -319,10 +321,12 @@ p
 
 
 ### Bathymetry in 3D
-up to 100,000 surface points. Good performance test for CPU/GPU.  
+up to 200,000 surface points. Good performance test for CPU/GPU.  
 <img src='img/hawaii3d.png' alt='bathy' />
 <details><summary>🔻 Shiny app - <span style="color:magenta">Live Demo</span></summary>
 
+Multiple 3D examples based on ocean floor measurements in different locations across the planet.  
+The app requires _shiny_ and several other libraries with their dependencies - [source code](https://gist.github.com/helgasoft/121d7d3ff7d292990c3e05cfc1cbf24b). Run the demo with command:
 ```r
 shiny::runGist('https://gist.github.com/helgasoft/121d7d3ff7d292990c3e05cfc1cbf24b')
 ```
@@ -442,27 +446,29 @@ a horizontal chart with tooltips
 
 ```r
 #' inspired by https://juliasilge.com/blog/giant-pumpkins/
+#' advantage over ggplot is interactivity - zoom brush and tooltips
+#' TODO:  totals by country, add year in tooltip
 library(tidyverse)
 pumpkins_raw <- readr::read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2021/2021-10-19/pumpkins.csv")
 pumpkins <-
-	pumpkins_raw %>%
-	separate(id, into = c("year", "type")) %>%
-	mutate(across(c(year, weight_lbs), parse_number)) %>% 
-	filter(type == "P") %>%
-	select(country, weight_lbs, year) %>% 
-	mutate(country = fct_lump(country, n = 10) )
+	pumpkins_raw |>
+	separate(id, into = c("year", "type")) |>
+	mutate(across(c(year, weight_lbs), parse_number)) |> 
+	filter(type == "P") |>
+	select(country, weight_lbs, year) |> 
+	mutate(country= fct_lump(country, n = 10))
 
-tmp <- tidyr::pivot_wider(pumpkins, names_from=year, 
-								  values_from=weight_lbs )
+tmp <- tidyr::pivot_wider(pumpkins, names_from= year, 
+								  values_from= weight_lbs )
 for(i in 2013:2016) 
-	tmp <- tmp %>% tidyr::unnest_wider(as.character(i), names_repair='unique')
+	tmp <- tmp |> tidyr::unnest_wider(as.character(i), names_repair='unique')
 
 tmp$rmean <- apply(tmp[, -1], 1, function(x) median(unlist(x), na.rm=TRUE))
 tmp <- tmp[order(tmp$rmean), ]
 rnames <- as.character(tmp$country)
 tmp <- as.data.frame(t(within(tmp, rm(country,rmean))))
 tt <- lapply(tmp, function(u) unname(na.omit(unlist(u))))
-tt <- unname(lapply(tt, c))   # trick to remove attributes
+tt <- unname(lapply(tt, c))   # remove attributes
 yax <- paste(rnames, collapse="','")   # for Y axis labels
 yax <- paste0("function (params) { return ['",yax,"'][params.value]; }")
 
@@ -482,7 +488,7 @@ p$yAxis <- list(
 p$dataset <- list(
 	list(source= tt),
 	list(transform= list(type='boxplot',
-				config=list(itemNameFormatter= htmlwidgets::JS(yax))
+								config=list(itemNameFormatter= htmlwidgets::JS(yax))
 	)),
 	list(fromDatasetIndex= 1, fromTransformResult= 1)
 )
@@ -498,12 +504,15 @@ sers <- lapply(p$dataset[[1]]$source, function(xx) {
 	data <- list()
 	for(j in 1:length(xx)) data <- append(data, list(list(xx[j], yy[j])))
 	list(name='data', type= 'scatter', data=data, yAxisIndex=1, 
-		  symbolSize=3, itemStyle=list(opacity=0.3), color=heat.colors(11)[i-0.5])
+		  symbolSize=3, itemStyle=list(opacity=0.3), color=heat.colors(11)[i-0.5],
+		  emphasis= list(itemStyle= list(color= 'chartreuse', borderWidth=4, opacity=1)) )
 })
 p$series <- append(p$series, sers)
 p$legend <- list(show=TRUE)
 p$tooltip <- list(show=TRUE, 
-	formatter=htmlwidgets::JS("function(c) { return (c.value[0].toFixed()+' lbs');}"))
+	backgroundColor= 'rgba(30,30,30,0.5)', textStyle= list(color='#eee')
+	,formatter=htmlwidgets::JS("function(c) { return (c.value[0].toFixed()+' lbs');}"))
+p$toolbox <- list(left='right', feature=list(dataZoom=list(show=TRUE)))
 ec.snip(p)
 
 ```
@@ -661,7 +670,7 @@ Statistical tools plugin in echarty &nbsp; &nbsp; &nbsp; [<span style="color:mag
 Animated transition between two charts 
 <img src='img/morph.gif' alt='morph' /></a>
 <details><summary>🔻 Info</summary>
-Made with ECharts <a href='https://github.com/100pah/echarts-simple-transform' target=_blank>ecSimpleTransform</a> library and echarty.  
+Made with ECharts with <a href='https://github.com/100pah/echarts-simple-transform' target=_blank>ecSimpleTransform</a> plugin and echarty.  
 
 Code up for <a href='https://www.paypal.com/paypalme/helgasoft/19' target=_blank>sale $19</a>, delivered to your Paypal email.
 </details>
