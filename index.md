@@ -1,9 +1,8 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:site" content="@echarty_R">
-<meta name="twitter:title" content="echarty - Minimal R/Shiny Interface to ECharts.js">
-<meta name="twitter:description" content="The goal of echarty is to provide a minimal interface, a 'glue', between R and ECharts, then let your R data lists build the chart. There are utilities included to assist with data preparation (ec.data), Shiny with proxy (ecs.*) and JS plugins (ec.plugjs).
-Have the full functionality of ECharts in R with minimal overhead!">
-<meta name="twitter:image" content="https://helgasoft.github.io/echarty/img/echarty.gallery.png">
+<meta name="twitter:title" content="echarty - a thin R/Shiny wrapper to ECharts.js">
+<meta name="twitter:description" content="Have the full functionality of ECharts in R with minimal overhead!">
+<meta name="twitter:image" content="https://helgasoft.github.io/echarty/img/echarty.gallery.300.png">
 
   
 
