@@ -2,7 +2,7 @@
 <meta name="twitter:site" content="@echarty_R">
 <meta name="twitter:title" content="echarty - a thin R/Shiny wrapper to ECharts.js">
 <meta name="twitter:description" content="Have the full functionality of ECharts in R with minimal overhead!">
-<meta name="twitter:image" content="https://helgasoft.github.io/echarty/img/echarty.gallery.300.png">
+<meta name="twitter:image" content="https://helgasoft.github.io/echarty/img/echarty.gallery.300.jpg">
 
   
 
