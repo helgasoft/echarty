@@ -326,7 +326,8 @@ up to 200,000 surface points. Good performance test for CPU/GPU.
 <details><summary>🔻 Shiny app - <span style="color:magenta">Live Demo</span></summary>
 
 Multiple 3D examples based on ocean floor measurements in different locations across the planet.  
-The app requires _shiny_ and several other libraries with their dependencies - [source code](https://gist.github.com/helgasoft/121d7d3ff7d292990c3e05cfc1cbf24b). Run the demo with command:
+The app requires _shiny_ and several other libraries with their dependencies - [source code](https://gist.github.com/helgasoft/121d7d3ff7d292990c3e05cfc1cbf24b).  
+Run the demo with command:
 ```r
 shiny::runGist('https://gist.github.com/helgasoft/121d7d3ff7d292990c3e05cfc1cbf24b')
 ```
@@ -366,7 +367,9 @@ p
 </details>
 <br />
 
-### Grouped boxplot
+<a id='boxplot'></a>
+
+### Simple or grouped boxplots
 boxplot calculations in R or ECharts
 <img src='img/cb-9.png' alt='boxplot' />
 <details><summary>🔻 View code</summary>
@@ -438,11 +441,14 @@ p
 </details>
 <br />
 
-<a id='boxplot'></a>
 ### Boxplot + scatter overlay
 a horizontal chart with tooltips  
 <img src='img/cb-pumpkin.png' alt='box+scatter' />
 <details><summary>🔻 View code</summary>
+
+Inspired by [Julia Silge's article](https://juliasilge.com/blog/giant-pumpkins/).
+ECharts advantage over ggplot is interactivity - zoom brush and tooltips.  
+A vertical layout version is also [published](https://gist.github.com/helgasoft/bd057b64e9b89cc133de2a4c407b53ad).
 
 ```r
 #' inspired by https://juliasilge.com/blog/giant-pumpkins/
@@ -458,17 +464,14 @@ pumpkins <-
 	select(country, weight_lbs, year) |> 
 	mutate(country= fct_lump(country, n = 10))
 
-tmp <- tidyr::pivot_wider(pumpkins, names_from= year, 
-								  values_from= weight_lbs )
-for(i in 2013:2016) 
-	tmp <- tmp |> tidyr::unnest_wider(as.character(i), names_repair='unique')
+# set columns to: country, 2013, 2014, etc. (country by years)
+tmp <- tidyr::pivot_wider(pumpkins, names_from= year, values_from= weight_lbs )
 
-tmp$rmean <- apply(tmp[, -1], 1, function(x) median(unlist(x), na.rm=TRUE))
-tmp <- tmp[order(tmp$rmean), ]
-rnames <- as.character(tmp$country)
-tmp <- as.data.frame(t(within(tmp, rm(country,rmean))))
-tt <- lapply(tmp, function(u) unname(na.omit(unlist(u))))
-tt <- unname(lapply(tt, c))   # remove attributes
+# merge each country's data into one list
+rng <- lapply(tmp$country, function(x) unname(unlist(tmp[tmp$country==x, c(-1)])) )
+asc.ord <- order(unlist(lapply(rng, median)))   # sort order
+rnames <- as.character(tmp$country[asc.ord])
+tt <- rng[asc.ord]
 yax <- paste(rnames, collapse="','")   # for Y axis labels
 yax <- paste0("function (params) { return ['",yax,"'][params.value]; }")
 
@@ -476,19 +479,19 @@ library(echarty)
 p <- ec.init() |> ec.theme('dark-mushroom') |> ec.snip()
 p$title <- list(
 	list(text="Giant Pumpkins", subtext='inspiration',
-		  sublink='https://juliasilge.com/blog/giant-pumpkins/') 
-	,list(text=paste(nrow(pumpkins),'records for 2013:2021'), 
-			textStyle= list(fontSize= 12), left= '60%', top= '90%' )
+		sublink='https://juliasilge.com/blog/giant-pumpkins/') 
+	,list(text=paste(nrow(pumpkins),'records for 2013-2021'), 
+		textStyle= list(fontSize= 12), left= '50%', top= '90%' )
 )
 p$xAxis <- list(name='weigth (lbs)', min=0, 
-					 nameLocation='center', nameGap=20)
+			nameLocation='center', nameGap=20)
 p$yAxis <- list(
 	list(type= 'category'), 
 	list(type= 'value', max=11, show=FALSE))
 p$dataset <- list(
 	list(source= tt),
 	list(transform= list(type='boxplot',
-								config=list(itemNameFormatter= htmlwidgets::JS(yax))
+			config=list(itemNameFormatter= htmlwidgets::JS(yax))
 	)),
 	list(fromDatasetIndex= 1, fromTransformResult= 1)
 )
@@ -510,8 +513,9 @@ sers <- lapply(p$dataset[[1]]$source, function(xx) {
 p$series <- append(p$series, sers)
 p$legend <- list(show=TRUE)
 p$tooltip <- list(show=TRUE, 
-	backgroundColor= 'rgba(30,30,30,0.5)', textStyle= list(color='#eee')
-	,formatter=htmlwidgets::JS("function(c) { return (c.value[0].toFixed()+' lbs');}"))
+		backgroundColor= 'rgba(30,30,30,0.5)', 
+		textStyle= list(color='#eee'),
+		formatter=htmlwidgets::JS("function(c) { return (c.value[0].toFixed()+' lbs');}"))
 p$toolbox <- list(left='right', feature=list(dataZoom=list(show=TRUE)))
 ec.snip(p)
 
