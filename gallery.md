@@ -765,11 +765,11 @@ p
 </details>
 <br />
 
-
+<!--
 ### Baidu maps 
 a proof-of-concept   
 [<span style="color:magenta">Live Demo</span>](https://rpubs.com/echarty/bmap) (no code)  
-<br />
+<br />  -->
 
 ### Leaflet maps
 and switching chart selection **without Shiny**  
@@ -778,8 +778,23 @@ and switching chart selection **without Shiny**
 
 ### World map
 with live data, color coding filter, pan/zoom  &nbsp; &nbsp; &nbsp; 
-[<span style="color:magenta">Live Demo</span>](https://rpubs.com/echarty/inet) with code  
+[<span style="color:magenta">Live Demo</span>](https://rpubs.com/echarty/inet)  
 [<img src='img/cb-speed.png' alt='world_speed' />](https://rpubs.com/echarty/inet)
+<br /><br />
+
+### 3D Globe
+Interactive 3D application with ECharts <a href='https://echarts.apache.org/examples/en/index.html#chart-type-globe'>3D Globe</a>  &nbsp; &nbsp; &nbsp; 
+[<span style="color:magenta">Live Demo</span>](https://rpubs.com/echarty/satellites)   
+[<img src='img/sattxt.600.gif' alt='3D Globe' />](https://rpubs.com/echarty/satellites)
+<details><summary>🔻 Features</summary>
+
+- real-time satellite data filtered by altitude
+- charts: scatter3D for satellite location, bar3D for beams and lines3D for tracks
+- controls: hover icons, timeline play/stop, animations toggle, zoom/rotate globe
+- published as <a href='https://rpubs.com/echarty/satellites'>live demo</a>
+</details>
+<br />
+
 
 <br />
 
