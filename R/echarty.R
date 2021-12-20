@@ -105,15 +105,6 @@ ec.init <- function( df=NULL, preset=TRUE, ctype='scatter', load=NULL,
     }
   }
 
-  if (requireNamespace("crosstalk", quietly = TRUE)) {  # replaced ' @importFrom crosstalk is.SharedData crosstalkLibs
-    if (crosstalk::is.SharedData(data)) {
-      crosstalkKey <- as.list(data$key())
-      crosstalkGroup <- data$groupName()
-      data <- data$origData()
-      dependencies <- crosstalk::crosstalkLibs()
-    }
-  }
-
   key <- group <- deps <- NULL
   if (requireNamespace("crosstalk", quietly = TRUE)) {
     if (crosstalk::is.SharedData(df)) {
@@ -286,10 +277,10 @@ ec.init <- function( df=NULL, preset=TRUE, ctype='scatter', load=NULL,
     }
   }
   if ('liquid' %in% load) 
-    wt <- ec.plugjs(wt, 'https://cdn.jsdelivr.net/npm/echarts-liquidfill@3.1.0/dist/echarts-liquidfill.min.js', ask)
+    wt <- ec.plugjs(wt, 'https://cdn.jsdelivr.net/npm/echarts-liquidfill@latest/dist/echarts-liquidfill.min.js', ask)
   
   if ('gmodular' %in% load) 
-    wt <- ec.plugjs(wt, 'https://cdn.jsdelivr.net/npm/echarts-graph-modularity@2.0.0/dist/echarts-graph-modularity.min.js', ask)
+    wt <- ec.plugjs(wt, 'https://cdn.jsdelivr.net/npm/echarts-graph-modularity@latest/dist/echarts-graph-modularity.min.js', ask)
   
   if ('wordcloud' %in% load) 
     wt <- ec.plugjs(wt, 'https://cdn.jsdelivr.net/npm/echarts-wordcloud@2.0.0/dist/echarts-wordcloud.min.js', ask)
@@ -526,6 +517,7 @@ let c = sprintf(`",col,"`, ss); return c; ")
 #'      Type 'stack' needs \emph{xAxis} to be of type 'category'.
 #' 
 #' @examples 
+#' if (interactive()) {
 #' df <- data.frame( x = 1:10, y = runif(10, 5, 10)) |>
 #'   dplyr::mutate(lwr = y-runif(10, 1, 3), upr = y+runif(10, 2, 4))
 #' 
@@ -543,7 +535,7 @@ let c = sprintf(`",col,"`, ss); return c; ")
 #'   return str;
 #'   }"))
 #' p
-#' 
+#' }
 #' @export
 ecr.band <- function(df=NULL, lower=NULL, upper=NULL, type='polygon', ...) {
   if (is.null(df) || is.null(lower) || is.null(upper)) 
@@ -610,6 +602,7 @@ ecr.band <- function(df=NULL, lower=NULL, upper=NULL, type='polygon', ...) {
 #'  ecr.ebars should be set at the end, after all other series.
 #'
 #' @examples
+#' if (interactive()) {
 #' tmp <- round(rnorm(24, sin(1:24/2)*10, .5))
 #' df <- data.frame(x = 1:24, val = tmp, 
 #'                  lower = round(rnorm(24, tmp -10, .5)),
@@ -618,7 +611,7 @@ ecr.band <- function(df=NULL, lower=NULL, upper=NULL, type='polygon', ...) {
 #' p <- df |> ec.init(load='custom') |> ecr.ebars()
 #' p$x$opts$tooltip <- list(ii='')
 #' p
-#' 
+#' }
 #' @export
 ecr.ebars <- function(wt, df=NULL, hwidth=6, ...) {
   # alternating bars with custom series doesn't work, first bars then customs
@@ -1097,7 +1090,6 @@ ec.snip <- function(wt) {
   if (missing(wt))
     stop('expecting wt as htmlwidget or list', call.=FALSE)
 
-  #if (is.null(wt$saved)) {
   if ('echarty' %in% class(wt)) {
     # prepare for shorthand writing
     op <- wt$x$opts
@@ -1132,6 +1124,7 @@ ec.snip <- function(wt) {
 #'   
 #' @examples
 #' # import map plugin and display two (lon,lat) locations
+#' if (interactive()) {
 #' p <- ec.init() |> ec.plugjs(
 #'   'https://raw.githubusercontent.com/apache/echarts/master/test/data/map/js/china-contour.js')
 #' p$x$opts <- list(
@@ -1142,7 +1135,7 @@ ec.snip <- function(wt) {
 #'     data= list(list(value= c(113, 40)), list(value= c(118, 39))) ))
 #' )
 #' p
-#'
+#' }
 #' @importFrom utils askYesNo download.file
 #'
 #' @export

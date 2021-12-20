@@ -1,6 +1,10 @@
 # history of echarty package development
 
-## v.1.4.1
+## v.1.4.3
+
+- upgrade ECharts to v.5.2.2, graph-modularity to v.2.1.0
+
+## v.1.4.2
 
 - replaced magrittr %>% dependency with R native pipe |>
 - added _ec.snip_ as option for better code readability

@@ -30,6 +30,7 @@ ecr.ebars with name attribute will show separate in the legend \cr
 ecr.ebars should be set at the end, after all other series.
 }
 \examples{
+if (interactive()) {
 tmp <- round(rnorm(24, sin(1:24/2)*10, .5))
 df <- data.frame(x = 1:24, val = tmp, 
                  lower = round(rnorm(24, tmp -10, .5)),
@@ -38,5 +39,5 @@ df <- data.frame(x = 1:24, val = tmp,
 p <- df |> ec.init(load='custom') |> ecr.ebars()
 p$x$opts$tooltip <- list(ii='')
 p
-
+}
 }

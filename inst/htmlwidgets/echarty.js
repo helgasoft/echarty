@@ -7,28 +7,8 @@ HTMLWidgets.widget({
   factory: function(el, width, height) {
     
     var initialized = false;
-
     var chart, opts;
-    
-    // does the job of htmlwidgets:::JSEvals and JS_EVAL for proxy
-    const evalFun = (sourceOpts) => {
-      let opts = Object.assign({}, sourceOpts);
-      Object.keys(opts).forEach((key) => {
-        if (opts[key] == null) return;
-        if (typeof opts[key] === 'object') {
-            evalFun(opts[key]);
-            return;
-        } else {
-            // filter by 'function', otherwise all data values get evaluated
-            if (typeof opts[key] === 'string' && opts[key].startsWith('function'))
-              try {
-                opts[key] = eval('(' + opts[key] + ')');
-              } catch { }
-        }
-      });
-      return(opts);
-    }
-    
+
     return {
 
       renderValue: function(x) {
@@ -72,7 +52,7 @@ HTMLWidgets.widget({
         chart = echarts.init(document.getElementById(el.id), x.theme, 
         	{renderer: x.renderer, locale: x.locale, useDirtyRect: x.useDirtyRect});
         
-        opts = x.opts; //evalFun(x.opts);
+        opts = x.opts;
         
         if (eva2) {	// to change opts
           try {

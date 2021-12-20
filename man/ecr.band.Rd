@@ -32,6 +32,7 @@ When type='stack', two smooth \emph{stacked} lines are drawn, one with customiza
 Type 'stack' needs \emph{xAxis} to be of type 'category'.
 }
 \examples{
+if (interactive()) {
 df <- data.frame( x = 1:10, y = runif(10, 5, 10)) |>
   dplyr::mutate(lwr = y-runif(10, 1, 3), upr = y+runif(10, 2, 4))
 
@@ -49,5 +50,5 @@ p$x$opts$tooltip <- list(trigger = 'axis'
   return str;
   }"))
 p
-
+}
 }

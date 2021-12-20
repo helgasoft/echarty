@@ -48,6 +48,7 @@ p
 
 
 #------ Plugin leaflet
+if (interactive()) {
 tmp <- quakes |> dplyr::relocate('long') |>  # set order to lon,lat
   dplyr::mutate(size= exp(mag)/20) |> head(100)   # add accented size
 p <- tmp |> ec.init(load='leaflet')
@@ -56,9 +57,10 @@ p$x$opts$series[[1]]$symbolSize = ec.clmn(6, scale=2)   # size column
 p$x$opts$tooltip = list(formatter=ec.clmn('magnitude \%@', 'mag'))
 p$x$opts$legend = list(show=TRUE)
 p
-
+}
 
 #------ Plugin 'world' with visualMap
+if (interactive()) {
 cns <- data.frame(
   country = c('United States','China','Russia','Brazil','Canada','Algeria','Sudan','Australia'),
   value = runif(8, 1, 100) 
@@ -67,9 +69,10 @@ p <- cns |> ec.init(load= 'world')
 p$x$opts$visualMap <- list(calculable= TRUE, max= 100)
 p$x$opts$toolbox <- list(feature= list(restore= list()))
 p
-
+}
 
 #------ Plugin 'world' with lines and color coding
+if (interactive()) {
 flights <- NULL
 flights <- try(read.csv(paste0('https://raw.githubusercontent.com/plotly/datasets/master/',
                                '2011_february_aa_flight_paths.csv')), silent = TRUE)
@@ -90,7 +93,7 @@ if (!is.null(flights)) {
     ,lineStyle = list(curveness=0.3, width=3, color=ec.clmn('colr'))
   ))
   p
-}
+} }
 
 
 #------ registerMap JSON
@@ -216,6 +219,7 @@ p
 #------ Band serie with customization
 # first column ('day') usually goes to the X-axis
 # try also alternative data setting - replace lines *1 with *2
+if (interactive()) {
 library(dplyr)
 dats <- as.data.frame(EuStockMarkets) |> mutate(day=1:n()) |>
           relocate(day) |> slice_head(n=100)
@@ -231,7 +235,7 @@ p$x$opts$series = append(
 p$x$opts$legend <- list(show=TRUE) 
 p$x$opts$dataZoom <- list(type='slider', end=50)
 p
-
+}
 
 #------ Timeline animation and ec.snip
 p <- Orange |> dplyr::group_by(age) |> ec.init(
@@ -357,6 +361,7 @@ p
 
 
 #------ Error Bars on grouped data
+if (interactive()) {
 library(dplyr)
 df <- mtcars |> group_by(cyl,gear) |> summarise(yy=round(mean(mpg),2)) |>
   mutate(low=round(yy-cyl*runif(1),2), high=round(yy+cyl*runif(1),2)) |>
@@ -366,7 +371,7 @@ p <- df |> ec.init(ctype='bar', load='custom') |>
      ,tooltip = list(formatter=ec.clmn('high <b>\%@</b><br>low <b>\%@</b>', 4,3)))
 p$x$opts$tooltip <- list(show=TRUE)
 p
-
+}
 
 #------ Gauge
 p <- ec.init(preset=FALSE); 

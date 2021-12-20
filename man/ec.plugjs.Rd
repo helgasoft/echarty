@@ -27,6 +27,7 @@ Called internally by \link{ec.init}. It is recommended to use \emph{ec.init(load
 }
 \examples{
 # import map plugin and display two (lon,lat) locations
+if (interactive()) {
 p <- ec.init() |> ec.plugjs(
   'https://raw.githubusercontent.com/apache/echarts/master/test/data/map/js/china-contour.js')
 p$x$opts <- list(
@@ -37,5 +38,5 @@ p$x$opts <- list(
     data= list(list(value= c(113, 40)), list(value= c(118, 39))) ))
 )
 p
-
+}
 }
