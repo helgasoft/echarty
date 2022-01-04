@@ -442,7 +442,7 @@ p
 <br />
 
 ### Boxplot + scatter overlay
-a horizontal chart with tooltips  
+a horizontal chart with zoom and tooltips  
 <img src='img/cb-pumpkin.png' alt='box+scatter' />
 <details><summary>🔻 View code</summary>
 
@@ -794,6 +794,56 @@ Interactive 3D application with ECharts <a href='https://echarts.apache.org/exam
 - published as <a href='https://rpubs.com/echarty/satellites'>live demo</a>
 </details>
 <br />
+
+<a id='quantiles'></a>
+
+### Quantiles
+Overlay data and quantiles, then identify each with tooltips <br />
+<img src='img/quantil.gif' alt='quantiles' />
+<details><summary>🔻 View code</summary>
+
+```r
+# data and inspiration from https://ptarroso.github.io/quantileplot/
+set.seed(555)
+counts <- 1:25
+n <- 50  # original is 250
+x <- rep(counts, each=n)
+y <- rep(NA, length(x))
+for (i in counts) {
+  mean.val <- log(i)+1
+  sdev.val <- runif(1, 0.2, 0.8)
+  y[x==i] <- round(rnorm(n, mean.val, sdev.val), 3)
+}
+q <- seq(0, 1, 0.025)
+mat <- matrix(NA, length(q), length(counts))
+for (i in 1:length(counts)) {
+  val <- counts[i]
+  mat[,i] <- quantile(y[x==val], probs=q)
+}
+mx <- as.integer(length(q)/2)
+colors <- hcl.colors(mx, palette= 'sunset', alpha= 0.9)
+dxy <- data.frame(x=x, y=y)
+
+library(echarty)
+p <- dxy |> ec.init(load='custom', preset=FALSE) |> ec.theme('dark') |> ec.snip()
+p$xAxis <- p$yAxis <- list(show=TRUE)
+p$tooltip <- list(formatter= '{a}', backgroundColor= '#55555599', 
+                  textStyle= list(color='#eee'))
+p$title <- list(text= 'Data + Quantiles + Tooltips', subtext= 'inspiration article', 
+                sublink= 'https://ptarroso.github.io/quantileplot/')
+for (i in 1:mx) {
+  tmp <- data.frame(x= counts, hi= mat[i,], low= mat[length(q)+1-i,])
+  p$series <- append(p$series,
+      ecr.band(tmp, 'low', 'hi', name=paste0(round((1-q[i]*2)*100),'%'), color=colors[i])
+  )
+}
+p$series <- append(p$series, 
+    list(list(type='scatter', symbolSize= 3, itemStyle= list(color='cyan'), 
+              tooltip= list(formatter='{c}'))) )
+p |> ec.snip()
+```
+</details>
+
 
 
 <br />
