@@ -23,11 +23,11 @@ A widget with error bars added if successful, otherwise the input wt
 Custom series to display error-bars for scatter,bar or line series
 }
 \details{
-Grouped series are supported, but require the group column to be included in df. \cr
-ecr.ebars are custom series, so \emph{ec.init(load='custom')} is required. \cr
-ecr.ebars will add a chart legend and its own tooltip if none is provided.\cr
-ecr.ebars with name attribute will show separate in the legend \cr
-ecr.ebars should be set at the end, after all other series.
+\emph{ecr.ebars} are custom series, so \emph{ec.init(load='custom')} is required. \cr
+Grouped series are supported, but require the group column to be included in \emph{df}. \cr
+Will add a chart legend and its own tooltip if none is provided.\cr
+ecr.ebars with name attribute will show separate in the legend. \cr
+Command should be called last, after all other series.
 }
 \examples{
 if (interactive()) {

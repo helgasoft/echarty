@@ -311,13 +311,15 @@ ec.init <- function( df=NULL, preset=TRUE, ctype='scatter', load=NULL,
       tl.series$coordinateSystem <- 'cartesian2d'
     if (tl.series$coordinateSystem=='cartesian2d') { 
       xtem <- 'x'; ytem <- 'y' }
+    if (startsWith(tl.series$coordinateSystem, 'cartesian')) { 
+      xtem <- 'x'; ytem <- 'y'; ztem <- 'z' }
     else if (tl.series$coordinateSystem=='polar') { 
       xtem <- 'radius'; ytem <- 'angle' }
     else if (tl.series$coordinateSystem %in% c('geo','leaflet')) { 
       xtem <- 'lng'; ytem <- 'lat'
       center <- c(mean(unlist(df[,tl.series$encode$lng])),
                   mean(unlist(df[,tl.series$encode$lat])))
-      if (tl.series$coordinateSystem=='geo') wt$x$opts$geo$center <- center
+      if (tl.series$coordinateSystem=='geo')     wt$x$opts$geo$center <- center
       if (tl.series$coordinateSystem=='leaflet') wt$x$opts$leaflet$center <- center
     }
     if (is.null(unlist(tl.series$encode[xtem]))) {
@@ -347,15 +349,15 @@ ec.init <- function( df=NULL, preset=TRUE, ctype='scatter', load=NULL,
       # multiple series for each Y, like y=c('col1', 'col3')
       series <- lapply(unname(unlist(tl.series$encode[ytem])), 
         function(sname) {
-          append(list(datasetIndex=di, name=sname), tl.series)
+          append(list(datasetIndex= di, name= sname), tl.series)
       })
       series <- lapply(series, function(s) {
         s$encode[ytem] <- s$name   # replace multiple col.names with one
         s
       })
 
-      list(title = list(text = as.character(unique(gp[gvar])), left=40),  
-           series = unname(series))
+      list(title= list(text= as.character(unique(gp[gvar]))),  
+           series= unname(series))
     })
     
     wt$x$opts$options <- optl
@@ -595,11 +597,11 @@ ecr.band <- function(df=NULL, lower=NULL, upper=NULL, type='polygon', ...) {
 #' @return A widget with error bars added if successful, otherwise the input wt
 #'
 #' @details 
-#'  Grouped series are supported, but require the group column to be included in df. \cr
-#'  ecr.ebars are custom series, so \emph{ec.init(load='custom')} is required. \cr
-#'  ecr.ebars will add a chart legend and its own tooltip if none is provided.\cr
-#'  ecr.ebars with name attribute will show separate in the legend \cr
-#'  ecr.ebars should be set at the end, after all other series.
+#'  \emph{ecr.ebars} are custom series, so \emph{ec.init(load='custom')} is required. \cr
+#'  Grouped series are supported, but require the group column to be included in \emph{df}. \cr
+#'  Will add a chart legend and its own tooltip if none is provided.\cr
+#'  ecr.ebars with name attribute will show separate in the legend. \cr
+#'  Command should be called last, after all other series.
 #'
 #' @examples
 #' if (interactive()) {
@@ -620,6 +622,8 @@ ecr.ebars <- function(wt, df=NULL, hwidth=6, ...) {
     stop('df must be a data.frame', call.=FALSE)
   if (!'renderers' %in% unlist(lapply(wt$dependencies, function(d) d$name)))
     stop("use ec.init(load='custom') for ecr.ebars", call.=FALSE)
+  if (!is.null(wt$saved))
+    stop('Did you place ec.snip at end-of-pipe?', call. = FALSE)
   
   ser <- wt$x$opts$series  # all series
   if (is.null(ser)) stop('series are missing', call.=FALSE)
@@ -832,7 +836,9 @@ ecs.exec <- function(proxy, cmd='p_merge') {
 #' @param width Width of columns, one of xs, md, lg
 #' @param title Title for the set
 #' @return A container \code{\link[htmltools]{div}} in rmarkdown, otherwise \code{\link[htmltools]{browsable}}
-#' @details  For 3-4 charts one would use multiple series with a \href{https://echarts.apache.org/en/option.html#grid}{grid}. For greater number of charts _ec.layout_ come in handy.
+#' @details  
+#' For 3-4 charts one would use multiple series with a \href{https://echarts.apache.org/en/option.html#grid}{grid}. \cr
+#' For greater number of charts _ec.layout_ come in handy.
 #' @examples
 #' options(browser = 'firefox')
 #' tmp <- lapply(list('dark','macarons','gray','jazz','dark-mushroom'),
@@ -954,21 +960,24 @@ ec.paxis <- function (df=NULL, minmax=TRUE, cols=NULL, ...) {
 #'     "backgroundColor": "lemonchiffon"}')
 #' 
 #' @export
-ec.theme <- function (wt, name, code = NULL) 
+ec.theme <- function (wt, name, code= NULL) 
 {
   if (missing(name))
     stop('must define theme name', call. = FALSE)
-
+  if (!is.null(wt$saved))
+    stop('Did you place ec.snip at end-of-pipe?', call. = FALSE)
+  
+  #if (length(wt$x[[1]])==0) wt$x[[1]] <- NULL  # parasite list
   wt$x$theme <- name
   if (!is.null(code))
     wt$x$themeCode <- code
   else {
     wt$x$themeCode <- NULL
-    path <- system.file('themes', package = 'echarty')
+    path <- system.file('themes', package= 'echarty')
     dep <- htmltools::htmlDependency(
-      name = name,
-      version = '1.0.0', src = c(file = path),
-      script = paste0(name, '.js'))
+      name= name,
+      version= '1.0.0', src= c(file= path),
+      script= paste0(name, '.js'))
     wt$dependencies <- append(wt$dependencies, list(dep))
   }
   wt
@@ -985,7 +994,8 @@ ec.theme <- function (wt, name, code = NULL)
 #' @return A JSON string if \code{json} is \code{TRUE} and
 #'  a \code{list} otherwise.
 #'
-#' @note Must be invoked or chained as last command.
+#' @note Must be invoked or chained as last command.\cr
+#' ec.inspect is incompatible with [ec.snip]
 #'
 #' @examples
 #' # extract JSON
@@ -997,7 +1007,9 @@ ec.theme <- function (wt, name, code = NULL)
 #'
 #' @export
 ec.inspect <- function(wt, target=NULL, json=TRUE, ...) {
-
+  if (!is.null(wt$saved))
+    stop('ec.inspect incompatible with ec.snip', call. = FALSE)
+  
   opts <- wt$x$opts
   
   if (!is.null(target)) {
@@ -1074,10 +1086,11 @@ ec.fromJson <- function(txt, ...) {
 #' Utility to improve readability and typing speed
 #' 
 #' @param wt A widget to be converted to option list \cr
-#'    OR an option list to plot
+#'    OR an option list to a plot
 #' @details 
-#' On initialization, pipe _ec.snip_ after [ec.init], \cr
-#'   or set for the entire R session with \code{options('echarty.short'=TRUE)}.
+#' On initialization, add _ec.snip_ at the end of the [ec.init] pipe, \cr
+#'   or set for the entire R session with \code{options('echarty.short'=TRUE)}.\cr
+#' Note: ec.theme, ecr.ebars, ec.inspect will not work with the session setting. 
 #'
 #' @examples 
 #' p <- cars |> ec.init() |> ec.snip()
@@ -1099,6 +1112,7 @@ ec.snip <- function(wt) {
   } 
   else {
     # return the chart widget to plot
+    # wt$x holds theme, registerMap, jcode, locale, renderer, etc.
     p <- wt$saved
     wt$saved <- NULL
     p$x$opts <- wt
@@ -1206,16 +1220,7 @@ if (requireNamespace("shiny", quietly = TRUE)) {
 
 #  ------------- Global Options -----------------
 #' 
-#' echarty uses the following global options: \cr \itemize{
-#'  \item echarty.theme = name of theme file (without extension), from folder /inst/themes
-#'  \item echarty.font = font family name 
-#'  \item echarty.urltiles = tiles URL template for leaflet maps 
-#'  \item echarty.short = a boolean flag, see [ec.snip]
-#' }
-#' @examples 
-#' options('echarty.short'=TRUE)  # set
-#' getOption('echarty.short')     # get
-#' options('echarty.short'=NULL)  # remove
+#' For info on options and prefixes, type \emph{?echarty} in the R console.
 
 
 

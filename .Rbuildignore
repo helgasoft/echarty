@@ -21,3 +21,4 @@ README.md
 ^\.ccache$
 ^tic\.R$
 ^codecov\.yml$
+^CRAN-SUBMISSION$

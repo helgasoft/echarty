@@ -8,14 +8,15 @@ ec.snip(wt)
 }
 \arguments{
 \item{wt}{A widget to be converted to option list \cr
-OR an option list to plot}
+OR an option list to a plot}
 }
 \description{
 Utility to improve readability and typing speed
 }
 \details{
-On initialization, pipe \emph{ec.snip} after \link{ec.init}, \cr
-or set for the entire R session with \code{options('echarty.short'=TRUE)}.
+On initialization, add \emph{ec.snip} at the end of the \link{ec.init} pipe, \cr
+or set for the entire R session with \code{options('echarty.short'=TRUE)}.\cr
+Note: ec.theme, ecr.ebars, ec.inspect will not work with the session setting.
 }
 \examples{
 p <- cars |> ec.init() |> ec.snip()

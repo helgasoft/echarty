@@ -1,5 +1,11 @@
 # history of echarty package development
 
+## v.1.4.4
+
+- upgrade ECharts to v.5.3.0
+- _ec.init_ timeline (_tl.series_) to support 3D
+- add _ec.theme_ warnings about _ec.snip_
+
 ## v.1.4.3
 
 - upgrade ECharts to v.5.2.2, graph-modularity to v.2.1.0

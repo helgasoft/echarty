@@ -23,7 +23,8 @@ a \code{list} otherwise.
 Convert chart to JSON string
 }
 \note{
-Must be invoked or chained as last command.
+Must be invoked or chained as last command.\cr
+ec.inspect is incompatible with \link{ec.snip}
 }
 \examples{
 # extract JSON

@@ -55,9 +55,7 @@
                 }
             },
             axisLabel: {
-                textStyle: {
-                    color: contrastColor
-                }
+                color: contrastColor
             },
             splitLine: {
                 lineStyle: {
@@ -94,7 +92,8 @@
                 crossStyle: {
                     color: contrastColor
                 }
-            }
+            },
+            textStyle: { color: contrastColor }
         },
         legend: {
             textStyle: {
@@ -123,7 +122,7 @@
 
         timeline: {
             itemStyle: {
-                color: colorPalette[1]
+                color: '#aaa' //colorPalette[1]
             },
             lineStyle: {
                 color: contrastColor
@@ -141,7 +140,12 @@
         logAxis: axisCommon(),
         valueAxis: axisCommon(),
         categoryAxis: axisCommon(),
-
+        
+	timeAxis3D: axisCommon(),
+	logAxis3D: axisCommon(),
+	valueAxis3D: axisCommon(),
+	categoryAxis3D: axisCommon(),
+    
         line: {
             symbol: 'circle'
         },
