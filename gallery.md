@@ -333,6 +333,79 @@ shiny::runGist('https://gist.github.com/helgasoft/121d7d3ff7d292990c3e05cfc1cbf2
 ```
 </details>
 <br />
+<a id='3Dbubbles'></a>
+
+### Timeline in 3D
+demographic data evolution in the last 200 years
+<img src='img/cb-bubble.3D.png' alt='bubbles' />
+<details><summary>🔻 View code</summary>
+
+```r
+# see also original 2D: https://helgasoft.github.io/echarty/uc5.html
+
+library(dplyr)
+# data download and preparation
+tmp <- jsonlite::fromJSON('https://echarts.apache.org/examples/data/asset/data/life-expectancy.json')
+tmp$series[,,2] <- round(as.numeric(tmp$series[,,2]), 1)  # life exp rounded
+tmp$series[,,3] <- round(as.numeric(tmp$series[,,3])/1000000, 2)  # pop in Millions
+
+df <- as.data.frame(tmp$series[1,,])
+for(i in 2:nrow(tmp$series)) {
+	df <- rbind(df, as.data.frame(tmp$series[i,,]))
+}  # convert array to data.frame
+colnames(df) <- c('Income','Life','Population','Country','Year')
+tt <- df$Country;	df <- df[,-4]; df[] <- lapply(df, as.numeric); df$Country<-tt
+df$SymSize <- (sqrt(df$Population / 5e2) + 0.1) *80
+df <- df |> relocate(Year, .after = last_col())
+
+# set colors for countries
+colors <- rep(c('#8b0069','#75c165', '#ce5c5c', '#fbc357', '#8fbf8f', '#659d84',
+					 '#fb8e6a', '#c77288', '#786090', '#91c4c5', '#6890ba'), 2)
+i <- 0
+pieces <- lapply(unique(df$Country), function(x) { 
+  i <<- i+1;	list(value= x, color= colors[i]) 
+})
+
+# remotes::install_github("helgasoft/echarty")  # needs v.1.4.4+
+library(echarty)
+p <- df |> group_by(Year) |> ec.init(
+	load= '3D',
+	tl.series= list(
+		type= 'scatter3D', coordinateSystem= 'cartesian3D',
+		itemStyle= list(opacity= 0.8),
+		encode= list(x= 'Income', y= 'Life', z= 'Year'),
+		symbolSize= ec.clmn(5),  # 5 is SymSize
+		tooltip= list( backgroundColor= 'transparent',
+			formatter= ec.clmn('<b>%@</b><br>life exp: <b>%@</b><br>income: <b>$%@</b><br>populat: <b>%@M</b>',4,2,1,3)
+		)
+)) |> 
+  ec.theme('dark-mushroom') |> ec.snip()
+
+p$title = list(list(left=5, top='top', textStyle=list(fontSize=50, color='#11111166')),
+					list(text= "Life expectancy and GDP by year", top= 10, 
+						left= "center", textStyle= list(fontWeight= "normal", fontSize= 20)) )
+p$timeline <- append(p$timeline, list(
+		orient= "vertical", 
+		autoPlay= TRUE, playInterval= 500, left= NULL, right= 0, top= 20, bottom= 20, 
+		width= 55, height= NULL, symbol= "none", checkpointStyle= list(borderWidth= 2)
+))
+p$grid3D  = list(axisLabel= list(textStyle= list(color='#ddd')))
+p$xAxis3D = list(name= 'Income', min= 15, axisLabel= list(formatter= "${value}"), 
+					  nameTextStyle= list(color= '#ddd'), nameGap= 25)
+p$yAxis3D = list(name= 'Life Expectancy', min= 15, 
+					  nameTextStyle= list(color= '#ddd'))
+p$zAxis3D = list(name= 'Year', min= 1790, max=2022, 
+					  nameTextStyle= list(color= '#ddd'), nameGap= 25,
+	# minInterval= 1 does not work in 3D, use formatter to show integers for Year
+	axisLabel= list(formatter= htmlwidgets::JS("function(val) {if (val % 1 === 0) return val;}"))
+)
+p$visualMap = list(show= FALSE, dimension= 'Country', type= 'piecewise', pieces= pieces)
+p$tooltip <- list(show= TRUE)
+ec.snip(p)
+
+```
+</details>
+<br />
 
 
 ### Radar chart customized
@@ -829,8 +902,10 @@ p <- dxy |> ec.init(load='custom', preset=FALSE) |> ec.theme('dark') |> ec.snip(
 p$xAxis <- p$yAxis <- list(show=TRUE)
 p$tooltip <- list(formatter= '{a}', backgroundColor= '#55555599', 
                   textStyle= list(color='#eee'))
-p$title <- list(text= 'Data + Quantiles + Tooltips', subtext= 'inspiration article', 
+p$title <- list(text= 'Data + Quantiles + Tooltips + Zoom', subtext= 'inspiration article', 
                 sublink= 'https://ptarroso.github.io/quantileplot/')
+# p$dataZoom <- list(type='inside', start=1)
+p$toolbox=list(feature= list(dataZoom=list(show=TRUE), saveAsImage=list(show=TRUE)))
 for (i in 1:mx) {
   tmp <- data.frame(x= counts, hi= mat[i,], low= mat[length(q)+1-i,])
   p$series <- append(p$series,
