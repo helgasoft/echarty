@@ -94,9 +94,9 @@ ec.init <- function( df=NULL, preset=TRUE, ctype='scatter', load=NULL,
   # presets are default settings
   # user can also ignore or replace them
   if (preset) {
-    # list(??='') or list(list()) is to create an empty object{} in JS
-    if (!('xAxis' %in% names(opts))) opts$xAxis <- list(pt='')
-    if (!('yAxis' %in% names(opts))) opts$yAxis <- list(pt='')
+    # list(show=TRUE) or list(list()) is to create an empty object{} in JS
+    if (!('xAxis' %in% names(opts))) opts$xAxis <- list(show=TRUE)
+    if (!('yAxis' %in% names(opts))) opts$yAxis <- list(show=TRUE)
     if (!('series' %in% names(opts))) opts$series <- list(
     	list(type=if (is.null(ctype)) 'scatter' else ctype) 
     )
@@ -256,12 +256,11 @@ ec.init <- function( df=NULL, preset=TRUE, ctype='scatter', load=NULL,
       wt$x$opts$xAxis3D <- list(list())
       wt$x$opts$yAxis3D <- list(list())
       wt$x$opts$zAxis3D <- list(list())
-      if (!is.null(ctype) && dplyr::is.grouped_df(df)) {
-        # make all series scatter3D
+      # valid 3D types: scatter3D, bar3D,...'surface' too
+      if ('series' %in% names(wt$x$opts)) {  # if default 2D, change it
         wt$x$opts$series <- lapply(wt$x$opts$series,
-          function(s) { s$type='scatter3D'; s })
-      } else
-        wt$x$opts$series[[1]] <- list(type='scatter3D')  
+          function(s) {s$type= if (s$type=='scatter') 'scatter3D' else s$type; s })
+      }
     }
     wt <- ec.plugjs(wt, 'https://cdn.jsdelivr.net/npm/echarts-gl@2.0.8/dist/echarts-gl.min.js', ask)
   }
@@ -494,7 +493,10 @@ let c = sprintf(`",col,"`, ss); return c; ")
     if (length(args) > 0)
       warning('col is numeric, others are ignored', call.=FALSE)
     col <- as.numeric(col) - 1   # from R to JS counting
-    ret <- paste0('let c = x.value!=null ? x.value[',col,'] : x.data!=null ? x.data[',col,'] : x[',col,']; ',scl)
+    if (col < 0)  # just a value is expected
+      ret <- paste0('let c=x; ',scl)
+    else
+      ret <- paste0('let c = x.value!=null ? x.value[',col,'] : x.data!=null ? x.data[',col,'] : x[',col,']; ',scl)
   }
   htmlwidgets::JS(paste0('function(x) {', ret, '}'))
 }
@@ -524,7 +526,7 @@ let c = sprintf(`",col,"`, ss); return c; ")
 #'   dplyr::mutate(lwr = y-runif(10, 1, 3), upr = y+runif(10, 2, 4))
 #' 
 #' p <- df |> ec.init(load='custom')
-#' p$x$opts$legend <- list(ii='') 
+#' p$x$opts$legend <- list(show=TRUE) 
 #' p$x$opts$xAxis <- list(type='category', boundaryGap=FALSE)
 #' p$x$opts$series <- list(list(type='line', color='yellow', datasetIndex=0, name='line1'))
 #' p$x$opts$series <- append( p$x$opts$series,
@@ -611,7 +613,7 @@ ecr.band <- function(df=NULL, lower=NULL, upper=NULL, type='polygon', ...) {
 #'                  upper = round(rnorm(24, tmp + 5, .8))
 #' )
 #' p <- df |> ec.init(load='custom') |> ecr.ebars()
-#' p$x$opts$tooltip <- list(ii='')
+#' p$x$opts$tooltip <- list(show=TRUE)
 #' p
 #' }
 #' @export
@@ -701,7 +703,7 @@ ecr.ebars <- function(wt, df=NULL, hwidth=6, ...) {
       cser <- list(oneSerie(names(df)[2], df))
   }
   wt$x$opts$series <- append(wt$x$opts$series, cser)
-  if (!("legend" %in% names(wt$x$opts))) wt$x$opts$legend <- list(pt='')
+  if (!("legend" %in% names(wt$x$opts))) wt$x$opts$legend <- list(show=TRUE)
   wt
 }
 
@@ -1095,7 +1097,7 @@ ec.fromJson <- function(txt, ...) {
 #' @examples 
 #' p <- cars |> ec.init() |> ec.snip()
 #' p$dataZoom <- list(start=70)   # instead of p$x$opts$dataZoom
-#' p$legend  <- list(zz='')       # instead of p$x$opts$tooltip
+#' p$legend  <- list(show=TRUE)   # instead of p$x$opts$tooltip
 #' ec.snip(p)                     # instead of just p
 #' 
 #' @export

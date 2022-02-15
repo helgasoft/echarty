@@ -21,7 +21,7 @@ Note: ec.theme, ecr.ebars, ec.inspect will not work with the session setting.
 \examples{
 p <- cars |> ec.init() |> ec.snip()
 p$dataZoom <- list(start=70)   # instead of p$x$opts$dataZoom
-p$legend  <- list(zz='')       # instead of p$x$opts$tooltip
+p$legend  <- list(show=TRUE)   # instead of p$x$opts$tooltip
 ec.snip(p)                     # instead of just p
 
 }

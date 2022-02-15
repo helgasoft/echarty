@@ -93,7 +93,8 @@
                     color: contrastColor
                 }
             },
-            textStyle: { color: contrastColor }
+            textStyle: { color: contrastColor },
+            backgroundColor: '#888888bb'
         },
         legend: {
             textStyle: {
