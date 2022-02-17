@@ -2,6 +2,7 @@
 
 export(ec.clmn)
 export(ec.data)
+export(ec.dendro)
 export(ec.examples)
 export(ec.fromJson)
 export(ec.init)
@@ -26,3 +27,4 @@ importFrom(htmlwidgets,shinyWidgetOutput)
 importFrom(htmlwidgets,sizingPolicy)
 importFrom(utils,askYesNo)
 importFrom(utils,download.file)
+importFrom(utils,tail)

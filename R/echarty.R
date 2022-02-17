@@ -424,7 +424,7 @@ ec.data <- function(df, format='dataset', header=TRUE) {
 
 #' Data column
 #' 
-#' Helper function to address data column(s) by index or name
+#' Helper function to display/format data column(s) by index or name
 #' 
 #' @param col A single column index(number) or column name(string), \cr
 #'    or a \code{\link[base]{sprintf}} format string. 
@@ -435,6 +435,7 @@ ec.data <- function(df, format='dataset', header=TRUE) {
 #' @details Column indexes are counted in R and start at 1.\cr
 #' \emph{col} as sprintf has the same placeholder \emph{%@} for both column indexes or column names.\cr
 #' \emph{col} as sprintf can contain double quotes, but not single or backquotes.\cr
+#' Set \emph{col} to -1 for charts like \emph{tree} which return a single value.\cr
 #' Useful for attributes like formatter, color, symbolSize. 
 #' 
 #' @examples
@@ -941,6 +942,63 @@ ec.paxis <- function (df=NULL, minmax=TRUE, cols=NULL, ...) {
   }
   pax
 }                   
+
+
+#' Dendrogram
+#' 
+#' Build data for Hierarchical Clustering dendrogram - a tree chart
+#' 
+#' @param hc Result of \code{\link[stats]{hclust}} function.
+#' @return A tree structure, see format in \href{https://echarts.apache.org/en/option.html#series-tree.data}{tree data}.
+#' @examples
+#' hc <- hclust(dist(USArrests), "complete")
+#' p <- ec.init(preset=FALSE) 
+#' p$x$opts$series <- list(list( 
+#'   type= 'tree', orient= 'TB', roam= TRUE, initialTreeDepth= -1,
+#'   data= ec.dendro(hc), 
+#'   # layout= 'radial',
+#'   # symbolSize= ec.clmn(-1, scale= 0.33), 
+#'   #    exclude added labels like 'p99', leaving only the originals
+#'   label= list(formatter= htmlwidgets::JS(
+#'     "function(n) { out= /p\\d+/.test(n.name) ? '' : n.name; return out;}"))
+#' ))
+#' p
+#' 
+#' @importFrom utils tail
+#' @export
+ec.dendro <- function (hc) {
+  # decode hc$merge with hc$labels
+  inew <- list()
+  i <- 0
+  tmp <- apply(hc$merge, 1, function(x) {
+    fst <- if (x[1]<0) { if (is.null(hc$labels)) -x[1] else hc$labels[-x[1]] } else inew[[x[1]]]$p[1]
+    snd <- if (x[2]<0) { if (is.null(hc$labels)) -x[2] else hc$labels[-x[2]] } else inew[[x[2]]]$p[1]
+    i <<- i+1
+    inew <<- append(inew, list(
+      list(p= rep(paste0('p',i),2), c= c(fst, snd), 
+           h= rep(round(hc$height[i], 2), 2))))
+  })
+  tmp <- unlist(inew)
+  parents <- children <- vals <- c()
+  for(i in 1:length(tmp)) {
+    fst <- substr(names(tmp[i]), 1, 1)
+    switch(fst,
+           'p'= parents <- c(parents, tmp[i]),
+           'c'= children <- c(children, tmp[i]),
+           'h'= vals <- c(vals, as.numeric(tmp[i]))
+    )
+  }
+  # add top element, required for tree chart
+  vals <- c(unname(vals), 1)
+  children <- c(unname(children), unname(tail(parents,1)))
+  parents <- c(unname(parents), '')
+  
+  # convert from data.frame to JSON
+  df <- data.frame(parents=parents, children=children, value=vals)
+  tmp <- data.tree::FromDataFrameNetwork(df)
+  json <- data.tree::ToListExplicit(tmp, unname=TRUE)
+  return(json$children)
+}
 
 
 #' Themes

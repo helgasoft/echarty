@@ -4,7 +4,10 @@
 
 - upgrade ECharts to v.5.3.0
 - _ec.init_ timeline (_tl.series_) to support 3D
-- add _ec.theme_ warnings about _ec.snip_
+- _ec.theme_ warnings about _ec.snip_
+- _ec.clmn_ for single value charts, like tree
+- new _ec.dendro_ for dendrograms, + data.tree dependency
+- new package info thru command "?echarty"
 
 ## v.1.4.3
 

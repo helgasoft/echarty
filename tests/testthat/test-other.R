@@ -60,6 +60,19 @@ test_that("ec.snip", {
   expect_equal(length(op$series), 3)
 })
 
+test_that("ec.dendro", {
+  hc <- hclust(dist(USArrests), "average")
+  p <- ec.init(preset=FALSE)
+  p$x$opts$series <- list(list(
+    type= 'tree', roam= TRUE, initialTreeDepth= -1,
+    data= ec.dendro(hc)
+  ))
+  
+  expect_equal(p$x$opts$series[[1]]$data[[1]]$name, 'p49')
+  expect_equal(p$x$opts$series[[1]]$data[[1]]$children[[1]]$children[[1]]$children[[2]]$name, 'North Carolina')
+  expect_equal(length(p$x$opts$series[[1]]$data[[1]]$children[[1]]$children), 2)
+})
+
 # test_that("load 3D surface", {  # dont - will load echarts-gl.js in source folder 'js'
 #     data <- list()
 #   for(y in 1:dim(volcano)[2]) for(x in 1:dim(volcano)[1]) 

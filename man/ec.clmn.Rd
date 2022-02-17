@@ -18,12 +18,13 @@ or a \code{\link[base]{sprintf}} format string.}
 A JavaScript code string (usually a function) marked as executable, see \code{\link[htmlwidgets]{JS}}.
 }
 \description{
-Helper function to address data column(s) by index or name
+Helper function to display/format data column(s) by index or name
 }
 \details{
 Column indexes are counted in R and start at 1.\cr
 \emph{col} as sprintf has the same placeholder \emph{\%@} for both column indexes or column names.\cr
 \emph{col} as sprintf can contain double quotes, but not single or backquotes.\cr
+Set \emph{col} to -1 for charts like \emph{tree} which return a single value.\cr
 Useful for attributes like formatter, color, symbolSize.
 }
 \examples{
