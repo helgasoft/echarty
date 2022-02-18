@@ -918,9 +918,64 @@ p$series <- append(p$series,
 p |> ec.snip()
 ```
 </details>
-
-
-
 <br />
 
+<a id='dendro'></a>
 
+### Dendrogram
+Vertical/Radial layouts, symbol size for height, values in tooltips <br />
+<img src='img/cb-dendro.png' alt='Dendrogram' />
+<details><summary>🔻 View code</summary>
+
+```r
+# Hierarchical Clustering dendrogram charts
+toolbox <- list(
+  right= '10%', top= 3, backgroundColor= 'beige',
+  feature= list(mySwitcher= list(
+    show= TRUE,  title= 'switch', 
+    icon= 'image://https://findicons.com/icon/download/direct/465124/toggle/32/png',
+    onclick= htmlwidgets::JS("function() { toggleOpt(); }"))
+  ))
+# JavaScript code for the switch button above
+jscode <- "window.toggleOpt = function () {
+    opt = chart.getOption();
+    optcurr = opt.o2;  // switch options
+    opt.o2 = null;
+    optcurr.o2 = opt;
+    chart.setOption(optcurr, true);
+}"
+
+hc <- hclust(dist(USArrests), "ave")
+subt <- paste(as.character(hc$call)[2:3], collapse=' ')
+
+library(echarty)
+p <- ec.init(preset=FALSE, js=jscode) |> ec.theme('dark-mushroom')
+option1 <- list(
+  title= list(text= 'Radial Dendrogram', subtext= subt),
+  tooltip= list(show= TRUE),
+  toolbox= toolbox,
+  series= list(list( 
+    type= 'tree', data= ec.dendro(hc),
+    roam= TRUE, initialTreeDepth= -1,  # initially show all
+    symbolSize= ec.clmn(-1, scale= 0.33),
+    # exclude added labels like 'p99', leaving only the originals
+    label= list(formatter= htmlwidgets::JS(
+  		"function(n) { out= /p\\d+/.test(n.name) ? '' : n.name; return out;}")),
+    layout= 'radial',
+    tooltip= list(formatter= "h={c}"),
+    universalTransition= list(enabled= TRUE, delay= 600) # animation
+  ))
+)
+option2 <- option1
+option2$title <- list(text= 'Orthogonal Dendrogram', subtext= subt)
+option2$series[[1]]$layout <- 'orthogonal'
+option2$series[[1]]$orient <- 'TB'
+option2$series[[1]]$leaves <- list(label= list(
+  position= 'middle',	rotate= 90, verticalAlign= 'top', align= 'right' ))
+option2$series[[1]]$label$offset <- c(-12,0)
+p$x$opts <- option2
+p$x$opts$o2 <- option1
+p
+```
+</details>
+<br />
