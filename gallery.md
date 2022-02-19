@@ -90,6 +90,7 @@ p
 <details><summary>🔻 View code</summary>
 
 ```r
+library(echarty)
 p <- iris %>% group_by(Species) %>% 
   ec.init(ctype='parallel') %>% ec.theme('dark-mushroom')
 p$x$opts$series <- lapply(p$x$opts$series, function(s) { 
@@ -203,6 +204,7 @@ jcode <- "setInterval(function () {
     opts.series[0].data[2].value = (Math.random() * 100).toFixed(2) - 0;
     chart.setOption(opts, true);
 }, 2000);"
+
 library(echarty)
 p <- ec.init(js=jcode) %>% ec.theme('dark')
 p$x$opts <- list(series = list(
@@ -231,11 +233,12 @@ p
 
 ```r
 # echarty can highlight 3D points selected by external controls
-library(crosstalk); library(DT); library(d3scatter); library(htmltools)
-library(echarty); library(dplyr); library(tibble)
+library(crosstalk); library(DT); library(d3scatter); 
+library(htmltools); library(dplyr); library(tibble)
 sdf <- mtcars %>% rownames_to_column(var='name') %>% relocate(mpg,wt,hp) 
 sdf <- SharedData$new(sdf)
 
+library(echarty)
 p3 <- sdf %>% ec.init(load='3D', 
             title = list(text="3D brush listener")) %>%
             ec.theme('dark-mushroom')
@@ -425,6 +428,7 @@ rifo <- lapply(data$name, function(x) {
 }) 
 names(rifo) <- data$name
 
+library(echarty)
 p <- data %>% ec.init(preset=FALSE) %>% ec.theme('dark-mushroom')
 p$x$opts$radar <- list(
   indicator = ec.data(data, 'names'),
@@ -602,7 +606,7 @@ using heatmap chart
 <details><summary>🔻 View code</summary>
 
 ```r
-library(echarty); library(dplyr)
+library(dplyr)
 # prepare and calculate data
 mtx <- cor(infert %>% dplyr::mutate(education=as.numeric(education)))
 order <- corrplot::corrMatOrder(mtx)
@@ -611,6 +615,7 @@ df <- as.data.frame(as.table(mtx))
 for(i in 1:2) df[,i] <- as.character(df[,i])
 
 # ECharts heatmap expects dataset columns in a certain order: relocate
+library(echarty)
 p <- df %>% relocate(Var2) %>% ec.init(ctype='heatmap') %>% ec.theme('dark')
 p$x$opts$title = list(text='Infertility after abortion correlation')
 p$x$opts$xAxis$axisLabel <- list(rotate=45)
@@ -669,7 +674,7 @@ DOW companies - size by market cap<br />
 
 ```r
 # click and drag items to see auto-rearrange effect
-library(echarty); library(dplyr)
+library(dplyr)
 tmp <- jsonlite::fromJSON('https://quote.cnbc.com/quote-html-webservice/quote.htm?noform=1&partnerId=2&fund=1&exthrs=0&output=json&symbolType=issue&symbols=55991|44503|36276|56858|70258|1607179|84090|142105|145043|148633|151846|167459|174239|178782|174614|197606|202757|205141|205778|212856|228324|260531|277095|81364|283359|10808544|283581|286571|89999|522511530&requestMethod=extended')
 df <- tmp$ExtendedQuoteResult$ExtendedQuote$QuickQuote
 wt <- data.frame(tic=df$symbol, name=df$altName, bn=NA, size=NA, 
@@ -679,6 +684,7 @@ wt$bn <- round(as.numeric(gsub('M','',wt$mcap, fixed=TRUE))/1000,1) # mkt.cap
 bnMax <- max(wt$bn)
 wt$size <- 30 + wt$bn/bnMax * 140   # size 30 to 140 px depending on mkt.cap
   
+library(echarty)
 p <- ec.init(load='gmodular'); 
 p$x$opts <- list(
   title=list(text='DOW 2021',x='center',y='bottom',
@@ -805,7 +811,7 @@ p
 
 ```r
 # inspired by data from https://github.com/etiennebacher
-library(echarty); library(dplyr)
+library(dplyr)
 flights <- read.csv('https://raw.githubusercontent.com/plotly/datasets/master/2011_february_aa_flight_paths.csv')
 # set first two columns to longitude/latitude as default for ECharts
 df <- head(flights) %>% relocate(start_lon,start_lat,end_lon) %>% 
@@ -828,6 +834,7 @@ options <-  lapply(df, function(y) {
        series = series)
 })
 
+library(echarty)
 p <- ec.init(preset=FALSE, load='world')
 # timeline labels need to match option titles
 p$x$opts$timeline <- list(data=unlist(lapply(options, 
@@ -948,7 +955,7 @@ jscode <- "window.toggleOpt = function () {
 hc <- hclust(dist(USArrests), "ave")
 subt <- paste(as.character(hc$call)[2:3], collapse=' ')
 
-library(echarty)
+library(echarty)   # v.1.4.4+
 p <- ec.init(preset=FALSE, js=jscode) |> ec.theme('dark-mushroom')
 option1 <- list(
   title= list(text= 'Radial Dendrogram', subtext= subt),
