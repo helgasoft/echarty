@@ -20,10 +20,10 @@ ec.init(
 For crosstalk df should be of type \code{\link[crosstalk]{SharedData}}.\cr
 Timeline requires a \emph{grouped data.frame} to build its \href{https://echarts.apache.org/en/option.html#options}{options}.}
 
-\item{preset}{Build presets xAxis,yAxis,serie for 2D, or grid3D,xAxis3D,yAxis3D,zAxis3D for 3D, default TRUE (enable).}
+\item{preset}{Build preset xAxis,yAxis,serie for 2D, or grid3D,xAxis3D,yAxis3D,zAxis3D for 3D, default TRUE (enable).}
 
 \item{ctype}{Chart type of series. Default is 'scatter'. Set to NULL to disable series preset. \cr
-If the grouping is on multiple columns, only the first one is used.}
+If grouping is on multiple columns, only the first one is used for grouping.}
 
 \item{load}{Name(s) of plugin(s) to load. Could be a character vector or comma-delimited string. default NULL.}
 

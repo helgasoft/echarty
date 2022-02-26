@@ -10,19 +10,42 @@ ec.data(df, format = "dataset", header = TRUE)
 \item{df}{Chart data in data.frame format, required.}
 
 \item{format}{A key on how to format the output list \cr \itemize{
-\item 'dataset' = list to be used in \href{https://echarts.apache.org/en/option.html#dataset.source}{dataset} (default), or in \href{https://echarts.apache.org/en/option.html#series-scatter.data}{series.data} but without a header. \cr
+\item 'dataset' = list to be used in \href{https://echarts.apache.org/en/option.html#dataset.source}{dataset} (default), or in \href{https://echarts.apache.org/en/option.html#series-scatter.data}{series.data} but without the header. \cr
 \item 'values' = list for customized \href{https://echarts.apache.org/en/option.html#series-scatter.data}{series.data} \cr
 \item 'names' = named lists useful for named data like \href{https://echarts.apache.org/en/option.html#series-sankey.links}{sankey links}.
+\item 'boxplot' = a named list, helper for grouped boxplots, see Details
 }}
 
 \item{header}{Boolean to include the column names header or not, default TRUE.
 Set this to FALSE when used in \href{https://echarts.apache.org/en/option.html#series-scatter.data}{series.data}.}
 }
 \value{
-A list for \emph{dataset.source}, \emph{series.data} or a list of named lists.
+A list for \emph{dataset.source}, \emph{series.data} or a list of named lists.\cr
+For boxplot see Details and Examples.
 }
 \description{
 Make data lists from a data.frame
+}
+\details{
+\code{format='boxplot'} requires a non-grouped \emph{df} to have the first three columns as:\cr \itemize{
+\item column for X-axis values
+\item column for grouping by, usually goes to the legend
+\item column for data (numeric), boxplot computing source }
+It returns \code{list(dataset, series, axlblfmt)} to set the chart dataset, series and axis-label-formatter.\cr
+Make sure there is enough data for computation, like >4 values per boxplot. Otherwise ECharts may exit with a \emph{Object.transform} error.
+}
+\examples{
+ds <- mtcars |> dplyr::relocate(am,cyl,mpg) |> ec.data(format='boxplot')
+p <- ec.init()
+p$x$opts <- list(
+ dataset= ds$dataset, 
+ series=  ds$series,
+ xAxis= list(type= 'category', axisLabel= list(formatter=ds$axlblfmt)), 
+ yAxis= list(show= TRUE),
+ legend= list(show= TRUE)
+)
+p
+
 }
 \seealso{
 some live \href{https://rpubs.com/echarty/data-models}{code samples}

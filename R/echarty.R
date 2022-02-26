@@ -8,8 +8,8 @@
 #'     For crosstalk df should be of type \code{\link[crosstalk]{SharedData}}.\cr
 #'     Timeline requires a \emph{grouped data.frame} to build its \href{https://echarts.apache.org/en/option.html#options}{options}.
 #' @param ctype Chart type of series. Default is 'scatter'. Set to NULL to disable series preset. \cr
-#'     If the grouping is on multiple columns, only the first one is used.
-#' @param preset Build presets xAxis,yAxis,serie for 2D, or grid3D,xAxis3D,yAxis3D,zAxis3D for 3D, default TRUE (enable).
+#'     If grouping is on multiple columns, only the first one is used for grouping.
+#' @param preset Build preset xAxis,yAxis,serie for 2D, or grid3D,xAxis3D,yAxis3D,zAxis3D for 3D, default TRUE (enable).
 #' @param load Name(s) of plugin(s) to load. Could be a character vector or comma-delimited string. default NULL.
 #' @param width,height A valid CSS unit (like \code{'100\%'},
 #'   \code{'500px'}, \code{'auto'}) or a number, which will be coerced to a
@@ -250,13 +250,15 @@ ec.init <- function( df=NULL, preset=TRUE, ctype='scatter', load=NULL,
   # Plugins implemented as dynamic load on-demand
   if ('3D' %in% load) {
     if (preset) {       # replace 2D presets with 3D
-      wt$x$opts$xAxis <- NULL   
-      wt$x$opts$yAxis <- NULL
-      wt$x$opts$grid3D  <- list(list())
-      wt$x$opts$xAxis3D <- list(list())
-      wt$x$opts$yAxis3D <- list(list())
-      wt$x$opts$zAxis3D <- list(list())
-      # valid 3D types: scatter3D, bar3D,...'surface' too
+      if (ctype != 'scatterGL') {  # scatterGL is 2D
+        wt$x$opts$xAxis <- NULL   
+        wt$x$opts$yAxis <- NULL
+        wt$x$opts$grid3D  <- list(list())
+        wt$x$opts$xAxis3D <- list(list())
+        wt$x$opts$yAxis3D <- list(list())
+        wt$x$opts$zAxis3D <- list(list())
+      }
+      # valid 3D types: scatter3D, bar3D, surface, etc.
       if ('series' %in% names(wt$x$opts)) {  # if default 2D, change it
         wt$x$opts$series <- lapply(wt$x$opts$series,
           function(s) {s$type= if (s$type=='scatter') 'scatter3D' else s$type; s })
@@ -382,15 +384,35 @@ ec.init <- function( df=NULL, preset=TRUE, ctype='scatter', load=NULL,
 #' 
 #' @param df Chart data in data.frame format, required. 
 #' @param format A key on how to format the output list \cr \itemize{
-#'  \item 'dataset' = list to be used in \href{https://echarts.apache.org/en/option.html#dataset.source}{dataset} (default), or in \href{https://echarts.apache.org/en/option.html#series-scatter.data}{series.data} but without a header. \cr
+#'  \item 'dataset' = list to be used in \href{https://echarts.apache.org/en/option.html#dataset.source}{dataset} (default), or in \href{https://echarts.apache.org/en/option.html#series-scatter.data}{series.data} but without the header. \cr
 #'  \item 'values' = list for customized \href{https://echarts.apache.org/en/option.html#series-scatter.data}{series.data} \cr
 #'  \item 'names' = named lists useful for named data like \href{https://echarts.apache.org/en/option.html#series-sankey.links}{sankey links}.
+#'  \item 'boxplot' = a named list, helper for grouped boxplots, see Details
 #'  }
 #' @param header Boolean to include the column names header or not, default TRUE. 
 #'    Set this to FALSE when used in \href{https://echarts.apache.org/en/option.html#series-scatter.data}{series.data}.
-#' @return A list for \emph{dataset.source}, \emph{series.data} or a list of named lists.
-#'
+#' @return A list for \emph{dataset.source}, \emph{series.data} or a list of named lists.\cr
+#'    For boxplot see Details and Examples.
+#' @details `format='boxplot'` requires a non-grouped \emph{df} to have the first three columns as:\cr \itemize{
+#'   \item column for X-axis values
+#'   \item column for grouping by, usually goes to the legend
+#'   \item column for data (numeric), boxplot computing source }
+#' It returns `list(dataset, series, axlblfmt)` to set the chart dataset, series and axis-label-formatter.\cr
+#' Make sure there is enough data for computation, like >4 values per boxplot. Otherwise ECharts may exit with a \emph{Object.transform} error.
 #' @seealso some live \href{https://rpubs.com/echarty/data-models}{code samples}
+#' 
+#' @examples
+#' ds <- mtcars |> dplyr::relocate(am,cyl,mpg) |> ec.data(format='boxplot')
+#' p <- ec.init()
+#' p$x$opts <- list(
+#'  dataset= ds$dataset, 
+#'  series=  ds$series,
+#'  xAxis= list(type= 'category', axisLabel= list(formatter=ds$axlblfmt)), 
+#'  yAxis= list(show= TRUE),
+#'  legend= list(show= TRUE)
+#' )
+#' p
+#' 
 #' @export
 ec.data <- function(df, format='dataset', header=TRUE) {
   if (missing(df))
@@ -415,7 +437,31 @@ ec.data <- function(df, format='dataset', header=TRUE) {
       datset <- c(list(colnames(df)), datset)
   } else if (format=='values' || isTRUE(format)) {
     datset <- lapply(tmp, function(x) list(value=unlist(unname(x))))
-  } else   # ='names'
+  } else if (format=='boxplot') {
+    if (dplyr::is.grouped_df(df)) stop('boxplot: grouped df is invalid', call.=FALSE)
+    cn <- colnames(df)
+    if (length(cn)<3) stop('boxplot: df should have 3+ columns', call.=FALSE)
+    colxax <- cn[1]; colgrp <- cn[2]; coldat <- cn[3]    
+    if (!is.numeric(df[[coldat]])) stop('boxplot: 3rd column must be numeric', call.=FALSE)
+    series <- list()
+    tmp <- df |> group_by(.data[[colgrp]]) |> group_split()
+    dataset <- lapply(tmp, function(dd) { 
+      dv <- dd |> group_by(.data[[colxax]]) |> group_split()
+      list(source= lapply(dv, function(vv) vv[[coldat]]) )
+    })
+    for (i in 1:length(tmp)) { 
+      dataset <- append(dataset, list(list(
+        fromDatasetIndex= i-1, transform= list(type= 'boxplot')))) 
+      series <- append(series, list(list(
+        name= tmp[[i]][[colgrp]][1], 
+        type= 'boxplot', datasetIndex= i+length(tmp)-1)) )
+    }
+    # dplyr::group_by is auto-sorting, so we need to do the same
+    xax <- paste(sort(unique(df[[colxax]])), collapse="','")   # X-axis labels
+    xax <- paste0("(v) => { return ['",xax,"'][v]; }")
+    
+    return(list(dataset= dataset, series= series, axlblfmt= htmlwidgets::JS(xax)))
+  } else    # ='names'
     datset <- tmp
 
   return(datset)

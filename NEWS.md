@@ -1,12 +1,13 @@
 # history of echarty package development
 
-## v.1.4.4
+## v.1.4.4.9002
 
 - upgrade ECharts to v.5.3.0
 - _ec.init_ timeline (_tl.series_) to support 3D
 - _ec.theme_ warnings about _ec.snip_
 - _ec.clmn_ for single value charts, like tree
-- new _ec.dendro_ for dendrograms, + data.tree dependency
+- new _ec.dendro_ for dendrograms with new dependency _data.tree_
+- new _ec.data_ format='boxplot' - a helper for grouped boxplots
 - new package info thru command "?echarty"
 
 ## v.1.4.3

@@ -72,14 +72,8 @@
     };
 
     var colorPalette = [
-        '#cc0e00',
-        '#ff1a0a',
-        '#ff8880',
-        '#ffc180',
-        '#ffc2b0',
-        '#ffffff',
-        '#ff8880',
-        '#ffe6e6'
+    	//'#cc0e00','#ff1a0a','#ff8880','#ffc180','#ffc2b0','#ffffff','#ff8880','#ffe6e6'  //old
+        '#d73027','#f46d43','#fdae61','#fee08b','#d9ef8b','#a6d96a','#66bd63','#1a9850'
     ];
     var theme = {
         color: colorPalette,
