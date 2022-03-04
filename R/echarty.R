@@ -523,17 +523,15 @@ return template.replace(/%@|%L@/g, (m) => {
         t0 <- sapply(args, function(s) toString(paste0('x.data.', s)) )
         t0 <- paste(t0, collapse=',')
         t1 <- paste(args, collapse='`,`')
-        ret <- paste0( spf,
-                       " if (!x.data) return `no data`; 
-let args=[`",t1,"`], ss=[]; pos=[];
+        ret <- paste0( spf, " if (!x.data) return `no data`; 
+let args=[`",t1,"`], vv=[]; pos=[];
 if (x.dimensionNames && x.dimensionNames.length>0) 
   pos= args.map(z => x.dimensionNames.indexOf(z));
 if (x.data.length)
-  ss= pos.map(p => x.data[p]);
+  vv= pos.map(p => x.data[p]);
 else
-  ss= (x.data.value && x.data.value.length>0) 
-     ? pos.map(p => x.data.value[p]) : [",t0,"];
-let c= sprintf(`",col,"`,ss); return c;"
+  vv= (x.data.value && x.data.value.length>0) 
+     ? pos.map(p => x.data.value[p]) : [",t0,"];"
         )
       }
       else {   
@@ -549,9 +547,11 @@ let vv= ss.map((e) => {
 if (typeof vv[0] === 'object' && vv[0].value) {
     vv = ss.map((e,idx) => { 
       f= Math.round(e % 1 *10) -1;
-      return vv[idx].value[f];  }) };
-let c = sprintf(`",col,"`, vv); return c; ")
+      return vv[idx].value[f];  }) };")
       }
+      if (scale>1) ret <- paste(ret, "vv= vv.map(e => isNaN(e) ? e : e*",scale,");")
+      if (scale==0) ret <- paste(ret,"vv= vv.map(e => isNaN(e) ? e : Math.round(e));")
+      ret <- paste(ret, "let c = sprintf(`",col,"`, vv); return c; ")
     }
   }
   else {      # col is solitary numeric
