@@ -325,7 +325,7 @@ ec.init <- function( df=NULL, preset=TRUE, ctype='scatter', load=NULL,
     }
     if (is.null(unlist(tl.series$encode[xtem]))) {
       # append col XcolX 1:max for each group
-      df <- df %>% group_modify(~ { .x %>% mutate(XcolX = 1:nrow(.)) })
+      df <- df |> group_modify(~ { .x |> mutate(XcolX = 1:nrow(.)) })
       tl.series$encode[xtem] <- 'XcolX'    # instead of relocate(XcolX)
       # replace only source, transforms stay
       wt$x$opts$dataset[[1]] <- list(source=ec.data(df))
@@ -339,13 +339,13 @@ ec.init <- function( df=NULL, preset=TRUE, ctype='scatter', load=NULL,
     wt$x$opts$legend <- NULL
     
     # loop group column(s)
-    gvar <- df %>% group_vars() %>% first()
+    gvar <- df |> group_vars() |> first()
     gvar <- as.character(gvar)  # convert if factor
     di <- 0
-    optl <- lapply(df %>% group_split(), function(gp) {
+    optl <- lapply(df |> group_split(), function(gp) {
       di <<- di+1
       # nicer looking lines with sorted X 
-      #if (!is.null(xcol)) gp <- gp %>% arrange(across(all_of(xcol)))
+      #if (!is.null(xcol)) gp <- gp |> arrange(across(all_of(xcol)))
       
       # multiple series for each Y, like y=c('col1', 'col3')
       series <- lapply(unname(unlist(tl.series$encode[ytem])), 
@@ -474,13 +474,15 @@ ec.data <- function(df, format='dataset', header=TRUE) {
 #' 
 #' @param col A single column index(number) or column name(string), \cr
 #'    or a \code{\link[base]{sprintf}} format string. 
-#' @param ... Only when \emph{col} is \emph{sprintf}: comma separated column indexes or names(strings), but not both.  This allows formatting of multiple columns, as for a tooltip.
-#' @param scale Only when \emph{col} is a single column index or name: a multiplier number for column values.
+#' @param ... Only when \emph{col} is \emph{sprintf}: comma separated column indexes or names(strings), but not both.  This allows formatting of multiple columns, as for a tooltip.\cr
+#'    Column indexes could be decimals for combo charts with multiple series, see [ecr.band] example. The whole number part is the serie index, the decimal part is the column index inside.
+#' @param scale A positive number, multiplier for numeric columns. When scale is 0, values are rounded.
 #' @return A JavaScript code string (usually a function) marked as executable, see \code{\link[htmlwidgets]{JS}}.
 #'  
 #' @details Column indexes are counted in R and start at 1.\cr
 #' \emph{col} as sprintf has the same placeholder \emph{%@} for both column indexes or column names.\cr
 #' \emph{col} as sprintf can contain double quotes, but not single or backquotes.\cr
+#' Placeholder \emph{%L@} will display a number in locale format, like '12,345.09'.
 #' Set \emph{col} to -1 for charts like \emph{tree} which return a single value.\cr
 #' Useful for attributes like formatter, color, symbolSize. 
 #' 
@@ -490,9 +492,9 @@ ec.data <- function(df, format='dataset', header=TRUE) {
 #' df <- iris |> dplyr::inner_join(tmp)   # add 6th column 'emoji'
 #' p <- df |> dplyr::group_by(Species) |> ec.init()
 #' p$x$opts$series <- list(list(
-#'   type='scatter', label=list(show=TRUE, formatter = ec.clmn(6))  # ref 6th column
+#'   type='scatter', label=list(show=TRUE, formatter= ec.clmn(6))  # ref 6th column
 #' ))
-#' p$x$opts$tooltip <- list(formatter=          # sprintf + ref multiple columns
+#' p$x$opts$tooltip <- list(formatter=     # sprintf + multiple column indexes
 #'    ec.clmn('species <b>%@</b><br>s.len <b>%@</b><br>s.wid <b>%@</b>', 5,1,2))
 #' p
 #' 
@@ -500,39 +502,55 @@ ec.data <- function(df, format='dataset', header=TRUE) {
 ec.clmn <- function(col=NULL, ..., scale=1) {
   if (is.null(col)) stop('col is required', call.=FALSE)
   if (is.null(scale)) scale=1
-  scl <- if (scale==1) 'return c;' else paste0('return (parseFloat(c)*',scale,');')
+  scl <- if (scale==1) 'return c;' 
+         else if (scale==0) 'return Math.round(c);'
+         else paste0('return (parseFloat(c)*',scale,');')
   args <- list(...)
   if (is.na(suppressWarnings(as.numeric(col)))) {   # col is string
     if (length(args)==0) {  # col is solitary name
       ret <- paste0('let c=(!x.data) ? `no data` : x.data.',col,'; ',scl)
       
-    } else {                # col a sprintf
-      spf <- paste("var sprintf = (str, argv) => !argv.length ? str :",
-                   "sprintf(str = str.replace('%@', argv.shift()), argv); ")
+    } else {                # col is sprintf
+      spf <- "var sprintf= (template, values) => { let j=0;
+return template.replace(/%@|%L@/g, (m) => {
+  if (m=='%@') return values[j++];
+  if (m=='%L@') return Number(values[j++]).toLocaleString();
+}); };"
+
       tmp <- suppressWarnings(as.numeric(args) -1)
-      if (all(is.na(tmp))) {   # multiple non-numeric strings = column names
+      if (all(is.na(tmp))) {   
+        # multiple non-numeric strings = column names
         t0 <- sapply(args, function(s) toString(paste0('x.data.', s)) )
         t0 <- paste(t0, collapse=',')
         t1 <- paste(args, collapse='`,`')
-        ret <- paste0( spf,       
-"if (!x.data) return `no data`;
-let args=[`",t1,"`], ss=pos=[];
+        ret <- paste0( spf,
+                       " if (!x.data) return `no data`; 
+let args=[`",t1,"`], ss=[]; pos=[];
 if (x.dimensionNames && x.dimensionNames.length>0) 
   pos= args.map(z => x.dimensionNames.indexOf(z));
-if (!x.data.length) {
+if (x.data.length)
+  ss= pos.map(p => x.data[p]);
+else
   ss= (x.data.value && x.data.value.length>0) 
-     ? pos.map(p => x.data.value[p]) : [",t0,"]; 
-} else {
-  ss= pos.map(p => x.data[p]); }
-let c=sprintf(`",col,"`,ss); return c;"
+     ? pos.map(p => x.data.value[p]) : [",t0,"];
+let c= sprintf(`",col,"`,ss); return c;"
         )
       }
-      else {   #  multiple numeric, they could be in x, x.data, x.value
+      else {   
+        #  multiple numeric, they could be in x, x.data, x.value OR x[].value[]
+        #  in combo-charts (ec.band), get decimal portion as .value index
         tmp <- paste(tmp, collapse=',')
-        ret <- paste0( spf,
-"let ss=[",tmp,"];
-ss=ss.map(e => x.value!=null ? x.value[e] : x.data!=null ? x.data[e] : x[e]!=null ? x[e] : `no data`);
-let c = sprintf(`",col,"`, ss); return c; ")
+        ret <- paste0( spf, "let ss=[",tmp,"];
+let vv= ss.map((e) => { 
+    let i= Math.floor(e);
+    return x.value!=null ? x.value[i] : 
+           x.data!=null  ? x.data[i] : 
+           x[i]!=null    ? x[i] : `no data` });
+if (typeof vv[0] === 'object' && vv[0].value) {
+    vv = ss.map((e,idx) => { 
+      f= Math.round(e % 1 *10) -1;
+      return vv[idx].value[f];  }) };
+let c = sprintf(`",col,"`, vv); return c; ")
       }
     }
   }
@@ -541,7 +559,7 @@ let c = sprintf(`",col,"`, ss); return c; ")
       warning('col is numeric, others are ignored', call.=FALSE)
     col <- as.numeric(col) - 1   # from R to JS counting
     if (col < 0)  # just a value is expected
-      ret <- paste0('let c=x; ',scl)
+      ret <- paste('let c=x;',scl)
     else
       ret <- paste0('let c = x.value!=null ? x.value[',col,'] : x.data!=null ? x.data[',col,'] : x[',col,']; ',scl)
   }
@@ -558,33 +576,30 @@ let c = sprintf(`",col,"`, ss); return c; ")
 #' @param upper The column name(string) of band's upper boundary.
 #' @param type Type of rendering  \cr \itemize{
 #'  \item 'stack' - by two \href{https://echarts.apache.org/en/option.html#series-line.stack}{stacked lines} 
-#'  \item 'polygon' - by drawing a polygon as polyline (default)
+#'  \item 'polygon' - by drawing a polygon as polyline (default). Warning: cannot be zoomed!
 #' }
 #' @param ... More parameters for \href{https://echarts.apache.org/en/option.html#series-line.type}{serie}
 #' @return A list of one serie when type='polygon', or two series when type='stack'
 #'
 #' @details When type='polygon', coordinates of the two boundaries are chained into a polygon and displayed as one.\cr
-#'      When type='stack', two smooth \emph{stacked} lines are drawn, one with customizable areaStyle. The upper boundary coordinates should be values added on top of the lower boundary coordinates.\cr
+#'      When type='stack', two \emph{stacked} lines are drawn, one with customizable areaStyle. The upper boundary coordinates should be values added on top of the lower boundary coordinates.\cr
 #'      Type 'stack' needs \emph{xAxis} to be of type 'category'.
 #' 
 #' @examples 
 #' if (interactive()) {
-#' df <- data.frame( x = 1:10, y = runif(10, 5, 10)) |>
-#'   dplyr::mutate(lwr = y-runif(10, 1, 3), upr = y+runif(10, 2, 4))
-#' 
+#' df <- airquality |> dplyr::mutate(lwr= round(Temp-Wind*2), 
+#'                                   upr= round(Temp+Wind*2), 
+#'                                   x=paste0(Month,'-',Day) ) |>
+#'                     dplyr::relocate(x,Temp)
+#' bands <- ecr.band(df, 'lwr', 'upr', type='stack', 
+#'                   name='stak', areaStyle= list(opacity=0.4))
 #' p <- df |> ec.init(load='custom')
-#' p$x$opts$legend <- list(show=TRUE) 
 #' p$x$opts$xAxis <- list(type='category', boundaryGap=FALSE)
-#' p$x$opts$series <- list(list(type='line', color='yellow', datasetIndex=0, name='line1'))
-#' p$x$opts$series <- append( p$x$opts$series,
-#'      ecr.band(df, 'lwr', 'upr', type='stack', name='stak')
-#' )
-#' p$x$opts$tooltip <- list(trigger = 'axis'
-#'                          ,formatter = htmlwidgets::JS("function(x) {
-#'   let str='high <b>'+x[2].value[2]+'</b><br>line <b>'+x[0].value[1]+
-#'    '</b><br>low <b>'+x[1].value[1]+'</b>';
-#'   return str;
-#'   }"))
+#' p$x$opts$series <- list(list(type='line', color='blue', name='line'), 
+#'                         bands[[1]], bands[[2]] )
+#' p$x$opts$tooltip <- list(trigger= 'axis',
+#'    formatter= ec.clmn('high <b>%@</b><br>line <b>%@</b><br>low <b>%@</b>', 3.3, 1.2, 2.2))
+#' p$x$opts$legend <- list(show= TRUE)
 #' p
 #' }
 #' @export
@@ -607,16 +622,17 @@ ecr.band <- function(df=NULL, lower=NULL, upper=NULL, type='polygon', ...) {
     if (is.null(slow$stack)) slow$stack <- 'band'
     if (is.null(slow$name)) slow$name <- 'band'
     if (is.null(slow$showSymbol)) slow$showSymbol <- FALSE
-    if (is.null(slow$smooth)) slow$smooth <- TRUE
+    #if (is.null(slow$smooth)) slow$smooth <- TRUE
     if (is.null(slow$lineStyle)) slow$lineStyle <- list(width=0)
     supr <- slow
     if (!is.null(slow$areaStyle)) slow$areaStyle <- NULL
     else supr$areaStyle <- astyle
-    # save realHI data for tooltip, 'hi' is just difference
+    # save upper data for tooltip, 'hi' is just difference
     tmp <- data.frame(x = df[fstc][[1]], lo=df[lower][[1]], 
-                      hi = df[upper][[1]] - df[lower][[1]], realHI = df[upper][[1]] )
-    slow$data <- ec.data(tmp[,c('x','lo')], "values")
-    supr$data <- ec.data(tmp[,c('x','hi','realHI')], "values")
+                      hi = df[upper][[1]] - df[lower][[1]], 
+                      ttip = df[upper][[1]] )
+    slow$data <- ec.data(tmp[,c('x','lo')], header=FALSE)
+    supr$data <- ec.data(tmp[,c('x','hi','ttip')], header=FALSE)
     serios <- list(slow, supr)
   }
   else {   # polygon
@@ -739,7 +755,7 @@ ecr.ebars <- function(wt, df=NULL, hwidth=6, ...) {
   else {
     if (dplyr::is.grouped_df(df)) {    # groups
       grnm <- dplyr::group_vars(df)[[1]]   # just 1st one matters
-      tmp <- df %>% dplyr::group_split()
+      tmp <- df |> dplyr::group_split()
       cser <- lapply(tmp, function(gp) {
         name <- unlist(unique(unname(gp[,grnm])))
         oneSerie(name, gp)

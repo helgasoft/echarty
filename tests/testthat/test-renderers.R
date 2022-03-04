@@ -1,11 +1,11 @@
 library(dplyr)
 
 test_that("custom renderers - ecr.ebars", {
-  df <- mtcars %>% group_by(cyl,gear) %>% summarise(yy=round(mean(mpg),2)) %>%
-    mutate(low=round(yy-cyl*runif(1),2), high=round(yy+cyl*runif(1),2)) %>%
+  df <- mtcars |> group_by(cyl,gear) |> summarise(yy=round(mean(mpg),2)) |>
+    mutate(low=round(yy-cyl*runif(1),2), high=round(yy+cyl*runif(1),2)) |>
     relocate(cyl, .after = last_col())   # move group column behind first four cols
   
-  p <- df %>% ec.init(ctype='bar', load='custom') %>%
+  p <- df |> ec.init(ctype='bar', load='custom') |>
     ecr.ebars(df, name = 'eb')
   
   expect_equal(length(p$x$opts$series), 6)
@@ -15,11 +15,11 @@ test_that("custom renderers - ecr.ebars", {
 })
 
 test_that("custom renderers - ecr.band", {
-  df <- Orange %>% mutate(Tree=as.numeric(Tree)) %>% relocate(Tree, .after = last_col())
-  p <- df %>% group_by(Tree) %>% ec.init(load='custom')
+  df <- Orange |> mutate(Tree=as.numeric(Tree)) |> relocate(Tree, .after = last_col())
+  p <- df |> group_by(Tree) |> ec.init(load='custom')
   p$x$opts$legend <- list(ii='')
   p$x$opts$series <- append(
-    ecr.band(df %>% filter(Tree==4) %>% inner_join(df %>% filter(Tree=='1'), by='age'),
+    ecr.band(df |> filter(Tree==4) |> inner_join(df |> filter(Tree=='1'), by='age'),
              'circumference.y', 'circumference.x', name='poly1'),
     list(list(type='line', datasetIndex=3, color='orange', name='line1'))
   )

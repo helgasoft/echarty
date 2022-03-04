@@ -10,9 +10,10 @@ ec.clmn(col = NULL, ..., scale = 1)
 \item{col}{A single column index(number) or column name(string), \cr
 or a \code{\link[base]{sprintf}} format string.}
 
-\item{...}{Only when \emph{col} is \emph{sprintf}: comma separated column indexes or names(strings), but not both.  This allows formatting of multiple columns, as for a tooltip.}
+\item{...}{Only when \emph{col} is \emph{sprintf}: comma separated column indexes or names(strings), but not both.  This allows formatting of multiple columns, as for a tooltip.\cr
+Column indexes could be decimals for combo charts with multiple series, see \link{ecr.band} example. The whole number part is the serie index, the decimal part is the column index inside.}
 
-\item{scale}{Only when \emph{col} is a single column index or name: a multiplier number for column values.}
+\item{scale}{A positive number, multiplier for numeric columns. When scale is 0, values are rounded.}
 }
 \value{
 A JavaScript code string (usually a function) marked as executable, see \code{\link[htmlwidgets]{JS}}.
@@ -24,6 +25,7 @@ Helper function to display/format data column(s) by index or name
 Column indexes are counted in R and start at 1.\cr
 \emph{col} as sprintf has the same placeholder \emph{\%@} for both column indexes or column names.\cr
 \emph{col} as sprintf can contain double quotes, but not single or backquotes.\cr
+Placeholder \emph{\%L@} will display a number in locale format, like '12,345.09'.
 Set \emph{col} to -1 for charts like \emph{tree} which return a single value.\cr
 Useful for attributes like formatter, color, symbolSize.
 }
@@ -33,9 +35,9 @@ tmp <- data.frame(Species = as.vector(unique(iris$Species)),
 df <- iris |> dplyr::inner_join(tmp)   # add 6th column 'emoji'
 p <- df |> dplyr::group_by(Species) |> ec.init()
 p$x$opts$series <- list(list(
-  type='scatter', label=list(show=TRUE, formatter = ec.clmn(6))  # ref 6th column
+  type='scatter', label=list(show=TRUE, formatter= ec.clmn(6))  # ref 6th column
 ))
-p$x$opts$tooltip <- list(formatter=          # sprintf + ref multiple columns
+p$x$opts$tooltip <- list(formatter=     # sprintf + multiple column indexes
    ec.clmn('species <b>\%@</b><br>s.len <b>\%@</b><br>s.wid <b>\%@</b>', 5,1,2))
 p
 

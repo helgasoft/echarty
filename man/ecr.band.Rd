@@ -15,7 +15,7 @@ ecr.band(df = NULL, lower = NULL, upper = NULL, type = "polygon", ...)
 
 \item{type}{Type of rendering  \cr \itemize{
 \item 'stack' - by two \href{https://echarts.apache.org/en/option.html#series-line.stack}{stacked lines}
-\item 'polygon' - by drawing a polygon as polyline (default)
+\item 'polygon' - by drawing a polygon as polyline (default). Warning: cannot be zoomed!
 }}
 
 \item{...}{More parameters for \href{https://echarts.apache.org/en/option.html#series-line.type}{serie}}
@@ -28,27 +28,24 @@ A 'custom' serie with lower and upper boundaries
 }
 \details{
 When type='polygon', coordinates of the two boundaries are chained into a polygon and displayed as one.\cr
-When type='stack', two smooth \emph{stacked} lines are drawn, one with customizable areaStyle. The upper boundary coordinates should be values added on top of the lower boundary coordinates.\cr
+When type='stack', two \emph{stacked} lines are drawn, one with customizable areaStyle. The upper boundary coordinates should be values added on top of the lower boundary coordinates.\cr
 Type 'stack' needs \emph{xAxis} to be of type 'category'.
 }
 \examples{
 if (interactive()) {
-df <- data.frame( x = 1:10, y = runif(10, 5, 10)) |>
-  dplyr::mutate(lwr = y-runif(10, 1, 3), upr = y+runif(10, 2, 4))
-
+df <- airquality |> dplyr::mutate(lwr= round(Temp-Wind*2), 
+                                  upr= round(Temp+Wind*2), 
+                                  x=paste0(Month,'-',Day) ) |>
+                    dplyr::relocate(x,Temp)
+bands <- ecr.band(df, 'lwr', 'upr', type='stack', 
+                  name='stak', areaStyle= list(opacity=0.4))
 p <- df |> ec.init(load='custom')
-p$x$opts$legend <- list(show=TRUE) 
 p$x$opts$xAxis <- list(type='category', boundaryGap=FALSE)
-p$x$opts$series <- list(list(type='line', color='yellow', datasetIndex=0, name='line1'))
-p$x$opts$series <- append( p$x$opts$series,
-     ecr.band(df, 'lwr', 'upr', type='stack', name='stak')
-)
-p$x$opts$tooltip <- list(trigger = 'axis'
-                         ,formatter = htmlwidgets::JS("function(x) {
-  let str='high <b>'+x[2].value[2]+'</b><br>line <b>'+x[0].value[1]+
-   '</b><br>low <b>'+x[1].value[1]+'</b>';
-  return str;
-  }"))
+p$x$opts$series <- list(list(type='line', color='blue', name='line'), 
+                        bands[[1]], bands[[2]] )
+p$x$opts$tooltip <- list(trigger= 'axis',
+   formatter= ec.clmn('high <b>\%@</b><br>line <b>\%@</b><br>low <b>\%@</b>', 3.3, 1.2, 2.2))
+p$x$opts$legend <- list(show= TRUE)
 p
 }
 }

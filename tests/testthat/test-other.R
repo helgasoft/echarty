@@ -73,6 +73,12 @@ test_that("ec.dendro", {
   expect_equal(length(p$x$opts$series[[1]]$data[[1]]$children[[1]]$children), 2)
 })
 
+test_that("ec.data for boxlpot", {
+  ds <- mtcars |> dplyr::relocate(am,cyl,mpg) |> ec.data(format='boxplot')
+  expect_equal(ds$series[[1]]$type, 'boxplot')
+  expect_equal(class(ds$axlblfmt), 'JS_EVAL')
+})
+
 # test_that("load 3D surface", {  # dont - will load echarts-gl.js in source folder 'js'
 #     data <- list()
 #   for(y in 1:dim(volcano)[2]) for(x in 1:dim(volcano)[1]) 

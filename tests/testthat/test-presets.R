@@ -7,7 +7,7 @@ df <- data.frame(
   symbol = sample(c("circle", "rect", "triangle"), 10, replace= TRUE)
 )
 test_that("ec.init presets for non-grouped data.frame", {
-  p <- df %>% ec.init()
+  p <- df |> ec.init()
   expect_equal(p$x$opts$xAxis$type, 'category')
   expect_true(!is.null(p$x$opts$yAxis))
   expect_equal(length(p$x$opts$dataset[[1]]$source), 11)
@@ -16,7 +16,7 @@ test_that("ec.init presets for non-grouped data.frame", {
 #> Test passed 🥇
 
 test_that("ec.init presets for grouped data.frame", {
-  p <- df %>% group_by(symbol) %>% ec.init()
+  p <- df |> dplyr::group_by(symbol) |> ec.init()
   expect_equal(p$x$opts$xAxis$type, 'category')
   expect_true(!is.null(p$x$opts$yAxis))
   expect_equal(length(p$x$opts$dataset[[1]]$source), 11)
@@ -34,7 +34,7 @@ test_that("ec.init presets for timeline", {
     value = runif(16)
   )
   barTL <- function(data, timeline_var, x_var, bar_var) {
-    bt <- data %>% group_by(!!sym(timeline_var)) %>% 
+    bt <- data |> group_by(!!sym(timeline_var)) |> 
       ec.init(tl.series = list(type='bar', encode=list(x=x_var, y=bar_var)))
     bt
   }
