@@ -1,11 +1,3 @@
-<!--
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:site" content="@echarty_R">
-<meta name="twitter:title" content="echarty - a thin R/Shiny wrapper to ECharts.js">
-<meta name="twitter:description" content="Have the full functionality of ECharts in R with minimal overhead!">
-<meta name="twitter:image" content="https://helgasoft.github.io/echarty/img/echarty.twitter.jpg">
-<meta name="google-site-verification" content="EPa1Ifa0Yrcub8714ClnWEO2XwD1CDqSVYWm8oLs2Kg" />
--->  
 
 ## Introduction
 
@@ -18,7 +10,7 @@ Building complex charts as data structures is a powerful concept, also simple an
 
 ## Gallery
 Enjoy [the gallery](gallery.md) and grab some chart code!  
-Best place to get started with **echarty**
+Best place to get started with **echarty**  
 <a href='gallery.html'><img src='img/echarty.gallery.png'/></a>
 <br /><br />
 
