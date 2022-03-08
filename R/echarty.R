@@ -504,9 +504,9 @@ ec.data <- function(df, format='dataset', header=TRUE) {
 ec.clmn <- function(col=NULL, ..., scale=1) {
   if (is.null(col)) stop('col is required', call.=FALSE)
   if (is.null(scale)) scale=1
-  scl <- 'return c;' 
-  if (scale==0) scl <- 'return Math.round(c);'
-  else scl <- paste0('return (parseFloat(c)*',scale,');')
+  if (scale==1) scl <- 'return c;' 
+  else { if (scale==0) scl <- 'return Math.round(c);'
+         else scl <- paste0('return (parseFloat(c)*',scale,');') }
   args <- list(...)
   if (is.na(suppressWarnings(as.numeric(col)))) {   # col is string
     if (length(args)==0) {  # col is solitary name
