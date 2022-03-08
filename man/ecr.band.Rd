@@ -44,7 +44,8 @@ p$x$opts$xAxis <- list(type='category', boundaryGap=FALSE)
 p$x$opts$series <- list(list(type='line', color='blue', name='line'), 
                         bands[[1]], bands[[2]] )
 p$x$opts$tooltip <- list(trigger= 'axis',
-   formatter= ec.clmn('high <b>\%@</b><br>line <b>\%@</b><br>low <b>\%@</b>', 3.3, 1.2, 2.2))
+   formatter= ec.clmn('high <b>\%@</b><br>line <b>\%@</b><br>low <b>\%@</b>', 
+        3.3, 1.2, 2.2))  # 3.3= upper-serie index .index of column inside
 p$x$opts$legend <- list(show= TRUE)
 p
 }

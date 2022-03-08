@@ -472,18 +472,20 @@ ec.data <- function(df, format='dataset', header=TRUE) {
 #' 
 #' Helper function to display/format data column(s) by index or name
 #' 
-#' @param col A single column index(number) or column name(string), \cr
+#' @param col A single column index(number) or column name(quoted string), \cr
 #'    or a \code{\link[base]{sprintf}} format string. 
-#' @param ... Only when \emph{col} is \emph{sprintf}: comma separated column indexes or names(strings), but not both.  This allows formatting of multiple columns, as for a tooltip.\cr
-#'    Column indexes could be decimals for combo charts with multiple series, see [ecr.band] example. The whole number part is the serie index, the decimal part is the column index inside.
-#' @param scale A positive number, multiplier for numeric columns. When scale is 0, values are rounded.
+#' @param ... A comma separated column indexes or names, only when \emph{col} is \emph{sprintf}. This allows formatting of multiple columns, as for a tooltip.\cr
+#' @param scale A positive number, multiplier for numeric columns. When scale is 0, all numeric values are rounded.
 #' @return A JavaScript code string (usually a function) marked as executable, see \code{\link[htmlwidgets]{JS}}.
 #'  
 #' @details Column indexes are counted in R and start at 1.\cr
+#' Set column index to -1 for single values, like \emph{tree} chart, \emph{axisLabel.formatter} or \emph{valueFormatter}.\cr
+#' Column indexes are decimals for combo charts with multiple series, see [ecr.band] example. The whole number part is the serie index, the decimal part is the column index inside.
 #' \emph{col} as sprintf has the same placeholder \emph{%@} for both column indexes or column names.\cr
 #' \emph{col} as sprintf can contain double quotes, but not single or backquotes.\cr
-#' Placeholder \emph{%L@} will display a number in locale format, like '12,345.09'.
-#' Set \emph{col} to -1 for charts like \emph{tree} which return a single value.\cr
+#' Placeholder \emph{%L@} will display a number in locale format, like '12,345.09'.\cr
+#' Placeholder \emph{%LR@} will display a rounded number in locale format, like '12,345'.\cr
+#' Placeholder \emph{%R@} will display a rounded number, like '12345'.\cr
 #' Useful for attributes like formatter, color, symbolSize. 
 #' 
 #' @examples
@@ -502,9 +504,9 @@ ec.data <- function(df, format='dataset', header=TRUE) {
 ec.clmn <- function(col=NULL, ..., scale=1) {
   if (is.null(col)) stop('col is required', call.=FALSE)
   if (is.null(scale)) scale=1
-  scl <- if (scale==1) 'return c;' 
-         else if (scale==0) 'return Math.round(c);'
-         else paste0('return (parseFloat(c)*',scale,');')
+  scl <- 'return c;' 
+  if (scale==0) scl <- 'return Math.round(c);'
+  else scl <- paste0('return (parseFloat(c)*',scale,');')
   args <- list(...)
   if (is.na(suppressWarnings(as.numeric(col)))) {   # col is string
     if (length(args)==0) {  # col is solitary name
@@ -512,11 +514,13 @@ ec.clmn <- function(col=NULL, ..., scale=1) {
       
     } else {                # col is sprintf
       spf <- "var sprintf= (template, values) => { let j=0;
-return template.replace(/%@|%L@/g, (m) => {
+return template.replace(/%@|%L@|%LR@|%R@/g, (m) => {
   if (m=='%@') return values[j++];
   if (m=='%L@') return Number(values[j++]).toLocaleString();
+  if (m=='%LR@') return Math.round(Number(values[j++])).toLocaleString();
+  if (m=='%R@') return Math.round(Number(values[j++]));
 }); };"
-
+      
       tmp <- suppressWarnings(as.numeric(args) -1)
       if (all(is.na(tmp))) {   
         # multiple non-numeric strings = column names
@@ -540,6 +544,7 @@ else
         tmp <- paste(tmp, collapse=',')
         ret <- paste0( spf, "let ss=[",tmp,"];
 let vv= ss.map((e) => { 
+    if (e<0) return x.value ? x.value : x;
     let i= Math.floor(e);
     return x.value!=null ? x.value[i] : 
            x.data!=null  ? x.data[i] : 
@@ -549,7 +554,7 @@ if (typeof vv[0] === 'object' && vv[0].value) {
       f= Math.round(e % 1 *10) -1;
       return vv[idx].value[f];  }) };")
       }
-      if (scale>1) ret <- paste(ret, "vv= vv.map(e => isNaN(e) ? e : e*",scale,");")
+      if (scale >0) ret <- paste(ret,"vv= vv.map(e => isNaN(e) ? e : e*",scale,");")
       if (scale==0) ret <- paste(ret,"vv= vv.map(e => isNaN(e) ? e : Math.round(e));")
       ret <- paste(ret, "let c = sprintf(`",col,"`, vv); return c; ")
     }
@@ -598,7 +603,8 @@ if (typeof vv[0] === 'object' && vv[0].value) {
 #' p$x$opts$series <- list(list(type='line', color='blue', name='line'), 
 #'                         bands[[1]], bands[[2]] )
 #' p$x$opts$tooltip <- list(trigger= 'axis',
-#'    formatter= ec.clmn('high <b>%@</b><br>line <b>%@</b><br>low <b>%@</b>', 3.3, 1.2, 2.2))
+#'    formatter= ec.clmn('high <b>%@</b><br>line <b>%@</b><br>low <b>%@</b>', 
+#'         3.3, 1.2, 2.2))  # 3.3= upper-serie index .index of column inside
 #' p$x$opts$legend <- list(show= TRUE)
 #' p
 #' }

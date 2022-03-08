@@ -7,13 +7,12 @@
 ec.clmn(col = NULL, ..., scale = 1)
 }
 \arguments{
-\item{col}{A single column index(number) or column name(string), \cr
+\item{col}{A single column index(number) or column name(quoted string), \cr
 or a \code{\link[base]{sprintf}} format string.}
 
-\item{...}{Only when \emph{col} is \emph{sprintf}: comma separated column indexes or names(strings), but not both.  This allows formatting of multiple columns, as for a tooltip.\cr
-Column indexes could be decimals for combo charts with multiple series, see \link{ecr.band} example. The whole number part is the serie index, the decimal part is the column index inside.}
+\item{...}{A comma separated column indexes or names, only when \emph{col} is \emph{sprintf}. This allows formatting of multiple columns, as for a tooltip.\cr}
 
-\item{scale}{A positive number, multiplier for numeric columns. When scale is 0, values are rounded.}
+\item{scale}{A positive number, multiplier for numeric columns. When scale is 0, all numeric values are rounded.}
 }
 \value{
 A JavaScript code string (usually a function) marked as executable, see \code{\link[htmlwidgets]{JS}}.
@@ -23,10 +22,13 @@ Helper function to display/format data column(s) by index or name
 }
 \details{
 Column indexes are counted in R and start at 1.\cr
+Set column index to -1 for single values, like \emph{tree} chart, \emph{axisLabel.formatter} or \emph{valueFormatter}.\cr
+Column indexes are decimals for combo charts with multiple series, see \link{ecr.band} example. The whole number part is the serie index, the decimal part is the column index inside.
 \emph{col} as sprintf has the same placeholder \emph{\%@} for both column indexes or column names.\cr
 \emph{col} as sprintf can contain double quotes, but not single or backquotes.\cr
-Placeholder \emph{\%L@} will display a number in locale format, like '12,345.09'.
-Set \emph{col} to -1 for charts like \emph{tree} which return a single value.\cr
+Placeholder \emph{\%L@} will display a number in locale format, like '12,345.09'.\cr
+Placeholder \emph{\%LR@} will display a rounded number in locale format, like '12,345'.\cr
+Placeholder \emph{\%R@} will display a rounded number, like '12345'.\cr
 Useful for attributes like formatter, color, symbolSize.
 }
 \examples{
