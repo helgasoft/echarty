@@ -431,8 +431,9 @@ library(echarty)
 p <- data |> ec.init(preset= FALSE) |> ec.theme('dark-mushroom')
 p$x$opts$radar <- list(
   indicator= ec.data(data, 'names'),
-  name= list(formatter= ec.clmn('{%@| }', -1),
-             rich= rifo)
+  name= list( 
+    formatter=ec.clmn(paste0('{','%@| }'), -1),  # paste0: Github/Jekyll workaround
+    rich= rifo)
 )
 p$x$opts$series= list( list(
   type= 'radar',
