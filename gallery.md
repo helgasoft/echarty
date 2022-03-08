@@ -580,6 +580,7 @@ p$toolbox <- list(left='right', feature=list(dataZoom=list(show=TRUE)))
 ec.snip(p)
 
 ```
+
 </details>
 <br />
 
@@ -606,6 +607,7 @@ p$x$opts$visualMap <- list(min=-1, max=1, orient='vertical',left='right'
   ,calculable=TRUE, inRange=list( color=heat.colors(11)) )
 p
 ```
+
 </details>
 <br />
 
@@ -646,6 +648,7 @@ p <- hh |> group_by(time) |>
   ec.theme('dark')
 p
 ```
+
 </details>
 <br />
 
@@ -690,6 +693,7 @@ p$x$opts <- list(
 )
 p
 ```
+
 </details>
 <br />
 
