@@ -137,7 +137,7 @@ ec.init <- function( df=NULL, preset=TRUE, ctype='scatter', load=NULL,
   if (!is.null(df)) {
     # if data.frame given, assign to dataset regardless of parameter 'preset'
     if (!'data.frame' %in% class(df)) 
-      stop('df must be a data.frame', call. = FALSE)
+      stop('ec.init: df must be a data.frame', call. = FALSE)
     
     # grouping uses transform - a v.5 feature
     grnm <- NULL
@@ -264,7 +264,7 @@ ec.init <- function( df=NULL, preset=TRUE, ctype='scatter', load=NULL,
           function(s) {s$type= if (s$type=='scatter') 'scatter3D' else s$type; s })
       }
     }
-    wt <- ec.plugjs(wt, 'https://cdn.jsdelivr.net/npm/echarts-gl@2.0.8/dist/echarts-gl.min.js', ask)
+    wt <- ec.plugjs(wt, 'https://cdn.jsdelivr.net/npm/echarts-gl@2.0.9/dist/echarts-gl.min.js', ask)
   }
   if ('world' %in% load) {
     wt <- ec.plugjs(wt, 'https://cdn.jsdelivr.net/npm/echarts@4.9.0/map/js/world.js', ask)
@@ -295,10 +295,10 @@ ec.init <- function( df=NULL, preset=TRUE, ctype='scatter', load=NULL,
   # timeline is last to execute
   if (!is.null(tl.series)) {
     if (!is.grouped_df(df))
-      stop('tl.series requires a grouped data.frame', call. = FALSE)
+      stop('ec.init: tl.series requires a grouped data.frame', call. = FALSE)
 
     if (is.null(tl.series$encode))
-      stop('encode is required for tl.series', call. = FALSE)
+      stop('ec.init: encode is required for tl.series', call. = FALSE)
 
     # add missing defaults
     if (is.null(tl.series$type)) tl.series$type <- 'line'
@@ -331,7 +331,7 @@ ec.init <- function( df=NULL, preset=TRUE, ctype='scatter', load=NULL,
       wt$x$opts$dataset[[1]] <- list(source=ec.data(df))
     }
     if (is.null(unlist(tl.series$encode[ytem])))
-      stop("encode 'y' is required for tl.series", call.=FALSE)
+      stop("ec.init: encode 'y' is required for tl.series", call.=FALSE)
     
     # dataset is already in, now set everything else
     #wt$x$opts$xAxis <- list(type='category')  # geo,leaf do not like
@@ -382,52 +382,104 @@ ec.init <- function( df=NULL, preset=TRUE, ctype='scatter', load=NULL,
 #' 
 #' Make data lists from a data.frame
 #' 
-#' @param df Chart data in data.frame format, required. 
+#' @param df Chart data in data.frame format, required. \cr
+#' Except when format is 'dendrogram', then df is a list, result of \code{\link[stats]{hclust}} function.
 #' @param format A key on how to format the output list \cr \itemize{
-#'  \item 'dataset' = list to be used in \href{https://echarts.apache.org/en/option.html#dataset.source}{dataset} (default), or in \href{https://echarts.apache.org/en/option.html#series-scatter.data}{series.data} but without the header. \cr
+#'  \item 'dataset' = list to be used in \href{https://echarts.apache.org/en/option.html#dataset.source}{dataset} (default), or in \href{https://echarts.apache.org/en/option.html#series-scatter.data}{series.data} (without header). \cr
 #'  \item 'values' = list for customized \href{https://echarts.apache.org/en/option.html#series-scatter.data}{series.data} \cr
 #'  \item 'names' = named lists useful for named data like \href{https://echarts.apache.org/en/option.html#series-sankey.links}{sankey links}.
-#'  \item 'boxplot' = a named list, helper for grouped boxplots, see Details
+#'  \item 'boxplot' = build dataset and source lists, see Details
+#'  \item 'dendrogram' = build series data for Hierarchical Clustering dendrogram
 #'  }
-#' @param header Boolean to include the column names header or not, default TRUE. 
+#' @param header Boolean to include the column names in dataset, default TRUE.\cr
 #'    Set this to FALSE when used in \href{https://echarts.apache.org/en/option.html#series-scatter.data}{series.data}.
 #' @return A list for \emph{dataset.source}, \emph{series.data} or a list of named lists.\cr
-#'    For boxplot see Details and Examples.
-#' @details `format='boxplot'` requires a non-grouped \emph{df} to have the first three columns as:\cr \itemize{
-#'   \item column for X-axis values
-#'   \item column for grouping by, usually goes to the legend
-#'   \item column for data (numeric), boxplot computing source }
-#' It returns `list(dataset, series, axlblfmt)` to set the chart dataset, series and axis-label-formatter.\cr
-#' Make sure there is enough data for computation, like >4 values per boxplot. Otherwise ECharts may exit with a \emph{Object.transform} error.
+#'   For boxplot - a named list, see Details and Examples \cr
+#'   For dendrogram - a tree structure, see format in \href{https://echarts.apache.org/en/option.html#series-tree.data}{tree data}
+#' @details `format='boxplot'` requires the first two \emph{df} columns as: \itemize{
+#'   \item column for the non-computational categorical axis
+#'   \item column with (numeric) data to compute the five boxplot values
+#'  }
+#'  Grouped \emph{df} is supported. Groups will show in the legend, if enabled.\cr
+#'  Returns a `list(dataset, series)` to set the chart dataset and series.\cr
+#'  Make sure there is enough data for computation, like >4 values per boxplot. Otherwise ECharts may exit with a \emph{Object.transform} error.
 #' @seealso some live \href{https://rpubs.com/echarty/data-models}{code samples}
 #' 
 #' @examples
-#' ds <- mtcars |> dplyr::relocate(am,cyl,mpg) |> ec.data(format='boxplot')
+#' library(dplyr)
+#' #ds <- Orange |> relocate(age,circumference) |> ec.data(format='boxplot')
+#' #ds <- Orange |> relocate(age,circumference) |> group_by(Tree) |> ec.data(format='boxplot')
+#' #ds <- mtcars |> relocate(am,mpg) |> ec.data(format='boxplot')
+#'  ds <- mtcars |> relocate(am,mpg) |> group_by(cyl) |> ec.data(format='boxplot')
 #' p <- ec.init()
 #' p$x$opts <- list(
-#'  dataset= ds$dataset, 
-#'  series=  ds$series,
-#'  xAxis= list(type= 'category', axisLabel= list(formatter=ds$axlblfmt)), 
-#'  yAxis= list(show= TRUE),
-#'  legend= list(show= TRUE)
+#'   dataset= ds$dataset, 
+#'   series=  ds$series, 
+#'   yAxis= list(type= 'category'), # categorical yAxis = boxplots horizontal
+#'   xAxis= list(show= TRUE),       # categorical xAxis = boxplots vertical
+#'   legend= list(show= TRUE)
 #' )
+#' p 
+#' 
+#' hc <- hclust(dist(USArrests), "complete")
+#' p <- ec.init(preset= FALSE)
+#' p$x$opts$series <- list(list(
+#'   type= 'tree', orient= 'TB', roam= TRUE, initialTreeDepth= -1,
+#'   data= ec.data(hc, format='dendrogram'),
+#'   # layout= 'radial', symbolSize= ec.clmn(-1, scale= 0.33),
+#'   #    exclude added labels like 'pXX', leaving only the originals
+#'   label= list(formatter= htmlwidgets::JS(
+#'     "function(n) { out= /p\\d+/.test(n.name) ? '' : n.name; return out;}"))
+#' ))
 #' p
 #' 
+#' @importFrom utils tail
+#' @importFrom grDevices boxplot.stats
 #' @export
 ec.data <- function(df, format='dataset', header=TRUE) {
   if (missing(df))
-    stop('expecting df as data.frame', call. = FALSE)
-  if (!'data.frame' %in% class(df))
-    stop('df has to be data.frame', call. = FALSE)
+    stop('ec.data: expecting parameter df', call. = FALSE)
+  if (format=='dendrogram') { 
+    if (class(df) != 'hclust')
+      stop('ec.data: df should be hclust for dendrogram', call. = FALSE)
+    hc <- df
+    # decode hc$merge with hc$labels
+    inew <- list()
+    i <- 0
+    tmp <- apply(hc$merge, 1, function(x) {
+      fst <- if (x[1]<0) { if (is.null(hc$labels)) -x[1] else hc$labels[-x[1]] } else inew[[x[1]]]$p[1]
+      snd <- if (x[2]<0) { if (is.null(hc$labels)) -x[2] else hc$labels[-x[2]] } else inew[[x[2]]]$p[1]
+      i <<- i+1
+      inew <<- append(inew, list(
+        list(p= rep(paste0('p',i),2), c= c(fst, snd), 
+             h= rep(round(hc$height[i], 2), 2))))
+    })
+    tmp <- unlist(inew)
+    parents <- children <- vals <- c()
+    for(i in 1:length(tmp)) {
+      fst <- substr(names(tmp[i]), 1, 1)
+      switch(fst,
+             'p'= parents <- c(parents, tmp[i]),
+             'c'= children <- c(children, tmp[i]),
+             'h'= vals <- c(vals, as.numeric(tmp[i]))
+      )
+    }
+    # add top element, required for tree chart
+    vals <- c(unname(vals), 1)
+    children <- c(unname(children), unname(tail(parents,1)))
+    parents <- c(unname(parents), '')
+    
+    # convert from data.frame to JSON
+    dafr <- data.frame(parents=parents, children=children, value=vals)
+    tmp <- data.tree::FromDataFrameNetwork(dafr)
+    json <- data.tree::ToListExplicit(tmp, unname=TRUE)
+    return(json$children)
+    
+  } 
+  else if (!'data.frame' %in% class(df))
+    stop('ec.data: df has to be data.frame', call. = FALSE)
   
-  #tmp <- purrr::transpose(df)          # named lists
   rownames(df) <- NULL
-  # tmp <- apply(df, 1, function(x) {   # apply converts df to matrix with cols=char
-  #   out <- list()
-  #   i <- 1
-  #   for(n in colnames(df)) { out[n] <- x[i]; i <- i+1 }
-  #   out 
-  # })
   n <- seq_along(df[[1]])       # assuming all lists in df have the same length
   tmp <- lapply(n, function(i) lapply(df, "[[", i))  # preserve column types
   
@@ -435,32 +487,46 @@ ec.data <- function(df, format='dataset', header=TRUE) {
     datset <- lapply(tmp, unname)
     if (header)
       datset <- c(list(colnames(df)), datset)
+    
   } else if (format=='values' || isTRUE(format)) {
     datset <- lapply(tmp, function(x) list(value=unlist(unname(x))))
-  } else if (format=='boxplot') {
-    if (dplyr::is.grouped_df(df)) stop('boxplot: grouped df is invalid', call.=FALSE)
-    cn <- colnames(df)
-    if (length(cn)<3) stop('boxplot: df should have 3+ columns', call.=FALSE)
-    colxax <- cn[1]; colgrp <- cn[2]; coldat <- cn[3]    
-    if (!is.numeric(df[[coldat]])) stop('boxplot: 3rd column must be numeric', call.=FALSE)
-    series <- list()
-    tmp <- df |> group_by(.data[[colgrp]]) |> group_split()
-    dataset <- lapply(tmp, function(dd) { 
-      dv <- dd |> group_by(.data[[colxax]]) |> group_split()
-      list(source= lapply(dv, function(vv) vv[[coldat]]) )
-    })
-    for (i in 1:length(tmp)) { 
-      dataset <- append(dataset, list(list(
-        fromDatasetIndex= i-1, transform= list(type= 'boxplot')))) 
-      series <- append(series, list(list(
-        name= tmp[[i]][[colgrp]][1], 
-        type= 'boxplot', datasetIndex= i+length(tmp)-1)) )
-    }
-    # dplyr::group_by is auto-sorting, so we need to do the same
-    xax <- paste(sort(unique(df[[colxax]])), collapse="','")   # X-axis labels
-    xax <- paste0("(v) => { return ['",xax,"'][v]; }")
     
-    return(list(dataset= dataset, series= series, axlblfmt= htmlwidgets::JS(xax)))
+  } else if (format=='boxplot') {
+    cn <- colnames(df)
+    if (length(cn)<2) stop('boxplot: df should have 2+ columns', call.=FALSE)
+    colas <- cn[1]; colb5 <- cn[2]
+    if (!is.numeric(df[[colb5]])) stop('boxplot: 2nd column must be numeric', call.=FALSE)
+    # will group by colas column anyway
+    colgrp <- if (is.grouped_df(df) && group_vars(df)[1]!=colas) 
+      group_vars(df)[1] else NULL
+    
+    if (!is.null(colgrp)) {   # grouped
+      series <- list()
+      tmp <- df |> group_split()
+      dataset <- lapply(tmp, function(dd) { 
+        dv <- dd |> dplyr::group_by(.data[[colas]]) |> group_split()
+        src <- lapply(dv, function(vv) vv[[colb5]])
+        list(source= if (length(src[[1]])==1) list(src) else src)
+      })
+      for (i in 1:length(tmp)) { 
+        dataset <- append(dataset, list(list(
+          fromDatasetIndex= i-1, transform= list(type= 'boxplot')))) 
+        series <- append(series, list(list(
+          name= tmp[[i]][[colgrp]][1], 
+          type= 'boxplot', datasetIndex= i+length(tmp)-1)) )
+      }
+      
+    } else {  # non-grouped
+      bdf <- ungroup(df) |> dplyr::group_by(across({colas})) |> group_split()
+      dats <- lapply(bdf, function(x) {
+        c(unique(pull(x,colas)), round(boxplot.stats( pull(x,colb5) )$stats, 4))
+      })
+      dataset <- list(source= ec.data( as.data.frame(do.call(rbind, dats)) ))
+      # default is horizontal, for vertical switch xAxis/yAxis category type
+      series <- list(list(type='boxplot', encode= list(y='V1', x=c('V2','V3','V4','V5','V6'))))
+    }
+    return(list(dataset= dataset, series= series)) 
+    
   } else    # ='names'
     datset <- tmp
 
@@ -502,7 +568,7 @@ ec.data <- function(df, format='dataset', header=TRUE) {
 #' 
 #' @export
 ec.clmn <- function(col=NULL, ..., scale=1) {
-  if (is.null(col)) stop('col is required', call.=FALSE)
+  if (is.null(col)) stop('ec.clmn: col is required', call.=FALSE)
   if (is.null(scale)) scale=1
   if (scale==1) scl <- 'return c;' 
   else { if (scale==0) scl <- 'return Math.round(c);'
@@ -611,11 +677,11 @@ if (typeof vv[0] === 'object' && vv[0].value) {
 #' @export
 ecr.band <- function(df=NULL, lower=NULL, upper=NULL, type='polygon', ...) {
   if (is.null(df) || is.null(lower) || is.null(upper)) 
-    stop("df, lower and upper are all required", call. = FALSE)
+    stop("ecr.band: df, lower and upper are all required", call. = FALSE)
   if (!"data.frame" %in% class(df)) 
-    stop("df must be a data.frame", call. = FALSE)
+    stop("ecr.band: df must be a data.frame", call. = FALSE)
   if (!is.numeric(df[lower][[1]]) || !is.numeric(df[upper][[1]]))
-    stop("lower and upper must be numeric", call. = FALSE)
+    stop("ecr.band: lower and upper must be numeric", call. = FALSE)
   
   fstc <- colnames(df)[1]   # first column name
   if (type=='stack') {
@@ -688,16 +754,16 @@ ecr.band <- function(df=NULL, lower=NULL, upper=NULL, type='polygon', ...) {
 #' @export
 ecr.ebars <- function(wt, df=NULL, hwidth=6, ...) {
   # alternating bars with custom series doesn't work, first bars then customs
-  if (missing(wt)) stop('ecr.ebars expecting widget', call.=FALSE)
+  if (missing(wt)) stop('ecr.ebars: expecting widget', call.=FALSE)
   if (!is.null(df) && !inherits(df, "data.frame")) 
-    stop('df must be a data.frame', call.=FALSE)
+    stop('ecr.ebars: df must be a data.frame', call.=FALSE)
   if (!'renderers' %in% unlist(lapply(wt$dependencies, function(d) d$name)))
-    stop("use ec.init(load='custom') for ecr.ebars", call.=FALSE)
+    stop("ecr.ebars: use ec.init(load='custom') for ecr.ebars", call.=FALSE)
   if (!is.null(wt$saved))
-    stop('Did you place ec.snip at end-of-pipe?', call. = FALSE)
+    stop('ecr.ebars: did you place ec.snip at end-of-pipe?', call. = FALSE)
   
   ser <- wt$x$opts$series  # all series
-  if (is.null(ser)) stop('series are missing', call.=FALSE)
+  if (is.null(ser)) stop('ecr.ebars: series are missing', call.=FALSE)
   args <- list(...)
   
   # look for barGap(s), barCategoryGap(s)
@@ -756,7 +822,7 @@ ecr.ebars <- function(wt, df=NULL, hwidth=6, ...) {
       if (is.null(name)) name <- wt$x$opts$dataset[[1]]$source[[1]][2]
       cser <- list(oneSerie(name))
     } else 
-      stop('dataset is grouped, use df parameter', call. = FALSE)
+      stop('ecr.ebars: dataset is grouped, use df parameter', call. = FALSE)
   }
   else {
     if (dplyr::is.grouped_df(df)) {    # groups
@@ -869,11 +935,11 @@ ecs.proxy <- function(id) {
 ecs.exec <- function(proxy, cmd='p_merge') {
 
   if (missing(proxy))
-    stop('missing proxy', call. = FALSE)
+    stop('ecs.exec: missing proxy', call. = FALSE)
   if (!'ecsProxy' %in% class(proxy)) 
-    stop('must pass ecsProxy object', call. = FALSE)
+    stop('ecs.exec: must pass ecsProxy object', call. = FALSE)
   if (is.null(proxy$x) || is.null(proxy$x$opts))
-    stop('proxy is empty', call. = FALSE)
+    stop('ecs.exec: proxy is empty', call. = FALSE)
   
   plist <- list(id = proxy$id, 
                 opts = proxy$x$opts,
@@ -921,7 +987,7 @@ ec.layout <- function (plots, rows = NULL, cols = NULL, width = "xs",
                        title = NULL) 
 {
   if (!is.list(plots))
-    stop('ec.layout charts must be a list', call. = FALSE)
+    stop('ec.layout: charts must be a list', call. = FALSE)
   if (is.null(rows) & !is.null(cols)) rows <- ceiling(length(plots)/cols)
   if (!is.null(rows) & is.null(cols)) cols <- ceiling(length(plots)/rows)
   if (is.null(rows) & is.null(cols)) { rows <- length(plots); cols <- 1 }
@@ -983,7 +1049,7 @@ ec.layout <- function (plots, rows = NULL, cols = NULL, width = "xs",
 #' @export 
 ec.paxis <- function (df=NULL, minmax=TRUE, cols=NULL, ...) {
   if (!'data.frame' %in% class(df))
-    stop('df has to be data.frame', call.= FALSE)
+    stop('ec.paxis: df has to be data.frame', call.= FALSE)
   pax <- list(); grnm <- ''
   cfilter <- 1:length(colnames(df))
   if (dplyr::is.grouped_df(df)) {
@@ -992,7 +1058,7 @@ ec.paxis <- function (df=NULL, minmax=TRUE, cols=NULL, ...) {
     cfilter <- cfilter[!cfilter==match(grnm,colnames(df))]
   }
   if (!is.null(cols)) {
-    if (!all(cols %in% colnames(df))) stop('some cols not found', call.= FALSE)
+    if (!all(cols %in% colnames(df))) stop('ec.paxis: some cols not found', call.= FALSE)
     cfilter <- match(cols, colnames(df))  # indexes
   }
   for(i in cfilter) {
@@ -1010,63 +1076,6 @@ ec.paxis <- function (df=NULL, minmax=TRUE, cols=NULL, ...) {
   }
   pax
 }                   
-
-
-#' Dendrogram
-#' 
-#' Build data for Hierarchical Clustering dendrogram - a tree chart
-#' 
-#' @param hc Result of \code{\link[stats]{hclust}} function.
-#' @return A tree structure, see format in \href{https://echarts.apache.org/en/option.html#series-tree.data}{tree data}.
-#' @examples
-#' hc <- hclust(dist(USArrests), "complete")
-#' p <- ec.init(preset=FALSE) 
-#' p$x$opts$series <- list(list( 
-#'   type= 'tree', orient= 'TB', roam= TRUE, initialTreeDepth= -1,
-#'   data= ec.dendro(hc), 
-#'   # layout= 'radial',
-#'   # symbolSize= ec.clmn(-1, scale= 0.33), 
-#'   #    exclude added labels like 'p99', leaving only the originals
-#'   label= list(formatter= htmlwidgets::JS(
-#'     "function(n) { out= /p\\d+/.test(n.name) ? '' : n.name; return out;}"))
-#' ))
-#' p
-#' 
-#' @importFrom utils tail
-#' @export
-ec.dendro <- function (hc) {
-  # decode hc$merge with hc$labels
-  inew <- list()
-  i <- 0
-  tmp <- apply(hc$merge, 1, function(x) {
-    fst <- if (x[1]<0) { if (is.null(hc$labels)) -x[1] else hc$labels[-x[1]] } else inew[[x[1]]]$p[1]
-    snd <- if (x[2]<0) { if (is.null(hc$labels)) -x[2] else hc$labels[-x[2]] } else inew[[x[2]]]$p[1]
-    i <<- i+1
-    inew <<- append(inew, list(
-      list(p= rep(paste0('p',i),2), c= c(fst, snd), 
-           h= rep(round(hc$height[i], 2), 2))))
-  })
-  tmp <- unlist(inew)
-  parents <- children <- vals <- c()
-  for(i in 1:length(tmp)) {
-    fst <- substr(names(tmp[i]), 1, 1)
-    switch(fst,
-           'p'= parents <- c(parents, tmp[i]),
-           'c'= children <- c(children, tmp[i]),
-           'h'= vals <- c(vals, as.numeric(tmp[i]))
-    )
-  }
-  # add top element, required for tree chart
-  vals <- c(unname(vals), 1)
-  children <- c(unname(children), unname(tail(parents,1)))
-  parents <- c(unname(parents), '')
-  
-  # convert from data.frame to JSON
-  df <- data.frame(parents=parents, children=children, value=vals)
-  tmp <- data.tree::FromDataFrameNetwork(df)
-  json <- data.tree::ToListExplicit(tmp, unname=TRUE)
-  return(json$children)
-}
 
 
 #' Themes
@@ -1091,9 +1100,9 @@ ec.dendro <- function (hc) {
 ec.theme <- function (wt, name, code= NULL) 
 {
   if (missing(name))
-    stop('must define theme name', call. = FALSE)
+    stop('ec.theme: must define a name', call. = FALSE)
   if (!is.null(wt$saved))
-    stop('Did you place ec.snip at end-of-pipe?', call. = FALSE)
+    stop('ec.theme: did you place ec.snip at end-of-pipe?', call. = FALSE)
   
   #if (length(wt$x[[1]])==0) wt$x[[1]] <- NULL  # parasite list
   wt$x$theme <- name
@@ -1136,12 +1145,12 @@ ec.theme <- function (wt, name, code= NULL)
 #' @export
 ec.inspect <- function(wt, target=NULL, json=TRUE, ...) {
   if (!is.null(wt$saved))
-    stop('ec.inspect incompatible with ec.snip', call. = FALSE)
+    stop('ec.inspect: incompatible with ec.snip', call. = FALSE)
   
   opts <- wt$x$opts
   
   if (!is.null(target)) {
-    if (target!='data') stop("only target='data' supported", call. = FALSE)
+    if (target!='data') stop("ec.inspect: only target='data' supported", call. = FALSE)
     out <- list()
     if (!is.null(opts$dataset))
       out <- sapply(opts$dataset, function(d) {
@@ -1229,7 +1238,7 @@ ec.fromJson <- function(txt, ...) {
 #' @export
 ec.snip <- function(wt) {
   if (missing(wt))
-    stop('expecting wt as htmlwidget or list', call.=FALSE)
+    stop('ec.snip: expecting wt as htmlwidget or list', call.=FALSE)
 
   if ('echarty' %in% class(wt)) {
     # prepare for shorthand writing
@@ -1283,10 +1292,10 @@ ec.snip <- function(wt) {
 #' @export
 ec.plugjs <- function(wt=NULL, source=NULL, ask=FALSE) {
   if (missing(wt))
-    stop('ec.plugjs expecting widget', call. = FALSE)
+    stop('ec.plugjs: expecting widget', call. = FALSE)
   if (is.null(source)) return(wt)
   if (!startsWith(source, 'http') && !startsWith(source, 'file://'))
-    stop('ec.plugjs expecting source as URL or file://', call. = FALSE)
+    stop('ec.plugjs: expecting source as URL or file://', call. = FALSE)
   fname <- basename(source)
   fname <- unlist(strsplit(fname, '?', fixed=TRUE))[1]  # when 'X.js?key=Y'
   # if (!endsWith(fname, '.js'))

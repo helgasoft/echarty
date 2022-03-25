@@ -60,12 +60,12 @@ test_that("ec.snip", {
   expect_equal(length(op$series), 3)
 })
 
-test_that("ec.dendro", {
+test_that("ec.data for dendrogram", {
   hc <- hclust(dist(USArrests), "average")
-  p <- ec.init(preset=FALSE)
+  p <- ec.init(preset= FALSE)
   p$x$opts$series <- list(list(
     type= 'tree', roam= TRUE, initialTreeDepth= -1,
-    data= ec.dendro(hc)
+    data= ec.data(hc, format='dendrogram')
   ))
   
   expect_equal(p$x$opts$series[[1]]$data[[1]]$name, 'p49')
@@ -74,9 +74,9 @@ test_that("ec.dendro", {
 })
 
 test_that("ec.data for boxlpot", {
-  ds <- mtcars |> dplyr::relocate(am,cyl,mpg) |> ec.data(format='boxplot')
+  ds <- mtcars |> dplyr::relocate(am,mpg) |> ec.data(format='boxplot')
   expect_equal(ds$series[[1]]$type, 'boxplot')
-  expect_equal(class(ds$axlblfmt), 'JS_EVAL')
+  expect_equal(ds$dataset$source[[1]], c("V1","V2","V3","V4","V5","V6"))
 })
 
 # test_that("load 3D surface", {  # dont - will load echarts-gl.js in source folder 'js'

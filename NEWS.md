@@ -1,17 +1,17 @@
 # history of echarty package development
 
-## v.1.4.4.9004
+## v.1.4.4.9005
 
-- upgrade ECharts to v.5.3.0
+- upgrade ECharts to v.5.3.1, GL to v.2.0.9
 - _ec.init_ timeline (_tl.series_) to support 3D
-- _ec.theme_ warnings about _ec.snip_
 - updated _ec.clmn_ for single value charts like tree. 
   Scale 0 to round values. Scale expanded to all numeric columns.
   Decimal indexes for combo charts. 
   L: locale number format. LR: locale rounded format.
-- new _ec.dendro_ for dendrograms with new dependency _data.tree_
-- new _ec.data_ format='boxplot' - a helper for grouped boxplots
-- new package info thru command "?echarty"
+- new _ec.data_ format='dendrogram' with new dependency _data.tree_
+- new _ec.data_ format='boxplot' - a helper for boxplot data
+- new package info via command "?echarty"
+- added new brush/click events to demo _eshiny_ 
 
 ## v.1.4.3
 

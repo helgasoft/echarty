@@ -269,21 +269,17 @@ p
 
 
 #------ Boxplot
-library(dplyr)
-bdf <- data.frame(vx= sample(LETTERS[1:3], size= 20, replace= TRUE), 
-		     vy= rnorm(20)) |> group_by(vx) |> group_split()
-dats <- lapply(bdf, function(x) round(boxplot.stats(x$vy)$stats, 4) )
+ds <- mtcars |> relocate(am,mpg) |> group_by(cyl) |> 
+      ec.data(format='boxplot')
 p <- ec.init()
-p$x$opts <- list(     # overwrite presets
-	xAxis = list(show=TRUE),
-	yAxis = list(type = 'category', data= unique(unlist(lapply(bdf, `[`, , 1))) ),
-	series = list(list(type= 'boxplot', data= dats, 
-			itemStyle= list(color= '#b8c5f2'),
-			encode= list(tooltip= c('min', 'Q1', 'median', 'Q3', 'max'))
-))
-	,tooltip = list(trigger= 'item')
+p$x$opts <- list(
+  dataset= ds$dataset, 
+  series=  ds$series, 
+  yAxis= list(type= 'category'),
+  xAxis= list(show= TRUE),
+  legend= list(show= TRUE)
 )
-p
+p 
 
 
 #------ EChartsJS v.5 feature custom transform - a regression line
