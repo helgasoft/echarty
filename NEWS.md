@@ -1,9 +1,10 @@
 # history of echarty package development
 
-## v.1.4.4.9005
+## v.1.4.5
 
 - upgrade ECharts to v.5.3.1, GL to v.2.0.9
 - _ec.init_ timeline (_tl.series_) to support 3D
+- _ec.init_ timeline (_tl.series_) to support map chart
 - updated _ec.clmn_ for single value charts like tree. 
   Scale 0 to round values. Scale expanded to all numeric columns.
   Decimal indexes for combo charts. 
@@ -11,7 +12,8 @@
 - new _ec.data_ format='dendrogram' with new dependency _data.tree_
 - new _ec.data_ format='boxplot' - a helper for boxplot data
 - new package info via command "?echarty"
-- added new brush/click events to demo _eshiny_ 
+- added new brush/click events to demo(_eshiny_)
+- cleanup `echarty.js` code for events
 
 ## v.1.4.3
 

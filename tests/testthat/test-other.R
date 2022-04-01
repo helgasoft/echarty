@@ -29,7 +29,20 @@ test_that("tl.series and timeline options", {
   expect_equal(p$x$opts$timeline$data[[5]], "1231")
   expect_true(p$x$opts$dataset[[5]]$transform$config['='] == 1004)
 })
-
+test_that("tl.series type 'map'", {
+  if (interactive()) {
+    cns <- data.frame(
+      country = c('United States','China','Russia'),
+      value = runif(3, 1, 100)
+    )
+    p <- cns |> group_by(country) |> ec.init(load='world',
+        tl.series=list(type='map',  encode=list(value='value', name='country')) )
+    p$x$opts$visualMap <- list(calculable=TRUE, max=100)
+    expect_equal(p$x$opts$options[[1]]$series[[1]]$data[[1]]$name, "China")
+  }
+  else expect_equal(1,1)
+})
+  
 test_that("echarts.registerTransform and ecStat", {
   dset <- data.frame(x=1:10, y=sample(1:100,10))
   p <- dset |> ec.init(js='echarts.registerTransform(ecStat.transform.regression)')
@@ -42,14 +55,17 @@ test_that("echarts.registerTransform and ecStat", {
 })
 
 test_that("leaflet with ec.clmn", {
-  tmp <- quakes |> dplyr::relocate('long') |>  # set order to lon,lat
-    dplyr::mutate(size= exp(mag)/20) |> head(100)  # add accented size
-  p <- tmp |> ec.init(load='leaflet')
-  p$x$opts$series[[1]]$symbolSize = ec.clmn(6, scale=2)   # size column
-  p$x$opts$tooltip = list(formatter=ec.clmn('magnitude %@', 'mag'))
-  
-  expect_equal(p$x$opts$leaflet$zoom, 6)
-  expect_equal(class(p$x$opts$tooltip$formatter), 'JS_EVAL')
+  if (interactive()) {
+    tmp <- quakes |> dplyr::relocate('long') |>  # set order to lon,lat
+      dplyr::mutate(size= exp(mag)/20) |> head(100)  # add accented size
+    p <- tmp |> ec.init(load='leaflet')
+    p$x$opts$series[[1]]$symbolSize = ec.clmn(6, scale=2)   # size column
+    p$x$opts$tooltip = list(formatter=ec.clmn('magnitude %@', 'mag'))
+    
+    expect_equal(p$x$opts$leaflet$zoom, 6)
+    expect_equal(class(p$x$opts$tooltip$formatter), 'JS_EVAL')
+  }
+  else expect_equal(1,1)
 })
 
 test_that("ec.snip", {
@@ -77,14 +93,18 @@ test_that("ec.data for boxlpot", {
   ds <- mtcars |> dplyr::relocate(am,mpg) |> ec.data(format='boxplot')
   expect_equal(ds$series[[1]]$type, 'boxplot')
   expect_equal(ds$dataset$source[[1]], c("V1","V2","V3","V4","V5","V6"))
+  expect_equal(class(ds$axlbl), 'JS_EVAL')
 })
 
-# test_that("load 3D surface", {  # dont - will load echarts-gl.js in source folder 'js'
-#     data <- list()
-#   for(y in 1:dim(volcano)[2]) for(x in 1:dim(volcano)[1]) 
-#     data <- append(data, list(c(x, y, volcano[x,y])))
-#   p <- ec.init(load = '3D')  
-#   p$x$opts$series <- list(type = 'surface',	data = data)
-#   
-#   expect_equal(length(p$x$opts$series$data), 5307)
-# })
+test_that("load 3D surface", {
+  if (interactive()) {  # first time will load echarts-gl.js in source folder 'js'
+    data <- list()
+    for(y in 1:dim(volcano)[2]) for(x in 1:dim(volcano)[1])
+      data <- append(data, list(c(x, y, volcano[x,y])))
+    p <- ec.init(load = '3D')
+    p$x$opts$series <- list(type = 'surface',	data = data)
+  
+    expect_equal(length(p$x$opts$series$data), 5307)
+  }
+  else expect_equal(1,1)
+})

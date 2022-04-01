@@ -8,7 +8,7 @@ ec.data(df, format = "dataset", header = TRUE)
 }
 \arguments{
 \item{df}{Chart data in data.frame format, required. \cr
-Except when format is 'dendrogram', then df is a list, result of \code{\link[stats]{hclust}} function.}
+Except when format is 'dendrogram', then df is a list, result of \link[stats]{hclust} function.}
 
 \item{format}{A key on how to format the output list \cr \itemize{
 \item 'dataset' = list to be used in \href{https://echarts.apache.org/en/option.html#dataset.source}{dataset} (default), or in \href{https://echarts.apache.org/en/option.html#series-scatter.data}{series.data} (without header). \cr
@@ -35,7 +35,7 @@ Make data lists from a data.frame
 \item column with (numeric) data to compute the five boxplot values
 }
 Grouped \emph{df} is supported. Groups will show in the legend, if enabled.\cr
-Returns a \code{list(dataset, series)} to set the chart dataset and series.\cr
+Returns a \code{list(dataset, series, axlbl)} to set the chart. \emph{axlbl} is a formatter for the category axis.\cr
 Make sure there is enough data for computation, like >4 values per boxplot. Otherwise ECharts may exit with a \emph{Object.transform} error.
 }
 \examples{
@@ -48,8 +48,9 @@ p <- ec.init()
 p$x$opts <- list(
   dataset= ds$dataset, 
   series=  ds$series, 
-  yAxis= list(type= 'category'), # categorical yAxis = boxplots horizontal
-  xAxis= list(show= TRUE),       # categorical xAxis = boxplots vertical
+  yAxis= list(type= 'category',  # categorical yAxis = horizontal boxplots 
+              axisLabel= list(formatter= ds$axlbl)),
+  xAxis= list(show= TRUE),       # categorical xAxis = vertical boxplots 
   legend= list(show= TRUE)
 )
 p 

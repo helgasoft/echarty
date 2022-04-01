@@ -8,14 +8,14 @@ ec.clmn(col = NULL, ..., scale = 1)
 }
 \arguments{
 \item{col}{A single column index(number) or column name(quoted string), \cr
-or a \code{\link[base]{sprintf}} format string.}
+or a \link[base]{sprintf} format string.}
 
 \item{...}{A comma separated column indexes or names, only when \emph{col} is \emph{sprintf}. This allows formatting of multiple columns, as for a tooltip.\cr}
 
 \item{scale}{A positive number, multiplier for numeric columns. When scale is 0, all numeric values are rounded.}
 }
 \value{
-A JavaScript code string (usually a function) marked as executable, see \code{\link[htmlwidgets]{JS}}.
+A JavaScript code string (usually a function) marked as executable, see \link[htmlwidgets]{JS}.
 }
 \description{
 Helper function to display/format data column(s) by index or name
@@ -29,18 +29,18 @@ Column indexes are decimals for combo charts with multiple series, see \link{ecr
 Placeholder \emph{\%L@} will display a number in locale format, like '12,345.09'.\cr
 Placeholder \emph{\%LR@} will display a rounded number in locale format, like '12,345'.\cr
 Placeholder \emph{\%R@} will display a rounded number, like '12345'.\cr
+Placeholder \emph{\%M@} will display a marker in serie's color.\cr
 Useful for attributes like formatter, color, symbolSize.
 }
 \examples{
 tmp <- data.frame(Species = as.vector(unique(iris$Species)),
                   emoji = c('\U0001F33B','\U0001F335','\U0001F33A'))
-df <- iris |> dplyr::inner_join(tmp)   # add 6th column 'emoji'
+df <- iris |> dplyr::inner_join(tmp)         # add 6th column emoji
 p <- df |> dplyr::group_by(Species) |> ec.init()
-p$x$opts$series <- list(list(
-  type='scatter', label=list(show=TRUE, formatter= ec.clmn(6))  # ref 6th column
-))
+p$x$opts$series <- lapply(p$x$opts$series,   # show 6th column as label
+   function(s) append(s, list(label= list(show= TRUE, formatter= ec.clmn(6)))) )
 p$x$opts$tooltip <- list(formatter=     # sprintf + multiple column indexes
-   ec.clmn('species <b>\%@</b><br>s.len <b>\%@</b><br>s.wid <b>\%@</b>', 5,1,2))
+   ec.clmn('\%M@ species <b>\%@</b><br>s.len <b>\%@</b><br>s.wid <b>\%@</b>', 5,1,2))
 p
 
 }

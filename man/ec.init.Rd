@@ -17,25 +17,28 @@ ec.init(
 }
 \arguments{
 \item{df}{A data.frame to be preset as \href{https://echarts.apache.org/en/option.html#dataset}{dataset}, default NULL \cr
-For crosstalk df should be of type \code{\link[crosstalk]{SharedData}}.\cr
-Timeline requires a \emph{grouped data.frame} to build its \href{https://echarts.apache.org/en/option.html#options}{options}.}
+For crosstalk df should be of type \link[crosstalk]{SharedData}.\cr
+Timeline requires a \emph{grouped data.frame} to build its \href{https://echarts.apache.org/en/option.html#options}{options}.\cr
+If grouping is on multiple columns, only the first one is used to determine settings.}
 
 \item{preset}{Build preset xAxis,yAxis,serie for 2D, or grid3D,xAxis3D,yAxis3D,zAxis3D for 3D, default TRUE (enable).}
 
-\item{ctype}{Chart type of series. Default is 'scatter'. Set to NULL to disable series preset. \cr
-If grouping is on multiple columns, only the first one is used for grouping.}
+\item{ctype}{Chart type of series. Default is 'scatter'. Set to NULL to disable series preset.}
 
 \item{load}{Name(s) of plugin(s) to load. Could be a character vector or comma-delimited string. default NULL.}
 
 \item{tl.series}{A list to build a timeline or NULL(default). The list defines options \href{https://echarts.apache.org/en/option.html#series}{series} and their attributes. \cr
 Requires a grouped data.frame \emph{df}.
-The only indispensable attribute is \href{https://echarts.apache.org/en/option.html#series-line.encode}{encode}.
-\emph{encode} defines which data columns names(not indexes) to use for the axes: \itemize{
-\item set \emph{x} and \emph{y} for coordinateSystem \emph{'cartesian2d'}
-\item set \emph{lng} and \emph{lat} for coordinateSystem \emph{'geo'}
-\item set \emph{radius} and \emph{angle} for coordinateSystem \emph{'polar'}
-\item set \emph{value} and \emph{itemName} for \emph{'pie'} chart.
+The only indispensable attribute is \href{https://echarts.apache.org/en/option.html#series-line.encode}{encode}.\cr
+\emph{encode} defines which data columns names to use for the axes: \cr
+\itemize{
+\item set \emph{x} and \emph{y} for coordinateSystem \emph{cartesian2d}
+\item set \emph{lng} and \emph{lat} for coordinateSystem \emph{geo}
+\item set \emph{radius} and \emph{angle} for coordinateSystem \emph{polar}
+\item set \emph{value} and \emph{itemName} for \emph{pie} chart
+\item set \emph{value} and \emph{name} for \emph{map} chart
 }
+
 Attribute \emph{coordinateSystem} is not set by default and depends on chart \emph{type}.\cr
 Auto-generated \emph{timeline} and \emph{options} will be preset for the chart as well.\cr
 \emph{tl.series} cannot be used for hierarchical charts like graph,tree,treemap,sankey. Chart options/timeline have to be built directly, see \href{https://helgasoft.github.io/echarty/uc4.html}{example}.}
@@ -45,15 +48,16 @@ Auto-generated \emph{timeline} and \emph{options} will be preset for the chart a
 string and have \code{'px'} appended.}
 
 \item{...}{other arguments to pass to the widget. \cr
-Custom widget arguments include: \cr \itemize{
+Custom widget arguments include: \cr
+\itemize{
 \item elementId - Id of the widget, default is NULL(auto-generated)
-\item ask - the \emph{plugjs} parameter when \emph{load} is present, FALSE by default
+\item ask - prompt user before downloading plugins when \emph{load} is present, FALSE by default
 \item js - single string or a vector with JavaScript expressions to evaluate.\cr
 First expression is evaluated before chart initialization. \cr
 Second is evaluated with an exposed object \emph{opts}. \cr
-Third is evaluated with an exposed object \emph{chart} after \emph{opts} have been set.
+Third is evaluated with an exposed \emph{chart} object after \emph{opts} have been set.
 \item renderer - 'canvas'(default) or 'svg'
-\item locale - 'EN'(default) or 'ZH' or other, see \href{https://echarts.apache.org/en/api.html#echarts.init}{here}
+\item locale - 'EN'(default) or 'ZH'. Define others \href{https://gist.github.com/helgasoft/0618c6537c45bfd9e86d3f9e1da497b8}{like so}, see \href{https://echarts.apache.org/en/api.html#echarts.init}{definitions}.
 \item useDirtyRect - enable dirty rectangle rendering or not, FALSE by default, see \href{https://echarts.apache.org/en/api.html#echarts.init}{here}
 }}
 }
@@ -64,13 +68,14 @@ A widget to plot, or to save and expand with more features.
 Required to build a chart. In most cases this will be the only command necessary.
 }
 \details{
-Command \emph{ec.init} creates a widget with \code{\link[htmlwidgets]{createWidget}}, then adds some ECharts features to it.\cr
+Command \emph{ec.init} creates a widget with \link[htmlwidgets]{createWidget}, then adds some ECharts features to it.\cr
 When \emph{ec.init} is chained after a data.frame, a \href{https://echarts.apache.org/en/option.html#dataset}{dataset} is preset. \cr
 When the data.frame is grouped and \emph{ctype} is not null, more datasets with legend and series are also preset. Grouped series are preset as type \emph{scatter}. \cr
 Plugin '3D' presets will not work for 'scatterGL'. Instead, use \emph{preset=FALSE} and set explicitly \emph{xAxis,yAxis}. \cr
 Plugins 'leaflet' and 'world' preset zoom=6 and center to the mean of all coordinates. \cr
 Users can delete or overwrite any presets as needed. \cr
 \link{ec.plugjs} will be called internally for each \emph{load} entry, popup prompts controlled by parameter \emph{ask}. \cr
+
 Built-in plugins: \cr \itemize{
 \item leaflet - Leaflet maps with customizable tiles, see \href{https://github.com/gnijuohz/echarts-leaflet#readme}{source}\cr
 \item custom - renderers for \link{ecr.band} and \link{ecr.ebars} \cr
@@ -80,7 +85,7 @@ Built-in plugins: \cr \itemize{
 \item liquid - liquid fill, see \href{https://github.com/ecomfe/echarts-liquidfill}{source}  \cr
 \item gmodular - graph modularity, see \href{https://github.com/ecomfe/echarts-graph-modularity}{source}  \cr
 \item wordcloud - cloud of words, see \href{https://github.com/ecomfe/echarts-wordcloud}{source} \cr
-} or install you own third-party plugins.
+} or install your own third-party plugins.
 }
 \examples{
  # basic scatter chart from a data.frame, using presets
@@ -97,4 +102,7 @@ p$x$opts$timeline <- append(p$x$opts$timeline, list(autoPlay=TRUE))
 p$x$opts$legend <- list(list())  # add legend
 p
 
+}
+\seealso{
+Package information in \link{echarty-package}.
 }

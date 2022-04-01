@@ -7,7 +7,7 @@
 ec.plugjs(wt = NULL, source = NULL, ask = FALSE)
 }
 \arguments{
-\item{wt}{A widget to add dependency to, see \code{\link[htmlwidgets]{createWidget}}}
+\item{wt}{A widget to add dependency to, see \link[htmlwidgets]{createWidget}}
 
 \item{source}{URL or file:// of a Javascript plugin, \cr
 file name suffix is '.js'. Default is NULL.}

@@ -5,10 +5,10 @@
 #' Required to build a chart. In most cases this will be the only command necessary.
 #'
 #' @param df A data.frame to be preset as \href{https://echarts.apache.org/en/option.html#dataset}{dataset}, default NULL \cr
-#'     For crosstalk df should be of type \code{\link[crosstalk]{SharedData}}.\cr
-#'     Timeline requires a \emph{grouped data.frame} to build its \href{https://echarts.apache.org/en/option.html#options}{options}.
-#' @param ctype Chart type of series. Default is 'scatter'. Set to NULL to disable series preset. \cr
-#'     If grouping is on multiple columns, only the first one is used for grouping.
+#'     For crosstalk df should be of type \link[crosstalk]{SharedData}.\cr
+#'     Timeline requires a \emph{grouped data.frame} to build its \href{https://echarts.apache.org/en/option.html#options}{options}.\cr
+#'     If grouping is on multiple columns, only the first one is used to determine settings.
+#' @param ctype Chart type of series. Default is 'scatter'. Set to NULL to disable series preset.
 #' @param preset Build preset xAxis,yAxis,serie for 2D, or grid3D,xAxis3D,yAxis3D,zAxis3D for 3D, default TRUE (enable).
 #' @param load Name(s) of plugin(s) to load. Could be a character vector or comma-delimited string. default NULL.
 #' @param width,height A valid CSS unit (like \code{'100\%'},
@@ -16,37 +16,37 @@
 #'   string and have \code{'px'} appended.
 #' @param tl.series A list to build a timeline or NULL(default). The list defines options \href{https://echarts.apache.org/en/option.html#series}{series} and their attributes. \cr
 #'  Requires a grouped data.frame \emph{df}.
-#'  The only indispensable attribute is \href{https://echarts.apache.org/en/option.html#series-line.encode}{encode}. 
-#'  \emph{encode} defines which data columns names(not indexes) to use for the axes: \itemize{
-#'   \item set \emph{x} and \emph{y} for coordinateSystem \emph{'cartesian2d'}
-#'   \item set \emph{lng} and \emph{lat} for coordinateSystem \emph{'geo'}
-#'   \item set \emph{radius} and \emph{angle} for coordinateSystem \emph{'polar'}
-#'   \item set \emph{value} and \emph{itemName} for \emph{'pie'} chart.
-#'   }
+#'  The only indispensable attribute is \href{https://echarts.apache.org/en/option.html#series-line.encode}{encode}.\cr
+#'  \emph{encode} defines which data columns names to use for the axes: \cr
+#'  * set \emph{x} and \emph{y} for coordinateSystem \emph{cartesian2d}
+#'  * set \emph{lng} and \emph{lat} for coordinateSystem \emph{geo}
+#'  * set \emph{radius} and \emph{angle} for coordinateSystem \emph{polar}
+#'  * set \emph{value} and \emph{itemName} for \emph{pie} chart
+#'  * set \emph{value} and \emph{name} for \emph{map} chart
+#'  
 #'   Attribute \emph{coordinateSystem} is not set by default and depends on chart \emph{type}.\cr
 #'   Auto-generated \emph{timeline} and \emph{options} will be preset for the chart as well.\cr
 #'   \emph{tl.series} cannot be used for hierarchical charts like graph,tree,treemap,sankey. Chart options/timeline have to be built directly, see \href{https://helgasoft.github.io/echarty/uc4.html}{example}.
 #' @param ... other arguments to pass to the widget. \cr
-#'   Custom widget arguments include: \cr \itemize{
-#'   \item elementId - Id of the widget, default is NULL(auto-generated)
-#'   \item ask - the \emph{plugjs} parameter when \emph{load} is present, FALSE by default
-#'   \item js - single string or a vector with JavaScript expressions to evaluate.\cr 
+#'   Custom widget arguments include: \cr
+#'  * elementId - Id of the widget, default is NULL(auto-generated)
+#'  * ask - prompt user before downloading plugins when \emph{load} is present, FALSE by default
+#'  * js - single string or a vector with JavaScript expressions to evaluate.\cr 
 #'      First expression is evaluated before chart initialization. \cr
 #'      Second is evaluated with an exposed object \emph{opts}. \cr
-#'      Third is evaluated with an exposed object \emph{chart} after \emph{opts} have been set.
-#'   \item renderer - 'canvas'(default) or 'svg'
-#'   \item locale - 'EN'(default) or 'ZH' or other, see \href{https://echarts.apache.org/en/api.html#echarts.init}{here}
-#'   \item useDirtyRect - enable dirty rectangle rendering or not, FALSE by default, see \href{https://echarts.apache.org/en/api.html#echarts.init}{here}
-#' }
-#' @return A widget to plot, or to save and expand with more features.
+#'      Third is evaluated with an exposed \emph{chart} object after \emph{opts} have been set.
+#'  * renderer - 'canvas'(default) or 'svg'
+#'  * locale - 'EN'(default) or 'ZH'. Define others \href{https://gist.github.com/helgasoft/0618c6537c45bfd9e86d3f9e1da497b8}{like so}, see \href{https://echarts.apache.org/en/api.html#echarts.init}{definitions}.
+#'  * useDirtyRect - enable dirty rectangle rendering or not, FALSE by default, see \href{https://echarts.apache.org/en/api.html#echarts.init}{here}
 #'
-#' @details  Command \emph{ec.init} creates a widget with \code{\link[htmlwidgets]{createWidget}}, then adds some ECharts features to it.\cr
+#' @details  Command \emph{ec.init} creates a widget with \link[htmlwidgets]{createWidget}, then adds some ECharts features to it.\cr
 #'  When \emph{ec.init} is chained after a data.frame, a \href{https://echarts.apache.org/en/option.html#dataset}{dataset} is preset. \cr
 #'  When the data.frame is grouped and \emph{ctype} is not null, more datasets with legend and series are also preset. Grouped series are preset as type \emph{scatter}. \cr
 #'  Plugin '3D' presets will not work for 'scatterGL'. Instead, use \emph{preset=FALSE} and set explicitly \emph{xAxis,yAxis}. \cr
 #'  Plugins 'leaflet' and 'world' preset zoom=6 and center to the mean of all coordinates. \cr
 #'  Users can delete or overwrite any presets as needed. \cr
 #'  [ec.plugjs] will be called internally for each \emph{load} entry, popup prompts controlled by parameter \emph{ask}. \cr
+#'  
 #'   Built-in plugins: \cr \itemize{
 #'   \item leaflet - Leaflet maps with customizable tiles, see \href{https://github.com/gnijuohz/echarts-leaflet#readme}{source}\cr
 #'   \item custom - renderers for [ecr.band] and [ecr.ebars] \cr 
@@ -56,7 +56,9 @@
 #'   \item liquid - liquid fill, see \href{https://github.com/ecomfe/echarts-liquidfill}{source}  \cr
 #'   \item gmodular - graph modularity, see \href{https://github.com/ecomfe/echarts-graph-modularity}{source}  \cr
 #'   \item wordcloud - cloud of words, see \href{https://github.com/ecomfe/echarts-wordcloud}{source} \cr
-#'  } or install you own third-party plugins.
+#'  } or install your own third-party plugins.
+#' 
+#' @return A widget to plot, or to save and expand with more features.
 #' 
 #' @examples
 #'  # basic scatter chart from a data.frame, using presets
@@ -72,6 +74,9 @@
 #' p$x$opts$timeline <- append(p$x$opts$timeline, list(autoPlay=TRUE))
 #' p$x$opts$legend <- list(list())  # add legend
 #' p
+#' 
+#' @seealso 
+#' Package information in [echarty-package].
 #' 
 #' @importFrom htmlwidgets createWidget sizingPolicy getDependency JS shinyWidgetOutput shinyRenderWidget
 #' @import dplyr
@@ -123,9 +128,6 @@ ec.init <- function( df=NULL, preset=TRUE, ctype='scatter', load=NULL,
     renderer = renderer,
     locale = locale,
     useDirtyRect = useDirtyRect,
-    mapping = list(),
-    events = list(),
-    buttons = list(),
     jcode = js,
     opts = opts,
     settings = list(
@@ -139,10 +141,12 @@ ec.init <- function( df=NULL, preset=TRUE, ctype='scatter', load=NULL,
     if (!'data.frame' %in% class(df)) 
       stop('ec.init: df must be a data.frame', call. = FALSE)
     
+    # skip default group settings on map timeline
+    if (!is.null(tl.series) && paste0(tl.series$type,'')=='map') ctype <- NULL
     # grouping uses transform - a v.5 feature
     grnm <- NULL
     if (!is.null(ctype) && dplyr::is.grouped_df(df)) {
-      grnm <- dplyr::group_vars(df)[[1]]   # just 1st grouping column name
+      grnm <- dplyr::group_vars(df)[[1]]   # name of 1st grouping column 
       x$opts$dataset <- list(list(source = ec.data(df)))
       grvals <- unname(unlist(dplyr::group_data(df)[grnm]))
       txfm <- list(); k <- 0
@@ -166,11 +170,16 @@ ec.init <- function( df=NULL, preset=TRUE, ctype='scatter', load=NULL,
       if (!is.null(x$opts$xAxis)) { 
         # update xAxis,yAxis if X,Y columns are categorical
         colX <- 1     # by default 1st column is X, second is Y
-        if (!is.null(grnm) && colnames(df)[1]==grnm)  
-            colX <- 2  # grouping is by 1st column
-        if (!is.numeric(unname(unlist(df[colX]))))
-          x$opts$xAxis <- list(type='category')
-        if (!is.numeric(unname(unlist(df[(colX+1)]))))
+        # cancelled: allow grouping by 1st column
+        #if (!is.null(grnm) && colnames(df)[1]==grnm)  
+        #  colX <- 2  # grouping is by 1st column
+        if (unname(sapply(df,class))[colX]=='Date')
+          x$opts$xAxis <- list(type= 'time')
+        else if (!is.numeric(unname(unlist(df[colX]))))
+          x$opts$xAxis <- list(type= 'category')
+        if (unname(sapply(df,class))[colX+1]=='Date')
+          x$opts$yAxis <- list(type= 'time')
+        else if (!is.numeric(unname(unlist(df[(colX+1)]))))
           x$opts$yAxis <- list(type='category')
       }
       if (!is.null(x$opts$series) && 
@@ -223,11 +232,7 @@ ec.init <- function( df=NULL, preset=TRUE, ctype='scatter', load=NULL,
       )
       wt$x$opts$series[[1]]$coordinateSystem <- 'leaflet'
       
-      # user should order the leaflet data  (lon,lat)
       if (!is.null(df)) {
-	      #rlo <- range(df[,1])
-	      #rla <- range(df[,2])
-	      #wt$x$opts$leaflet$center= c(sum(rlo)/2, sum(rla)/2)
 	      wt$x$opts$leaflet$center= c(mean(unlist(df[,1])), mean(unlist(df[,2])))
 	      wt$x$opts$leaflet$zoom <- 6
       }
@@ -269,10 +274,12 @@ ec.init <- function( df=NULL, preset=TRUE, ctype='scatter', load=NULL,
   if ('world' %in% load) {
     wt <- ec.plugjs(wt, 'https://cdn.jsdelivr.net/npm/echarts@4.9.0/map/js/world.js', ask)
     if (preset) {
+      # world.js dataset works by country only, not GPS lng/lat
       wt$x$opts$xAxis <- NULL
       wt$x$opts$yAxis <- NULL
       wt$x$opts$series <- list(list(type='map', geoIndex=0))
-      wt$x$opts$geo = list(map='world', roam=TRUE)  # !duplicate map if series have map=
+      # map will duplicate if series have map='world' too
+      wt$x$opts$geo = list(map='world', roam=TRUE)
       # if (!is.null(df))  # cancelled: don't know if first 2 cols are 'lng','lat'
       #   wt$x$opts$geo$center= c(mean(unlist(df[,1])), mean(unlist(df[,2])))
     }
@@ -292,7 +299,7 @@ ec.init <- function( df=NULL, preset=TRUE, ctype='scatter', load=NULL,
     for(p in unk) wt <- ec.plugjs(wt, p, ask)
   }
   
-  # timeline is last to execute
+  # timeline is evaluated last
   if (!is.null(tl.series)) {
     if (!is.grouped_df(df))
       stop('ec.init: tl.series requires a grouped data.frame', call. = FALSE)
@@ -301,66 +308,89 @@ ec.init <- function( df=NULL, preset=TRUE, ctype='scatter', load=NULL,
       stop('ec.init: encode is required for tl.series', call. = FALSE)
 
     # add missing defaults
-    if (is.null(tl.series$type)) tl.series$type <- 'line'
+    if (is.null(tl.series$type)) tl.series$type <- 'scatter' # 'unknown'
     #if (is.null(tl.series$coordinateSystem)) tl.series$coordinateSystem <- 'cartesian2d' # not for gauge
     # not in any coordinate system: 'pie','funnel','gauge','graph', tree/treemap/sankey
     if (is.null(tl.series$coordinateSystem))
       tl.series$coordinateSystem <- 'unknown'
-    if (tl.series$type == 'pie') {
-      xtem <- 'value'; ytem <- 'itemName' }
     if (tl.series$type %in% c('line','scatter','bar'))
       tl.series$coordinateSystem <- 'cartesian2d'
-    if (tl.series$coordinateSystem=='cartesian2d') { 
-      xtem <- 'x'; ytem <- 'y' }
+#    if (tl.series$coordinateSystem=='cartesian2d') { 
+#      xtem <- 'x'; ytem <- 'y' }
+    if (tl.series$type == 'pie') {
+      xtem <- 'value'; ytem <- 'itemName' }
     if (startsWith(tl.series$coordinateSystem, 'cartesian')) { 
       xtem <- 'x'; ytem <- 'y'; ztem <- 'z' }
-    else if (tl.series$coordinateSystem=='polar') { 
+    if (tl.series$coordinateSystem=='polar') { 
       xtem <- 'radius'; ytem <- 'angle' }
-    else if (tl.series$coordinateSystem %in% c('geo','leaflet')) { 
-      xtem <- 'lng'; ytem <- 'lat'
-      center <- c(mean(unlist(df[,tl.series$encode$lng])),
-                  mean(unlist(df[,tl.series$encode$lat])))
-      if (tl.series$coordinateSystem=='geo')     wt$x$opts$geo$center <- center
-      if (tl.series$coordinateSystem=='leaflet') wt$x$opts$leaflet$center <- center
-    }
-    if (is.null(unlist(tl.series$encode[xtem]))) {
-      # append col XcolX 1:max for each group
-      df <- df |> group_modify(~ { .x |> mutate(XcolX = 1:nrow(.)) })
-      tl.series$encode[xtem] <- 'XcolX'    # instead of relocate(XcolX)
-      # replace only source, transforms stay
-      wt$x$opts$dataset[[1]] <- list(source=ec.data(df))
-    }
-    if (is.null(unlist(tl.series$encode[ytem])))
-      stop("ec.init: encode 'y' is required for tl.series", call.=FALSE)
+    if (tl.series$coordinateSystem %in% c('geo','leaflet')) {
+        xtem <- 'lng'; ytem <- 'lat'
+        center <- c(mean(unlist(df[,tl.series$encode$lng])),
+                    mean(unlist(df[,tl.series$encode$lat])))
+        if (tl.series$coordinateSystem=='geo')
+          wt$x$opts$geo$center <- center
+        if (tl.series$coordinateSystem=='leaflet') 
+          wt$x$opts$leaflet$center <- center
+    } 
     
-    # dataset is already in, now set everything else
+    if (tl.series$type == 'map') {
+      xtem <- 'name'; ytem <- 'value'
+      # tl.series type='map' has no encode/dataset API, needs 'data'
+      wt$x$opts$dataset <- NULL
+      if (is.null(unlist(tl.series$encode[xtem])))
+        stop(paste0("tl.series: encode '",xtem,"' is required "), call.=FALSE)
+      if (is.null(unlist(tl.series$encode[ytem])))
+        stop(paste0("tl.series: encode '",ytem,"' is required "), call.=FALSE)
+      
+      gvar <- df |> group_vars() |> first() |> as.character()  # convert if factor
+      optl <- lapply(df |> group_split(), function(gp) {
+        tmp <- gp
+        names(tmp)[names(tmp)==tl.series$encode[xtem]] <- 'name'
+        names(tmp)[names(tmp)==tl.series$encode[ytem]] <- 'value'
+        series <- list(list(type= "map", geoIndex=0,
+                            data= ec.data(tmp, 'names')))
+        list(title= list(text= as.character(unique(gp[gvar]))),  
+             series= series)
+      })
+    }
+    else {
+      if (is.null(unlist(tl.series$encode[xtem]))) {
+        # append col XcolX 1:max for each group
+        df <- df |> group_modify(~ { .x |> mutate(XcolX = 1:nrow(.)) })
+        tl.series$encode[xtem] <- 'XcolX'    # instead of relocate(XcolX)
+        # replace only source, transforms stay
+        wt$x$opts$dataset[[1]] <- list(source=ec.data(df))
+      }
+      if (is.null(unlist(tl.series$encode[ytem])))
+        stop(paste0("tl.series: encode '",ytem,"' is required",
+                    tl.series$coordinateSystem), call.=FALSE)
+      
+      # dataset is already in, now loop group column(s)
+      gvar <- df |> group_vars() |> first() |> as.character()  # convert if factor
+      di <- 0
+      optl <- lapply(df |> group_split(), function(gp) {
+        di <<- di+1
+        # nicer looking lines with sorted X 
+        #if (!is.null(xcol)) gp <- gp |> arrange(across(all_of(xcol)))
+        
+        # multiple series for each Y, like y=c('col1', 'col3')
+        series <- lapply(unname(unlist(tl.series$encode[ytem])), 
+          function(sname) {
+            append(list(datasetIndex= di, name= sname), tl.series)
+        })
+        series <- lapply(series, function(s) {
+          s$encode[ytem] <- s$name   # replace multiple col.names with one
+          s
+        })
+  
+        list(title= list(text= as.character(unique(gp[gvar]))),  
+             series= unname(series))
+      })
+    }
+    
     #wt$x$opts$xAxis <- list(type='category')  # geo,leaf do not like
     wt$x$opts$series <- NULL
     wt$x$opts$legend <- NULL
-    
-    # loop group column(s)
-    gvar <- df |> group_vars() |> first()
-    gvar <- as.character(gvar)  # convert if factor
-    di <- 0
-    optl <- lapply(df |> group_split(), function(gp) {
-      di <<- di+1
-      # nicer looking lines with sorted X 
-      #if (!is.null(xcol)) gp <- gp |> arrange(across(all_of(xcol)))
-      
-      # multiple series for each Y, like y=c('col1', 'col3')
-      series <- lapply(unname(unlist(tl.series$encode[ytem])), 
-        function(sname) {
-          append(list(datasetIndex= di, name= sname), tl.series)
-      })
-      series <- lapply(series, function(s) {
-        s$encode[ytem] <- s$name   # replace multiple col.names with one
-        s
-      })
-
-      list(title= list(text= as.character(unique(gp[gvar]))),  
-           series= unname(series))
-    })
-    
     wt$x$opts$options <- optl
     
     steps <- lapply(optl, function(x) { paste(x$title$text, collapse=' ') })
@@ -383,7 +413,7 @@ ec.init <- function( df=NULL, preset=TRUE, ctype='scatter', load=NULL,
 #' Make data lists from a data.frame
 #' 
 #' @param df Chart data in data.frame format, required. \cr
-#' Except when format is 'dendrogram', then df is a list, result of \code{\link[stats]{hclust}} function.
+#' Except when format is 'dendrogram', then df is a list, result of \link[stats]{hclust} function.
 #' @param format A key on how to format the output list \cr \itemize{
 #'  \item 'dataset' = list to be used in \href{https://echarts.apache.org/en/option.html#dataset.source}{dataset} (default), or in \href{https://echarts.apache.org/en/option.html#series-scatter.data}{series.data} (without header). \cr
 #'  \item 'values' = list for customized \href{https://echarts.apache.org/en/option.html#series-scatter.data}{series.data} \cr
@@ -401,7 +431,7 @@ ec.init <- function( df=NULL, preset=TRUE, ctype='scatter', load=NULL,
 #'   \item column with (numeric) data to compute the five boxplot values
 #'  }
 #'  Grouped \emph{df} is supported. Groups will show in the legend, if enabled.\cr
-#'  Returns a `list(dataset, series)` to set the chart dataset and series.\cr
+#'  Returns a `list(dataset, series, axlbl)` to set the chart. \emph{axlbl} is a formatter for the category axis.\cr
 #'  Make sure there is enough data for computation, like >4 values per boxplot. Otherwise ECharts may exit with a \emph{Object.transform} error.
 #' @seealso some live \href{https://rpubs.com/echarty/data-models}{code samples}
 #' 
@@ -415,8 +445,9 @@ ec.init <- function( df=NULL, preset=TRUE, ctype='scatter', load=NULL,
 #' p$x$opts <- list(
 #'   dataset= ds$dataset, 
 #'   series=  ds$series, 
-#'   yAxis= list(type= 'category'), # categorical yAxis = boxplots horizontal
-#'   xAxis= list(show= TRUE),       # categorical xAxis = boxplots vertical
+#'   yAxis= list(type= 'category',  # categorical yAxis = horizontal boxplots 
+#'               axisLabel= list(formatter= ds$axlbl)),
+#'   xAxis= list(show= TRUE),       # categorical xAxis = vertical boxplots 
 #'   legend= list(show= TRUE)
 #' )
 #' p 
@@ -525,7 +556,11 @@ ec.data <- function(df, format='dataset', header=TRUE) {
       # default is horizontal, for vertical switch xAxis/yAxis category type
       series <- list(list(type='boxplot', encode= list(y='V1', x=c('V2','V3','V4','V5','V6'))))
     }
-    return(list(dataset= dataset, series= series)) 
+    # category axis labels
+    axe <- paste(sort(unique(df[[colas]])), collapse="','")
+    axe <- paste0("(v) => { return ['",axe,"'][v]; }")			
+    
+    return(list(dataset= dataset, series= series, axlbl= htmlwidgets::JS(axe)))
     
   } else    # ='names'
     datset <- tmp
@@ -539,10 +574,10 @@ ec.data <- function(df, format='dataset', header=TRUE) {
 #' Helper function to display/format data column(s) by index or name
 #' 
 #' @param col A single column index(number) or column name(quoted string), \cr
-#'    or a \code{\link[base]{sprintf}} format string. 
+#'    or a \link[base]{sprintf} format string. 
 #' @param ... A comma separated column indexes or names, only when \emph{col} is \emph{sprintf}. This allows formatting of multiple columns, as for a tooltip.\cr
 #' @param scale A positive number, multiplier for numeric columns. When scale is 0, all numeric values are rounded.
-#' @return A JavaScript code string (usually a function) marked as executable, see \code{\link[htmlwidgets]{JS}}.
+#' @return A JavaScript code string (usually a function) marked as executable, see \link[htmlwidgets]{JS}.
 #'  
 #' @details Column indexes are counted in R and start at 1.\cr
 #' Set column index to -1 for single values, like \emph{tree} chart, \emph{axisLabel.formatter} or \emph{valueFormatter}.\cr
@@ -552,18 +587,18 @@ ec.data <- function(df, format='dataset', header=TRUE) {
 #' Placeholder \emph{%L@} will display a number in locale format, like '12,345.09'.\cr
 #' Placeholder \emph{%LR@} will display a rounded number in locale format, like '12,345'.\cr
 #' Placeholder \emph{%R@} will display a rounded number, like '12345'.\cr
+#' Placeholder \emph{%M@} will display a marker in serie's color.\cr
 #' Useful for attributes like formatter, color, symbolSize. 
 #' 
 #' @examples
 #' tmp <- data.frame(Species = as.vector(unique(iris$Species)),
 #'                   emoji = c('\U0001F33B','\U0001F335','\U0001F33A'))
-#' df <- iris |> dplyr::inner_join(tmp)   # add 6th column 'emoji'
+#' df <- iris |> dplyr::inner_join(tmp)         # add 6th column emoji
 #' p <- df |> dplyr::group_by(Species) |> ec.init()
-#' p$x$opts$series <- list(list(
-#'   type='scatter', label=list(show=TRUE, formatter= ec.clmn(6))  # ref 6th column
-#' ))
+#' p$x$opts$series <- lapply(p$x$opts$series,   # show 6th column as label
+#'    function(s) append(s, list(label= list(show= TRUE, formatter= ec.clmn(6)))) )
 #' p$x$opts$tooltip <- list(formatter=     # sprintf + multiple column indexes
-#'    ec.clmn('species <b>%@</b><br>s.len <b>%@</b><br>s.wid <b>%@</b>', 5,1,2))
+#'    ec.clmn('%M@ species <b>%@</b><br>s.len <b>%@</b><br>s.wid <b>%@</b>', 5,1,2))
 #' p
 #' 
 #' @export
@@ -580,11 +615,12 @@ ec.clmn <- function(col=NULL, ..., scale=1) {
       
     } else {                # col is sprintf
       spf <- "var sprintf= (template, values) => { let j=0;
-return template.replace(/%@|%L@|%LR@|%R@/g, (m) => {
+return template.replace(/%@|%L@|%LR@|%R@|%M@/g, (m) => {
   if (m=='%@') return values[j++];
   if (m=='%L@') return Number(values[j++]).toLocaleString();
   if (m=='%LR@') return Math.round(Number(values[j++])).toLocaleString();
   if (m=='%R@') return Math.round(Number(values[j++]));
+  if (m=='%M@') return x.marker;
 }); };"
       
       tmp <- suppressWarnings(as.numeric(args) -1)
@@ -674,6 +710,8 @@ if (typeof vv[0] === 'object' && vv[0].value) {
 #' p$x$opts$legend <- list(show= TRUE)
 #' p
 #' }
+#' 
+#' @importFrom stats na.omit
 #' @export
 ecr.band <- function(df=NULL, lower=NULL, upper=NULL, type='polygon', ...) {
   if (is.null(df) || is.null(lower) || is.null(upper)) 
@@ -682,6 +720,7 @@ ecr.band <- function(df=NULL, lower=NULL, upper=NULL, type='polygon', ...) {
     stop("ecr.band: df must be a data.frame", call. = FALSE)
   if (!is.numeric(df[lower][[1]]) || !is.numeric(df[upper][[1]]))
     stop("ecr.band: lower and upper must be numeric", call. = FALSE)
+  df <- na.omit(df)
   
   fstc <- colnames(df)[1]   # first column name
   if (type=='stack') {
@@ -712,7 +751,8 @@ ecr.band <- function(df=NULL, lower=NULL, upper=NULL, type='polygon', ...) {
     l2 <- unname(unlist(df[upper])[order(ld:1)])
     tmp <- data.frame(x = unname(unlist(c(df[1:ld, fstc], df[ld:1, fstc]))), 
                       y = c(df[lower][[1]],  l2))
-    serios <- list(type = "custom", renderItem = htmlwidgets::JS("riPolygon"), 
+    serios <- list(type = "custom", 
+                   renderItem = htmlwidgets::JS("riPolygon"), 
                    data = ec.data(tmp, "values"), ...)
     if (is.null(serios$itemStyle)) serios$itemStyle <- list(borderWidth = 0.5)
     if (is.null(serios$boundaryGap)) serios$boundaryGap <- FALSE
@@ -726,7 +766,7 @@ ecr.band <- function(df=NULL, lower=NULL, upper=NULL, type='polygon', ...) {
 #' 
 #' Custom series to display error-bars for scatter,bar or line series
 #' 
-#' @param wt A widget to add error bars to, see \code{\link[htmlwidgets]{createWidget}}
+#' @param wt A widget to add error bars to, see \link[htmlwidgets]{createWidget}
 #' @param df NULL(default) or data.frame with four or more columns ordered exactly (x,y,low,high,others).
 #' When NULL, data is taken from wt's dataset where order should be the same (x,y,low,high,etc)
 #' @param hwidth Half-width of error bar in pixels, default is 6.
@@ -856,7 +896,7 @@ ecr.ebars <- function(wt, df=NULL, hwidth=6, ...) {
 #'   string and have \emph{'px'} appended.
 #' @return An output or render function that enables the use of the widget within Shiny applications. 
 #'
-#' @seealso [ecs.exec] for example, \code{\link[htmlwidgets]{shinyWidgetOutput}} for return value.
+#' @seealso [ecs.exec] for example, \link[htmlwidgets]{shinyWidgetOutput} for return value.
 #' 
 #' @importFrom htmlwidgets shinyWidgetOutput
 #' @export
@@ -874,7 +914,7 @@ ecs.output <- function(outputId, width = '100%', height = '400px') {
 #' @param quoted Is \code{expr} a quoted expression? default FALSE.
 #' @return An output or render function that enables the use of the widget within Shiny applications.
 #'   
-#' @seealso [ecs.exec] for example, \code{\link[htmlwidgets]{shinyRenderWidget}} for return value.
+#' @seealso [ecs.exec] for example, \link[htmlwidgets]{shinyRenderWidget} for return value.
 #' 
 #' @importFrom htmlwidgets shinyRenderWidget
 #' @export
@@ -924,7 +964,8 @@ ecs.proxy <- function(id) {
 #' \emph{p_dispatch} - send action commands, see \href{https://echarts.apache.org/en/api.html#echartsInstance.dispatchAction}{documentation}
 #' @return A proxy object to update the chart.
 #' 
-#' @seealso [ecs.proxy], [ecs.render], [ecs.output]
+#' @seealso [ecs.proxy], [ecs.render], [ecs.output] \cr
+#' Read about event handling in [echarty-package], code in [ec.examples].
 #' 
 #' @examples
 #' if (interactive()) {
@@ -972,7 +1013,7 @@ ecs.exec <- function(proxy, cmd='p_merge') {
 #' @param cols Number of columns
 #' @param width Width of columns, one of xs, md, lg
 #' @param title Title for the set
-#' @return A container \code{\link[htmltools]{div}} in rmarkdown, otherwise \code{\link[htmltools]{browsable}}
+#' @return A container \link[htmltools]{div} in rmarkdown, otherwise \link[htmltools]{browsable}
 #' @details  
 #' For 3-4 charts one would use multiple series with a \href{https://echarts.apache.org/en/option.html#grid}{grid}. \cr
 #' For greater number of charts _ec.layout_ come in handy.
@@ -1127,7 +1168,7 @@ ec.theme <- function (wt, name, code= NULL)
 #' @param wt An \code{echarty} widget as returned by [ec.init]
 #' @param target NULL(default) or 'data' to show info about chart's embedded data.
 #' @param json Boolean whether to return a JSON, or a \code{list}, default TRUE
-#' @param ... Additional arguments to pass to \code{\link[jsonlite]{toJSON}}
+#' @param ... Additional arguments to pass to \link[jsonlite]{toJSON}
 #' @return A JSON string if \code{json} is \code{TRUE} and
 #'  a \code{list} otherwise.
 #'
@@ -1190,7 +1231,7 @@ ec.inspect <- function(wt, target=NULL, json=TRUE, ...) {
 #' 
 #' Convert JSON string to chart
 #' 
-#' @param txt JSON character string, url, or file, see \code{\link[jsonlite]{fromJSON}}
+#' @param txt JSON character string, url, or file, see \link[jsonlite]{fromJSON}
 #' @param ... Any arguments to pass to internal [ec.init]
 #' @return An \code{echarty} widget.
 #' 
@@ -1263,7 +1304,7 @@ ec.snip <- function(wt) {
 
 #' Install Javascript plugin from URL source
 #' 
-#' @param wt A widget to add dependency to, see \code{\link[htmlwidgets]{createWidget}}
+#' @param wt A widget to add dependency to, see \link[htmlwidgets]{createWidget}
 #' @param source URL or file:// of a Javascript plugin, \cr
 #'   file name suffix is '.js'. Default is NULL.
 #' @param ask Boolean, to ask the user to download source if missing. Default is FALSE.

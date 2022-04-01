@@ -20,5 +20,5 @@ An output or render function that enables the use of the widget within Shiny app
 Placeholder for a chart in Shiny UI
 }
 \seealso{
-\link{ecs.exec} for example, \code{\link[htmlwidgets]{shinyWidgetOutput}} for return value.
+\link{ecs.exec} for example, \link[htmlwidgets]{shinyWidgetOutput} for return value.
 }

@@ -49,4 +49,5 @@ p$x$opts$tooltip <- list(trigger= 'axis',
 p$x$opts$legend <- list(show= TRUE)
 p
 }
+
 }

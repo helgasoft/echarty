@@ -7,7 +7,7 @@
 ecr.ebars(wt, df = NULL, hwidth = 6, ...)
 }
 \arguments{
-\item{wt}{A widget to add error bars to, see \code{\link[htmlwidgets]{createWidget}}}
+\item{wt}{A widget to add error bars to, see \link[htmlwidgets]{createWidget}}
 
 \item{df}{NULL(default) or data.frame with four or more columns ordered exactly (x,y,low,high,others).
 When NULL, data is taken from wt's dataset where order should be the same (x,y,low,high,etc)}

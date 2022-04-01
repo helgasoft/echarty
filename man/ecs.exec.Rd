@@ -32,5 +32,6 @@ if (interactive()) {
 
 }
 \seealso{
-\link{ecs.proxy}, \link{ecs.render}, \link{ecs.output}
+\link{ecs.proxy}, \link{ecs.render}, \link{ecs.output} \cr
+Read about event handling in \link{echarty-package}, code in \link{ec.examples}.
 }

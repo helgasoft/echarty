@@ -18,7 +18,7 @@ ec.layout(plots, rows = NULL, cols = NULL, width = "xs", title = NULL)
 \item{title}{Title for the set}
 }
 \value{
-A container \code{\link[htmltools]{div}} in rmarkdown, otherwise \code{\link[htmltools]{browsable}}
+A container \link[htmltools]{div} in rmarkdown, otherwise \link[htmltools]{browsable}
 }
 \description{
 Set multiple charts in rows/columns format

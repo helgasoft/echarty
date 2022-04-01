@@ -69,90 +69,40 @@ HTMLWidgets.widget({
           } catch(err) { console.log('eva3: ' + err.message) }
         }
         
-        // shiny callbacks
-        if (HTMLWidgets.shinyMode) {
-          
-          let ecp = ":echartyParse";
-          chart.on("brushselected", function(e){
-            Shiny.setInputValue(el.id + '_brush' + ecp, e, {priority: 'event'});
-          });
+        if (HTMLWidgets.shinyMode) {    // shiny callbacks
 
-          chart.on("brush", function(e){
-            Shiny.setInputValue(el.id + '_brush_released' + ecp, e, {priority: 'event'});
-          });
-          
-          chart.on("legendselectchanged", function(e){
-            Shiny.setInputValue(el.id + '_legend_change' + ecp, e.name, {priority: 'event'});
-            Shiny.setInputValue(el.id + '_legend_selected' + ecp, e.selected, {priority: 'event'});
-          });
-          
-          chart.on("globalout", function(e){
-            Shiny.setInputValue(el.id + '_global_out' + ecp, e, {priority: 'event'});
-          });
-          
-          if(x.hasOwnProperty('capture')){
-            // for events not included below, like "datazoom"
-            chart.on(x.capture, function(e){
-              Shiny.setInputValue(el.id + '_' + x.capture + ecp, e, {priority: 'event'});
-            });
-          }
+          ecp = ":echartyParse";
           
           chart.on("click", function(e){
-            Shiny.setInputValue(el.id + '_clicked_data' + ecp, e.data, {priority:'event'});
-            Shiny.setInputValue(el.id + '_clicked_row' + ecp, e.dataIndex + 1, {priority:'event'});
-            Shiny.setInputValue(el.id + '_clicked_serie' + ecp, e.seriesName, {priority:'event'});
+            Shiny.onInputChange(el.id + '_click' + ecp, 
+              { name: e.name, data: e.data, dataIndex: e.dataIndex,
+                seriesName: e.seriesName, value: e.value
+              },  {priority:'event'});
           });
           
           chart.on("mouseover", function(e){
-            Shiny.setInputValue(el.id + '_mouseover_data' + ecp, e.data, {priority:'event'});
-            Shiny.setInputValue(el.id + '_mouseover_row' + ecp, e.dataIndex + 1, {priority:'event'});
-            Shiny.setInputValue(el.id + '_mouseover_serie' + ecp, e.seriesName, {priority:'event'});
+            Shiny.onInputChange(el.id + '_mouseover' + ecp, 
+              { name: e.name, data: e.data, dataIndex: e.dataIndex,
+                seriesName: e.seriesName, value: e.value
+              },  {priority:'event'});
           });
-          
-          chart.on("mouseout", function(e){
-            Shiny.setInputValue(el.id + '_mouseout_data' + ecp, e.data, {priority:'event'});
-            Shiny.setInputValue(el.id + '_mouseout_row' + ecp, e.dataIndex + 1, {priority:'event'});
-            Shiny.setInputValue(el.id + '_mouseout_serie' + ecp, e.seriesName, {priority:'event'});
-          });
-          
-          $(document).on('shiny:recalculating', function() {
 
-            if(x.loading === true){
-              chart.showLoading('default', x.loadingOpts);
-            } else if(x.loading === false) {
-              chart.hideLoading();
-            }
-            
-          });
-          
-          $(document).on('shiny:value', function() {
-            chart.hideLoading();
-          });
-        }
-        
-        // actions
-        if(x.events.length >= 1){
-          for(var i = 0; i < x.events.length; i++){
-            chart.dispatchAction(x.events[i].data);
-          }  
-        }
-        
-        // buttons
-        var buttons = x.buttons;
-        Object.keys(buttons).map( function(buttonId){
-          document.getElementById(buttonId).addEventListener('click', 
-            (function(id) {
-              const scoped_id = id;
-              return function(e){
-                buttons[scoped_id].forEach(function(el){
-                  chart.dispatchAction(el.data);
+          if(x.hasOwnProperty('capture')){
+            // for events like datazoom, click, etc
+            // defined in https://echarts.apache.org/en/api.html#events
+            if (Array.isArray(x.capture)) {  // multiple events
+              for( let evt= 0; evt < x.capture.length; evt++) {
+                chart.on(x.capture[evt], function(e) {
+                  Shiny.setInputValue(el.id +'_' +x.capture[evt] +ecp, e, {priority: 'event'});
                 });
-              };
-            }
-            )(buttonId)
-          );
-        });
-          
+              }
+            } else   // just one event
+                chart.on(x.capture, function(e) {
+                  Shiny.setInputValue(el.id +'_' +x.capture +ecp, e, {priority: 'event'});
+                });
+          }
+        }
+        
         if(x.hasOwnProperty('on')){
           for(var e = 0; e < x.on.length; e++){
             chart.on(x.on[e].event, x.on[e].query, x.on[e].handler);

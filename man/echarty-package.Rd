@@ -6,26 +6,67 @@
 \alias{echarty-package}
 \title{echarty: Minimal R/Shiny Interface to JavaScript Library 'ECharts'}
 \description{
-The goal is to deliver the full functionality of 'ECharts' with minimal overhead. 'ECharts' is based on data structures and 'echarty' users build R lists for these same data structures. One to three 'echarty' commands are usually sufficient to produce any chart.
+Deliver the full functionality of 'ECharts' with minimal overhead. 'echarty' users build R lists for 'ECharts' API. Lean set of powerful commands.
 }
 \section{Package Conventions}{
 
 echarty is "pipe-friendly", supports both \%>\% and |> \cr
-echarty functions have three prefixes to help with auto-completion: \itemize{
-\item \emph{ec.} for general functions
-\item \emph{ecr.} for rendering functions
-\item \emph{ecs.} for Shiny functions
+echarty functions have three prefixes to help with auto-completion: \cr
+\itemize{
+\item \emph{ec.} for general functions, like \link{ec.data}
+\item \emph{ecs.} for Shiny functions, like \link{ecs.output}
+\item \emph{ecr.} for rendering functions, like \link{ecr.band}
 }
 }
 
 \section{Global Options}{
 
 Options are set with R command \href{https://www.rdocumentation.org/packages/base/versions/3.6.2/topics/options}{options}.\cr
-echarty uses the following options: \cr \itemize{
+echarty uses the following options: \cr
+\itemize{
 \item echarty.theme = name of theme file (without extension), from folder /inst/themes
 \item echarty.font = font family name
 \item echarty.urltiles = tiles URL template for leaflet maps
 \item echarty.short = a boolean flag, see \link{ec.snip}
+}
+}
+
+\section{Events}{
+
+Event handling is usually necessary only in Shiny. See code in \link{ec.examples} and \code{eshiny.R}, run as \code{demo(eshiny)}.\cr
+echarty has two built-in event callbacks - \code{click} and \code{mouseover}.
+All other ECharts \href{https://echarts.apache.org/en/api.html#events}{events} should be initialized through \code{p$x$capture}.\cr
+Another option is to use \code{p$x$on} with JavaScript handlers, see code in \link{ec.examples}.
+}
+
+\section{Widget parameters}{
+
+These are \code{htmlwidget} and \code{ECharts} initialization parameters supported by echarty.\cr
+There are code samples for most in \link{ec.examples}.
+\itemize{
+\item capture = event name(s), to monitor events usually in Shiny
+\item on = define JavaScript code for event handling, see in \href{https://echarts.apache.org/en/api.html#echartsInstance.on}{ECharts}
+\item registerMap = define a map from a geoJSON file, see in \href{https://echarts.apache.org/en/api.html#echarts.registerMap}{ECharts}
+\item group = group-name of a chart, see in \href{https://echarts.apache.org/en/api.html#echartsInstance.group}{ECharts}
+\item connect = command to connect charts with same group-name, see in \href{https://echarts.apache.org/en/api.html#echarts.connect}{ECharts}
+\item locale = 'EN'(default) or 'ZH', set from \code{locale} parameter of \link{ec.init}, see also in \href{https://echarts.apache.org/en/api.html#echarts.init}{ECharts}.
+\item renderer = 'canvas'(default) or \code{svg}, set from \code{renderer} in \link{ec.init}, see also in \href{https://echarts.apache.org/en/api.html#echarts.init}{ECharts}.
+\item jcode = custom JavaScript code to execute, set from \code{js} parameter of \link{ec.init}
+}
+}
+
+\section{Code examples}{
+
+Here is the complete list of sample code locations \cr
+\itemize{
+\item \link{ec.examples}
+\item command examples, like in \link{ec.init}
+\item Shiny code is in \code{eshiny.R}, run with \code{demo(eshiny)}
+\item searchable \href{https://helgasoft.github.io/echarty/gallery.html}{gallery} and \href{https://helgasoft.github.io/echarty/}{tutorials} on website
+\item searchable \href{https://gist.github.com/helgasoft}{gists}
+\item demos on \href{https://rpubs.com/echarty}{RPubs}
+\item answers to \href{https://github.com/helgasoft/echarty/issues}{Github issues}
+\cr
 }
 }
 
@@ -37,6 +78,7 @@ cars |> ec.init()
 options('echarty.short'=TRUE)  # set
 getOption('echarty.short')     # get
 options('echarty.short'=NULL)  # remove
+
 
 }
 \seealso{

@@ -1,5 +1,5 @@
 #'-----------  Interactive charts with echarty and Shiny ------------
-#' run with command demo(eshiny, package ='echarty')
+#' run with command demo(eshiny)  #, package ='echarty')
 #' 
 tryCatch ({
   library(shiny)
@@ -32,7 +32,7 @@ ui <- fluidPage(
     column(5, actionButton('addData', 'Add data'),
           actionButton('hilit', 'Highlight'),
           actionButton('dnplay', 'Downplay'), 
-          br(), span(strong('Click point'), span('to see data row:', class='sml'), 
+          br(), span(strong('Click'), span('data point or legend to see data:', class='sml'), 
                     textOutput('dclick'))
     )
   ),
@@ -99,7 +99,7 @@ server <- function(input, output, session) {
     p$x$opts$dataZoom <- list(list(type = 'slider',
                                    startValue = min(boxplot_df$ValY), 
                                    endValue = max(boxplot_df$ValY) ))
-    p$x$capture <- "datazoom"
+    p$x$capture <- 'datazoom'
     p
   }
   rpie <- function() { 
@@ -138,17 +138,23 @@ server <- function(input, output, session) {
     )
     p$x$opts$series[[1]]$emphasis <- list(
       focus='series', blurScope='coordinateSystem')
+    p$x$capture <- c('brushselected', 'legendselectchanged')
     p
   })
   
-  observeEvent(input$plot_clicked_data, 
-               output$dclick <- renderText(toString(input$plot_clicked_data)) 
-  )
-  observeEvent(input$plot_brush, {
-    if (length(input$plot_brush$batch$selected[[1]]$dataIndex[[1]])==0) return()
+  # click & mouseover are the only built-in events, no need to capture them
+  # they contain: name, data, dataIndex, seriesName, value
+  observeEvent(input$plot_click, {
+    output$dclick <- renderText(input$plot_click$value)
+  })
+  observeEvent(input$plot_mouseover, {
+    cat('\nMover:', toString(input$plot_mouseover$data))
+  })
+  observeEvent(input$plot_brushselected, {
+    # activated from p$x$capture
+    tmp <- input$plot_brushselected$batch$selected[[1]]
     output$brdat <- renderTable({
-      tmp <- input$plot_brush$batch$selected[[1]]
-      # tmp <- data.frame(sName=tmp$seriesName, sDataIdx=unlist(lapply(tmp$dataIndex, toString)))  # raw
+      # out <- data.frame(sName=tmp$seriesName, sDataIdx=unlist(lapply(tmp$dataIndex, toString)))  # raw
       out <- lapply(1:length(tmp$seriesId), function(x) {
         dix <- tmp$dataIndex[[x]]
         if (length(dix)==0) return()
@@ -159,6 +165,9 @@ server <- function(input, output, session) {
       out <-  as.data.frame(do.call(rbind, out[lengths(out)!=0]))
       out
     })
+  })
+  observeEvent(input$plot_legendselectchanged, {
+    output$dclick <- renderText(toString(input$plot_legendselectchanged))
   })
   
   observeEvent(input$addMarks, {
@@ -422,14 +431,13 @@ server <- function(input, output, session) {
       toolbox = list( feature=list(brush=list(type=list("lineX", "clear"))))
       ,brush = list(brushMode='multiple', throttleType='debounce', throttleDelay=222)
     )
-    p$x$on <- list(list(event='mouseover', 
-                        handler=htmlwidgets::JS("(event) => 
-          document.getElementById('vmouse').innerHTML = event.seriesName+'_'+event.name;") ),
-                   list(event='mouseout',
-                        handler=htmlwidgets::JS("() =>
-          document.getElementById('vmouse').innerHTML = '';") )
-    )
+    p$x$capture <- 'brushselected'
     p
+  })
+  
+  observeEvent(input$barplot_vert_mouseover, {
+    tmp <- input$barplot_vert_mouseover
+    output$vmouse <- renderText(paste0(tmp$seriesName,'_',tmp$name))
   })
   
   output$barplot_horiz <- ecs.render({
@@ -443,6 +451,7 @@ server <- function(input, output, session) {
       ,brush = list(brushMode='multiple', throttleType='debounce', throttleDelay=222)  # group selection
       #,brush = list(show=TRUE)   # single selection
     )
+    p$x$capture <- 'brushselected'
     p
   })
   
@@ -455,12 +464,12 @@ server <- function(input, output, session) {
     })
     unlist(out)
   }
-  observeEvent(input$barplot_vert_brush, {
-    tmp <- brushcap(input$barplot_vert_brush$batch$selected)
+  observeEvent(input$barplot_vert_brushselected, {
+    tmp <- brushcap(input$barplot_vert_brushselected$batch$selected)
     output$vbrush <- renderText(na.omit(tmp))
   })
-  observeEvent(input$barplot_horiz_brush, {
-    tmp <- brushcap(input$barplot_horiz_brush$batch$selected)
+  observeEvent(input$barplot_horiz_brushselected, {
+    tmp <- brushcap(input$barplot_horiz_brushselected$batch$selected)
     output$hbrush <- renderText(na.omit(tmp))
   })
 

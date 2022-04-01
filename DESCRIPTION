@@ -1,7 +1,7 @@
 Package: echarty
 Title: Minimal R/Shiny Interface to JavaScript Library 'ECharts'
-Date: 2022-02-06
-Version: 1.4.4.9005
+Date: 2022-03-30
+Version: 1.4.5
 Authors@R: c( 
   person("Larry", "Helgason", email = "larry@helgasoft.com", role = c("aut", "cre", "cph")),
   person("John", "Coene", email = "jcoenep@gmail.com", role = c("aut", "cph"))
@@ -9,7 +9,7 @@ Authors@R: c(
 Author: Larry Helgason [aut, cre, cph], 
   John Coene [aut, cph]
 Maintainer: Larry Helgason <larry@helgasoft.com>
-Description: The goal is to deliver the full functionality of 'ECharts' with minimal overhead. 'ECharts' is based on data structures and 'echarty' users build R lists for these same data structures. One to three 'echarty' commands are usually sufficient to produce any chart. 
+Description: Deliver the full functionality of 'ECharts' with minimal overhead. 'echarty' users build R lists for 'ECharts' API. Lean set of powerful commands.
 Depends: R (>= 4.1.0)
 License: Apache License (>= 2.0)
 LazyData: false
