@@ -484,15 +484,15 @@ p
 # 3) grouped boxplots ---------------------
 # remotes::install_github("helgasoft/echarty")   # needs new v.1.4.4+
 
-ds <- mtcars |> relocate(am,cyl,mpg) |> ec.data(format='boxplot')
-# Below we mutate to create less X items with more, sufficient data. Otherwise ECharts exits with errors.
-#ds <- airquality |> mutate(Day=round(Day/10)) |> relocate(Day,Month,Wind) |> ec.data(format='boxplot')
+ds <- mtcars |> relocate(am,mpg) |> group_by(cyl) |> ec.data(format='boxplot')
+# Below we mutate to create less Y-axis items with more, sufficient data. Otherwise ECharts exits with errors.
+# ds <- airquality |> mutate(Day=round(Day/10)) |> relocate(Day,Wind) |> ec.data(format='boxplot')
 p <- ec.init()
 p$x$opts <- list(
-  xAxis= list(type= 'category', axisLabel= list(formatter= ds$axlblfmt)), 
-  yAxis= list(show= TRUE),
   dataset= ds$dataset, 
   series= ds$series, 
+  yAxis= list(type= 'category'), 
+  xAxis= list(show= TRUE),
   legend= list(show= TRUE)
 )
 p
@@ -950,7 +950,7 @@ option1 <- list(
   tooltip= list(show= TRUE),
   toolbox= toolbox,
   series= list(list( 
-    type= 'tree', data= ec.dendro(hc),
+    type= 'tree', data= ec.data(hc, format='dendrogram'),
     roam= TRUE, initialTreeDepth= -1,  # initially show all
     symbolSize= ec.clmn(-1, scale= 0.33),
     # exclude added labels like 'p99', leaving only the originals
