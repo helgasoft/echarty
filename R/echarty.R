@@ -5,9 +5,11 @@
 #' Required to build a chart. In most cases this will be the only command necessary.
 #'
 #' @param df A data.frame to be preset as \href{https://echarts.apache.org/en/option.html#dataset}{dataset}, default NULL \cr
-#'     For crosstalk df should be of type \link[crosstalk]{SharedData}.\cr
-#'     Timeline requires a \emph{grouped data.frame} to build its \href{https://echarts.apache.org/en/option.html#options}{options}.\cr
-#'     If grouping is on multiple columns, only the first one is used to determine settings.
+#'   By default the first column is for X values, second column is for Y, and third is for Z when in 3D.\cr
+#'   Best practice is to have the grouping column placed last.\cr
+#'   For crosstalk df should be of type \link[crosstalk]{SharedData}.\cr
+#'   Timeline requires a \emph{grouped data.frame} to build its \href{https://echarts.apache.org/en/option.html#options}{options}.\cr
+#'   If grouping is on multiple columns, only the first one is used to determine settings.
 #' @param ctype Chart type of series. Default is 'scatter'. Set to NULL to disable series preset.
 #' @param preset Build preset xAxis,yAxis,serie for 2D, or grid3D,xAxis3D,yAxis3D,zAxis3D for 3D, default TRUE (enable).
 #' @param load Name(s) of plugin(s) to load. Could be a character vector or comma-delimited string. default NULL.
@@ -15,8 +17,8 @@
 #'   \code{'500px'}, \code{'auto'}) or a number, which will be coerced to a
 #'   string and have \code{'px'} appended.
 #' @param tl.series A list to build a timeline or NULL(default). The list defines options \href{https://echarts.apache.org/en/option.html#series}{series} and their attributes. \cr
-#'  Requires a grouped data.frame \emph{df}.
-#'  The only indispensable attribute is \href{https://echarts.apache.org/en/option.html#series-line.encode}{encode}.\cr
+#'   Requires a grouped data.frame \emph{df}.
+#'   The only indispensable attribute is \href{https://echarts.apache.org/en/option.html#series-line.encode}{encode}.\cr
 #'  \emph{encode} defines which data columns names to use for the axes: \cr
 #'  * set \emph{x} and \emph{y} for coordinateSystem \emph{cartesian2d}
 #'  * set \emph{lng} and \emph{lat} for coordinateSystem \emph{geo}
@@ -310,17 +312,15 @@ ec.init <- function( df=NULL, preset=TRUE, ctype='scatter', load=NULL,
     # add missing defaults
     if (is.null(tl.series$type)) tl.series$type <- 'scatter' # 'unknown'
     #if (is.null(tl.series$coordinateSystem)) tl.series$coordinateSystem <- 'cartesian2d' # not for gauge
-    # not in any coordinate system: 'pie','funnel','gauge','graph', tree/treemap/sankey
+    # not in any coordinate system: pie,funnel,gauge,graph, tree/treemap/sankey
     if (is.null(tl.series$coordinateSystem))
       tl.series$coordinateSystem <- 'unknown'
-    if (tl.series$type %in% c('line','scatter','bar'))
+    if (tl.series$type %in% c('line','scatter','bar','pictorialBar','candlestick','boxplot'))
       tl.series$coordinateSystem <- 'cartesian2d'
-#    if (tl.series$coordinateSystem=='cartesian2d') { 
-#      xtem <- 'x'; ytem <- 'y' }
-    if (tl.series$type == 'pie') {
-      xtem <- 'value'; ytem <- 'itemName' }
     if (startsWith(tl.series$coordinateSystem, 'cartesian')) { 
       xtem <- 'x'; ytem <- 'y'; ztem <- 'z' }
+    if (tl.series$type == 'pie') {
+      xtem <- 'value'; ytem <- 'itemName' }
     if (tl.series$coordinateSystem=='polar') { 
       xtem <- 'radius'; ytem <- 'angle' }
     if (tl.series$coordinateSystem %in% c('geo','leaflet')) {

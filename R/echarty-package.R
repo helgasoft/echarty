@@ -1,7 +1,7 @@
 #' 
 #' @section Package Conventions:
-#' echarty is "pipe-friendly", supports both %>% and |> \cr
-#' echarty functions have three prefixes to help with auto-completion: \cr
+#' 1. pipe-friendly - supports both %>% and |> \cr
+#' 2. functions have three prefixes to help with auto-completion: \cr
 #' * \emph{ec.} for general functions, like [ec.data]
 #' * \emph{ecs.} for Shiny functions, like [ecs.output]
 #' * \emph{ecr.} for rendering functions, like [ecr.band]

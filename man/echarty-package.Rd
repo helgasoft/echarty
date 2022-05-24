@@ -10,8 +10,10 @@ Deliver the full functionality of 'ECharts' with minimal overhead. 'echarty' use
 }
 \section{Package Conventions}{
 
-echarty is "pipe-friendly", supports both \%>\% and |> \cr
-echarty functions have three prefixes to help with auto-completion: \cr
+\enumerate{
+\item pipe-friendly - supports both \%>\% and |> \cr
+\item functions have three prefixes to help with auto-completion: \cr
+}
 \itemize{
 \item \emph{ec.} for general functions, like \link{ec.data}
 \item \emph{ecs.} for Shiny functions, like \link{ecs.output}

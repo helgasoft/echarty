@@ -1,5 +1,11 @@
 # history of echarty package development
 
+## v.1.4.5.9001
+
+- upgrade ECharts to v.5.3.2
+- fix timeline _tl.series_ for candlestick,boxplot,pictorialBar
+- expand docs for _ec.init_
+
 ## v.1.4.5
 
 - upgrade ECharts to v.5.3.1, GL to v.2.0.9
