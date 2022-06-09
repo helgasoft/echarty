@@ -19,7 +19,7 @@ ec.init(
 \item{df}{A data.frame to be preset as \href{https://echarts.apache.org/en/option.html#dataset}{dataset}, default NULL \cr
 By default the first column is for X values, second column is for Y, and third is for Z when in 3D.\cr
 Best practice is to have the grouping column placed last.\cr
-For crosstalk df should be of type \link[crosstalk]{SharedData}.\cr
+For crosstalk df should be of type \link[crosstalk]{SharedData}, see \href{https://helgasoft.github.io/echarty/xtalk.html}{more info}.\cr
 Timeline requires a \emph{grouped data.frame} to build its \href{https://echarts.apache.org/en/option.html#options}{options}.\cr
 If grouping is on multiple columns, only the first one is used to determine settings.}
 
@@ -30,8 +30,7 @@ If grouping is on multiple columns, only the first one is used to determine sett
 \item{load}{Name(s) of plugin(s) to load. Could be a character vector or comma-delimited string. default NULL.}
 
 \item{tl.series}{A list to build a timeline or NULL(default). The list defines options \href{https://echarts.apache.org/en/option.html#series}{series} and their attributes. \cr
-Requires a grouped data.frame \emph{df}.
-The only indispensable attribute is \href{https://echarts.apache.org/en/option.html#series-line.encode}{encode}.\cr
+The only required attribute is \href{https://echarts.apache.org/en/option.html#series-line.encode}{encode}.\cr
 \emph{encode} defines which data columns names to use for the axes: \cr
 \itemize{
 \item set \emph{x} and \emph{y} for coordinateSystem \emph{cartesian2d}
@@ -42,7 +41,9 @@ The only indispensable attribute is \href{https://echarts.apache.org/en/option.h
 }
 
 Attribute \emph{coordinateSystem} is not set by default and depends on chart \emph{type}.\cr
-Auto-generated \emph{timeline} and \emph{options} will be preset for the chart as well.\cr
+Custom attribute \emph{groupBy}, a \emph{df} column name, can create series groups in each timeline group.
+A grouped \emph{df} must be present, with group column providing the \href{https://echarts.apache.org/en/option.html#timeline.data}{timeline data}.
+Auto-generated \emph{timeline} and \emph{options} will be preset for the chart.\cr
 \emph{tl.series} cannot be used for hierarchical charts like graph,tree,treemap,sankey. Chart options/timeline have to be built directly, see \href{https://helgasoft.github.io/echarty/uc4.html}{example}.}
 
 \item{width, height}{A valid CSS unit (like \code{'100\%'},
@@ -101,7 +102,7 @@ p <- iris |> dplyr::group_by(Species) |> ec.init(
   )
 )
 p$x$opts$timeline <- append(p$x$opts$timeline, list(autoPlay=TRUE))
-p$x$opts$legend <- list(list())  # add legend
+p$x$opts$legend <- list(show=TRUE)  # add legend
 p
 
 }

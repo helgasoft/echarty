@@ -35,8 +35,8 @@ support](https://helgasoft.github.io/echarty/xtalk.html).
 Latest development version:
 
 ``` r
-# install.packages("remotes")
-remotes::install_github("helgasoft/echarty")
+if (!requireNamespace('remotes')) install.packages('remotes')
+remotes::install_github('helgasoft/echarty')
 ```
 
 [![CRAN
@@ -44,7 +44,7 @@ status](https://www.r-pkg.org/badges/version/echarty)](https://cran.r-project.or
 From [CRAN](https://CRAN.R-project.org):
 
 ``` r
-install.packages("echarty")
+install.packages('echarty')
 ```
 
 ## Examples

@@ -7,7 +7,7 @@
 #' @param df A data.frame to be preset as \href{https://echarts.apache.org/en/option.html#dataset}{dataset}, default NULL \cr
 #'   By default the first column is for X values, second column is for Y, and third is for Z when in 3D.\cr
 #'   Best practice is to have the grouping column placed last.\cr
-#'   For crosstalk df should be of type \link[crosstalk]{SharedData}.\cr
+#'   For crosstalk df should be of type \link[crosstalk]{SharedData}, see \href{https://helgasoft.github.io/echarty/xtalk.html}{more info}.\cr
 #'   Timeline requires a \emph{grouped data.frame} to build its \href{https://echarts.apache.org/en/option.html#options}{options}.\cr
 #'   If grouping is on multiple columns, only the first one is used to determine settings.
 #' @param ctype Chart type of series. Default is 'scatter'. Set to NULL to disable series preset.
@@ -17,8 +17,7 @@
 #'   \code{'500px'}, \code{'auto'}) or a number, which will be coerced to a
 #'   string and have \code{'px'} appended.
 #' @param tl.series A list to build a timeline or NULL(default). The list defines options \href{https://echarts.apache.org/en/option.html#series}{series} and their attributes. \cr
-#'   Requires a grouped data.frame \emph{df}.
-#'   The only indispensable attribute is \href{https://echarts.apache.org/en/option.html#series-line.encode}{encode}.\cr
+#'   The only required attribute is \href{https://echarts.apache.org/en/option.html#series-line.encode}{encode}.\cr
 #'  \emph{encode} defines which data columns names to use for the axes: \cr
 #'  * set \emph{x} and \emph{y} for coordinateSystem \emph{cartesian2d}
 #'  * set \emph{lng} and \emph{lat} for coordinateSystem \emph{geo}
@@ -27,7 +26,9 @@
 #'  * set \emph{value} and \emph{name} for \emph{map} chart
 #'  
 #'   Attribute \emph{coordinateSystem} is not set by default and depends on chart \emph{type}.\cr
-#'   Auto-generated \emph{timeline} and \emph{options} will be preset for the chart as well.\cr
+#'   Custom attribute \emph{groupBy}, a \emph{df} column name, can create series groups in each timeline group.
+#'   A grouped \emph{df} must be present, with group column providing the \href{https://echarts.apache.org/en/option.html#timeline.data}{timeline data}.
+#'   Auto-generated \emph{timeline} and \emph{options} will be preset for the chart.\cr
 #'   \emph{tl.series} cannot be used for hierarchical charts like graph,tree,treemap,sankey. Chart options/timeline have to be built directly, see \href{https://helgasoft.github.io/echarty/uc4.html}{example}.
 #' @param ... other arguments to pass to the widget. \cr
 #'   Custom widget arguments include: \cr
@@ -74,7 +75,7 @@
 #'   )
 #' )
 #' p$x$opts$timeline <- append(p$x$opts$timeline, list(autoPlay=TRUE))
-#' p$x$opts$legend <- list(list())  # add legend
+#' p$x$opts$legend <- list(show=TRUE)  # add legend
 #' p
 #' 
 #' @seealso 
@@ -303,8 +304,10 @@ ec.init <- function( df=NULL, preset=TRUE, ctype='scatter', load=NULL,
   
   # timeline is evaluated last
   if (!is.null(tl.series)) {
+    if (is.null(df))
+      stop('ec.init: tl.series requires a grouped data.frame df', call. = FALSE)
     if (!is.grouped_df(df))
-      stop('ec.init: tl.series requires a grouped data.frame', call. = FALSE)
+      stop('ec.init: tl.series requires a grouped data.frame df', call. = FALSE)
 
     if (is.null(tl.series$encode))
       stop('ec.init: encode is required for tl.series', call. = FALSE)
@@ -392,6 +395,43 @@ ec.init <- function( df=NULL, preset=TRUE, ctype='scatter', load=NULL,
     wt$x$opts$series <- NULL
     wt$x$opts$legend <- NULL
     wt$x$opts$options <- optl
+    
+    if (preset && !is.null(tl.series$groupBy)) {
+      if (!(tl.series$groupBy %in% colnames(df)))
+        stop('ec.init: tl.series groupBy column missing in df', call.= FALSE)
+      gvar <- df |> group_vars() |> first() |> as.character()  # convert if factor
+      tgrp <- tl.series$groupBy
+      # define additional filter transformations and option series based on preset ones
+      dsf <- list()  # new filters
+      opts <- list()  # new options
+      filterIdx <- 0
+      for (i in 1:length(unlist(unname(lapply(unique(df[gvar]), as.list))))) {
+        snames <- c()
+        for (x2 in unlist(unname(lapply(unique(df[tgrp]), as.list)))) {
+          dst <- wt$x$opts$dataset[[i+1]]  # skip source-dataset 1st
+          dst$transform$config <- list(and= list(
+            dst$transform$config,
+            list(dimension= tgrp, `=`= x2)
+          ))
+          dsf <- append(dsf, list(dst))
+          snames <- c(snames, x2)
+        }
+        ooo <- wt$x$opts$options[[i]]
+        sss <- lapply(snames, function(s) {
+          filterIdx <<- filterIdx + 1
+          tmp <- ooo$series[[1]]
+          tmp$name <- s
+          tmp$datasetIndex <- filterIdx
+          tmp$groupBy <- NULL
+          tmp
+        })
+        opts <- append(opts, list(
+          list(title= ooo$title, series= sss)))
+      }
+      wt$x$opts$dataset <- append(wt$x$opts$dataset[1], dsf)   # keep source-dataset [1]
+      wt$x$opts$options <- opts
+      wt$x$opts$legend <- list(show=TRUE)  # needed for sub-group
+    }
     
     steps <- lapply(optl, function(x) { paste(x$title$text, collapse=' ') })
     wt$x$opts$timeline <- list(data=steps, axisType='category')
