@@ -13,7 +13,7 @@ test_that("ec.init presets for non-grouped data.frame", {
   expect_equal(length(p$x$opts$dataset[[1]]$source), 11)
   expect_equal(p$x$opts$series[[1]]$type, 'scatter')
 })
-#> Test passed 🥇
+
 
 test_that("ec.init presets for grouped data.frame", {
   p <- df |> dplyr::group_by(symbol) |> ec.init()
@@ -44,5 +44,35 @@ test_that("ec.init presets for timeline", {
   expect_equal(length(p$x$opts$options), 4)
   expect_equal(p$x$opts$options[[4]]$title$text, '2021')
 })
+
+
+test_that("ec.init presets for timeline groupBy", {
+  set.seed(2022)
+  dat <- data.frame(
+    x3 = runif(16),
+    x4 = runif(16),
+    x5 = abs(runif(16)),
+    x1 = rep(2020:2023, each = 4),
+    x2 = rep(c("A", "A", "B", "B"), 4)
+  ) 
+  p <- dat |> group_by(x1) |> ec.init(
+    tl.series= list(encode= list(x= 'x3', y= 'x5'), 
+                    symbolSize= ec.clmn(2, scale=30),
+                    groupBy= 'x2') 
+  )
+  p$x$opts$legend <- list(show=TRUE)
+  expect_equal(p$x$opts$options[[4]]$series[[1]]$type, 'scatter')
+  expect_equal(p$x$opts$options[[4]]$series[[1]]$encode$y, 'x5')
+})
+
+
+
+
+
+
+
+
+
+
 
 

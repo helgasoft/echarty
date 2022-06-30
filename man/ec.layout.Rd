@@ -31,6 +31,6 @@ For greater number of charts \emph{ec.layout} come in handy.
 options(browser = 'firefox')
 tmp <- lapply(list('dark','macarons','gray','jazz','dark-mushroom'),
               function(x) cars |> ec.init() |> ec.theme(x) )
-ec.layout(tmp, cols=2 )
+ec.layout(tmp, cols=2, title='layout' )
 
 }

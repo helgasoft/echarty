@@ -41,10 +41,11 @@
 #' * [ec.examples]
 #' * command examples, like in [ec.init]
 #' * Shiny code is in `eshiny.R`, run with `demo(eshiny)`
-#' * searchable \href{https://helgasoft.github.io/echarty/gallery.html}{gallery} and \href{https://helgasoft.github.io/echarty/}{tutorials} on website
+#' * website \href{https://helgasoft.github.io/echarty/gallery.html}{gallery} and \href{https://helgasoft.github.io/echarty/}{tutorials}
 #' * searchable \href{https://gist.github.com/helgasoft}{gists}
 #' * demos on \href{https://rpubs.com/echarty}{RPubs}
 #' * answers to \href{https://github.com/helgasoft/echarty/issues}{Github issues}
+#' * code in \href{https://github.com/helgasoft/echarty/tree/main/tests/testthat}{Github tests}
 #' \cr
 #' 
 #' @examples

@@ -39,12 +39,12 @@ ec.fromJson(json) |> ec.theme("dark")
 
 #------ Data grouping
 library(dplyr)
-iris |> mutate(Species=as.character(Species)) |>
+iris |> mutate(Species= as.character(Species)) |>
          group_by(Species) |> ec.init()      # by non-factor column
 
 p <- Orange |> group_by(Tree) |> ec.init()   # by factor column
 p$x$opts$series <- lapply(p$x$opts$series, function(x) { 
-  x$symbolSize=10; x$encode=list(x='age', y='circumference'); x } )
+  x$symbolSize= 10; x$encode= list(x='age', y='circumference'); x } )
 p
 
 
@@ -57,27 +57,27 @@ p
 
 #------ Plugin leaflet
 if (interactive()) {
-tmp <- quakes |> dplyr::relocate('long') |>  # set order to lon,lat
-  dplyr::mutate(size= exp(mag)/20) |> head(100)   # add accented size
-p <- tmp |> ec.init(load='leaflet')
-p$x$opts$series[[1]]$name = 'quakes'
-p$x$opts$series[[1]]$symbolSize = ec.clmn(6, scale=2)   # size column
-p$x$opts$tooltip = list(formatter=ec.clmn('magnitude \%@', 'mag'))
-p$x$opts$legend = list(show=TRUE)
-p
+  tmp <- quakes |> dplyr::relocate('long') |>  # set order to lon,lat
+    dplyr::mutate(size= exp(mag)/20) |> head(100)   # add accented size
+  p <- tmp |> ec.init(load= 'leaflet',
+                    tooltip= list(formatter= ec.clmn('magnitude \%@', 'mag')),
+                    legend= list(show=TRUE)
+  )
 }
 
 #------ Plugin 'world' with visualMap
 if (interactive()) {
-cns <- data.frame(   
+cns <- data.frame(
   country = c('United States','China','Russia'),
   value = runif(3, 1, 100)
 )
-p <- cns |> group_by(country) |> ec.init(load='world',
-    tl.series=list(type='map', encode=list(value='value', name='country')) )
-p$x$opts$visualMap <- list(calculable=TRUE, max=100)
-p$x$opts$toolbox <- list(feature= list(restore= list()))
-p
+cns |> group_by(country) |> ec.init(
+  load='world',
+  visualMap= list(calculable=TRUE, max=100),
+  toolbox= list(feature= list(restore= list())),
+  tl.series= list(type= 'map', 
+                  encode= list(value='value', name='country')) 
+)
 }
 
 #------ Plugin 'world' with lines and color coding
@@ -124,7 +124,7 @@ p
 #------ locale
 mo <- seq.Date(Sys.Date() - 444, Sys.Date(), by= "month")
 df <- data.frame(date= mo, val= runif(length(mo), 1, 10))
-p <- df |> ec.init(title=list(text='locale test'))
+p <- df |> ec.init(title= list(text= 'locale test'))
 p$x$locale <- 'ZH'
 p$x$renderer <- 'svg'
 p
@@ -137,19 +137,18 @@ data <- ec.data(is, 'names')
 p <- ec.init()
 p$x$opts <- list(
   title = list(text = "Landmasses over 60,000 mi\u00B2", left = 'center'),
-  tooltip = list(trigger='item'),
+  tooltip = list(trigger='item'),   #, formatter=ec.clmn()),
   series = list(type='pie', radius='50\%', data=data, name='mi\u00B2'))
 p
 
 
 #------ Liquidfill plugin
 if (interactive()) {
- p <- ec.init(load=c('liquid'), preset=FALSE)
- p$x$opts$series[[1]] <- list(
-   type='liquidFill', data=c(0.6, 0.5, 0.4, 0.3), # amplitude=0,
-   waveAnimation=FALSE, animationDuration=0, animationDurationUpdate=0
- )
- p
+  ec.init(load= 'liquid', preset=FALSE,
+          series= list(
+            type='liquidFill', data=c(0.6, 0.5, 0.4, 0.3),
+            waveAnimation= FALSE, animationDuration=0, animationDurationUpdate=0
+  ))
 }
 
 
@@ -179,58 +178,55 @@ p
 
 #------ Plugin 3D
 if (interactive()) {
- data <- list()
- for(y in 1:dim(volcano)[2]) for(x in 1:dim(volcano)[1]) 
-   data <- append(data, list(c(x, y, volcano[x,y])))
- p <- ec.init(load= '3D')
- p$x$opts$series <- list(type= 'surface',	data= data)
- p
+  data <- list()
+  for(y in 1:dim(volcano)[2]) for(x in 1:dim(volcano)[1]) 
+    data <- append(data, list(c(x, y, volcano[x,y])))
+  ec.init(load= '3D',
+          series= list(list(type= 'surface',	data= data))
+  )
 }
 
 
-#------ 3D chart with custom item size, improved readability with ec.snip
+#------ 3D chart with custom item size
 if (interactive()) {
-p <- iris |> group_by(Species) |>
-     mutate(size= log(Petal.Width*10)) |>  # add 6th column accented size
-     ec.init(load= '3D') |> ec.snip()
-p$xAxis3D <- list(name= 'Petal.Length')
-p$yAxis3D <- list(name= 'Sepal.Width')
-p$zAxis3D <- list(name= 'Sepal.Length')
-p$series <- lapply(p$series, function(s) {  # update preset series
-                   s$symbolSize <- ec.clmn(6, scale=10); s })
-p$legend <- list(show= TRUE)
-ec.snip(p)
+  p <- iris |> group_by(Species) |>
+    mutate(size= log(Petal.Width*10)) |>  # add size as 6th column
+    ec.init(load= '3D',
+          xAxis3D= list(name= 'Petal.Length'),
+          yAxis3D= list(name= 'Sepal.Width'),
+          zAxis3D= list(name= 'Sepal.Length'),
+          legend= list(show= TRUE) )
+  p$x$opts$series <- lapply(p$x$opts$series, function(s) {  # update preset series
+    s$symbolSize <- ec.clmn(6, scale=10); s })
+  p
 }
 
 
 #------ Surface data equation with JS code
 if (interactive()) {
-p <- ec.init(load= '3D')
-p$x$opts$series[[1]] <- list(
-  type= 'surface',
-  equation= list(
-    x = list(min= -3, max= 4, step= 0.05), 
-    y = list(min= -3, max= 3, step= 0.05), 
-    z = htmlwidgets::JS("function (x, y) { 
-          return Math.sin(x * x + y * y) * x / Math.PI; }")
-  )
-)
-p
+ ec.init(load= '3D',
+   series= list(list(
+     type= 'surface',
+     equation= list(
+       x = list(min= -3, max= 4, step= 0.05),
+       y = list(min= -3, max= 3, step= 0.05),
+       z = htmlwidgets::JS("function (x, y) {
+                           return Math.sin(x * x + y * y) * x / Math.PI; }")
+     )
+   )))
 }
 
 
 #------ Surface with data from a data.frame
 if (interactive()) {
-library(dplyr)
-data <- expand.grid(
-  x = seq(0, 2, by = 0.1),
-  y = seq(0, 1, by = 0.1)
-) |> mutate(z = x * (y ^ 2)) |> select(x,y,z)
-p <- ec.init(load= '3D')
-p$x$opts$series[[1]] <- list(
-  type= 'surface',
-  data= ec.data(data, 'values'))
-p
+  data <- expand.grid(
+    x = seq(0, 2, by = 0.1),
+    y = seq(0, 1, by = 0.1)
+  ) |> mutate(z = x * (y ^ 2)) |> select(x,y,z)
+  ec.init(load= '3D',
+          series= list(list(
+            type= 'surface',
+            data= ec.data(data, 'values'))) )
 }
 
  
@@ -238,7 +234,6 @@ p
 # first column ('day') usually goes to the X-axis
 # try also alternative data setting - replace lines *1 with *2
 if (interactive()) {
-library(dplyr)
 dats <- as.data.frame(EuStockMarkets) |> mutate(day= 1:n()) |>
           relocate(day) |> slice_head(n= 100)
 p <- ec.init(load= 'custom')            # *1 = unnamed data
@@ -255,15 +250,15 @@ p$x$opts$dataZoom <- list(type= 'slider', end= 50)
 p
 }
 
-#------ Timeline animation and ec.snip
+#------ Timeline animation and use of ec.snip for readability
 p <- Orange |> dplyr::group_by(age) |> ec.init(
-  tl.series=list(type= 'bar', encode= list(x='Tree', y='circumference'))
+  xAxis= list(type= 'category', name= 'tree'),
+  yAxis= list(max= max(Orange$circumference)),
+  tl.series= list(type= 'bar', encode= list(x='Tree', y='circumference'))
 ) |> ec.snip()
 p$timeline <- append(p$timeline, list(autoPlay= TRUE))
-p$options <- lapply(p$options, 
-         function(o) { o$title$text <- paste('age',o$title$text,'days'); o })
-p$xAxis <- list(type= 'category', name= 'tree')
-p$yAxis <- list(max= max(Orange$circumference))
+p$options <- lapply(p$options,
+      function(o) { o$title$text <- paste('age',o$title$text,'days'); o })
 ec.snip(p)
 
 
@@ -275,7 +270,9 @@ df <- data.frame(
   label= c("name1","name2","name3","name4","name1","name2","name3","name4"),
   color= c("blue","purple","red","gold","blue","purple","red","gold")
 )
-p <- df |> group_by(group) |> ec.init( preset= FALSE,
+p <- df |> group_by(group) |> ec.init( 
+         preset= FALSE,
+         legend= list(selectedMode= "single"),
          tl.series= list(type= 'pie', roseType= 'radius',
                          encode=list(value='value', itemName='type')
          ))
@@ -284,7 +281,6 @@ p$x$opts$options <- lapply(p$x$opts$options, function(s) {
   s$series[[1]]$label <- list(formatter=ec.clmn(4))
   s
 })
-p$x$opts$legend <- list(selectedMode= "single")
 p
 
 
@@ -329,34 +325,32 @@ datset <- list(
     list(dimension='profession', order='desc'),
     list(dimension='score', order='desc'))
   )))
-p <- ec.init(title= list(
-        text= 'Data transform, multiple-sort bar', 
-        subtext= 'JS source',
-        sublink= paste0('https://echarts.apache.org/next/examples/en/editor.html',
-                   '?c=doc-example/data-transform-multiple-sort-bar'), 
-        left= 'center')) 
-p$x$opts$dataset <- datset
-p$x$opts$xAxis <- list(type= 'category', axisLabel= list(interval=0, rotate=30))
-p$x$opts$yAxis <- list(name= 'score')
-p$x$opts$series[[1]] <- list(
-  type= 'bar',
-  label= list(show= TRUE, rotate= 90, position= 'insideBottom',
-              align= 'left', verticalAlign= 'middle'
-  ),
-  itemStyle =list(
-    color= htmlwidgets::JS("function (params) {
-      return ({
-        Engineer: '#5470c6',
-        Teacher: '#91cc75',
-        Musician: '#fac858'
-      })[params.data[2]]
-    }")
-  ),
-  encode= list(x= 'name', y= 'score', label= list('profession') ),
-  datasetIndex= 1
+ec.init(
+  title= list(
+    text= 'Data transform, multiple-sort bar',
+    subtext= 'JS source',
+    sublink= paste0('https://echarts.apache.org/next/examples/en/editor.html',
+                    '?c=doc-example/data-transform-multiple-sort-bar'),
+    left= 'center'),
+  tooltip= list(trigger= 'item', axisPointer= list(type= 'shadow')),
+  dataset= datset,
+  xAxis= list(type= 'category', axisLabel= list(interval=0, rotate=30)),
+  yAxis= list(name= 'score'),
+  series= list(list(
+    type= 'bar',
+    label= list(show= TRUE, rotate= 90, position= 'insideBottom',
+                align= 'left', verticalAlign= 'middle'),
+    itemStyle =list(color= htmlwidgets::JS("function (params) {
+        return ({
+          Engineer: '#5470c6',
+          Teacher: '#91cc75',
+          Musician: '#fac858'
+        })[params.data[2]]
+      }")),
+    encode= list(x= 'name', y= 'score', label= list('profession') ),
+    datasetIndex= 1
+  ))
 )
-p$x$opts$tooltip <- list(trigger= 'item', axisPointer= list(type= 'shadow'))
-p
 
 
 #------ Sunburst
@@ -378,41 +372,38 @@ p
 
 #------ Error Bars on grouped data
 if (interactive()) {
-library(dplyr)
-df <- mtcars |> group_by(cyl,gear) |> summarise(yy=round(mean(mpg),2)) |>
-  mutate(low=round(yy-cyl*runif(1),2), high=round(yy+cyl*runif(1),2)) |>
-  relocate(cyl, .after = last_col())   # move group column behind first four cols
-p <- df |> ec.init(ctype='bar', load='custom') |>
+df <- mtcars |> group_by(cyl,gear) |> summarise(yy= round(mean(mpg),2)) |>
+  mutate(low= round(yy-cyl*runif(1),2), high= round(yy+cyl*runif(1),2)) |>
+  relocate(cyl, .after= last_col())   # move group column as last
+df |> ec.init(ctype='bar', load='custom', tooltip= list(show=TRUE)) |>
   ecr.ebars(df, name = 'eb'
      ,tooltip = list(formatter=ec.clmn('high <b>\%@</b><br>low <b>\%@</b>', 4,3)))
-p$x$opts$tooltip <- list(show=TRUE)
-p
 }
 
 #------ Gauge
-p <- ec.init(preset=FALSE); 
-p$x$opts$series <- list(list( 
-  type = 'gauge', max = 160, min=40,
-  detail = list(formatter='\U1F9E0={value}'), 
-  data = list(list(value=85, name='IQ test')) ))
-p
+ec.init(preset= FALSE,
+        series= list(list(
+          type = 'gauge', max = 160, min=40,
+          detail = list(formatter='\U1F9E0={value}'),
+          data = list(list(value=85, name='IQ test')) )) )
 
 
 #------ Custom gauge with animation
-p <- ec.init(js = "setInterval(function () { 
-   opts.series[0].data[0].value = (Math.random() * 100).toFixed(2) - 0;  
-   chart.setOption(opts, true);}, 2000);")
-p$x$opts <- list(series=list(list(type = 'gauge',
-  axisLine = list(lineStyle=list(width=30,
-    color = list(c(0.3, '#67e0e3'),c(0.7, '#37a2da'),c(1, '#fd666d')))),
-  pointer = list(itemStyle=list(color='auto')), 
-  axisTick = list(distance=-30,length=8, lineStyle=list(color='#fff',width=2)),
-  splitLine = list(distance=-30,length=30, lineStyle=list(color='#fff',width=4)),
-  axisLabel = list(color='auto',distance=40,fontSize=20),
-  detail = list(valueAnimation=TRUE, formatter='{value} km/h',color='auto'),
-  data = list(list(value=70))
+jcode <- "setInterval(function () { 
+    opts.series[0].data[0].value = (Math.random() * 100).toFixed(2) - 0;  
+    chart.setOption(opts, true);}, 2000);"
+ec.init(preset= FALSE, js= jcode,
+        series= list(list(
+          type= 'gauge',
+          axisLine= list(lineStyle=list(width=30,
+            color= list(c(0.3, '#67e0e3'),c(0.7, '#37a2da'),c(1, '#fd666d')))),
+            pointer= list(itemStyle=list(color='auto')),
+            axisTick= list(distance=-30,length=8, lineStyle=list(color='#fff',width=2)),
+            splitLine= list(distance=-30,length=30, lineStyle=list(color='#fff',width=4)),
+            axisLabel= list(color='auto',distance=40,fontSize=20),
+            detail= list(valueAnimation=TRUE, formatter='{value} km/h',color='auto'),
+            data= list(list(value=70))
 )))
-p
 
 
 #------ Sankey and graph plots
@@ -424,31 +415,31 @@ sankey <- data.frame(
   value = c(5, 6, 2, 8, 13),
   stringsAsFactors = FALSE
 )
-p <- ec.init(preset=FALSE)
-p$x$opts$series[[1]] <- list( type='sankey',
-  data = lapply(ec.data(sankey,'names'), function(x) list(name=x$node)),
-  edges = ec.data(sankey,'names')
+ec.init(preset= FALSE,
+        series= list(list( 
+          type= 'sankey',
+          data= lapply(ec.data(sankey, 'names'), function(x) list(name=x$node)),
+          edges= ec.data(sankey, 'names') ))
 )
-p
 
 
 # graph plot with same data ---------------
-p <- ec.init(preset= FALSE, title= list(text= 'Graph'))
-p$x$opts$series[[1]] <- list( 
-  type= 'graph',
-  layout= 'force',   # try 'circular' too
-  data= lapply(ec.data(sankey,'names'),
-             function(x) list(name= x$node, tooltip= list(show=FALSE))),
-  edges= lapply(ec.data(sankey,'names'),
-             function(x) { x$lineStyle <- list(width=x$value); x }),
-  emphasis= list(focus= 'adjacency',
-                  label= list(position= 'right', show=TRUE)),
-  label= list(show=TRUE), roam= TRUE, zoom= 4,
-  tooltip= list(textStyle= list(color= 'blue')),
-  lineStyle= list(curveness= 0.3)
+ec.init(preset= FALSE, 
+        title= list(text= 'Graph'),
+        tooltip= list(show= TRUE),
+        series= list(list(
+          type= 'graph',
+          layout= 'force',   # try 'circular' too
+          data= lapply(ec.data(sankey,'names'),
+                       function(x) list(name= x$node, tooltip= list(show=FALSE))),
+          edges= lapply(ec.data(sankey,'names'),
+                        function(x) { x$lineStyle <- list(width=x$value); x }),
+          emphasis= list(focus= 'adjacency',
+                         label= list(position= 'right', show=TRUE)),
+          label= list(show=TRUE), roam= TRUE, zoom= 4,
+          tooltip= list(textStyle= list(color= 'blue')),
+          lineStyle= list(curveness= 0.3) ))
 )
-p$x$opts$tooltip <- list(trigger='item')
-p
 
 
 #------ group connect 
@@ -476,8 +467,8 @@ if (interactive()) {
 ui <- fluidPage( ecs.output('plot') )
 server <- function(input, output, session) {
   output$plot <- ecs.render({
-    p <- cars |> group_by(speed) |> ec.init()
-    p$x$opts$dataZoom <- list(type= 'inside')
+    p <- cars |> group_by(speed) |> 
+      ec.init(dataZoom= list(type= 'inside'))
     p$x$on <- list(         # event(s) with Javascript handler
       list(event= 'legendselectchanged',
            handler= htmlwidgets::JS("(event) => alert('selected: '+event.name);"))

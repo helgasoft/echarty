@@ -41,7 +41,7 @@ The only required attribute is \href{https://echarts.apache.org/en/option.html#s
 }
 
 Attribute \emph{coordinateSystem} is not set by default and depends on chart \emph{type}.\cr
-Custom attribute \emph{groupBy}, a \emph{df} column name, can create series groups in each timeline group.
+Custom attribute \emph{groupBy}, a \emph{df} column name, can create series groups inside each timeline step.
 A grouped \emph{df} must be present, with group column providing the \href{https://echarts.apache.org/en/option.html#timeline.data}{timeline data}.
 Auto-generated \emph{timeline} and \emph{options} will be preset for the chart.\cr
 \emph{tl.series} cannot be used for hierarchical charts like graph,tree,treemap,sankey. Chart options/timeline have to be built directly, see \href{https://helgasoft.github.io/echarty/uc4.html}{example}.}
@@ -60,7 +60,7 @@ First expression is evaluated before chart initialization. \cr
 Second is evaluated with an exposed object \emph{opts}. \cr
 Third is evaluated with an exposed \emph{chart} object after \emph{opts} have been set.
 \item renderer - 'canvas'(default) or 'svg'
-\item locale - 'EN'(default) or 'ZH'. Define others \href{https://gist.github.com/helgasoft/0618c6537c45bfd9e86d3f9e1da497b8}{like so}, see \href{https://echarts.apache.org/en/api.html#echarts.init}{definitions}.
+\item locale - 'EN'(default) or 'ZH'. Use predefined or custom \href{https://gist.github.com/helgasoft/0618c6537c45bfd9e86d3f9e1da497b8}{like so}.
 \item useDirtyRect - enable dirty rectangle rendering or not, FALSE by default, see \href{https://echarts.apache.org/en/api.html#echarts.init}{here}
 }}
 }

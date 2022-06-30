@@ -26,7 +26,7 @@
 #'  * set \emph{value} and \emph{name} for \emph{map} chart
 #'  
 #'   Attribute \emph{coordinateSystem} is not set by default and depends on chart \emph{type}.\cr
-#'   Custom attribute \emph{groupBy}, a \emph{df} column name, can create series groups in each timeline group.
+#'   Custom attribute \emph{groupBy}, a \emph{df} column name, can create series groups inside each timeline step.
 #'   A grouped \emph{df} must be present, with group column providing the \href{https://echarts.apache.org/en/option.html#timeline.data}{timeline data}.
 #'   Auto-generated \emph{timeline} and \emph{options} will be preset for the chart.\cr
 #'   \emph{tl.series} cannot be used for hierarchical charts like graph,tree,treemap,sankey. Chart options/timeline have to be built directly, see \href{https://helgasoft.github.io/echarty/uc4.html}{example}.
@@ -39,7 +39,7 @@
 #'      Second is evaluated with an exposed object \emph{opts}. \cr
 #'      Third is evaluated with an exposed \emph{chart} object after \emph{opts} have been set.
 #'  * renderer - 'canvas'(default) or 'svg'
-#'  * locale - 'EN'(default) or 'ZH'. Define others \href{https://gist.github.com/helgasoft/0618c6537c45bfd9e86d3f9e1da497b8}{like so}, see \href{https://echarts.apache.org/en/api.html#echarts.init}{definitions}.
+#'  * locale - 'EN'(default) or 'ZH'. Use predefined or custom \href{https://gist.github.com/helgasoft/0618c6537c45bfd9e86d3f9e1da497b8}{like so}.
 #'  * useDirtyRect - enable dirty rectangle rendering or not, FALSE by default, see \href{https://echarts.apache.org/en/api.html#echarts.init}{here}
 #'
 #' @details  Command \emph{ec.init} creates a widget with \link[htmlwidgets]{createWidget}, then adds some ECharts features to it.\cr
@@ -150,7 +150,7 @@ ec.init <- function( df=NULL, preset=TRUE, ctype='scatter', load=NULL,
     grnm <- NULL
     if (!is.null(ctype) && dplyr::is.grouped_df(df)) {
       grnm <- dplyr::group_vars(df)[[1]]   # name of 1st grouping column 
-      x$opts$dataset <- list(list(source = ec.data(df)))
+      x$opts$dataset <- list(list(source = ec.data(df, header=TRUE)))
       grvals <- unname(unlist(dplyr::group_data(df)[grnm]))
       txfm <- list(); k <- 0
       x$opts$legend = list(data=list())
@@ -160,14 +160,14 @@ ec.init <- function( df=NULL, preset=TRUE, ctype='scatter', load=NULL,
           type='filter', config=list(dimension=grnm, '='=nm)))))
         x$opts$series[[k]] <- list(
           type=ctype, datasetIndex=k, name=as.character(nm))
-        if (colnames(df)[1]==grnm)  # grouping by 1st column
-          x$opts$series[[k]]$encode <- list(x=1, y=2)  # JS count
+        # if (colnames(df)[1]==grnm)  # grouping by 1st column - breaks prll,map,etc.
+        #   x$opts$series[[k]]$encode <- list(x=1, y=2)  # JS count
         x$opts$legend$data <- append(x$opts$legend$data, list(list(name=as.character(nm))))
       }
       x$opts$dataset <- append(x$opts$dataset, txfm)
     } 
     else 
-      x$opts$dataset <- list(list(source = ec.data(df)))
+      x$opts$dataset <- list(list(source = ec.data(df, header=TRUE)))
 
     if (preset) {
       if (!is.null(x$opts$xAxis)) { 
@@ -261,10 +261,11 @@ ec.init <- function( df=NULL, preset=TRUE, ctype='scatter', load=NULL,
       if (ctype != 'scatterGL') {  # scatterGL is 2D
         wt$x$opts$xAxis <- NULL   
         wt$x$opts$yAxis <- NULL
-        wt$x$opts$grid3D  <- list(list())
-        wt$x$opts$xAxis3D <- list(list())
-        wt$x$opts$yAxis3D <- list(list())
-        wt$x$opts$zAxis3D <- list(list())
+        nops <- names(wt$x$opts)
+        if (!('xAxis3D' %in% nops)) wt$x$opts$xAxis3D <- list(list())
+        if (!('yAxis3D' %in% nops)) wt$x$opts$yAxis3D <- list(list())
+        if (!('zAxis3D' %in% nops)) wt$x$opts$zAxis3D <- list(list())
+        if (!('grid3D'  %in% nops)) wt$x$opts$grid3D <- list(list())
       }
       # valid 3D types: scatter3D, bar3D, surface, etc.
       if ('series' %in% names(wt$x$opts)) {  # if default 2D, change it
@@ -316,6 +317,8 @@ ec.init <- function( df=NULL, preset=TRUE, ctype='scatter', load=NULL,
     if (is.null(tl.series$type)) tl.series$type <- 'scatter' # 'unknown'
     #if (is.null(tl.series$coordinateSystem)) tl.series$coordinateSystem <- 'cartesian2d' # not for gauge
     # not in any coordinate system: pie,funnel,gauge,graph, tree/treemap/sankey
+    if ('leaflet' %in% load && preset)
+      tl.series$coordinateSystem <- 'leaflet'
     if (is.null(tl.series$coordinateSystem))
       tl.series$coordinateSystem <- 'unknown'
     if (tl.series$type %in% c('line','scatter','bar','pictorialBar','candlestick','boxplot'))
@@ -362,10 +365,10 @@ ec.init <- function( df=NULL, preset=TRUE, ctype='scatter', load=NULL,
         df <- df |> group_modify(~ { .x |> mutate(XcolX = 1:nrow(.)) })
         tl.series$encode[xtem] <- 'XcolX'    # instead of relocate(XcolX)
         # replace only source, transforms stay
-        wt$x$opts$dataset[[1]] <- list(source=ec.data(df))
+        wt$x$opts$dataset[[1]] <- list(source=ec.data(df, header=TRUE))
       }
       if (is.null(unlist(tl.series$encode[ytem])))
-        stop(paste0("tl.series: encode '",ytem,"' is required",
+        stop(paste0("tl.series: encode '",ytem,"' is required for ",
                     tl.series$coordinateSystem), call.=FALSE)
       
       # dataset is already in, now loop group column(s)
@@ -460,12 +463,14 @@ ec.init <- function( df=NULL, preset=TRUE, ctype='scatter', load=NULL,
 #'  \item 'names' = named lists useful for named data like \href{https://echarts.apache.org/en/option.html#series-sankey.links}{sankey links}.
 #'  \item 'boxplot' = build dataset and source lists, see Details
 #'  \item 'dendrogram' = build series data for Hierarchical Clustering dendrogram
+#'  \item 'treePC' = build series data for sunburst,tree,treemap from parent/children data.frame
+#'  \item 'treeTK' = build series data for sunburst,tree,treemap from data.frame like Titanic. Supports column \emph{itemStyle}.
 #'  }
 #' @param header Boolean to include the column names in dataset, default TRUE.\cr
 #'    Set this to FALSE when used in \href{https://echarts.apache.org/en/option.html#series-scatter.data}{series.data}.
 #' @return A list for \emph{dataset.source}, \emph{series.data} or a list of named lists.\cr
 #'   For boxplot - a named list, see Details and Examples \cr
-#'   For dendrogram - a tree structure, see format in \href{https://echarts.apache.org/en/option.html#series-tree.data}{tree data}
+#'   For dendrogram & treePC - a tree structure, see format in \href{https://echarts.apache.org/en/option.html#series-tree.data}{tree data}
 #' @details `format='boxplot'` requires the first two \emph{df} columns as: \itemize{
 #'   \item column for the non-computational categorical axis
 #'   \item column with (numeric) data to compute the five boxplot values
@@ -480,34 +485,32 @@ ec.init <- function( df=NULL, preset=TRUE, ctype='scatter', load=NULL,
 #' #ds <- Orange |> relocate(age,circumference) |> ec.data(format='boxplot')
 #' #ds <- Orange |> relocate(age,circumference) |> group_by(Tree) |> ec.data(format='boxplot')
 #' #ds <- mtcars |> relocate(am,mpg) |> ec.data(format='boxplot')
-#'  ds <- mtcars |> relocate(am,mpg) |> group_by(cyl) |> ec.data(format='boxplot')
-#' p <- ec.init()
-#' p$x$opts <- list(
-#'   dataset= ds$dataset, 
-#'   series=  ds$series, 
-#'   yAxis= list(type= 'category',  # categorical yAxis = horizontal boxplots 
+#' ds <- mtcars |> relocate(am,mpg) |> group_by(cyl) |> ec.data(format='boxplot')
+#' ec.init(
+#'   dataset= ds$dataset,
+#'   series=  ds$series,
+#'   yAxis= list(type= 'category',  # categorical yAxis = horizontal boxplots
 #'               axisLabel= list(formatter= ds$axlbl)),
-#'   xAxis= list(show= TRUE),       # categorical xAxis = vertical boxplots 
+#'   xAxis= list(show= TRUE),       # categorical xAxis = vertical boxplots
 #'   legend= list(show= TRUE)
-#' )
-#' p 
+#' ) 
 #' 
 #' hc <- hclust(dist(USArrests), "complete")
-#' p <- ec.init(preset= FALSE)
-#' p$x$opts$series <- list(list(
-#'   type= 'tree', orient= 'TB', roam= TRUE, initialTreeDepth= -1,
-#'   data= ec.data(hc, format='dendrogram'),
-#'   # layout= 'radial', symbolSize= ec.clmn(-1, scale= 0.33),
-#'   #    exclude added labels like 'pXX', leaving only the originals
-#'   label= list(formatter= htmlwidgets::JS(
-#'     "function(n) { out= /p\\d+/.test(n.name) ? '' : n.name; return out;}"))
-#' ))
-#' p
+#' ec.init(preset= FALSE,
+#'         series= list(list(
+#'           type= 'tree', orient= 'TB', roam= TRUE, initialTreeDepth= -1,
+#'           data= ec.data(hc, format='dendrogram'),
+#'           # layout= 'radial', symbolSize= ec.clmn(scale= 0.33),
+#'           ## exclude added labels like 'pXX', leaving only the originals
+#'           label= list(formatter= htmlwidgets::JS(
+#'             "function(n) { out= /p\\d+/.test(n.name) ? '' : n.name; return out;}"))
+#'         ))
+#' )
 #' 
 #' @importFrom utils tail
 #' @importFrom grDevices boxplot.stats
 #' @export
-ec.data <- function(df, format='dataset', header=TRUE) {
+ec.data <- function(df, format='dataset', header=FALSE) {
   if (missing(df))
     stop('ec.data: expecting parameter df', call. = FALSE)
   if (format=='dendrogram') { 
@@ -547,8 +550,54 @@ ec.data <- function(df, format='dataset', header=TRUE) {
     return(json$children)
     
   } 
-  else if (!'data.frame' %in% class(df))
+  if (!'data.frame' %in% class(df))
     stop('ec.data: df has to be data.frame', call. = FALSE)
+  
+  if (format=='treePC') {
+    # for sunburst,tree,treemap
+    if (!all(colnames(df) == c('parents', 'children', 'value')) ||
+        !all(unlist(unname(lapply(as.list(df[,1:3]), class))) == c('character','character','numeric')) )
+      stop('ec.data: tree df columns need to be (parents, children, value) with value as numeric', call. = FALSE)
+
+    tryCatch({
+      tmp <- data.tree::FromDataFrameNetwork(df)
+    },
+    error=function(e) { stop(e) })
+    json <- data.tree::ToListExplicit(tmp, unname=TRUE)
+    return(json$children)
+  }
+  if (format=='treeTK') {
+    # for sunburst,tree,treemap from Titanic like 
+    chNames <- function(lest) {  # recursive
+      cldrn <- lest$children
+      nm <- names(cldrn)
+      tot <- unlist(sapply(cldrn, '[[', 'value'))
+      if (!is.null(tot)) {
+        tot <- sum(sapply(cldrn, '[[', 'value'))
+        lest$value <- tot
+      }
+      #cat('\nnames:',nm,' ',tot)
+      cldrn <- unname(cldrn)
+      cnt <- 0
+      lest$children <- lapply(cldrn, function(x) {
+        cnt <<- cnt+1; x$name <- nm[cnt]
+        if (!is.null(tot)) x$pct <- round(x$value / tot * 100, 2)
+        if (!is.null(x$itemStyle)) x$itemStyle <- eval(parse(text=paste0('list(',x$itemStyle,')')))
+        if (!is.null(x$children)) x <- chNames(x)
+        x })
+      if (!is.null(lest$children[[1]]$itemStyle))
+        lest$itemStyle <- lest$children[[1]]$itemStyle
+      lest
+    }
+    
+    tryCatch({
+      nod <- data.tree::FromDataFrameTable(df)
+    },
+    error=function(e) { stop(e) })
+    json <- data.tree::ToListExplicit(nod)
+    tmp <- chNames(json)
+    return(list(tmp))
+  }
   
   rownames(df) <- NULL
   n <- seq_along(df[[1]])       # assuming all lists in df have the same length
@@ -559,10 +608,12 @@ ec.data <- function(df, format='dataset', header=TRUE) {
     if (header)
       datset <- c(list(colnames(df)), datset)
     
-  } else if (format=='values' || isTRUE(format)) {
+  } 
+  else if (format=='values' || isTRUE(format)) {
     datset <- lapply(tmp, function(x) list(value=unlist(unname(x))))
     
-  } else if (format=='boxplot') {
+  } 
+  else if (format=='boxplot') {
     cn <- colnames(df)
     if (length(cn)<2) stop('boxplot: df should have 2+ columns', call.=FALSE)
     colas <- cn[1]; colb5 <- cn[2]
@@ -592,7 +643,7 @@ ec.data <- function(df, format='dataset', header=TRUE) {
       dats <- lapply(bdf, function(x) {
         c(unique(pull(x,colas)), round(boxplot.stats( pull(x,colb5) )$stats, 4))
       })
-      dataset <- list(source= ec.data( as.data.frame(do.call(rbind, dats)) ))
+      dataset <- list(source= ec.data( as.data.frame(do.call(rbind, dats)), header=TRUE ))
       # default is horizontal, for vertical switch xAxis/yAxis category type
       series <- list(list(type='boxplot', encode= list(y='V1', x=c('V2','V3','V4','V5','V6'))))
     }
@@ -602,8 +653,10 @@ ec.data <- function(df, format='dataset', header=TRUE) {
     
     return(list(dataset= dataset, series= series, axlbl= htmlwidgets::JS(axe)))
     
-  } else    # ='names'
+  } 
+  else {
     datset <- tmp
+  }  # format=='names'
 
   return(datset)
 }
@@ -614,14 +667,15 @@ ec.data <- function(df, format='dataset', header=TRUE) {
 #' Helper function to display/format data column(s) by index or name
 #' 
 #' @param col A single column index(number) or column name(quoted string), \cr
-#'    or a \link[base]{sprintf} format string. 
+#'    or a \link[base]{sprintf} format string. Default is NULL, for charts with single values like tree, pie.
 #' @param ... A comma separated column indexes or names, only when \emph{col} is \emph{sprintf}. This allows formatting of multiple columns, as for a tooltip.\cr
 #' @param scale A positive number, multiplier for numeric columns. When scale is 0, all numeric values are rounded.
 #' @return A JavaScript code string (usually a function) marked as executable, see \link[htmlwidgets]{JS}.
 #'  
 #' @details Column indexes are counted in R and start at 1.\cr
-#' Set column index to -1 for single values, like \emph{tree} chart, \emph{axisLabel.formatter} or \emph{valueFormatter}.\cr
-#' Column indexes are decimals for combo charts with multiple series, see [ecr.band] example. The whole number part is the serie index, the decimal part is the column index inside.
+#' Omit _col_ for single values like \emph{tree} chart, \emph{axisLabel.formatter} or \emph{valueFormatter}. See [ec.data] dendrogram example.\cr
+#' Use only column index(es) when setting \emph{symbolSize}.\cr
+#' Column indexes are decimals for combo charts with multiple series, see [ecr.band] example. The whole number part is the serie index, the decimal part is the column index inside.\cr
 #' \emph{col} as sprintf has the same placeholder \emph{%@} for both column indexes or column names.\cr
 #' \emph{col} as sprintf can contain double quotes, but not single or backquotes.\cr
 #' Placeholder \emph{%L@} will display a number in locale format, like '12,345.09'.\cr
@@ -635,26 +689,31 @@ ec.data <- function(df, format='dataset', header=TRUE) {
 #'                   emoji = c('\U0001F33B','\U0001F335','\U0001F33A'))
 #' df <- iris |> dplyr::inner_join(tmp)         # add 6th column emoji
 #' p <- df |> dplyr::group_by(Species) |> ec.init()
-#' p$x$opts$series <- lapply(p$x$opts$series,   # show 6th column as label
-#'    function(s) append(s, list(label= list(show= TRUE, formatter= ec.clmn(6)))) )
-#' p$x$opts$tooltip <- list(formatter=     # sprintf + multiple column indexes
+#' p$x$opts$series <- lapply(p$x$opts$series,
+#'    function(s) append(s, list(label= list(show= TRUE, 
+#'                                           formatter= ec.clmn('emoji')))) 
+#' )
+#' p$x$opts$tooltip <- list(formatter=     
+#'    # ec.clmn with sprintf + multiple column indexes
 #'    ec.clmn('%M@ species <b>%@</b><br>s.len <b>%@</b><br>s.wid <b>%@</b>', 5,1,2))
 #' p
 #' 
 #' @export
 ec.clmn <- function(col=NULL, ..., scale=1) {
-  if (is.null(col)) stop('ec.clmn: col is required', call.=FALSE)
   if (is.null(scale)) scale=1
   if (scale==1) scl <- 'return c;' 
   else { if (scale==0) scl <- 'return Math.round(c);'
-         else scl <- paste0('return (parseFloat(c)*',scale,');') }
+  else scl <- paste0('return (parseFloat(c)*',scale,');') }
   args <- list(...)
-  if (is.na(suppressWarnings(as.numeric(col)))) {   # col is string
+  ret <- paste("let c=String(typeof x=='object' ? x.value : x);", scl)
+  
+  if (is.null(col)) {}   # for pie,sunburst
+  else if (is.na(suppressWarnings(as.numeric(col)))) {   # col is string
     if (length(args)==0) {  # col is solitary name
-      ret <- paste0('let c=(!x.data) ? `no data` : x.data.',col,'; ',scl)
-      
-    } else {                # col is sprintf
-      spf <- "var sprintf= (template, values) => { let j=0;
+      args <- c(col); col <- '%@'   # replace
+    }
+    # col is sprintf
+    spf <- "var sprintf= (template, values) => { let j=0;
 return template.replace(/%@|%L@|%LR@|%R@|%M@/g, (m) => {
   if (m=='%@') return values[j++];
   if (m=='%L@') return Number(values[j++]).toLocaleString();
@@ -662,53 +721,49 @@ return template.replace(/%@|%L@|%LR@|%R@|%M@/g, (m) => {
   if (m=='%R@') return Math.round(Number(values[j++]));
   if (m=='%M@') return x.marker;
 }); };"
-      
-      tmp <- suppressWarnings(as.numeric(args) -1)
-      if (all(is.na(tmp))) {   
-        # multiple non-numeric strings = column names
-        t0 <- sapply(args, function(s) toString(paste0('x.data.', s)) )
-        t0 <- paste(t0, collapse=',')
-        t1 <- paste(args, collapse='`,`')
-        ret <- paste0( spf, " if (!x.data) return `no data`; 
-let args=[`",t1,"`], vv=[]; pos=[];
+    
+    tmp <- suppressWarnings(as.numeric(args) -1)
+    if (all(is.na(tmp))) {   
+      # multiple non-numeric strings = column names
+      t0 <- sapply(args, function(s) toString(paste0("x.data['", s,"']")) )
+      t0 <- paste(t0, collapse=',')
+      t1 <- paste(args, collapse='`,`')
+      # x.data = 1) object 2) array with x.dimensionNames 3) array only when dataset
+      ret <- paste0( spf, " if (!x.data) return `no data`; 
+let args=[`",t1,"`], vv=[",t0,"]; pos=[];
 if (x.dimensionNames && x.dimensionNames.length>0) 
   pos= args.map(z => x.dimensionNames.indexOf(z));
 if (x.data.length)
-  vv= pos.map(p => x.data[p]);
-else
-  vv= (x.data.value && x.data.value.length>0) 
-     ? pos.map(p => x.data.value[p]) : [",t0,"];"
-        )
-      }
-      else {   
-        #  multiple numeric, they could be in x, x.data, x.value OR x[].value[]
-        #  in combo-charts (ec.band), get decimal portion as .value index
-        tmp <- paste(tmp, collapse=',')
-        ret <- paste0( spf, "let ss=[",tmp,"];
-let vv= ss.map((e) => { 
-    if (e<0) return x.value ? x.value : x;
-    let i= Math.floor(e);
-    return x.value!=null ? x.value[i] : 
-           x.data!=null  ? x.data[i] : 
-           x[i]!=null    ? x[i] : `no data` });
-if (typeof vv[0] === 'object' && vv[0].value) {
-    vv = ss.map((e,idx) => { 
-      f= Math.round(e % 1 *10) -1;
-      return vv[idx].value[f];  }) };")
-      }
-      if (scale >0) ret <- paste(ret,"vv= vv.map(e => isNaN(e) ? e : e*",scale,");")
-      if (scale==0) ret <- paste(ret,"vv= vv.map(e => isNaN(e) ? e : Math.round(e));")
-      ret <- paste(ret, "let c = sprintf(`",col,"`, vv); return c; ")
+  vv= pos.map(p => x.data[p]);")
     }
+    else {   
+      #  multiple numeric, they could be in x, x.data, x.value OR x[].value[]
+      #  in combo-charts (ec.band), get decimal portion as .value index
+      tmp <- paste(tmp, collapse=',')
+      ret <- paste0( spf, "let ss=[",tmp,"];
+let vv= ss.map((e) => { 
+  if (e<0) return x.value ? x.value : x;
+  let i= Math.floor(e);
+  return x.value!=null ? x.value[i] : 
+         x.data!=null  ? x.data[i] : 
+         x[i]!=null    ? x[i] : `no data` });
+if (vv.length > 0) // multi-series
+  vv = ss.map((e,idx) => {
+  if (typeof vv[idx] != 'object') return vv[idx];
+    f= Math.round(e % 1 *10) -1;
+    return vv[idx].value[f];  }); ")
+    }
+    
+    if (scale >0) ret <- paste(ret,"vv= vv.map(e => isNaN(e) ? e : e*",scale,");")
+    if (scale==0) ret <- paste(ret,"vv= vv.map(e => isNaN(e) ? e : Math.round(e));")
+    ret <- paste(ret, "let c = sprintf(`",col,"`, vv); return c; ")
   }
   else {      # col is solitary numeric
     if (length(args) > 0)
       warning('col is numeric, others are ignored', call.=FALSE)
     col <- as.numeric(col) - 1   # from R to JS counting
-    if (col < 0)  # just a value is expected
-      ret <- paste('let c=x;',scl)
-    else
-      ret <- paste0('let c = x.value!=null ? x.value[',col,'] : x.data!=null ? x.data[',col,'] : x[',col,']; ',scl)
+    if (col >= 0)
+      ret <- paste0('let c = String(x.value!=null ? x.value[',col,'] : x.data!=null ? x.data[',col,'] : x[',col,'] ); ',scl)
   }
   htmlwidgets::JS(paste0('function(x) {', ret, '}'))
 }
@@ -734,21 +789,25 @@ if (typeof vv[0] === 'object' && vv[0].value) {
 #' 
 #' @examples 
 #' if (interactive()) {
-#' df <- airquality |> dplyr::mutate(lwr= round(Temp-Wind*2), 
-#'                                   upr= round(Temp+Wind*2), 
-#'                                   x=paste0(Month,'-',Day) ) |>
-#'                     dplyr::relocate(x,Temp)
-#' bands <- ecr.band(df, 'lwr', 'upr', type='stack', 
+#' df <- airquality |> mutate(lwr= round(Temp-Wind*2),
+#'                            upr= round(Temp+Wind*2),
+#'                            x= paste0(Month,'-',Day) ) |>
+#'                     relocate(x,Temp)
+#' bands <- ecr.band(df, 'lwr', 'upr', type='stack',
 #'                   name='stak', areaStyle= list(opacity=0.4))
-#' p <- df |> ec.init(load='custom')
-#' p$x$opts$xAxis <- list(type='category', boundaryGap=FALSE)
-#' p$x$opts$series <- list(list(type='line', color='blue', name='line'), 
-#'                         bands[[1]], bands[[2]] )
-#' p$x$opts$tooltip <- list(trigger= 'axis',
-#'    formatter= ec.clmn('high <b>%@</b><br>line <b>%@</b><br>low <b>%@</b>', 
-#'         3.3, 1.2, 2.2))  # 3.3= upper-serie index .index of column inside
-#' p$x$opts$legend <- list(show= TRUE)
-#' p
+#' df |> ec.init(load='custom',
+#'               legend= list(show= TRUE),
+#'               xAxis= list(type='category', boundaryGap=FALSE),
+#'               series= list(list(
+#'                 type='line', color='blue', name='line'),
+#'                 bands[[1]], bands[[2]] ),
+#'               tooltip= list(
+#'                 trigger= 'axis',
+#'                 formatter= ec.clmn(
+#'                   'high <b>%@</b><br>line <b>%@</b><br>low <b>%@</b>',
+#'                   3.3, 1.2, 2.2)
+#'               )  # 3.3= upper-serie index +.+ index of column inside
+#' )
 #' }
 #' 
 #' @importFrom stats na.omit
@@ -782,8 +841,8 @@ ecr.band <- function(df=NULL, lower=NULL, upper=NULL, type='polygon', ...) {
     tmp <- data.frame(x = df[fstc][[1]], lo=df[lower][[1]], 
                       hi = df[upper][[1]] - df[lower][[1]], 
                       ttip = df[upper][[1]] )
-    slow$data <- ec.data(tmp[,c('x','lo')], header=FALSE)
-    supr$data <- ec.data(tmp[,c('x','hi','ttip')], header=FALSE)
+    slow$data <- ec.data(tmp[,c('x','lo')])
+    supr$data <- ec.data(tmp[,c('x','hi','ttip')])
     serios <- list(slow, supr)
   }
   else {   # polygon
@@ -807,28 +866,46 @@ ecr.band <- function(df=NULL, lower=NULL, upper=NULL, type='polygon', ...) {
 #' Custom series to display error-bars for scatter,bar or line series
 #' 
 #' @param wt A widget to add error bars to, see \link[htmlwidgets]{createWidget}
-#' @param df NULL(default) or data.frame with four or more columns ordered exactly (x,y,low,high,others).
-#' When NULL, data is taken from wt's dataset where order should be the same (x,y,low,high,etc)
+#' @param df NULL(default) or data.frame with four or more columns ordered exactly x,y,low,high,(category),...\cr
+#' When NULL, data is taken from wt's dataset where order should be the same x,y,low,high,(category),...
 #' @param hwidth Half-width of error bar in pixels, default is 6.
 #' @param ... More parameters for \href{https://echarts.apache.org/en/option.html#series-custom.type}{custom serie}
 #' @return A widget with error bars added if successful, otherwise the input wt
 #'
 #' @details 
 #'  \emph{ecr.ebars} are custom series, so \emph{ec.init(load='custom')} is required. \cr
-#'  Grouped series are supported, but require the group column to be included in \emph{df}. \cr
+#'  Grouped series are supported, but \emph{df} is required with group column included. \cr
 #'  Will add a chart legend and its own tooltip if none is provided.\cr
-#'  ecr.ebars with name attribute will show separate in the legend. \cr
-#'  Command should be called last, after all other series.
+#'  Add a name attribute to show error bars separate in the legend. \cr
+#'  Command should be called last, after all other series.\cr
+#'  Simple non-grouped series could be displayed with formatter \emph{riErrBarSimple} instead of \emph{ecr.ebars}. See example below.
 #'
 #' @examples
 #' if (interactive()) {
+#' library(dplyr)
 #' tmp <- round(rnorm(24, sin(1:24/2)*10, .5))
 #' df <- data.frame(x = 1:24, val = tmp, 
 #'                  lower = round(rnorm(24, tmp -10, .5)),
-#'                  upper = round(rnorm(24, tmp + 5, .8))
-#' )
-#' p <- df |> ec.init(load='custom') |> ecr.ebars()
-#' p$x$opts$tooltip <- list(show=TRUE)
+#'                  upper = round(rnorm(24, tmp + 5, .8)),
+#'                  cat= rep(c('A','B'),24) )
+#' df |> ec.init(load='custom', tooltip= list(show=TRUE)) |> ecr.ebars()
+#'   
+#' #------ riErrBarSimple ------
+#' p <- df |> ec.init(load='custom',
+#'                    title= list(text= "riErrBarSimple"),
+#'                    legend= list(show=TRUE) )
+#' p$x$opts$xAxis= list(data= df$category)
+#' p$x$opts$series <- append(p$x$opts$series, list(list(
+#'   type= "custom", name= "error",
+#'   itemStyle = list(borderWidth= 1.5, color= 'brown'), 
+#'   encode = list(x= 0, y= list(1, 2)), 
+#'   data = ec.data(df |> select(x,lower,upper)),
+#'   renderItem = htmlwidgets::JS("riErrBarSimple") )))
+#' p
+#' 
+#' # ----- grouped -------
+#' p <- df |> group_by(cat) |> ec.init(load='custom') |> ecr.ebars(df)
+#' p$x$opts$xAxis <- list(type='value')  # fix wrong preset to category
 #' p
 #' }
 #' @export
@@ -1061,7 +1138,7 @@ ecs.exec <- function(proxy, cmd='p_merge') {
 #' options(browser = 'firefox')
 #' tmp <- lapply(list('dark','macarons','gray','jazz','dark-mushroom'),
 #'               function(x) cars |> ec.init() |> ec.theme(x) )
-#' ec.layout(tmp, cols=2 )
+#' ec.layout(tmp, cols=2, title='layout' )
 #' 
 #' @export 
 ec.layout <- function (plots, rows = NULL, cols = NULL, width = "xs", 
@@ -1120,12 +1197,12 @@ ec.layout <- function (plots, rows = NULL, cols = NULL, width = "xs",
 #' @examples
 #' iris |> dplyr::group_by(Species) |> ec.init(ctype='parallel')
 #' 
-#' p <- ec.init(preset=FALSE) 
-#' p$x$opts$parallelAxis <- ec.paxis(mtcars, 
-#'      cols= c('gear','cyl','hp','carb'), nameRotate= 45)
-#' p$x$opts$series <- list(list( type= 'parallel',
-#'      smooth= TRUE, data= ec.data(mtcars,'dataset',FALSE) ))
-#' p
+#' ec.init(preset=FALSE,
+#'         parallelAxis= ec.paxis(mtcars, 
+#'                                cols= c('gear','cyl','hp','carb'), nameRotate= 45),
+#'         series= list(list(type= 'parallel', smooth= TRUE, 
+#'                           data= ec.data(mtcars, 'dataset') ))
+#' )
 #' 
 #' @export 
 ec.paxis <- function (df=NULL, minmax=TRUE, cols=NULL, ...) {
@@ -1339,6 +1416,149 @@ ec.snip <- function(wt) {
 }
 
 
+#' Utility functions
+#' 
+#' currently related only to GIS shapefiles read by library sf
+#'  
+#' @param type Type of utility - 'sf.series'(default) or 'sf.bbox' \cr\itemize{
+#'   \item \emph{sf.series} returns a list of chart series\cr
+#'   * required parameter \emph{df} - a result from \link[sf]{st_read}\cr
+#'   * optional parameter \emph{nid} - column name for name-id used in tooltips\cr
+#'   \item \emph{sf.bbox} returns JavaScript code to position a map inside a bounding box from \link[sf]{st_bbox}\cr
+#'   }
+#' @param ... Optional parameters for \href{https://echarts.apache.org/en/option.html#series-scatter.type}{scatter}(points) or lines(polylines) charts.\cr
+#' @param verbose Print extra info in console, default is FALSE.
+#' @details 
+#' These utilities are experimental. Goal is to build map series from a shapefile.
+#' Limitations:\cr no sfc_MULTIPOINT or sfc_POLYGON types supported yet,\cr
+#'   no polygons with holes, polygons can have only a name in tooltip,\cr
+#'   assumes Geodetic CRS is WGS 84.
+#' 
+#' @examples 
+#' if (interactive()) {
+#'   library(sf)
+#'   fname <- system.file("shape/nc.shp", package="sf")
+#'   nc <- st_read(fname)
+#'   p <- ec.init(load= c('leaflet', 'custom'),  # load custom for polygons
+#'          js= ec.util(type= 'sf.bbox', bbox= st_bbox(nc)),
+#'          series= ec.util(df= nc, nid= 'NAME', itemStyle= list(opacity= 0.3)),
+#'          tooltip= list(show= TRUE, formatter= '{a}')
+#'   )
+#'   p
+#' }
+#' @export
+ec.util <- function( ..., type='sf.series', verbose=FALSE) {
+  do.series <- function(df=NULL, ..., verbose=FALSE) {
+    polig <- function(geom) {
+      for(k in 1:length(geom)) {
+        if ('matrix' %in% class(geom[[k]])) {
+          gm <- as.data.frame(geom[[k]])
+          coords <- list()
+          for(j in 1:nrow(gm))
+            coords <- append(coords, list(c(gm[j,1], gm[j,2])))
+          sers <<- append(sers, list(list(
+            type= 'custom', coordinateSystem= 'leaflet', 
+            renderItem= htmlwidgets::JS('riPolygon'),
+            name= dname, 
+            data= coords, ...
+          )))
+        } else polig(geom[[k]])  # recursive
+      }
+    }
+    geometry <- L1 <- NULL  # trick to avoid code checking NOTES
+    opts <- list(...)
+    sers <- list()
+    switch( class(df$geometry)[1],
+            'sfc_POINT'= {
+              flds <- colnames(df)[! colnames(df) %in% c("value")]
+              tt <- c(paste(rep('%@', length(flds)), collapse='<br>'), flds)
+              df <- df |> rename(value= geometry)
+              pnts <- ec.data(df, 'names')
+              sers <- list(
+                list(type='scatter', coordinateSystem='leaflet',
+                     tooltip= list(formatter= do.call("ec.clmn", as.list(tt))),
+                     data= pnts, ...
+                ))
+            },
+            'sfc_MULTIPOLYGON' = {
+              for(i in 1:nrow(df)) {
+                dname <- ifelse(is.null(opts$nid), i, df[i,opts$nid][[1]])
+                if (verbose) cat(dname,',', sep='')
+                geom <- df$geometry[[i]]
+                polig(geom)
+              }
+            },
+            'sfc_LINESTRING' = {
+              tmp <- df$geometry
+              tmp <- as.data.frame(cbind(do.call(rbind, tmp), L1= rep(seq_along(tmp), times= vapply(tmp, nrow, 0L))))
+              for(i in 1:nrow(df)) {
+                dname <- ifelse(is.null(opts$nid), i, df[i,opts$nid][[1]])
+                if (verbose) cat(dname,',', sep='')
+                coords <- list()
+                geom <- tmp |> filter(L1==i)
+                for(k in 1:nrow(geom))
+                  coords <- append(coords, list(c(geom[k,1], geom[k,2])))
+                
+                sers <- append(sers, list(list(
+                  type='lines', coordinateSystem='leaflet', polyline= TRUE,
+                  name= dname, 
+                  tooltip= list(formatter= '{a}'),
+                  data= list(coords), ... )))
+              }
+            },
+            'sfc_MULTILINESTRING' = {
+              for(i in 1:nrow(df)) {
+                dname <- ifelse(is.null(opts$nid), i, df[i,opts$nid][[1]])
+                if (verbose) cat(dname,',', sep='')
+                corda <- list()
+                geom <- df$geometry[[i]]
+                for(k in 1:length(geom)) {
+                  gm <- as.data.frame(geom[[k]])
+                  coords <- list()
+                  for(j in 1:nrow(gm))
+                    coords <- append(coords, list(c(gm[j,1], gm[j,2])))
+                  corda <- append(corda, list(coords))
+                }
+                sers <- append(sers, list(list(
+                  type='lines', coordinateSystem='leaflet', polyline= TRUE,
+                  name= dname, 
+                  tooltip= list(formatter= '{a}'),
+                  data= corda, ... )))
+              }
+            },
+            stop(paste('ec.series:',class(df$geometry)[1],'geometry not supported'), call.= FALSE)
+    )
+    cat('\n series length =',length(sers),'\n')
+    sers
+  }
+  
+  opts <- list(...)
+  switch( type,
+          'sf.series'= {
+            if (is.null(opts$df))
+              stop('ec.util: expecting parameter df', call. = FALSE)
+            if (is.null(opts$df$geometry))
+              stop('ec.util: expecting df$geometry', call. = FALSE)
+            out <- do.series(..., verbose=verbose)
+          },
+          
+          'sf.bbox'= {
+            if (is.null(opts$bbox))
+              stop('ec.util: expecting parameter bbox', call. = FALSE)
+            if (is.null(opts$bbox$ymin))
+              stop('ec.util: expecting bbox in sf format', call. = FALSE)
+            tmp <- opts$bbox
+            rng <- paste0('[[',tmp$ymin,',',tmp$xmin,'],[',tmp$ymax,',',tmp$xmax,']]')
+            out <- c('','', 
+                     paste("var map= chart.getModel().getComponent('leaflet').__map;", 
+                           "map.fitBounds(",rng,");"))
+          },
+          stop(paste('ec.util: invalid type',type), call. = FALSE)
+  )
+  out
+}
+
+
 # ----------- Internal --------------
 
 
@@ -1357,16 +1577,15 @@ ec.snip <- function(wt) {
 #' @examples
 #' # import map plugin and display two (lon,lat) locations
 #' if (interactive()) {
-#' p <- ec.init() |> ec.plugjs(
-#'   'https://raw.githubusercontent.com/apache/echarts/master/test/data/map/js/china-contour.js')
-#' p$x$opts <- list(
-#'   geo = list(map= 'china-contour', roam= TRUE),
-#'   series = list(list( name= 'Geo',
-#'     type= 'scatter', coordinateSystem= 'geo',
-#'     symbolSize= 9, itemStyle= list(color= 'red'),
-#'     data= list(list(value= c(113, 40)), list(value= c(118, 39))) ))
-#' )
-#' p
+#'   ec.init(preset= FALSE,
+#'           geo = list(map= 'china-contour', roam= TRUE),
+#'           series = list(list(
+#'             type= 'scatter', coordinateSystem= 'geo',
+#'             symbolSize= 9, itemStyle= list(color= 'red'),
+#'             data= list(list(value= c(113, 40)), list(value= c(118, 39))) ))
+#'   ) |> 
+#'   ec.plugjs( paste0('https://raw.githubusercontent.com/apache/echarts/',
+#'                     'master/test/data/map/js/china-contour.js') )
 #' }
 #' @importFrom utils askYesNo download.file
 #'

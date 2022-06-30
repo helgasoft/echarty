@@ -1,12 +1,16 @@
 # history of echarty package development
 
-## v.1.4.5.9002
+## v.1.4.6
 
-- upgrade ECharts to v.5.3.2
+- upgrade ECharts to v.5.3.3
 - expand docs for _ec.init_
 - fix timeline _tl.series_ for candlestick,boxplot,pictorialBar
 - add custom attribute _groupBy_ for _tl.series_
 - add _riErrBarSimple_ renderer
+- new _ec.data_ formats 'treePC' and 'treeTK' for hierarchies
+- changed _ec.data_ default parameter _header_ to FALSE
+- fixes in _ec.clmn_ and allow empty _col_ parameter for pie,sunburst,etc.
+- add _ec.util_ to support map shapefiles thru sf
 
 ## v.1.4.5
 

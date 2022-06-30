@@ -24,11 +24,11 @@ Create 'parallelAxis' for a parallel chart
 \examples{
 iris |> dplyr::group_by(Species) |> ec.init(ctype='parallel')
 
-p <- ec.init(preset=FALSE) 
-p$x$opts$parallelAxis <- ec.paxis(mtcars, 
-     cols= c('gear','cyl','hp','carb'), nameRotate= 45)
-p$x$opts$series <- list(list( type= 'parallel',
-     smooth= TRUE, data= ec.data(mtcars,'dataset',FALSE) ))
-p
+ec.init(preset=FALSE,
+        parallelAxis= ec.paxis(mtcars, 
+                               cols= c('gear','cyl','hp','carb'), nameRotate= 45),
+        series= list(list(type= 'parallel', smooth= TRUE, 
+                          data= ec.data(mtcars, 'dataset') ))
+)
 
 }

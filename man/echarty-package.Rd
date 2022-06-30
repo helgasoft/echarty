@@ -64,10 +64,11 @@ Here is the complete list of sample code locations \cr
 \item \link{ec.examples}
 \item command examples, like in \link{ec.init}
 \item Shiny code is in \code{eshiny.R}, run with \code{demo(eshiny)}
-\item searchable \href{https://helgasoft.github.io/echarty/gallery.html}{gallery} and \href{https://helgasoft.github.io/echarty/}{tutorials} on website
+\item website \href{https://helgasoft.github.io/echarty/gallery.html}{gallery} and \href{https://helgasoft.github.io/echarty/}{tutorials}
 \item searchable \href{https://gist.github.com/helgasoft}{gists}
 \item demos on \href{https://rpubs.com/echarty}{RPubs}
 \item answers to \href{https://github.com/helgasoft/echarty/issues}{Github issues}
+\item code in \href{https://github.com/helgasoft/echarty/tree/main/tests/testthat}{Github tests}
 \cr
 }
 }
@@ -96,7 +97,7 @@ Useful links:
 
 Authors:
 \itemize{
-  \item John Coene \email{jcoenep@gmail.com} [copyright holder]
+  \item John Coene (echarts4r library) [copyright holder]
 }
 
 }

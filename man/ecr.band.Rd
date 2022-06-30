@@ -33,21 +33,25 @@ Type 'stack' needs \emph{xAxis} to be of type 'category'.
 }
 \examples{
 if (interactive()) {
-df <- airquality |> dplyr::mutate(lwr= round(Temp-Wind*2), 
-                                  upr= round(Temp+Wind*2), 
-                                  x=paste0(Month,'-',Day) ) |>
-                    dplyr::relocate(x,Temp)
-bands <- ecr.band(df, 'lwr', 'upr', type='stack', 
+df <- airquality |> mutate(lwr= round(Temp-Wind*2),
+                           upr= round(Temp+Wind*2),
+                           x= paste0(Month,'-',Day) ) |>
+                    relocate(x,Temp)
+bands <- ecr.band(df, 'lwr', 'upr', type='stack',
                   name='stak', areaStyle= list(opacity=0.4))
-p <- df |> ec.init(load='custom')
-p$x$opts$xAxis <- list(type='category', boundaryGap=FALSE)
-p$x$opts$series <- list(list(type='line', color='blue', name='line'), 
-                        bands[[1]], bands[[2]] )
-p$x$opts$tooltip <- list(trigger= 'axis',
-   formatter= ec.clmn('high <b>\%@</b><br>line <b>\%@</b><br>low <b>\%@</b>', 
-        3.3, 1.2, 2.2))  # 3.3= upper-serie index .index of column inside
-p$x$opts$legend <- list(show= TRUE)
-p
+df |> ec.init(load='custom',
+              legend= list(show= TRUE),
+              xAxis= list(type='category', boundaryGap=FALSE),
+              series= list(list(
+                type='line', color='blue', name='line'),
+                bands[[1]], bands[[2]] ),
+              tooltip= list(
+                trigger= 'axis',
+                formatter= ec.clmn(
+                  'high <b>\%@</b><br>line <b>\%@</b><br>low <b>\%@</b>',
+                  3.3, 1.2, 2.2)
+              )  # 3.3= upper-serie index +.+ index of column inside
+)
 }
 
 }

@@ -28,15 +28,14 @@ Called internally by \link{ec.init}. It is recommended to use \emph{ec.init(load
 \examples{
 # import map plugin and display two (lon,lat) locations
 if (interactive()) {
-p <- ec.init() |> ec.plugjs(
-  'https://raw.githubusercontent.com/apache/echarts/master/test/data/map/js/china-contour.js')
-p$x$opts <- list(
-  geo = list(map= 'china-contour', roam= TRUE),
-  series = list(list( name= 'Geo',
-    type= 'scatter', coordinateSystem= 'geo',
-    symbolSize= 9, itemStyle= list(color= 'red'),
-    data= list(list(value= c(113, 40)), list(value= c(118, 39))) ))
-)
-p
+  ec.init(preset= FALSE,
+          geo = list(map= 'china-contour', roam= TRUE),
+          series = list(list(
+            type= 'scatter', coordinateSystem= 'geo',
+            symbolSize= 9, itemStyle= list(color= 'red'),
+            data= list(list(value= c(113, 40)), list(value= c(118, 39))) ))
+  ) |> 
+  ec.plugjs( paste0('https://raw.githubusercontent.com/apache/echarts/',
+                    'master/test/data/map/js/china-contour.js') )
 }
 }

@@ -1,18 +1,18 @@
 Package: echarty
 Title: Minimal R/Shiny Interface to JavaScript Library 'ECharts'
-Date: 2022-06-08
-Version: 1.4.5.9002
+Date: 2022-06-30
+Version: 1.4.6
 Authors@R: c( 
   person("Larry", "Helgason", email = "larry@helgasoft.com", role = c("aut", "cre", "cph")),
-  person("John", "Coene", email = "jcoenep@gmail.com", role = c("aut", "cph"))
+  person("John", "Coene", role = c("aut", "cph"), comment = "echarts4r library")
   )
-Author: Larry Helgason [aut, cre, cph], 
+Author: Larry Helgason [cre, aut, cph], 
   John Coene [aut, cph]
 Maintainer: Larry Helgason <larry@helgasoft.com>
 Description: Deliver the full functionality of 'ECharts' with minimal overhead. 'echarty' users build R lists for 'ECharts' API. Lean set of powerful commands.
 Depends: R (>= 4.1.0)
 License: Apache License (>= 2.0)
-LazyData: false
+LazyData: true
 Imports:
   htmlwidgets,
   htmltools (>= 0.5.0),
@@ -24,7 +24,8 @@ Suggests:
   crosstalk,
   rmarkdown,
   knitr,
-  testthat (>= 3.0.0)
+  testthat (>= 3.0.0),
+  sf
 RoxygenNote: 7.2.0
 Roxygen: list(markdown = TRUE)
 URL: https://github.com/helgasoft/echarty
