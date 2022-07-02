@@ -4,18 +4,19 @@
 \alias{ec.util}
 \title{Utility functions}
 \usage{
-ec.util(..., type = "sf.series", verbose = FALSE)
+ec.util(..., uid = "sf.series", verbose = FALSE)
 }
 \arguments{
 \item{...}{Optional parameters for \href{https://echarts.apache.org/en/option.html#series-scatter.type}{scatter}(points) or lines(polylines) charts.\cr}
 
-\item{type}{Type of utility - 'sf.series'(default) or 'sf.bbox' \cr\itemize{
-\item \emph{sf.series} returns a list of chart series\cr
+\item{uid}{Id of utility - sf.series(default), sf.bbox, sf.unzip\cr
 \itemize{
-\item required parameter \emph{df} - a result from \link[sf]{st_read}\cr
-\item optional parameter \emph{nid} - column name for name-id used in tooltips\cr
+\item \emph{sf.series} returns a list of chart series\cr
+required parameter \emph{df} - value from \link[sf]{st_read}\cr
+optional parameter \emph{nid} - column name for name-id used in tooltips\cr
 \item \emph{sf.bbox} returns JavaScript code to position a map inside a bounding box from \link[sf]{st_bbox}\cr
-}
+\item \emph{sf.unzip} returns local file name of the unzipped .shp file\cr
+required parameter \emph{url} - URL of remote zipped shapefile\cr
 }}
 
 \item{verbose}{Print extra info in console, default is FALSE.}
@@ -25,20 +26,20 @@ currently related only to GIS shapefiles read by library sf
 }
 \details{
 These utilities are experimental. Goal is to build map series from a shapefile.
-Limitations:\cr no sfc_MULTIPOINT or sfc_POLYGON types supported yet,\cr
-no polygons with holes, polygons can have only a name in tooltip,\cr
-assumes Geodetic CRS is WGS 84.
+Limitations:\cr
+polygons can have only a name in tooltip, no polygons with holes, \cr
+XY values only, Z is removed if any\cr
+assumes Geodetic CRS is WGS 84, use \link[sf]{st_transform} with \emph{crs=4326} to switch.
 }
 \examples{
 if (interactive()) {
   library(sf)
   fname <- system.file("shape/nc.shp", package="sf")
   nc <- st_read(fname)
-  p <- ec.init(load= c('leaflet', 'custom'),  # load custom for polygons
+  ec.init(load= c('leaflet', 'custom'),  # load custom for polygons
          js= ec.util(type= 'sf.bbox', bbox= st_bbox(nc)),
          series= ec.util(df= nc, nid= 'NAME', itemStyle= list(opacity= 0.3)),
          tooltip= list(show= TRUE, formatter= '{a}')
   )
-  p
 }
 }

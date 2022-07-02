@@ -509,6 +509,7 @@ ec.init <- function( df=NULL, preset=TRUE, ctype='scatter', load=NULL,
 #' 
 #' @importFrom utils tail
 #' @importFrom grDevices boxplot.stats
+#' @importFrom data.tree Aggregate
 #' @export
 ec.data <- function(df, format='dataset', header=FALSE) {
   if (missing(df))
@@ -567,8 +568,9 @@ ec.data <- function(df, format='dataset', header=FALSE) {
     return(json$children)
   }
   if (format=='treeTK') {
-    # for sunburst,tree,treemap from Titanic like 
-    chNames <- function(lest) {  # recursive
+    # for sunburst,tree,treemap from Titanic-like data
+    chNames <- function(lest) {  
+      # recursive, build pct and itemStyle
       cldrn <- lest$children
       nm <- names(cldrn)
       tot <- unlist(sapply(cldrn, '[[', 'value'))
@@ -593,7 +595,8 @@ ec.data <- function(df, format='dataset', header=FALSE) {
     tryCatch({
       nod <- data.tree::FromDataFrameTable(df)
     },
-    error=function(e) { stop(e) })
+    error= function(e) { stop(e) })
+    nod$Do(function(x) x$value <- data.tree::Aggregate(x, "value", sum))
     json <- data.tree::ToListExplicit(nod)
     tmp <- chNames(json)
     return(list(tmp))
@@ -1420,34 +1423,36 @@ ec.snip <- function(wt) {
 #' 
 #' currently related only to GIS shapefiles read by library sf
 #'  
-#' @param type Type of utility - 'sf.series'(default) or 'sf.bbox' \cr\itemize{
-#'   \item \emph{sf.series} returns a list of chart series\cr
-#'   * required parameter \emph{df} - a result from \link[sf]{st_read}\cr
-#'   * optional parameter \emph{nid} - column name for name-id used in tooltips\cr
-#'   \item \emph{sf.bbox} returns JavaScript code to position a map inside a bounding box from \link[sf]{st_bbox}\cr
-#'   }
+#' @param uid Id of utility - sf.series(default), sf.bbox, sf.unzip\cr
+#' * \emph{sf.series} returns a list of chart series\cr
+#'      required parameter \emph{df} - value from \link[sf]{st_read}\cr
+#'      optional parameter \emph{nid} - column name for name-id used in tooltips\cr
+#' * \emph{sf.bbox} returns JavaScript code to position a map inside a bounding box from \link[sf]{st_bbox}\cr
+#' * \emph{sf.unzip} returns local file name of the unzipped .shp file\cr
+#'      required parameter \emph{url} - URL of remote zipped shapefile\cr
 #' @param ... Optional parameters for \href{https://echarts.apache.org/en/option.html#series-scatter.type}{scatter}(points) or lines(polylines) charts.\cr
 #' @param verbose Print extra info in console, default is FALSE.
 #' @details 
 #' These utilities are experimental. Goal is to build map series from a shapefile.
-#' Limitations:\cr no sfc_MULTIPOINT or sfc_POLYGON types supported yet,\cr
-#'   no polygons with holes, polygons can have only a name in tooltip,\cr
-#'   assumes Geodetic CRS is WGS 84.
+#' Limitations:\cr 
+#'   polygons can have only a name in tooltip, no polygons with holes, \cr
+#'   XY values only, Z is removed if any\cr
+#'   assumes Geodetic CRS is WGS 84, use \link[sf]{st_transform} with \emph{crs=4326} to switch.
 #' 
 #' @examples 
 #' if (interactive()) {
 #'   library(sf)
 #'   fname <- system.file("shape/nc.shp", package="sf")
 #'   nc <- st_read(fname)
-#'   p <- ec.init(load= c('leaflet', 'custom'),  # load custom for polygons
+#'   ec.init(load= c('leaflet', 'custom'),  # load custom for polygons
 #'          js= ec.util(type= 'sf.bbox', bbox= st_bbox(nc)),
 #'          series= ec.util(df= nc, nid= 'NAME', itemStyle= list(opacity= 0.3)),
 #'          tooltip= list(show= TRUE, formatter= '{a}')
 #'   )
-#'   p
 #' }
+#' @importFrom utils unzip
 #' @export
-ec.util <- function( ..., type='sf.series', verbose=FALSE) {
+ec.util <- function( ..., uid='sf.series', verbose=FALSE) {
   do.series <- function(df=NULL, ..., verbose=FALSE) {
     polig <- function(geom) {
       for(k in 1:length(geom)) {
@@ -1469,10 +1474,13 @@ ec.util <- function( ..., type='sf.series', verbose=FALSE) {
     opts <- list(...)
     sers <- list()
     switch( class(df$geometry)[1],
+            'sfc_MULTIPOINT' =,
             'sfc_POINT'= {
-              flds <- colnames(df)[! colnames(df) %in% c("value")]
-              tt <- c(paste(rep('%@', length(flds)), collapse='<br>'), flds)
               df <- df |> rename(value= geometry)
+              df$value <- lapply(df$value, function(x) x[1:2])  # XY, remove Z if any
+              flds <- colnames(df)[! colnames(df) %in% c("value")]
+              if (length(flds)>10) flds <- flds[1:10]
+              tt <- c(paste(rep('%@', length(flds)), collapse='<br>'), flds)
               pnts <- ec.data(df, 'names')
               sers <- list(
                 list(type='scatter', coordinateSystem='leaflet',
@@ -1480,6 +1488,7 @@ ec.util <- function( ..., type='sf.series', verbose=FALSE) {
                      data= pnts, ...
                 ))
             },
+            'sfc_POLYGON' =,
             'sfc_MULTIPOLYGON' = {
               for(i in 1:nrow(df)) {
                 dname <- ifelse(is.null(opts$nid), i, df[i,opts$nid][[1]])
@@ -1533,7 +1542,7 @@ ec.util <- function( ..., type='sf.series', verbose=FALSE) {
   }
   
   opts <- list(...)
-  switch( type,
+  switch( uid,
           'sf.series'= {
             if (is.null(opts$df))
               stop('ec.util: expecting parameter df', call. = FALSE)
@@ -1553,7 +1562,20 @@ ec.util <- function( ..., type='sf.series', verbose=FALSE) {
                      paste("var map= chart.getModel().getComponent('leaflet').__map;", 
                            "map.fitBounds(",rng,");"))
           },
-          stop(paste('ec.util: invalid type',type), call. = FALSE)
+          'sf.unzip'= {
+            if (is.null(opts$url))
+              stop('ec.util: expecting url of zipped shapefile', call. = FALSE)
+            destfile <- tempfile('shapefile')
+            download.file(opts$url, destfile, mode='wb') #, method='curl')
+            # get name only, use as folder name to unzip to
+            fldr <- sub(pattern = "(.*)\\..*$", replacement = "\\1", basename(opts$url))
+            unzip(destfile, exdir=fldr)  # new folder under getwd()
+            # find name
+            tmp <- list.files(path = fldr, pattern="*.shp")
+            if (length(tmp)==0) stop('ec.util: shp file not found in folder', call. = FALSE)
+            out <- paste0(getwd(),'/',fldr,'/',tmp[1])
+          },
+          stop(paste('ec.util: invalid uid',uid), call. = FALSE)
   )
   out
 }

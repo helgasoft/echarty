@@ -1,5 +1,10 @@
 # history of echarty package development
 
+## v.1.4.6.01
+
+- _ec.util_: add POLYGON/MULTIPOINT, rename _type_ param to _uid_, new sf.unzip
+- improved _ec.data_ format='treeTK', see example in _test-other.R_
+
 ## v.1.4.6
 
 - upgrade ECharts to v.5.3.3

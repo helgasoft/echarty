@@ -120,51 +120,31 @@ test_that("ec.data for treePC", {
 })
 
 test_that("ec.data format treeTK", {
+
   df <- as.data.frame(Titanic) |> 
-    group_by(Survived,Age,Sex,Class) |>
-    summarise(value=sum(Freq), .groups='drop') |>
-    mutate(pathString= paste('Survive?', Survived, Age, Sex, Class, sep='/'),
-           itemStyle= case_when(Survived=='Yes' ~ "color='green'", 
-                                TRUE ~ "color='pink'"))  |> 
-    select(pathString,value,itemStyle) |>
-    rbind( as.data.frame(Titanic) |> 
-             group_by(Survived,Age,Sex) |>
-             summarise(value=sum(Freq), .groups='drop') |>
-             mutate(pathString= paste('Survive?', Survived, Age, Sex, sep='/'),
-                    itemStyle= case_when(Survived=='Yes' ~ "color='green'", 
-                                         TRUE ~ "color='pink'"))  |> 
-             select(pathString,value,itemStyle)) |>
-    rbind( as.data.frame(Titanic) |> 
-             group_by(Survived,Age) |> 
-             summarise(value=sum(Freq), .groups='drop') |>
-             mutate(pathString= paste('Survive?', Survived, Age, sep='/'),
-                    itemStyle= case_when(Survived=='Yes' ~ "color='green'", 
-                                         TRUE ~ "color='pink'"))  |> 
-             select(pathString,value,itemStyle)) |>
-    rbind( as.data.frame(Titanic) |> 
-             group_by(Survived) |>
-             summarise(value=sum(Freq), .groups='drop') |>
-             mutate(pathString= paste('Survive?', Survived, sep='/'),
-                    itemStyle= case_when(Survived=='Yes' ~ "color='green'", 
-                                         TRUE ~ "color='pink'"))  |> 
-             select(pathString,value,itemStyle))
-  dat1 <- ec.data(df, format='treeTK')
-  dat1[[1]]$itemStyle <- list(color= 'white')
+    group_by(Survived,Age,Sex,Class) |> 
+    summarise(value=sum(Freq), .groups='drop') |> 
+    rowwise() |>
+    mutate(pathString= paste('Survive', Survived, Age, Sex, Class, sep='/'),
+           itemStyle= case_when(Survived=='Yes' ~ "color='green'", TRUE ~ "color='pink'")) |>
+    select(pathString,value,itemStyle)
+  
+  dat <- ec.data(df, format='treeTK')
+  dat[[1]] <- within(dat[[1]], { itemStyle <- list(color= 'white'); pct <- 0 })
   
   p <- ec.init(preset=FALSE, title=list(text= 'Titanic: Survival by Class'))
   p$x$opts$series <- list(list(
     type= 'sunburst', radius= c(0, '90%'), label=list(rotate=0),
-    #type= 'tree', symbolSize= ec.clmn(scale=0.08),
-    #type= 'treemap', upperLabel= list(show=TRUE, height=30), itemStyle= list(borderColor= '#999'), #leafDepth=4,
-    data= dat1, 
-    #	levels= list(list(itemStyle= list(color= 'blue')),
-    #					 list(itemStyle= list(color= 'pink'))),
+    # type= 'tree', symbolSize= ec.clmn(scale=0.08),
+    # type= 'treemap', upperLabel= list(show=TRUE, height=30), itemStyle= list(borderColor= '#999'), #leafDepth=4,
+    data= dat,
     emphasis= list(focus='none') 
   ))
-  p$x$opts$tooltip <- list(show=TRUE, formatter=ec.clmn('%@%','pct')) # OK
+  p$x$opts$tooltip <- list(show=TRUE, formatter=ec.clmn('%@%','pct'))
   
   expect_equal(p$x$opts$series[[1]]$data[[1]]$value, 2201)
   expect_equal(length(p$x$opts$series[[1]]$data[[1]]$children), 2)
+  expect_equal(p$x$opts$series[[1]]$data[[1]]$children[[2]]$pct, 32.3)
 })
 
 test_that("load 3D surface", {
