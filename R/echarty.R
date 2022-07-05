@@ -907,9 +907,10 @@ ecr.band <- function(df=NULL, lower=NULL, upper=NULL, type='polygon', ...) {
 #' p
 #' 
 #' # ----- grouped -------
-#' p <- df |> group_by(cat) |> ec.init(load='custom') |> ecr.ebars(df)
-#' p$x$opts$xAxis <- list(type='value')  # fix wrong preset to category
-#' p
+#' df |> group_by(cat) |> 
+#'   ec.init(load= 'custom',
+#'           xAxis= list(type='value')) |>  # fix preset 'category'
+#' 	 ecr.ebars(df)
 #' }
 #' @export
 ecr.ebars <- function(wt, df=NULL, hwidth=6, ...) {
@@ -1421,38 +1422,40 @@ ec.snip <- function(wt) {
 
 #' Utility functions
 #' 
-#' currently related only to GIS shapefiles read by library sf
+#' currently only for GIS shapefiles as read by library sf
 #'  
-#' @param uid Id of utility - sf.series(default), sf.bbox, sf.unzip\cr
+#' @param cmd Utility command - sf.series(default), sf.bbox, sf.unzip\cr
 #' * \emph{sf.series} returns a list of chart series\cr
 #'      required parameter \emph{df} - value from \link[sf]{st_read}\cr
 #'      optional parameter \emph{nid} - column name for name-id used in tooltips\cr
-#' * \emph{sf.bbox} returns JavaScript code to position a map inside a bounding box from \link[sf]{st_bbox}\cr
-#' * \emph{sf.unzip} returns local file name of the unzipped .shp file\cr
+#' * \emph{sf.bbox} returns JavaScript code to position a map inside a bounding box from \link[sf]{st_bbox}, for leaflet only.\cr
+#' * \emph{sf.unzip} unzips a remote file and returns local file name of the unzipped .shp file\cr
 #'      required parameter \emph{url} - URL of remote zipped shapefile\cr
-#' @param ... Optional parameters for \href{https://echarts.apache.org/en/option.html#series-scatter.type}{scatter}(points) or lines(polylines) charts.\cr
-#' @param verbose Print extra info in console, default is FALSE.
+#'      optional parameter \emph{shp} - name of .shp file inside ZIP file if multiple exist. Do not add extension. \cr
+#' @param cs Optional coordinate system, \emph{leaflet}(default) or \emph{geo}\cr
+#' @param ... Optional parameters for \href{https://echarts.apache.org/en/option.html#series-scatter.type}{scatter}(points) or \href{https://echarts.apache.org/en/option.html#series-lines.type}{lines}(polylines) or itemStyle(polygons).\cr
+#' @param verbose Print shapefile item names in console, default is FALSE.
 #' @details 
-#' These utilities are experimental. Goal is to build map series from a shapefile.
+#' Goal is to build leaflet or \href{https://echarts.apache.org/en/option.html#geo.map}{geo} map series from shapefiles.\cr
+#' Supported types: POINT,MULTIPOINT,LINESTRING,MULTILINESTRING,POLYGON,MULTIPOLYGON \cr
 #' Limitations:\cr 
-#'   polygons can have only a name in tooltip, no polygons with holes, \cr
-#'   XY values only, Z is removed if any\cr
-#'   assumes Geodetic CRS is WGS 84, use \link[sf]{st_transform} with \emph{crs=4326} to switch.
+#'   polygons can have only a name in tooltip,  \cr
+#'   assumes Geodetic CRS is WGS 84, use \link[sf]{st_transform} with \emph{crs=4326} to convert.
 #' 
 #' @examples 
 #' if (interactive()) {
 #'   library(sf)
 #'   fname <- system.file("shape/nc.shp", package="sf")
-#'   nc <- st_read(fname)
+#'   nc <- as.data.frame(st_read(fname))
 #'   ec.init(load= c('leaflet', 'custom'),  # load custom for polygons
-#'          js= ec.util(type= 'sf.bbox', bbox= st_bbox(nc)),
-#'          series= ec.util(df= nc, nid= 'NAME', itemStyle= list(opacity= 0.3)),
-#'          tooltip= list(show= TRUE, formatter= '{a}')
+#'      js= ec.util(cmd= 'sf.bbox', bbox= st_bbox(nc$geometry)),
+#'      series= ec.util(df= nc, nid= 'NAME', itemStyle= list(opacity= 0.3)),
+#'      tooltip= list(formatter= '{a}')
 #'   )
 #' }
 #' @importFrom utils unzip
 #' @export
-ec.util <- function( ..., uid='sf.series', verbose=FALSE) {
+ec.util <- function( ..., cmd='sf.series', cs='leaflet', verbose=FALSE) {
   do.series <- function(df=NULL, ..., verbose=FALSE) {
     polig <- function(geom) {
       for(k in 1:length(geom)) {
@@ -1462,7 +1465,7 @@ ec.util <- function( ..., uid='sf.series', verbose=FALSE) {
           for(j in 1:nrow(gm))
             coords <- append(coords, list(c(gm[j,1], gm[j,2])))
           sers <<- append(sers, list(list(
-            type= 'custom', coordinateSystem= 'leaflet', 
+            type= 'custom', coordinateSystem= cs, 
             renderItem= htmlwidgets::JS('riPolygon'),
             name= dname, 
             data= coords, ...
@@ -1470,112 +1473,125 @@ ec.util <- function( ..., uid='sf.series', verbose=FALSE) {
         } else polig(geom[[k]])  # recursive
       }
     }
-    geometry <- L1 <- NULL  # trick to avoid code checking NOTES
+    geometry <- L1 <- cmd <- NULL  # trick to avoid code checking NOTES
     opts <- list(...)
     sers <- list()
     switch( class(df$geometry)[1],
-            'sfc_MULTIPOINT' =,
-            'sfc_POINT'= {
-              df <- df |> rename(value= geometry)
-              df$value <- lapply(df$value, function(x) x[1:2])  # XY, remove Z if any
-              flds <- colnames(df)[! colnames(df) %in% c("value")]
-              if (length(flds)>10) flds <- flds[1:10]
-              tt <- c(paste(rep('%@', length(flds)), collapse='<br>'), flds)
-              pnts <- ec.data(df, 'names')
-              sers <- list(
-                list(type='scatter', coordinateSystem='leaflet',
-                     tooltip= list(formatter= do.call("ec.clmn", as.list(tt))),
-                     data= pnts, ...
-                ))
-            },
-            'sfc_POLYGON' =,
-            'sfc_MULTIPOLYGON' = {
-              for(i in 1:nrow(df)) {
-                dname <- ifelse(is.null(opts$nid), i, df[i,opts$nid][[1]])
-                if (verbose) cat(dname,',', sep='')
-                geom <- df$geometry[[i]]
-                polig(geom)
-              }
-            },
-            'sfc_LINESTRING' = {
-              tmp <- df$geometry
-              tmp <- as.data.frame(cbind(do.call(rbind, tmp), L1= rep(seq_along(tmp), times= vapply(tmp, nrow, 0L))))
-              for(i in 1:nrow(df)) {
-                dname <- ifelse(is.null(opts$nid), i, df[i,opts$nid][[1]])
-                if (verbose) cat(dname,',', sep='')
-                coords <- list()
-                geom <- tmp |> filter(L1==i)
-                for(k in 1:nrow(geom))
-                  coords <- append(coords, list(c(geom[k,1], geom[k,2])))
-                
-                sers <- append(sers, list(list(
-                  type='lines', coordinateSystem='leaflet', polyline= TRUE,
-                  name= dname, 
-                  tooltip= list(formatter= '{a}'),
-                  data= list(coords), ... )))
-              }
-            },
-            'sfc_MULTILINESTRING' = {
-              for(i in 1:nrow(df)) {
-                dname <- ifelse(is.null(opts$nid), i, df[i,opts$nid][[1]])
-                if (verbose) cat(dname,',', sep='')
-                corda <- list()
-                geom <- df$geometry[[i]]
-                for(k in 1:length(geom)) {
-                  gm <- as.data.frame(geom[[k]])
-                  coords <- list()
-                  for(j in 1:nrow(gm))
-                    coords <- append(coords, list(c(gm[j,1], gm[j,2])))
-                  corda <- append(corda, list(coords))
-                }
-                sers <- append(sers, list(list(
-                  type='lines', coordinateSystem='leaflet', polyline= TRUE,
-                  name= dname, 
-                  tooltip= list(formatter= '{a}'),
-                  data= corda, ... )))
-              }
-            },
-            stop(paste('ec.series:',class(df$geometry)[1],'geometry not supported'), call.= FALSE)
+      'sfc_MULTIPOINT' =,
+      'sfc_POINT'= {
+        df <- df |> rename(value= geometry)
+        #df$value <- lapply(df$value, function(x) x[1:2])  # XY, remove Z if any
+        tt <- NULL
+        flds <- colnames(df)[! colnames(df) %in% c("value")]
+        if (length(flds)>0) {
+          if (length(flds)>10) flds <- flds[1:10]
+          tt <- c(paste(rep('%@', length(flds)), collapse='<br>'), flds)
+        }
+        pnts <- ec.data(df, 'names')
+        sers <- list(
+          list(type= 'scatter', coordinateSystem= cs,
+               data= pnts, ...
+          ))
+        if (!is.null(tt)) 
+          sers[[1]]$tooltip= list(formatter= do.call("ec.clmn", as.list(tt)))
+      },
+      'sfc_POLYGON' =,
+      'sfc_MULTIPOLYGON' = {
+        for(i in 1:nrow(df)) {
+          dname <- i
+          if (!is.null(opts$nid) && opts$nid %in% colnames(df)) dname <- df[i,opts$nid][[1]]
+          if (verbose) cat(dname,',', sep='')
+          geom <- df$geometry[[i]]
+          polig(geom)
+        }
+      },
+      'sfc_LINESTRING' = {
+        tmp <- df$geometry
+        tmp <- as.data.frame(cbind(do.call(rbind, tmp), 
+                                   L1= rep(seq_along(tmp), times= vapply(tmp, nrow, 0L))))
+        for(i in 1:nrow(df)) {
+          dname <- ifelse(is.null(opts$nid), i, df[i,opts$nid][[1]])
+          if (verbose) cat(dname,',', sep='')
+          coords <- list()
+          geom <- tmp |> filter(L1==i)
+          for(k in 1:nrow(geom))
+            coords <- append(coords, list(c(geom[k,1], geom[k,2])))
+          
+          sers <- append(sers, list(list(
+            type='lines', coordinateSystem= cs, polyline= TRUE,
+            name= dname, 
+            tooltip= list(formatter= '{a}'),
+            data= list(coords), ... )))
+        }
+      },
+      'sfc_MULTILINESTRING' = {
+        for(i in 1:nrow(df)) {
+          dname <- ifelse(is.null(opts$nid), i, df[i,opts$nid][[1]])
+          if (verbose) cat(dname,',', sep='')
+          corda <- list()
+          geom <- df$geometry[[i]]
+          for(k in 1:length(geom)) {
+            gm <- as.data.frame(geom[[k]])
+            coords <- list()
+            for(j in 1:nrow(gm))
+              coords <- append(coords, list(c(gm[j,1], gm[j,2])))
+            corda <- append(corda, list(coords))
+          }
+          sers <- append(sers, list(list(
+            type='lines', coordinateSystem= cs, polyline= TRUE,
+            name= dname, 
+            tooltip= list(formatter= '{a}'),
+            data= corda, ... )))
+        }
+      },
+      stop(paste('ec.util:',class(df$geometry)[1],'geometry not supported'), call.= FALSE)
     )
-    cat('\n series length =',length(sers),'\n')
+    cnt <- length(sers)
+    recs <- sum(unlist(lapply(sers, function(x) {
+      len <- length(x$data)
+      if (len==1) len <- length(x$data[[1]])  #multiline
+      len
+    })))
+    cat('\n series:',cnt,'coords:',recs,'\n')
     sers
   }
   
   opts <- list(...)
-  switch( uid,
-          'sf.series'= {
-            if (is.null(opts$df))
-              stop('ec.util: expecting parameter df', call. = FALSE)
-            if (is.null(opts$df$geometry))
-              stop('ec.util: expecting df$geometry', call. = FALSE)
-            out <- do.series(..., verbose=verbose)
-          },
-          
-          'sf.bbox'= {
-            if (is.null(opts$bbox))
-              stop('ec.util: expecting parameter bbox', call. = FALSE)
-            if (is.null(opts$bbox$ymin))
-              stop('ec.util: expecting bbox in sf format', call. = FALSE)
-            tmp <- opts$bbox
-            rng <- paste0('[[',tmp$ymin,',',tmp$xmin,'],[',tmp$ymax,',',tmp$xmax,']]')
-            out <- c('','', 
-                     paste("var map= chart.getModel().getComponent('leaflet').__map;", 
-                           "map.fitBounds(",rng,");"))
-          },
-          'sf.unzip'= {
-            if (is.null(opts$url))
-              stop('ec.util: expecting url of zipped shapefile', call. = FALSE)
-            destfile <- tempfile('shapefile')
-            download.file(opts$url, destfile, mode='wb') #, method='curl')
-            # get name only, use as folder name to unzip to
-            fldr <- sub(pattern = "(.*)\\..*$", replacement = "\\1", basename(opts$url))
-            unzip(destfile, exdir=fldr)  # new folder under getwd()
-            # find name
-            tmp <- list.files(path = fldr, pattern="*.shp")
-            if (length(tmp)==0) stop('ec.util: shp file not found in folder', call. = FALSE)
-            out <- paste0(getwd(),'/',fldr,'/',tmp[1])
-          },
-          stop(paste('ec.util: invalid uid',uid), call. = FALSE)
+  switch( cmd,
+    'sf.series'= {
+      if (is.null(opts$df))
+        stop('ec.util: expecting parameter df', call. = FALSE)
+      if (is.null(opts$df$geometry))
+        stop('ec.util: expecting df$geometry', call. = FALSE)
+      out <- do.series(..., cs=cs, verbose=verbose)
+    },
+    
+    'sf.bbox'= {
+      if (is.null(opts$bbox))
+        stop('ec.util: expecting parameter bbox', call. = FALSE)
+      if (is.null(opts$bbox$ymin))
+        stop('ec.util: expecting bbox in sf format', call. = FALSE)
+      tmp <- opts$bbox
+      rng <- paste0('[[',tmp$ymin,',',tmp$xmin,'],[',tmp$ymax,',',tmp$xmax,']]')
+      out <- c('','', 
+               paste("var map= chart.getModel().getComponent('leaflet').__map;", 
+                     "map.fitBounds(",rng,");"))
+    },
+    'sf.unzip'= {
+      if (is.null(opts$url))
+        stop('ec.util: expecting url of zipped shapefile', call. = FALSE)
+      destfile <- tempfile('shapefile')
+      download.file(opts$url, destfile, mode='wb') #, method='curl')
+      # get name only, use as folder name to unzip to
+      fldr <- sub(pattern = "(.*)\\..*$", replacement = "\\1", basename(opts$url))
+      unzip(destfile, exdir=fldr)  # new folder under getwd()
+      # find name
+      pat <- ifelse (is.null(opts$shp), '*.shp', paste0(opts$shp,'.shp'))
+      tmp <- list.files(path= fldr, pattern= pat)
+      if (length(tmp)==0) stop(paste('ec.util:',pat,'file not found in folder',fldr), call. = FALSE)
+      out <- paste0(getwd(),'/',fldr,'/',tmp[1])
+    },
+    stop(paste('ec.util: invalid cmd',cmd), call. = FALSE)
   )
   out
 }

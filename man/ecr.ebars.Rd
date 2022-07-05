@@ -54,8 +54,9 @@ p$x$opts$series <- append(p$x$opts$series, list(list(
 p
 
 # ----- grouped -------
-p <- df |> group_by(cat) |> ec.init(load='custom') |> ecr.ebars(df)
-p$x$opts$xAxis <- list(type='value')  # fix wrong preset to category
-p
+df |> group_by(cat) |> 
+  ec.init(load= 'custom',
+          xAxis= list(type='value')) |>  # fix preset 'category'
+	 ecr.ebars(df)
 }
 }

@@ -4,42 +4,45 @@
 \alias{ec.util}
 \title{Utility functions}
 \usage{
-ec.util(..., uid = "sf.series", verbose = FALSE)
+ec.util(..., cmd = "sf.series", cs = "leaflet", verbose = FALSE)
 }
 \arguments{
-\item{...}{Optional parameters for \href{https://echarts.apache.org/en/option.html#series-scatter.type}{scatter}(points) or lines(polylines) charts.\cr}
+\item{...}{Optional parameters for \href{https://echarts.apache.org/en/option.html#series-scatter.type}{scatter}(points) or \href{https://echarts.apache.org/en/option.html#series-lines.type}{lines}(polylines) or itemStyle(polygons).\cr}
 
-\item{uid}{Id of utility - sf.series(default), sf.bbox, sf.unzip\cr
+\item{cmd}{Utility command - sf.series(default), sf.bbox, sf.unzip\cr
 \itemize{
 \item \emph{sf.series} returns a list of chart series\cr
 required parameter \emph{df} - value from \link[sf]{st_read}\cr
 optional parameter \emph{nid} - column name for name-id used in tooltips\cr
-\item \emph{sf.bbox} returns JavaScript code to position a map inside a bounding box from \link[sf]{st_bbox}\cr
-\item \emph{sf.unzip} returns local file name of the unzipped .shp file\cr
+\item \emph{sf.bbox} returns JavaScript code to position a map inside a bounding box from \link[sf]{st_bbox}, for leaflet only.\cr
+\item \emph{sf.unzip} unzips a remote file and returns local file name of the unzipped .shp file\cr
 required parameter \emph{url} - URL of remote zipped shapefile\cr
+optional parameter \emph{shp} - name of .shp file inside ZIP file if multiple exist. Do not add extension. \cr
 }}
 
-\item{verbose}{Print extra info in console, default is FALSE.}
+\item{cs}{Optional coordinate system, \emph{leaflet}(default) or \emph{geo}\cr}
+
+\item{verbose}{Print shapefile item names in console, default is FALSE.}
 }
 \description{
-currently related only to GIS shapefiles read by library sf
+currently only for GIS shapefiles as read by library sf
 }
 \details{
-These utilities are experimental. Goal is to build map series from a shapefile.
+Goal is to build leaflet or \href{https://echarts.apache.org/en/option.html#geo.map}{geo} map series from shapefiles.\cr
+Supported types: POINT,MULTIPOINT,LINESTRING,MULTILINESTRING,POLYGON,MULTIPOLYGON \cr
 Limitations:\cr
-polygons can have only a name in tooltip, no polygons with holes, \cr
-XY values only, Z is removed if any\cr
-assumes Geodetic CRS is WGS 84, use \link[sf]{st_transform} with \emph{crs=4326} to switch.
+polygons can have only a name in tooltip,  \cr
+assumes Geodetic CRS is WGS 84, use \link[sf]{st_transform} with \emph{crs=4326} to convert.
 }
 \examples{
 if (interactive()) {
   library(sf)
   fname <- system.file("shape/nc.shp", package="sf")
-  nc <- st_read(fname)
+  nc <- as.data.frame(st_read(fname))
   ec.init(load= c('leaflet', 'custom'),  # load custom for polygons
-         js= ec.util(type= 'sf.bbox', bbox= st_bbox(nc)),
-         series= ec.util(df= nc, nid= 'NAME', itemStyle= list(opacity= 0.3)),
-         tooltip= list(show= TRUE, formatter= '{a}')
+     js= ec.util(cmd= 'sf.bbox', bbox= st_bbox(nc$geometry)),
+     series= ec.util(df= nc, nid= 'NAME', itemStyle= list(opacity= 0.3)),
+     tooltip= list(formatter= '{a}')
   )
 }
 }

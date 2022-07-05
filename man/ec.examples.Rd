@@ -407,33 +407,33 @@ ec.init(preset= FALSE, js= jcode,
 
 
 #------ Sankey and graph plots
-# prepare data
 sankey <- data.frame(
-  node = c("a","b", "c", "d", "e"),
+  node   = c("a","b", "c", "d", "e"),
   source = c("a", "b", "c", "d", "c"),
   target = c("b", "c", "d", "e", "e"),
-  value = c(5, 6, 2, 8, 13),
-  stringsAsFactors = FALSE
+  value  = c(5, 6, 2, 8, 13)
 )
+data <- ec.data(sankey, 'names')
+
 ec.init(preset= FALSE,
-        series= list(list( 
+        series= list(list(
           type= 'sankey',
-          data= lapply(ec.data(sankey, 'names'), function(x) list(name=x$node)),
-          edges= ec.data(sankey, 'names') ))
+          data= lapply(data, function(x) list(name= x$node)),
+          edges= data ))
 )
 
 
 # graph plot with same data ---------------
-ec.init(preset= FALSE, 
+ec.init(preset= FALSE,
         title= list(text= 'Graph'),
         tooltip= list(show= TRUE),
         series= list(list(
           type= 'graph',
           layout= 'force',   # try 'circular' too
-          data= lapply(ec.data(sankey,'names'),
-                       function(x) list(name= x$node, tooltip= list(show=FALSE))),
-          edges= lapply(ec.data(sankey,'names'),
-                        function(x) { x$lineStyle <- list(width=x$value); x }),
+          data= lapply(data,
+             function(x) list(name= x$node, tooltip= list(show=FALSE))),
+          edges= lapply(data,
+             function(x) { x$lineStyle <- list(width=x$value); x }),
           emphasis= list(focus= 'adjacency',
                          label= list(position= 'right', show=TRUE)),
           label= list(show=TRUE), roam= TRUE, zoom= 4,
@@ -443,9 +443,8 @@ ec.init(preset= FALSE,
 
 
 #------ group connect 
-main <- mtcars |> ec.init(height = 200)
+main <- mtcars |> ec.init(height= 200, legend= list(show=FALSE))
 main$x$opts$series[[1]]$name <- "this legend is shared"
-main$x$opts$legend <- list(show=FALSE)
 main$x$group <- 'group1' # same group name for all charts
 
 q1 <- main; q1$x$opts$series[[1]]$encode <- list(y='hp', x='mpg'); 

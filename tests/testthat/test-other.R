@@ -123,25 +123,26 @@ test_that("ec.data format treeTK", {
 
   df <- as.data.frame(Titanic) |> 
     group_by(Survived,Age,Sex,Class) |> 
-    summarise(value=sum(Freq), .groups='drop') |> 
+    summarise(value= sum(Freq), .groups= 'drop') |> 
     rowwise() |>
     mutate(pathString= paste('Survive', Survived, Age, Sex, Class, sep='/'),
            itemStyle= case_when(Survived=='Yes' ~ "color='green'", TRUE ~ "color='pink'")) |>
-    select(pathString,value,itemStyle)
+    select(pathString, value, itemStyle)
   
   dat <- ec.data(df, format='treeTK')
   dat[[1]] <- within(dat[[1]], { itemStyle <- list(color= 'white'); pct <- 0 })
   
-  p <- ec.init(preset=FALSE, title=list(text= 'Titanic: Survival by Class'))
+  p <- ec.init(preset= FALSE, 
+               title= list(text= 'Titanic: Survival by Class'),
+               tooltip= list(formatter= ec.clmn('%@%','pct')))
   p$x$opts$series <- list(list(
-    type= 'sunburst', radius= c(0, '90%'), label=list(rotate=0),
+    type= 'sunburst', radius= c(0, '90%'), label= list(rotate=0),
     # type= 'tree', symbolSize= ec.clmn(scale=0.08),
     # type= 'treemap', upperLabel= list(show=TRUE, height=30), itemStyle= list(borderColor= '#999'), #leafDepth=4,
     data= dat,
     emphasis= list(focus='none') 
   ))
-  p$x$opts$tooltip <- list(show=TRUE, formatter=ec.clmn('%@%','pct'))
-  
+
   expect_equal(p$x$opts$series[[1]]$data[[1]]$value, 2201)
   expect_equal(length(p$x$opts$series[[1]]$data[[1]]$children), 2)
   expect_equal(p$x$opts$series[[1]]$data[[1]]$children[[2]]$pct, 32.3)
@@ -164,11 +165,11 @@ test_that("shapefiles with multi-polygons", {
   if (interactive()) {
     library(sf)
     fname <- system.file("shape/nc.shp", package="sf")
-    nc <- st_read(fname)
+    nc <- as.data.frame(st_read(fname))
     p <- ec.init(load= c('leaflet', 'custom'),  # load custom for polygons
-           js= ec.util(type= 'sf.bbox', bbox= st_bbox(nc)),
-           series= ec.util(df= nc, nid= 'NAME', itemStyle= list(opacity= 0.3)),
-           tooltip= list(show= TRUE, formatter= '{a}')
+       js= ec.util(cmd= 'sf.bbox', bbox= st_bbox(nc$geometry)),
+       series= ec.util(df= nc, nid= 'NAME', itemStyle= list(opacity= 0.3)),
+       tooltip= list(show= TRUE, formatter= '{a}')
     )
     expect_true(p$x$opts$leaflet$roam)
     expect_equal(p$x$opts$series[[108]]$name, 'Brunswick')
@@ -177,3 +178,26 @@ test_that("shapefiles with multi-polygons", {
   else expect_equal(1,1)
 })
 
+test_that("shapefile from ZIP", {
+  if (interactive()) {
+    library(sf)
+    fname <- ec.util(cmd= 'sf.unzip', 
+                     url= 'https://mapcruzin.com/sierra-leone-shapefiles/railways.zip')
+    nc <- as.data.frame(st_read(fname))
+    p <- ec.init(load= 'leaflet',
+                 js= ec.util(cmd='sf.bbox', bbox=st_bbox(nc$geometry)), 
+                 series= ec.util(df= nc, nid= 'osm_id', verbose=TRUE,
+                                 lineStyle= list(width= 3, color= 'red')),
+                 tooltip= list(formatter= '{a}'), animation= FALSE
+    )
+    p$x$opts$leaflet$tiles <- list(list(
+        urlTemplate= 'https://stamen-tiles-{s}.a.ssl.fastly.net/terrain/{z}/{x}/{y}{r}.{ext}',
+        options= list(attribution= 'Map tiles by <a href="http://stamen.com">Stamen Design</a>, <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>',
+                      subdomains= 'abcd',	maxZoom= 18,	ext= 'png')
+    ))
+    expect_equal(p$x$opts$leaflet$tiles[[1]]$options$subdomains, 'abcd')
+    expect_equal(p$x$opts$series[[6]]$name, '207557821')
+    expect_equal(p$x$opts$series[[6]]$lineStyle$color, 'red')
+  }
+  else expect_equal(1,1)
+})
