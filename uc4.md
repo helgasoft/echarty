@@ -7,24 +7,20 @@ To speed things up, we go to echarty's examples. In the Console type **?ec.examp
 
 ```r
 #------ Sankey and graph plots
-# prepare data
 sankey <- data.frame(
-  node = c("a","b", "c", "d", "e"),
+  node   = c("a","b", "c", "d", "e"),
   source = c("a", "b", "c", "d", "c"),
   target = c("b", "c", "d", "e", "e"),
-  value = c(5, 6, 2, 8, 13),
-  stringsAsFactors = FALSE
+  value  = c(5, 6, 2, 8, 13)
 )
+data <- ec.data(sankey, 'names')
 
-p <- ec.init(preset=FALSE)
-p$x$opts$series[[1]] <- list( type='sankey',
-  data = lapply(ec.data(sankey,TRUE),
-                function(x) list(name=x$value[1])),
-  edges = lapply(ec.data(sankey,TRUE), function(x)
-    list(source=as.character(x$value[2]), 
-         target=as.character(x$value[3]), value=x$value[4]) ) 
+ec.init(preset= FALSE,
+        series= list(list(
+          type= 'sankey',
+          data= lapply(data, function(x) list(name= x$node)),
+          edges= data ))
 )
-p
 ```
 
 Sankey chart data consists of nodes connected by edges having a value. If the data is defined as *data.frame*, we need to transform it into a list with command *ec.data()*. Once in that format, we can access the columns by index - *node* is value[1], ..., *value* is value[4]. The [edges](https://echarts.apache.org/en/option.html#series-sankey.edges) definition requires three parameters - source, target and value.  
@@ -45,8 +41,7 @@ sankey <- data.frame(
   node = c("a","b", "c", "d", "e"),
   source = c("a", "b", "c", "d", "c"),
   target = c("b", "c", "d", "e", "e"),
-  value = c(5, 3, 2, 8, 13),
-  stringsAsFactors = FALSE
+  value = c(5, 3, 2, 8, 13)
 )
 # prepare timeline state data
 st <- function() ec.data(sankey, 'values')  # data.frame to list

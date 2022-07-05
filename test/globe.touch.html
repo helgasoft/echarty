@@ -28,6 +28,7 @@ This is a demo of 3D Globe working with a fixed echarts.js :
 	<body>
 		<!--script src="https://cdn.jsdelivr.net/npm/echarts@latest/dist/echarts.min.js" type="text/javascript" charset="utf-8"></script>-->
 		<script src="echarts.5.3.2.T.js"></script>
+		<!--script src="echarts.min.533.js"></script-->
 		<script src="https://cdn.jsdelivr.net/npm/echarts-gl@2.0.8/dist/echarts-gl.min.js" type="text/javascript" charset="utf-8"></script>
 
 		<div id="box" class="main"></div>
@@ -39,6 +40,7 @@ var myChart = echarts.init(chartDom);
 var option;
 
 option = {
+  title: {text: 'ECharts v.5.3.2 touch fix'},
   backgroundColor: '#000',
   globe: {
     baseTexture: 'earth.jpg', 

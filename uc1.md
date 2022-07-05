@@ -10,28 +10,24 @@ Let start by initializing the chart, load the map as a plugin and make sure it s
 ```r
 library(echarty); library(dplyr)
 url <- 'https://raw.githubusercontent.com/echarts-maps/echarts-countries-js/master/echarts-countries-js/France.js'
-# p <- ec.init() %>% ec.plugjs(url)   # alternative
-p <- ec.init(load=url)
-p$x$opts <- list(
-   series = list(list(type='map', map='France', roam=TRUE))
+# ec.init() %>% ec.plugjs(url)   # alternative
+ec.init(load= url, preset= FALSE,
+		  series= list(list(type= 'map', map= 'France', roam= TRUE))
 )
-p
 ```
 
-We use *ec.init()* without worrying about presets(xAxis,yAxis) since we rewrite the option *p\$x\$opts* from scratch. The map is loaded as plugin with command *ec.plugjs* or directly with *ec.init*. We set only one option component - 'series', with its own sub-components - *type, map* and *roam* documented [here](https://echarts.apache.org/en/option.html#series-map). Adding widget '**p**' at the end will display the chart in RStudio's Viewer panel.  
-Run the code. We get a popup prompt *"One-time installation of plugin France.js"*, answer **Yes**. The map is installed with some feedback in the Console panel. And no error, but also ...no map ??!  
+We use *ec.init()* with _preset=FALSE_ since we do not want the default XY axes to show up. The map is loaded as plugin with command *ec.plugjs* or directly with *ec.init*. We set only one option component - 'series', with its parameters *type, map* and *roam* documented [here](https://echarts.apache.org/en/option.html#series-map).
+Run the code. The map is installed with some feedback in the Console panel. No error, but also ...no map ??!  
 \
 The problem is in the **map name**. In the [docs](https://echarts.apache.org/en/option.html#series-map.map) we see that for file 'china.js' they use *map='china'*. So the easy conclusion by analogy would be to set *map='France'* for 'France.js' ?  
 Actually map name and file name may have nothing in common. We'll need to dig inside the JS file to find the exact name.  
 Open *France.js* in a text editor and look for *'registerMap('*. It turns out the name right after is '法国' - Chinese for 'France'. Let's update the code:
 
 ```r
-p <- ec.init(load='file://France.js')
-p$x$opts <- list(
-  title = list(show=TRUE, text='France'),
-  series = list(list(type='map', map='法国', roam=TRUE))
+ec.init(load= 'file://France.js', preset= FALSE,
+	title = list(text= 'France'),
+	series = list(list(type= 'map', map= '法国', roam= TRUE))
 )
-p
 ```
 
 The map has been already installed, so we just load it by name ('file://France.js'). We also add a [title](https://echarts.apache.org/en/option.html#title). Running the updated code results in the following chart  
@@ -56,19 +52,18 @@ library(rvest)
 wp <- read_html('https://www.ined.fr/en/everything_about_population/data/france/population-structure/regions_departments')
 wt <- wp %>% html_node('#para_nb_1 > div > div > div > table') %>% html_table(header=TRUE)
 names(wt) <- c('region','v1','v2','v3','ppl') # rename columns
-wt$ppl <- as.numeric(gsub(' ','', wt$ppl))    # remove spaces
+wt$ppl <- as.numeric(gsub(' ','', wt$ppl))    # remove weird(binary) spaces
 wt <- wt[-nrow(wt),]     # delete summary row, contaminates color values
-p <- ec.init(load='France.js')
-p$x$opts <- list(
-  title = list(show=TRUE, text='France'),
-  series = list(list(type='map', map='法国', 
-    roam=TRUE,
-    data = lapply(ec.data(wt,'names'), function(x) 
-                     list(name=x$region, value=x$ppl))
-  )),
-  visualMap = list(type='continuous',calculable=TRUE, max=max(wt$ppl))
+
+ec.init(load='file://France.js', preset= FALSE,
+	title= list(show=TRUE, text='France'),
+	series= list(list(type= 'map', map= '法国', 
+							roam= TRUE,
+							data= lapply(ec.data(wt,'names'), 
+			function(x) list(name=x$region, value=x$ppl))
+	)),
+	visualMap= list(type= 'continuous', calculable= TRUE, max= max(wt$ppl))
 )
-p
 ```
 
 As you can see, we are using *ec.data()* for data conversion from data.frame to a list. Each row becomes a sublist with *name* and *value*. Name is the region name, and value is the number of people (ppl). <br /> Added also is a *visualMap* which will color the regions depending on their values (population).  
@@ -84,7 +79,7 @@ library(dplyr); library(rvest)
 wp <- read_html('https://www.ined.fr/en/everything_about_population/data/france/population-structure/regions_departments/')
 wt <- wp %>% html_node('#para_nb_1 > div > div > div > table') %>% html_table(header=TRUE)
 names(wt) <- c('region','v1','v2','v3','ppl') # rename columns
-wt$ppl <- as.numeric(gsub(' ','', wt$ppl))    # remove spaces
+wt$ppl <- as.numeric(gsub(' ','', wt$ppl))    # remove weird(binary) spaces
 wt <- wt[-nrow(wt),]     # delete summary row, contaminates color values
 wt <- wt %>% mutate(region = case_when(
   region=='Grand Est'       ~'Alsace–Champagne-Ardenne–Lorraine',
@@ -102,20 +97,19 @@ wt <- wt %>% mutate(region = case_when(
 
 library(echarty)
 url <- 'https://raw.githubusercontent.com/echarts-maps/echarts-countries-js/master/echarts-countries-js/France.js'
-p <- ec.init(load=url)
-p$x$opts <- list(
-  title = list(show=TRUE, text='France Population'),
-  backgroundColor = 'whitesmoke',
-  series = list(list(type='map', map='法国', 
-    roam=TRUE,
-    data = lapply(ec.data(wt,TRUE), function(x) 
-      list(name=x$value[1], value=x$value[5]))
-  )),
-  visualMap = list(type='continuous',calculable=TRUE, min=0, max=max(wt$ppl),
-      formatter = htmlwidgets::JS("function(value) { 
+ec.init(load= url, preset= FALSE,
+	title = list(text= 'France Population'),
+	backgroundColor= 'whitesmoke',
+	series= list(list(type= 'map', map= '法国', 
+							roam= TRUE,
+							data= lapply(ec.data(wt,'names'), 
+			function(x) list(name=x$region, value=x$ppl))
+	)),
+	visualMap= list(type= 'continuous', calculable= TRUE, max= max(wt$ppl),
+						 formatter = htmlwidgets::JS("function(value) { 
          return value.toLocaleString(undefined, {maximumFractionDigits: 0}); }"))
 )
-p
+
 ```
 
 At last we have the final code above. The *visualMap* has been enhanced with a [*formatter*](https://echarts.apache.org/en/option.html#visualMap-continuous.formatter). It shows the *visualMap* values as formatted integers. Sometimes, like in our case, formatters are JS code that needs to be wrapped in *htmlwidgets::JS()* so it can be sent to ECharts for execution. Other [simpler formatters](https://echarts.apache.org/en/option.html#series-scatter.tooltip.formatter) are just strings like *"{a}: {c}"*.  

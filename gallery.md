@@ -77,7 +77,7 @@ library(echarty)
 p <- ec.init()
 p$x$opts <- list(
   title= list(text= "Landmasses over 60,000 mi\u00B2", left= 'center'),
-  tooltip= list(trigger= 'item'),
+  tooltip= list(show= TRUE),
   series= list(type= 'pie', data= ec.data(isl, 'names')),
   backgroundColor= '#191919')
 p
@@ -92,10 +92,9 @@ p
 ```r
 library(echarty)
 p <- iris |> group_by(Species) |> 
-  ec.init(ctype='parallel') |> ec.theme('dark-mushroom')
+  ec.init(ctype='parallel', color= rainbow(10)) |> ec.theme('dark-mushroom')
 p$x$opts$series <- lapply(p$x$opts$series, function(s) { 
   s$smooth=TRUE; s$lineStyle=list(width=3); s })  # update preset series
-p$x$opts$color <- rainbow(10)
 p
 ```
 </details>
@@ -156,39 +155,39 @@ p
 
 ```r
 # example by https://github.com/kuzmenkov111
-library(echarty)
 library(data.table)
 library(binom); library(dplyr)
 # function for percent and CI calculation
 myfun_binom <- function(n,all){
-  round((binom::binom.confint(n, all, methods= "wilson", conf.level=0.95)[,c(4:6)])*100,2)
+	round((binom::binom.confint(n, all, methods= "wilson", conf.level=0.95)[,c(4:6)])*100,2)
 }
 #  --- 1. data prep
 stackbar <- data.table(Year= c(2010, 2010, 2010, 2011, 2011, 2011, 2012, 2012, 2012, 2013,2013, 2013),
-                       Category= c("A", "B", "C", "A", "B", "C", "A", "B", "C", "A", "B", "C"),
-                       n= c(10, 20, 30, 30, 20, 10, 11,12,13, 15, 15, 15))
+							         Category= c("A", "B", "C", "A", "B", "C", "A", "B", "C", "A", "B", "C"),
+       							   n= c(10, 20, 30, 30, 20, 10, 11,12,13, 15, 15, 15))
 # calculate percent and 95% CI
 stackbar <- stackbar[,`:=`(all=sum(n)), by= c("Year")][,c("perc","low","up") := myfun_binom(n,all)]
-stackbar <- stackbar |> mutate(xlbl=paste0(Year,' (N=',all,')'))
-stackbar <- stackbar |> relocate(xlbl,perc)  # move in front as natural X & Y columns
-stackbar <- stackbar |> group_by(Category)   # both ec.init & ecr.ebars need grouped data
+stackbar <- stackbar |> mutate(xlbl= paste0(Year,' (N=',all,')')) |>
+	relocate(xlbl,perc) |>  # move in front as default X & Y columns
+	group_by(Category)      # both ec.init & ecr.ebars need grouped data
 #  --- 2. plot
 q <- stackbar |> ec.init(ctype='bar', load='custom') |>
-     ec.theme('dark-mushroom') |>
-     ecr.ebars(stackbar[,c('xlbl','low','up','Category')],    # only columns for x,low,high,category
-               hwidth= 9)    # (optional) half-width of err.bar in pixels
+	ec.theme('dark-mushroom') |>
+	# only columns for x,y,low,high,category
+	ecr.ebars(stackbar[,c('xlbl','perc','low','up','Category')],
+				    hwidth= 4)    # (optional) half-width of err.bar in pixels
 #  --- 3. customization
 groupColors <- c("#387e78","#eeb422","#d9534f")
 q$x$opts$series <- lapply(q$x$opts$series, function(s, i) {
-  if (s$type=='bar') {
-    s$emphasis <- list(focus= 'series')
-    s$color <- groupColors[parent.frame()$i[]]  # iteration hack, for fun only
-  }
-  else if (s$type=='custom')
-    s$color <- 'cyan'
-  s
+	if (s$type=='bar') {
+		s$emphasis <- list(focus= 'series')
+		s$color <- groupColors[parent.frame()$i[]]  # iteration hack, for fun only
+	}
+	else if (s$type=='custom')
+		s$itemStyle$color <- 'cyan'
+	s
 })
-q   # customized
+q   # display customized
 ```
 </details>
 <br />
@@ -206,7 +205,7 @@ jcode <- "setInterval(function () {
 }, 2000);"
 
 library(echarty)
-p <- ec.init(js=jcode) |> ec.theme('dark')
+p <- ec.init(js= jcode) |> ec.theme('dark')
 p$x$opts <- list(series= list(
     list(type= "gauge", 
     anchor= list(show= TRUE, showAbove= TRUE,
@@ -263,6 +262,46 @@ bscols( list(
 play with the [<span style="color:magenta">Live Demo</span>](https://rpubs.com/echarty/crosstalk) with code 
 <br />
 
+### Crosstalk with leaflet
+two-way selection between map and chart  
+<img src='img/xtalk.png' alt='crosstalk' />
+<details><summary>🔻 View code</summary>
+
+```r
+library(crosstalk)
+sdf <- quakes[1:33,] |> SharedData$new(group= 'qk')
+
+library(leaflet)
+map <- leaflet(sdf) |> addTiles() |> addMarkers()
+
+library(echarty)
+e="float:right;width:50%;",p) 
+))p <- sdf |> ec.init() |> ec.theme('dark-mushroom')
+p$x$opts$xAxis <- list(scale=TRUE, boundaryGap= c('5%', '5%'))
+p$x$opts <- append(p$x$opts, list(
+	title= list(text= 'Crosstalk two-way selection'),
+	toolbox= list(feature= list(brush= list(show=TRUE))),
+	brush= list(brushLink='all', throttleType='debounce', 
+					brushStyle= list(borderColor= 'red')),
+	tooltip= list(show=TRUE)
+))
+p$x$opts$series[[1]] = append(p$x$opts$series[[1]], list(
+	encode= list(x='mag', y='depth', tooltip=list(2,3)),
+	selectedMode= 'multiple',
+	emphasis= list(
+		itemStyle= list(borderColor='yellow', borderWidth=2),
+		focus= 'self', 
+		blurScope='series'
+	),
+	blur= list(itemStyle= list(opacity = 0.4))  # when focus set
+))
+library(htmltools)
+browsable(tagList(
+  div(style="float:left;width:50%;", map), 
+	div(styl
+```
+</details>
+<br />
 
 ### scatterGL
 plugin **3D**, test with 5,000 points  
@@ -312,11 +351,11 @@ plugin **3D**, test with 36,000 points
 library(onion); library(echarty)
 data(bunny)
 tmp <- as.data.frame(bunny)
-p <- tmp |> ec.init(load='3D') |> ec.theme('dark-mushroom')
+p <- tmp |> ec.init(load='3D', visualMap= list(
+		inRange=list(color= rainbow(10)), calculable=TRUE,
+		min=min(tmp$y), max=max(tmp$y), dimension=1)) |> 
+	ec.theme('dark-mushroom')
 p$x$opts$series[[1]] <- list(type='scatter3D', symbolSize=2)
-p$x$opts$visualMap <- list( 
-      inRange=list(color= rainbow(10)), calculable=TRUE,
-      min=min(tmp$y), max=max(tmp$y), dimension=1)
 p
 ```
 </details>
@@ -428,18 +467,18 @@ rifo <- lapply(data$name, function(x) {
 names(rifo) <- data$name
 
 library(echarty)
-p <- data |> ec.init(preset= FALSE) |> ec.theme('dark-mushroom')
-p$x$opts$radar <- list(
-  indicator= ec.data(data, 'names'),
-  name= list( 
-    formatter= htmlwidgets::JS("v => '{'+v+'| }'"),
-    rich= rifo)
-)
-p$x$opts$series= list( list(
-  type= 'radar',
-  data= list(data$values)
-))
-p 
+data |> ec.init(preset= FALSE,
+	radar= list(
+		indicator= ec.data(data, 'names'),
+		name= list( 
+			formatter= htmlwidgets::JS("v => '{'+v+'| }'"),
+			rich= rifo)
+	),
+	series= list(list(
+		type= 'radar',	data= list(data$values)
+	))
+) |> ec.theme('dark-mushroom')
+ 
 ```
 </details>
 <br />
@@ -456,30 +495,29 @@ library(echarty); library(dplyr)
 
 # 1) boxplot calculation in R ---------------------
 
-p <- ec.init()
-p$x$opts$series <- list(
-  list(type='boxplot', name='mpg', data=list(boxplot.stats(mtcars$mpg)$stats)), 
-  list(type='boxplot', name='hp',  data=list(boxplot.stats(mtcars$hp)$stats)), 
-  list(type='boxplot', name='disp',data=list(boxplot.stats(mtcars$disp)$stats))
-)	
-p$x$opts$xAxis <- list(type= 'category')
-p$x$opts$legend <- list(show=TRUE)
-p
+ec.init(series= list(
+	list(type='boxplot', name='mpg', data=list(boxplot.stats(mtcars$mpg)$stats)), 
+	list(type='boxplot', name='hp',  data=list(boxplot.stats(mtcars$hp)$stats)), 
+	list(type='boxplot', name='disp',data=list(boxplot.stats(mtcars$disp)$stats))
+	),	
+	xAxis= list(type= 'category'),
+	legend= list(show=TRUE)
+)
 
 # 2) boxplot calculation in ECharts ---------------------
-df <- mtcars[,c(1,3,4)] |> mutate(mpg=mpg*10)
-p <- ec.init()
-p$x$opts$dataset <- list(
-  list(source= ec.data(data.frame(t(df)), header=FALSE)),
-  list(transform= list(type='boxplot')),
-  list(fromDatasetIndex=1, fromTransformResult= 1))
-p$x$opts$series <- list(
-  list(name= 'boxplot', type= 'boxplot', datasetIndex= 1),
-  list(name= 'outlier', type= 'scatter', encode= list(x=1, y=0), datasetIndex= 2)
+df <- mtcars[,c(1,3,4)] |> mutate(mpg= mpg*10)
+ec.init(
+	dataset= list(
+		list(source= ec.data(data.frame(t(df)), header=FALSE)),
+		list(transform= list(type='boxplot')),
+		list(fromDatasetIndex=1, fromTransformResult= 1)),
+	series= list(
+		list(name= 'boxplot', type= 'boxplot', datasetIndex= 1),
+		list(name= 'outlier', type= 'scatter', encode= list(x=1, y=0), datasetIndex= 2)
+	),
+	yAxis= list(type= 'category', boundaryGap=TRUE),
+	legend= list(show=TRUE)
 )
-p$x$opts$yAxis <- list(type= 'category', boundaryGap=TRUE)
-p$x$opts$legend <- list(show=TRUE)
-p
 
 # 3) grouped boxplots ---------------------
 # remotes::install_github("helgasoft/echarty")   # needs new v.1.4.4+
@@ -487,15 +525,13 @@ p
 ds <- mtcars |> relocate(am,mpg) |> group_by(cyl) |> ec.data(format='boxplot')
 # Below we mutate to create less Y-axis items with more, sufficient data. Otherwise ECharts exits with errors.
 # ds <- airquality |> mutate(Day=round(Day/10)) |> relocate(Day,Wind) |> ec.data(format='boxplot')
-p <- ec.init()
-p$x$opts <- list(
-  dataset= ds$dataset, 
-  series= ds$series, 
-  yAxis= list(type= 'category'), 
-  xAxis= list(show= TRUE),
-  legend= list(show= TRUE)
+ec.init(
+	dataset= ds$dataset, 
+	series= ds$series, 
+	yAxis= list(type= 'category'), 
+	xAxis= list(show= TRUE),
+	legend= list(show= TRUE)
 )
-p
 
 ```
 </details>
@@ -600,12 +636,12 @@ for(i in 1:2) df[,i] <- as.character(df[,i])
 
 # ECharts heatmap expects dataset columns in a certain order: relocate
 library(echarty)
-p <- df |> relocate(Var2) |> ec.init(ctype='heatmap') |> ec.theme('dark')
-p$x$opts$title= list(text='Infertility after abortion correlation')
-p$x$opts$xAxis$axisLabel <- list(rotate=45)
-p$x$opts$visualMap <- list(min=-1, max=1, orient='vertical',left='right'
-  ,calculable=TRUE, inRange=list( color=heat.colors(11)) )
-p
+df |> relocate(Var2) |> ec.init(ctype='heatmap',
+	title= list(text='Infertility after abortion correlation'),
+	xAxis= list(axisLabel= list(rotate=45)),
+	visualMap= list(min=-1, max=1, orient='vertical',left='right',
+						 calculable=TRUE, inRange=list( color=heat.colors(11)) )
+) |> ec.theme('dark')
 ```
 
 </details>
@@ -624,17 +660,17 @@ do.histogram <- function(x, breaks='Sturges') {
   tmp <- data.frame(x=histo$mids, y=histo$counts)
   tmp
 }
-p <- do.histogram(rnorm(44)) |> ec.init(ctype='bar') |> ec.theme('dark')
-p
+do.histogram(rnorm(44)) |> ec.init(ctype='bar') |> ec.theme('dark')
 
 # with normal distribution line added
 hh <- do.histogram(rnorm(44))
-p <- hh |> ec.init(ctype='bar') |> ec.theme('dark')
 nrm <- dnorm(hh$x, mean=mean(hh$x), sd=sd(hh$x))  # normal distribution
-p$x$opts$xAxis <- list(list(show=TRUE), list(data=c(1:length(nrm))))
-p$x$opts$yAxis <- list(list(show=TRUE), list(show=TRUE))
+p <- hh |> ec.init(ctype='bar',
+	xAxis= list(list(show=TRUE), list(data=c(1:length(nrm)))),
+	yAxis= list(list(show=TRUE), list(show=TRUE))
+) |> ec.theme('dark')
 p$x$opts$series <- append(p$x$opts$series, 
-  list(list(type='line', data=nrm, xAxisIndex=1, yAxisIndex=1, color='yellow')))
+	list(list(type='line', data=nrm, xAxisIndex=1, yAxisIndex=1, color='yellow')))
 p
 
 # same with timeline
@@ -643,10 +679,9 @@ for(i in 1:5) {
   tmp <- do.histogram(rnorm(44)) |> mutate(time=rep(i,n()))
   hh <- rbind(hh, tmp)
 }
-p <- hh |> group_by(time) |> 
-  ec.init(tl.series=list(type='bar', encode=list(x='x',y='y'))) |> 
-  ec.theme('dark')
-p
+hh |> group_by(time) |> 
+	ec.init(tl.series=list(type='bar', encode=list(x='x',y='y'))) |> 
+	ec.theme('dark')
 ```
 
 </details>
@@ -671,27 +706,25 @@ bnMax <- max(wt$bn)
 wt$size <- 30 + wt$bn/bnMax * 140   # size 30 to 140 px depending on mkt.cap
   
 library(echarty)
-p <- ec.init(load='gmodular'); 
-p$x$opts <- list(
-  title=list(text='DOW 2021',x='center',y='bottom',
-    backgroundColor='rgba(0,0,0,0)',borderColor='#ccc',    
-    borderWidth=0,padding=5,itemGap=10, 
-    textStyle=list(fontSize=18,fontWeight='bolder',color='#eee'),subtextStyle=list(color='#aaa')),
-  backgroundColor='#000',
-  animationDurationUpdate= "function(idx) list(return idx * 100; )",
-  animationEasingUpdate= 'bounceIn',
-  series= list(list(
-    type='graph', layout='force', 
-    force=list(repulsion=250,edgeLength=10),
-    modularity= list(resolution=7, sort=TRUE),
-    roam=TRUE, label=list(show=TRUE),
-    data= lapply(ec.data(wt, 'names'), function(x)
-      list(name= x$tic, lname=x$name, value=x$bn, 
-           symbolSize=x$size, draggable=TRUE 
-      )) )),
-  tooltip= list(formatter= ec.clmn('<b>%@</b><br>%@ bn','lname','value'))
+ec.init(load='gmodular', preset=FALSE,
+	title=list(text='DOW 2021',x='center',y='bottom',
+				  backgroundColor='rgba(0,0,0,0)',borderColor='#ccc',    
+				  borderWidth=0,padding=5,itemGap=10, 
+				  textStyle=list(fontSize=18,fontWeight='bolder',color='#eee'),subtextStyle=list(color='#aaa')),
+	backgroundColor= '#000',
+	animationDurationUpdate= "function(idx) list(return idx * 100; )",
+	animationEasingUpdate= 'bounceIn',
+	series= list(list(
+		type='graph', layout='force', 
+		force=list(repulsion=250,edgeLength=10),
+		modularity= list(resolution=7, sort=TRUE),
+		roam=TRUE, label=list(show=TRUE),
+		data= lapply(ec.data(wt, 'names'), function(x)
+			list(name= x$tic, lname=x$name, value=x$bn, 
+				  symbolSize=x$size, draggable=TRUE 
+			)) )),
+	tooltip= list(formatter= ec.clmn('<b>%@</b><br>%@ bn','lname','value'))
 )
-p
 ```
 
 </details>
@@ -708,21 +741,23 @@ Circular layout diagram for 'Les Miserables' characters<br />
 library(echarty); library(dplyr)
 les <- jsonlite::fromJSON('https://echarts.apache.org/examples/data/asset/data/les-miserables.json')
 les$categories$name <- as.character(1:9)
-p <- ec.init(preset=FALSE, title=list(text='Les Miserables',top='bottom',left='right')) 
-p$x$opts$series <- list(list(
-  type='graph', layout='circular',
-  circular= list(rotateLabel=TRUE),
-  nodes= ec.data(les$nodes, 'names'), 
-  links= ec.data(les$links, 'names'), 
-  categories= ec.data(les$categories, 'names'),
-  roam= TRUE, label=list(position='right', formatter='{b}'),
-  lineStyle= list(color='source', curveness=0.3)
-))
+p <- ec.init(preset=FALSE, 
+	title=list(text='Les Miserables',top='bottom',left='right'),
+	series= list(list(
+		type='graph', layout='circular',
+		circular= list(rotateLabel=TRUE),
+		nodes= ec.data(les$nodes, 'names'), 
+		links= ec.data(les$links, 'names'), 
+		categories= ec.data(les$categories, 'names'),
+		roam= TRUE, label=list(position='right', formatter='{b}'),
+		lineStyle= list(color='source', curveness=0.3)
+	)),
+	legend= list(data=c(les$categories$name), textStyle=list(color='#ccc')),
+	tooltip= list(show=TRUE),
+	backgroundColor= '#191919'
+)
 p$x$opts$series[[1]]$nodes <- lapply(p$x$opts$series[[1]]$nodes, function(n) {
-  n$label <- list(show=n$symbolSize > 30); n })  # labels for most important
-p$x$opts$legend <- list(data=c(les$categories$name), textStyle=list(color='#ccc'))
-p$x$opts$tooltip <- list(show=TRUE)
-p$x$opts$backgroundColor <- '#191919'
+	n$label <- list(show=n$symbolSize > 30); n })  # labels for most important
 p
 ```
 </details>
@@ -742,11 +777,7 @@ Animated transitions between charts   &nbsp; &nbsp; &nbsp;
 [<span style="color:magenta">Live Demo</span>](https://rpubs.com/echarty/morph) with code
 [<img src='img/morph.w.png' alt='morph' />](https://rpubs.com/echarty/morph)
 <br /><br />
-<!--
-<video id="video1" preload="auto" 
-	src="img/morph18s.mp4" type="video/mp4" muted="muted" controls>
-	Your browser does not support the video tag.
-</video> -->
+
 
 <a id='maps'></a>
 
@@ -763,30 +794,29 @@ with mouse events &nbsp; &nbsp; &nbsp; [<span style="color:magenta">Live Demo</s
 library(echarty); library(dplyr)
 url <- 'https://echarts.apache.org/examples/data/asset/geo/Veins_Medical_Diagram_clip_art.svg'
 svg <- url |> readLines(encoding='UTF-8') |> paste0(collapse="")
-p <- ec.init(preset=FALSE) |> ec.theme('dark-mushroom')
+p <- ec.init(preset=FALSE,
+ 	tooltip= list(zz= ""), 
+ 	geo= list(left= 10, right= "50%", map= "organs", selectedMode= "multiple",
+ 				 emphasis= list(focus= "self", itemStyle= list(color= NULL), 
+ 				 					label= list(position= "bottom", distance= 0, textBorderColor= "#fff", textBorderWidth= 2)),
+ 				 blur= list(zz= ""), 
+ 				 select= list(itemStyle= list(color= "#b50205"), 
+ 				 				 label= list(show= FALSE, textBorderColor= "#fff", textBorderWidth= 2))), 
+ 	grid= list(left= "60%", top= "20%", bottom= "20%"), 
+ 	xAxis= list(zz= ""), 
+ 	yAxis= list(data= list("heart", "large-intestine", "small-intestine", "spleen", "kidney", "lung", "liver")), 
+ 	series= list(list(type= "bar", emphasis= list(focus= "self"), 
+ 							data= list(121, 321, 141, 52, 198, 289, 139)))
+) |> ec.theme('dark-mushroom')
 p$x$registerMap <- list(list(mapName='organs', svg=svg))
 p$x$on <- list(list(event='mouseover', query=list(seriesIndex=0), 
-                    handler=htmlwidgets::JS("function (event) {
+						  handler=htmlwidgets::JS("function (event) {
   this.dispatchAction({ type: 'highlight', geoIndex: 0, name: event.name }); }") ),
-               list(event='mouseout', query=list(seriesIndex=0),
-                 handler=htmlwidgets::JS("function (event) {
+					list(event='mouseout', query=list(seriesIndex=0),
+						  handler=htmlwidgets::JS("function (event) {
   this.dispatchAction({ type: 'downplay', geoIndex: 0, name: event.name }); }") )
 )
-p$x$opts <- list(
-  tooltip= list(zz= ""), 
-  geo= list(left= 10, right= "50%", map= "organs", selectedMode= "multiple",
-             emphasis= list(focus= "self", itemStyle= list(color= NULL), 
-                             label= list(position= "bottom", distance= 0, textBorderColor= "#fff", textBorderWidth= 2)),
-             blur= list(zz= ""), 
-             select= list(itemStyle= list(color= "#b50205"), 
-                           label= list(show= FALSE, textBorderColor= "#fff", textBorderWidth= 2))), 
-  grid= list(left= "60%", top= "20%", bottom= "20%"), 
-  xAxis= list(zz= ""), 
-  yAxis= list(data= list("heart", "large-intestine", "small-intestine", "spleen", "kidney", "lung", "liver")), 
-  series= list(list(type= "bar", emphasis= list(focus= "self"), 
-                     data= list(121, 321, 141, 52, 198, 289, 139))))
 p
-
 ```
 </details>
 <br>
@@ -823,12 +853,12 @@ options <-  lapply(df, function(y) {
 })
 
 library(echarty)
-p <- ec.init(preset=FALSE, load='world')
-# timeline labels need to match option titles
-p$x$opts$timeline <- list(data=unlist(lapply(options, 
-      function(x) x$title$text)), axisType='category')
-p$x$opts$options <- options
-p
+ec.init(preset=FALSE, load='world',
+	# timeline labels need to match option titles
+	timeline= list(data=unlist(lapply(options, 
+										function(x) x$title$text)), axisType='category'),
+	options= options
+)
 ```
 </details>
 <br />
@@ -838,11 +868,81 @@ p
 a proof-of-concept   
 [<span style="color:magenta">Live Demo</span>](https://rpubs.com/echarty/bmap) (no code)  
 <br />  -->
+<a id='leaflet'></a>
 
 ### Leaflet maps
 and switching chart selection **without Shiny**  
 [<span style="color:magenta">Live Demo</span>](https://rpubs.com/echarty/mapjs) with code
 <br /><br />
+
+### Leaflet maps with shape files
+demo for GIS polylines, points and polygons
+<video id="vidshp" preload="auto" 
+	src="img/shpfiles.mp4" type="video/mp4" muted="muted" controls>
+	Your browser does not support the video tag.
+</video>
+<details><summary>🔻 View code</summary>
+
+```r
+library(echarty)
+library(dplyr)
+library(sf)
+library(spData)  # https://jakubnowosad.com/spData/
+
+xy2df <- function(val) {
+  len2 <- length(unlist(val)) /2
+  as.array(matrix(unlist(val), len2, 2))
+}
+
+# ----- MULTILINESTRING -----
+nc <- as.data.frame( st_transform(seine, crs=4326)) 
+p <- ec.init(load= c('leaflet'),
+    js= ec.util(cmd= 'sf.bbox', bbox= st_bbox(nc$geometry)), 
+    series= ec.util(df= nc, nid= 'name', lineStyle= list(width= 4), verbose=TRUE),
+    tooltip= list(formatter= '{a}'), legend= list(show= TRUE),
+    color=c('red','purple','green')
+)
+# add animation effect
+sd <- list()
+for(i in 1:nrow(nc)) {
+  sd <- append(sd, list(
+    list(type= 'lines', coordinateSystem= 'leaflet', polyline= TRUE, 
+         name= nc$name[i], lineStyle= list(width=0), color= 'blue',
+     effect= list(show= TRUE, constantSpeed= 80, trailLength= 0.1, symbolSize= 3),
+     data= list(list(coords= xy2df(nc$geometry[i]))
+  ))))
+}
+p$x$opts$series <- append(p$x$opts$series, sd)
+p
+
+# ----- MULTIPOINT -----
+nc <- as.data.frame(urban_agglomerations) |> filter(year==2020) |> 
+  rename(NAME= urban_agglomeration) |> 
+  select(NAME, country_or_area, population_millions, geometry) |>
+  rowwise() |>  # set population as Z
+  mutate(geometry= st_sfc(st_point(c(unlist(geometry), population_millions))) )
+
+ec.init(load= c('leaflet'),
+    js= ec.util(cmd= 'sf.bbox', bbox= st_bbox(nc$geometry)), 
+    series= ec.util(df= nc, name= 'Largest Cities', itemStyle= list(color= 'red')
+          ,symbolSize= ec.clmn(3, scale=0.5) # urban_agglomerations
+    ),
+    tooltip= list(formatter= '{a}'), legend= list(show= TRUE), animation= FALSE
+)
+
+# ----- MULTIPOLYGON -----
+nc <- as.data.frame(st_transform(nz, crs=4326)) |> rename(geometry= geom)
+  attr(nc, 'sf_column') <- 'geometry'
+
+ec.init(load= c('leaflet', 'custom'),  # load custom for polygons
+    js= ec.util(cmd= 'sf.bbox', bbox= st_bbox(nc$geometry)),
+    series= ec.util(df= nc, nid= 'Name', itemStyle= list(opacity= 0.3)),
+    tooltip= list(formatter= '{a}'), animation= FALSE
+)
+
+```
+</details>
+<br />
 
 ### World map
 with live data, color coding filter, pan/zoom  &nbsp; &nbsp; &nbsp; 

@@ -2,9 +2,10 @@
 
 There are several types of charts to represent hierarchical structures - sunburst, tree, treemap, sankey, graph.
 Hierarchical data in R can be built with:
-- list of lists
-- data.frame with nested children
-- data.frame with parent-child
+- list of lists - read as is
+- data.frame with nested data.frame children - read thru _jsonlite::toJSON_
+- data.frame with parent & child columns - read thru _ec.data(format='treePC')_
+- data.frame with a column for each level, like Titanic data - read thru  _ec.data(format='treeTK')_
 
 Many users find the latter representation most intuitive and straightforward. However note that it requires library *data.tree*.  
 Note also the difference in data setting for chart *tree* compared to *sunburst* and *treemap*.  *Tree*'s data is the top-level node, while *sunburst* and *treemap* use the first lower level.
@@ -14,28 +15,35 @@ Here are examples for the three types.
 ## List of lists
 
 ```r
-data <- list(list(name='Grandpa',children=list(
-  list(name='Uncle Leo',value=15,
-     children=list(list(name='Cousin Jack',value=2), 
-                   list(name='Cousin Mary',value=5,
-     children=list(list(name='Jackson',value=2))), 
-                   list(name='Cousin Ben',value=4))),
-  list(name='Father',value=10,children=list(list(name='Me',value=5),
-      list(name='Brother Peter',value=1))))), 
-  list(name='Nancy',children=list(list(name='Uncle Nike',children=list(list(name='Cousin Betty',value=1), list(name='Cousin Jenny',value=2))))))
+data <- list(
+	list(name='Grandpa',children=list(
+		list(name='Uncle Leo', value=15,
+		  children=list(list(name='Cousin Jack',value=2), 
+		  				  list(name='Cousin Mary',value=5,
+		  				  	  children=list(list(name='Jackson',value=2))), 
+		  				  list(name='Cousin Ben',value=4))),
+		list(name='Father', value=10,
+		  children=list(list(name='Me',value=5),
+		  				list(name='Brother Peter',value=1))))),
+	list(name='Nancy',
+		  children=list(list(name='Uncle Nike',
+  						   children=list(list(name='Cousin Betty',value=1), 
+  						   				 list(name='Cousin Jenny',value=2)))))
+)
 # -------------------------------------------------
 
-p <- ec.init(preset=FALSE)
-p$x$opts$series <- list(list(type = 'sunburst', 
-  data = data, radius=list(0, '90%'), label=list(rotate='radial')))
-p
+ec.init(preset= FALSE,
+		series= list(list(
+		  	type= 'sunburst', data= data, 
+            radius= list(0, '90%'), label= list(rotate='radial')))
+)
 ```
 <br />
 
-## Data frame with nested children
+## Data frame with nested data.frame children
 
 ```r
-animl <- data.frame(name = "Animals", value = 1)  # top level
+animl <- data.frame(name = "Animals", value = 255)  # top level
 animl$children <- 
 	list(data.frame(name = c("Mammals", "Reptiles","Fish"), value = c(100,90,60)))
 animl$children[[1]]$children <- c(
@@ -65,32 +73,61 @@ p
 ```
 <br />
 
-## Data frame with parent-child
+## Data frame with parent-child columns
 
 ```r
-df <- data.frame(parents = c("","Reptiles", "Reptiles", "Mammals", "Mammals", "Fish", "Sharks", "Sharks", "Animals", "Animals", "Animals"),
-                 children = c("Animals", "Snakes", "Lizards", "Dogs", "Humans", "Sharks", "hammerhead", "thresher", "Reptiles", "Mammals", "Fish"),
-                 value = c(55, 30, 40, 15, 35, 30, 10, 20, 90, 100, 60)) 
-library(data.tree)
-tmp <- data.tree::FromDataFrameNetwork(df)
-json <- data.tree::ToListExplicit(tmp, unname=TRUE)
-# -------------------------------------------------
+df <- data.frame(
+    parents = c("","Reptiles", "Reptiles", "Mammals", "Mammals", "Fish", "Sharks", "Sharks", "Animals", "Animals", "Animals"),
+	children = c("Animals", "Snakes", "Lizards", "Dogs", "Humans", "Sharks", "hammerhead", "thresher", "Reptiles", "Mammals", "Fish"),
+	value = c(255, 30, 40, 15, 35, 30, 10, 20, 90, 100, 60)) 
+df <- ec.data(df, format='treePC')
 
-p <- ec.init(preset=FALSE)
-p$x$opts$series <- list(list(type='sunburst', 
-    data=json$children[[1]]$children, 
-    radius=c(0, '90%'), label=list(rotate='radial'), emphasis=list(focus='ancestor') ))
-p
+ec.init(preset= FALSE,
+	series= list(list(type= 'sunburst', 
+		data= df[[1]]$children,  # =df
+		radius= c(0, '90%'), label=list(rotate='radial'), emphasis=list(focus='ancestor') ))
+)
+ec.init(preset= FALSE,
+	series= list(list(type= 'tree', 
+	  	data= df, 
+	  	label= list(offset = c(0, -12)), symbolSize= ec.clmn() ))  # size by value
+)
+ec.init(preset= FALSE,
+	series= list(list(type= 'treemap', 
+	  	data= df[[1]]$children, # =df, leafDepth=1, 
+	  	label= list(offset = c(0, -12)), symbolSize= ec.clmn() )),
+	tooltip= list(show= TRUE)
+)
+```
+<img src="img/uc3-1.png" alt="sunburst" />
 
-p$x$opts$series <- list(list(type='tree', 
-    data=json$children, 
-    label = list(offset = c(0, -12)), symbolSize = htmlwidgets::JS("function(d) { return d; }") ))
-p
+<br />
 
-p$x$opts$series <- list(list(type='treemap', 
-    data=json$children[[1]]$children, leafDepth=1))
-p$x$opts$tooltip <- list(ey='')   # ey is a dummy parameter, in JS becomes object "tooltip:{ey:''}"
+## Data frame with a column for each level
+
+```r
+# build required pathString and optional itemStyle columns
+df <- as.data.frame(Titanic) |> 
+    group_by(Survived,Age,Sex,Class) |> 
+    summarise(value= sum(Freq), .groups= 'drop') |> 
+    rowwise() |>
+    mutate(pathString= paste('Survive', Survived, Age, Sex, Class, sep='/'),
+            itemStyle= case_when(Survived=='Yes' ~ "color='green'", TRUE ~ "color='pink'")) |>
+    select(pathString, value, itemStyle)
+
+dat <- ec.data(df, format='treeTK')
+dat[[1]] <- within(dat[[1]], { itemStyle <- list(color= 'white'); pct <- 0 })  # customize top
+
+p <- ec.init(preset= FALSE, 
+            title= list(text= 'Titanic: Survival by Class'),
+            tooltip= list(formatter= ec.clmn('%@%','pct')))
+p$x$opts$series <- list(list(
+    type= 'sunburst', radius= c(0, '90%'), label= list(rotate=0),
+    # type= 'tree', symbolSize= ec.clmn(scale=0.08),
+    # type= 'treemap', upperLabel= list(show=TRUE, height=30), itemStyle= list(borderColor= '#999'), #leafDepth=4,
+    data= dat,
+    emphasis= list(focus='none') 
+))
 p
 ```
-
-<img src="img/uc3-1.png" alt="sunburst" />
+<img src="img/uc3-2.png" alt="sunburst" />
