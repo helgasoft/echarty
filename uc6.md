@@ -17,23 +17,23 @@ During the making of this example we confirmed an important fact. In current ECh
 Data *vv* credit goes to [vituri](https://vituri.github.io).
 ```r
 library(echarty);  library(dplyr)
-vv = iris %>% mutate(Year = rep(2020:2022, 50)) %>% 
-  tidyr::pivot_longer(cols = Sepal.Length:Petal.Width) %>% 
-  group_by(Year, Species, name) %>% 
+vv = iris |> mutate(Year = rep(2020:2022, 50)) |> 
+  tidyr::pivot_longer(cols = Sepal.Length:Petal.Width) |> 
+  group_by(Year, Species, name) |> 
   summarise(value = sum(value))
 # rearrange columns for axes: X = Species (1st), Y = value (2nd)
-vv <- vv %>% relocate(Species,value) %>% mutate(Species=as.character(Species))
-options <-  lapply(vv %>% group_by(Year) %>% group_split(), function(y) {
-  series <- lapply(y %>% group_by(name) %>% group_split(), function(s) {
+vv <- vv |> relocate(Species,value) |> mutate(Species=as.character(Species))
+options <-  lapply(vv |> group_by(Year) |> group_split(), function(y) {
+  series <- lapply(y |> group_by(name) |> group_split(), function(s) {
      list(type = 'bar', stack = 'grp', data = ec.data(s,'values'))
   })
   list(title=list(text=unique(y$Year), top=30), series = series)
 })
 
-p <- vv %>% group_by(name) %>% ec.init()
-p$x$opts$timeline <- list(data=unique(vv$Year), axisType='category')
-p$x$opts$options <- options
-p
+vv |> group_by(name) |> ec.init(
+	timeline= list(data=unique(vv$Year), axisType='category'),
+	options= options
+)
 ```
 <br />
 <img src="img/uc6.png" alt="stacked bars" />

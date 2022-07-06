@@ -67,13 +67,11 @@ i <- -1
 levcol = lapply(list('blue','red','green','brown','yellow'),
 		 function(clr) { i<<-i+1; list(depth=i, itemStyle=list(color=clr)) })
 
-p <- ec.init(preset=FALSE)
-p$x$opts <- list(
+ec.init(preset= FALSE,
 	series = list(list(type='sankey', data = nodes, edges = edges[[1]], levels = levcol	)),
-  timeline = list(axisType='category', data=list('s1','s2','s3')),
-  options = options
+	timeline = list(axisType='category', data=list('s1','s2','s3')),
+	options = options
 )
-p
 ```
 
 <img src="img/uc4-1.png" alt="sankey" />

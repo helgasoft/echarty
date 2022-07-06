@@ -101,7 +101,7 @@ ec.init(preset= FALSE,
 ```
 <img src="img/uc3-1.png" alt="sunburst" />
 
-<br />
+<br /><br />
 
 ## Data frame with a column for each level
 

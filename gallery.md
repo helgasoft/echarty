@@ -11,25 +11,23 @@ demo for presets
 ```r
 library(echarty); library(dplyr)
 library(lubridate)
-df <- data.frame(date=as.character(as.Date('2019-12-31') %m+% months(1:13)), 
-                 num=runif(13))
+df <- data.frame(date= as.character(as.Date('2019-12-31') %m+% months(1:13)), 
+                 num= runif(13))
 
 #  with presets and df chained
-p <- df |> ec.init(ctype='bar') |> ec.theme('dark')
-p
+df |> ec.init(ctype= 'bar') |> ec.theme('dark')
 
 #  without presets all options are explicitly assigned
-p <- ec.init(preset= FALSE) |> ec.theme('dark')
-p$x$opts <- list(
+ec.init(preset= FALSE,
   yAxis= list(show= TRUE),
   xAxis= list(type= 'category', 
                axisLabel= list(interval= 0, rotate= 45)
                #, axisTick= list(alignWithLabel= TRUE)
           ),
   series= list(list(
-    type= 'bar', data= ec.data(df, 'values', FALSE)))
-)
-p
+    type= 'bar', data= ec.data(df, 'values')))
+) |> ec.theme('dark')
+
 
 ```
 </details>
@@ -48,20 +46,20 @@ how to store data in echarty -
 ```r
 library(echarty); library(dplyr)
 df <- Orange |> mutate(Tree= as.character(Tree)) |>
-      arrange(Tree) |> group_by(Tree) |> group_split()
+	arrange(Tree) |> group_by(Tree) |> group_split()
 
-p <- ec.init(preset=FALSE) |> ec.theme('dark')
-p$x$opts <- list(
-  series= lapply(df, function(t) {
-    list(type= 'bar', name= unique(t$Tree), data= t$circumference) }),
-  legend= list(show=TRUE),
-  xAxis= list(name= 'tree circumference in mm', nameLocation= 'center', nameGap= 22),
-  yAxis= list(data= unique(Orange$age), name= 'age in days'),
-  tooltip= list(formatter= 'circumference={c} mm')
-)
-l <- length(p$x$opts$series)
-p$x$opts$series[[l]]$name <- paste(p$x$opts$series[[l]]$name, ' trees')
-p
+ec.init(preset= FALSE,
+	series= lapply(df, function(t) {
+		list(type= 'bar', name= unique(t$Tree), data= t$circumference) }),
+	legend= list(show=TRUE),
+	xAxis= list(name= 'tree circumference in mm', nameLocation= 'center', nameGap= 22),
+	yAxis= list(data= unique(Orange$age), name= 'age in days'),
+	tooltip= list(formatter= 'circumference={c} mm')
+) |> ec.upd({
+	l <- length(series)
+	series[[l]]$name <- paste(series[[l]]$name, ' trees')
+}) |> ec.theme('dark')
+
 ```
 </details>
 <br />
@@ -74,13 +72,12 @@ p
 isl <- data.frame(name= names(islands), value= islands) |> filter(value>60) |> arrange(value)
 
 library(echarty)
-p <- ec.init()
-p$x$opts <- list(
-  title= list(text= "Landmasses over 60,000 mi\u00B2", left= 'center'),
-  tooltip= list(show= TRUE),
-  series= list(type= 'pie', data= ec.data(isl, 'names')),
-  backgroundColor= '#191919')
-p
+ec.init(preset= FALSE,
+	title= list(text= "Landmasses over 60,000 mi\u00B2", left= 'center'),
+	tooltip= list(show= TRUE),
+	series= list(list(type= 'pie', data= ec.data(isl, 'names'))),
+	backgroundColor= '#191919'
+)
 ```
 </details>
 <br />
@@ -91,11 +88,13 @@ p
 
 ```r
 library(echarty)
-p <- iris |> group_by(Species) |> 
-  ec.init(ctype='parallel', color= rainbow(10)) |> ec.theme('dark-mushroom')
-p$x$opts$series <- lapply(p$x$opts$series, function(s) { 
-  s$smooth=TRUE; s$lineStyle=list(width=3); s })  # update preset series
-p
+iris |> group_by(Species) |> 
+	ec.init(ctype='parallel', color= rainbow(10)) |> 
+	ec.upd({   # update preset series
+		series <- lapply(series, function(s) { 
+			s$smooth=TRUE; s$lineStyle=list(width=3); s })  
+	}) |> ec.theme('dark-mushroom')
+
 ```
 </details>
 <br />
@@ -131,20 +130,19 @@ ritem <- "function renderItem(params, api) {
         style: style
     };
 }"
-p <- ec.init() |> ec.theme('dark-mushroom')      # only 2 commands used
-p$x$opts <- list(
-    title= list(text= "Profit", left= "center"),
-    tooltip= list(zz= ""),
-    xAxis= list(scale= TRUE), yAxis= list(zz= ""),
-    series= list(list(type= "custom",
-         renderItem= htmlwidgets::JS(ritem),
-         label= list(show= TRUE, position= "top"),
-         dimensions= list("from", "to", "profit"),
-         encode= list(x= list(0, 1), y= 2,
-                           tooltip= list(0, 1, 2), itemName= 3),
-         data= rdata ))
-)
-p
+ec.init(
+	title= list(text= "Profit", left= "center"),
+	tooltip= list(zz= ""),
+	xAxis= list(scale= TRUE), yAxis= list(zz= ""),
+	series= list(list(type= "custom",
+		renderItem= htmlwidgets::JS(ritem),
+		label= list(show= TRUE, position= "top"),
+		dimensions= list("from", "to", "profit"),
+		encode= list(x= list(0, 1), y= 2,
+						 tooltip= list(0, 1, 2), itemName= 3),
+		data= rdata ))
+) |> ec.theme('dark-mushroom')      # only 2 commands used
+
 ```
 </details>
 <br />
@@ -275,30 +273,32 @@ library(leaflet)
 map <- leaflet(sdf) |> addTiles() |> addMarkers()
 
 library(echarty)
-e="float:right;width:50%;",p) 
-))p <- sdf |> ec.init() |> ec.theme('dark-mushroom')
-p$x$opts$xAxis <- list(scale=TRUE, boundaryGap= c('5%', '5%'))
-p$x$opts <- append(p$x$opts, list(
+p <- sdf |> ec.init(
 	title= list(text= 'Crosstalk two-way selection'),
 	toolbox= list(feature= list(brush= list(show=TRUE))),
 	brush= list(brushLink='all', throttleType='debounce', 
 					brushStyle= list(borderColor= 'red')),
-	tooltip= list(show=TRUE)
-))
-p$x$opts$series[[1]] = append(p$x$opts$series[[1]], list(
-	encode= list(x='mag', y='depth', tooltip=list(2,3)),
-	selectedMode= 'multiple',
-	emphasis= list(
-		itemStyle= list(borderColor='yellow', borderWidth=2),
-		focus= 'self', 
-		blurScope='series'
-	),
-	blur= list(itemStyle= list(opacity = 0.4))  # when focus set
-))
+	tooltip= list(show=TRUE),
+	xAxis= list(scale=TRUE, boundaryGap= c('5%', '5%'))
+) |> 
+ec.upd({
+		series[[1]] <- append(series[[1]], list(
+			encode= list(x='mag', y='depth', tooltip=list(2,3)),
+			selectedMode= 'multiple',
+			emphasis= list(
+				itemStyle= list(borderColor='yellow', borderWidth=2),
+				focus= 'self', 
+				blurScope='series'
+			),
+			blur= list(itemStyle= list(opacity = 0.4))  # when focus set
+		))
+}) |> ec.theme('dark-mushroom')
+
 library(htmltools)
 browsable(tagList(
-  div(style="float:left;width:50%;", map), 
-	div(styl
+	div(style="float:left;width:50%;", map), 
+	div(style="float:right;width:50%;",p) 
+))
 ```
 </details>
 <br />
@@ -324,18 +324,16 @@ dat <- rbind(setData(0), setData(1))
 
 # ------ 2) show data
 library(echarty)
-p <- ec.init(load='3D') |> ec.theme('dark-mushroom') 
-p$x$opts <- list(
-  title= list(text=paste('scatterGL -',nrow(dat),'points + zoom')),
-  xAxis= list(show=TRUE),
-  yAxis= list(show=TRUE),
-  series= list(type= 'scatterGL', data= ec.data(dat, 'dataset', FALSE),
-               symbolSize=3, large=TRUE,
-               itemStyle=list(opacity=0.4, color='cyan')
-  ),
-  dataZoom= list(type='inside',start=50)
-)
-p
+ec.init(load= '3D', preset= FALSE, 
+	title= list(text=paste('scatterGL -',nrow(dat),'points + zoom')),
+	xAxis= list(show=TRUE),
+	yAxis= list(show=TRUE),
+	series= list(list(type= 'scatterGL', data= ec.data(dat),
+					 symbolSize= 3, large=TRUE,
+					 itemStyle= list(opacity=0.4, color='cyan')
+	)),
+	dataZoom= list(type='inside',start=50)
+) |> ec.theme('dark-mushroom')
 
 ```
 </details>
@@ -351,12 +349,13 @@ plugin **3D**, test with 36,000 points
 library(onion); library(echarty)
 data(bunny)
 tmp <- as.data.frame(bunny)
-p <- tmp |> ec.init(load='3D', visualMap= list(
-		inRange=list(color= rainbow(10)), calculable=TRUE,
-		min=min(tmp$y), max=max(tmp$y), dimension=1)) |> 
-	ec.theme('dark-mushroom')
-p$x$opts$series[[1]] <- list(type='scatter3D', symbolSize=2)
-p
+tmp |> ec.init(load= '3D', 
+					visualMap= list(
+	inRange= list(color= rainbow(10)), calculable= TRUE,
+	min= min(tmp$y), max= max(tmp$y), dimension= 1)) |> 
+ec.upd({ 
+  series[[1]] <- list(type='scatter3D', symbolSize=2) }) |>
+ec.theme('dark-mushroom')
 ```
 </details>
 <br />
@@ -665,13 +664,13 @@ do.histogram(rnorm(44)) |> ec.init(ctype='bar') |> ec.theme('dark')
 # with normal distribution line added
 hh <- do.histogram(rnorm(44))
 nrm <- dnorm(hh$x, mean=mean(hh$x), sd=sd(hh$x))  # normal distribution
-p <- hh |> ec.init(ctype='bar',
-	xAxis= list(list(show=TRUE), list(data=c(1:length(nrm)))),
-	yAxis= list(list(show=TRUE), list(show=TRUE))
-) |> ec.theme('dark')
-p$x$opts$series <- append(p$x$opts$series, 
-	list(list(type='line', data=nrm, xAxisIndex=1, yAxisIndex=1, color='yellow')))
-p
+hh |> ec.init(ctype= 'bar',
+				  xAxis= list(list(show=TRUE), list(data=c(1:length(nrm)))),
+				  yAxis= list(list(show=TRUE), list(show=TRUE))
+) |> ec.upd({
+	series <- append(series, 
+		list(list(type='line', data=nrm, xAxisIndex=1, yAxisIndex=1, color='yellow')))
+}) |> ec.theme('dark')
 
 # same with timeline
 hh <- data.frame()
@@ -680,7 +679,7 @@ for(i in 1:5) {
   hh <- rbind(hh, tmp)
 }
 hh |> group_by(time) |> 
-	ec.init(tl.series=list(type='bar', encode=list(x='x',y='y'))) |> 
+	ec.init(tl.series= list(type='bar', encode= list(x='x',y='y'))) |> 
 	ec.theme('dark')
 ```
 
@@ -741,24 +740,25 @@ Circular layout diagram for 'Les Miserables' characters<br />
 library(echarty); library(dplyr)
 les <- jsonlite::fromJSON('https://echarts.apache.org/examples/data/asset/data/les-miserables.json')
 les$categories$name <- as.character(1:9)
-p <- ec.init(preset=FALSE, 
-	title=list(text='Les Miserables',top='bottom',left='right'),
-	series= list(list(
-		type='graph', layout='circular',
-		circular= list(rotateLabel=TRUE),
-		nodes= ec.data(les$nodes, 'names'), 
-		links= ec.data(les$links, 'names'), 
-		categories= ec.data(les$categories, 'names'),
-		roam= TRUE, label=list(position='right', formatter='{b}'),
-		lineStyle= list(color='source', curveness=0.3)
-	)),
-	legend= list(data=c(les$categories$name), textStyle=list(color='#ccc')),
-	tooltip= list(show=TRUE),
-	backgroundColor= '#191919'
-)
-p$x$opts$series[[1]]$nodes <- lapply(p$x$opts$series[[1]]$nodes, function(n) {
-	n$label <- list(show=n$symbolSize > 30); n })  # labels for most important
-p
+ec.init(preset=FALSE, 
+		  title=list(text='Les Miserables',top='bottom',left='right'),
+		  series= list(list(
+				 	type='graph', layout='circular',
+				 	circular= list(rotateLabel=TRUE),
+				 	nodes= ec.data(les$nodes, 'names'), 
+				 	links= ec.data(les$links, 'names'), 
+				 	categories= ec.data(les$categories, 'names'),
+				 	roam= TRUE, label=list(position='right', formatter='{b}'),
+				 	lineStyle= list(color='source', curveness=0.3)
+		  )),
+		  legend= list(data=c(les$categories$name), textStyle=list(color='#ccc')),
+		  tooltip= list(show=TRUE),
+		  backgroundColor= '#191919'
+) |> ec.upd({    # labels only for most important
+	series[[1]]$nodes <- lapply(series[[1]]$nodes, function(n) {
+		n$label <- list(show=n$symbolSize > 30); n })
+})
+
 ```
 </details>
 <br />
@@ -884,7 +884,7 @@ demo for GIS polylines, points and polygons
 <details><summary>🔻 View code</summary>
 
 ```r
-library(echarty)
+library(echarty)  # v.1.4.6+
 library(dplyr)
 library(sf)
 library(spData)  # https://jakubnowosad.com/spData/
@@ -896,24 +896,24 @@ xy2df <- function(val) {
 
 # ----- MULTILINESTRING -----
 nc <- as.data.frame( st_transform(seine, crs=4326)) 
-p <- ec.init(load= c('leaflet'),
-    js= ec.util(cmd= 'sf.bbox', bbox= st_bbox(nc$geometry)), 
-    series= ec.util(df= nc, nid= 'name', lineStyle= list(width= 4), verbose=TRUE),
-    tooltip= list(formatter= '{a}'), legend= list(show= TRUE),
-    color=c('red','purple','green')
-)
-# add animation effect
+# build animation effect series
 sd <- list()
 for(i in 1:nrow(nc)) {
-  sd <- append(sd, list(
-    list(type= 'lines', coordinateSystem= 'leaflet', polyline= TRUE, 
-         name= nc$name[i], lineStyle= list(width=0), color= 'blue',
-     effect= list(show= TRUE, constantSpeed= 80, trailLength= 0.1, symbolSize= 3),
-     data= list(list(coords= xy2df(nc$geometry[i]))
-  ))))
+	sd <- append(sd, list(
+		list(type= 'lines', coordinateSystem= 'leaflet', polyline= TRUE, 
+			  name= nc$name[i], lineStyle= list(width=0), color= 'blue',
+			  effect= list(show= TRUE, constantSpeed= 80, trailLength= 0.1, symbolSize= 3),
+			  data= list(list(coords= xy2df(nc$geometry[i]))
+			  ))))
 }
-p$x$opts$series <- append(p$x$opts$series, sd)
-p
+
+ec.init(load= c('leaflet'),
+		  js= ec.util(cmd= 'sf.bbox', bbox= st_bbox(nc$geometry)), 
+		  series= ec.util(df= nc, nid= 'name', lineStyle= list(width= 4), verbose=TRUE),
+		  tooltip= list(formatter= '{a}'), legend= list(show= TRUE),
+		  color=c('red','purple','green')
+) |> 
+ec.upd({ series <- append(series, sd) })
 
 # ----- MULTIPOINT -----
 nc <- as.data.frame(urban_agglomerations) |> filter(year==2020) |> 
