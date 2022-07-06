@@ -24,7 +24,7 @@ Create 'parallelAxis' for a parallel chart
 \examples{
 iris |> dplyr::group_by(Species) |> ec.init(ctype='parallel')
 
-ec.init(preset=FALSE,
+ec.init(preset= FALSE,
         parallelAxis= ec.paxis(mtcars, 
                                cols= c('gear','cyl','hp','carb'), nameRotate= 45),
         series= list(list(type= 'parallel', smooth= TRUE, 

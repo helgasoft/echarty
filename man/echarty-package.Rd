@@ -26,10 +26,9 @@ Deliver the full functionality of 'ECharts' with minimal overhead. 'echarty' use
 Options are set with R command \href{https://www.rdocumentation.org/packages/base/versions/3.6.2/topics/options}{options}.\cr
 echarty uses the following options: \cr
 \itemize{
-\item echarty.theme = name of theme file (without extension), from folder /inst/themes
+\item echarty.theme = name of theme file, without extension, from folder /inst/themes
 \item echarty.font = font family name
 \item echarty.urltiles = tiles URL template for leaflet maps
-\item echarty.short = a boolean flag, see \link{ec.snip}
 }
 }
 
@@ -41,7 +40,7 @@ All other ECharts \href{https://echarts.apache.org/en/api.html#events}{events} s
 Another option is to use \code{p$x$on} with JavaScript handlers, see code in \link{ec.examples}.
 }
 
-\section{Widget parameters}{
+\section{Widget 'x' parameters}{
 
 These are \code{htmlwidget} and \code{ECharts} initialization parameters supported by echarty.\cr
 There are code samples for most in \link{ec.examples}.
@@ -78,9 +77,9 @@ Here is the complete list of sample code locations \cr
 cars |> ec.init()
 
 # set/get global options
-options('echarty.short'=TRUE)  # set
-getOption('echarty.short')     # get
-options('echarty.short'=NULL)  # remove
+options('echarty.theme'='jazz') # set
+getOption('echarty.theme')      # get
+options('echarty.theme'=NULL)   # remove
 
 
 }

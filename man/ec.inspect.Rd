@@ -22,9 +22,8 @@ a \code{list} otherwise.
 \description{
 Convert chart to JSON string
 }
-\note{
+\details{
 Must be invoked or chained as last command.\cr
-ec.inspect is incompatible with \link{ec.snip}
 }
 \examples{
 # extract JSON

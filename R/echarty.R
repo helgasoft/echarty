@@ -69,13 +69,13 @@
 #'  
 #'  # a timeline with two series and autoPlay
 #' p <- iris |> dplyr::group_by(Species) |> ec.init(
-#'   tl.series=list(
+#'   legend= list(show=TRUE),
+#'   tl.series= list(
 #'     encode=list(x=NULL, y=c('Sepal.Width', 'Petal.Length')),
 #'     markPoint = list(data=list(list(type='max'), list(type='min')))
 #'   )
-#' )
+#' ) #|> ec.upd(
 #' p$x$opts$timeline <- append(p$x$opts$timeline, list(autoPlay=TRUE))
-#' p$x$opts$legend <- list(show=TRUE)  # add legend
 #' p
 #' 
 #' @seealso 
@@ -690,16 +690,15 @@ ec.data <- function(df, format='dataset', header=FALSE) {
 #' @examples
 #' tmp <- data.frame(Species = as.vector(unique(iris$Species)),
 #'                   emoji = c('\U0001F33B','\U0001F335','\U0001F33A'))
-#' df <- iris |> dplyr::inner_join(tmp)         # add 6th column emoji
-#' p <- df |> dplyr::group_by(Species) |> ec.init()
-#' p$x$opts$series <- lapply(p$x$opts$series,
-#'    function(s) append(s, list(label= list(show= TRUE, 
-#'                                           formatter= ec.clmn('emoji')))) 
-#' )
-#' p$x$opts$tooltip <- list(formatter=     
-#'    # ec.clmn with sprintf + multiple column indexes
-#'    ec.clmn('%M@ species <b>%@</b><br>s.len <b>%@</b><br>s.wid <b>%@</b>', 5,1,2))
-#' p
+#' df <- iris |> dplyr::inner_join(tmp)      # add 6th column emoji
+#' df |> dplyr::group_by(Species) |> ec.init() |> ec.upd({
+#'   series <- lapply(series,
+#'     function(s) append(s,
+#'       list(label= list(show= TRUE, formatter= ec.clmn('emoji')))) )
+#'   tooltip <- list(formatter=
+#'     # ec.clmn with sprintf + multiple column indexes
+#'     ec.clmn('%M@ species <b>%@</b><br>s.len <b>%@</b><br>s.wid <b>%@</b>', 5,1,2))
+#' })
 #' 
 #' @export
 ec.clmn <- function(col=NULL, ..., scale=1) {
@@ -891,20 +890,21 @@ ecr.band <- function(df=NULL, lower=NULL, upper=NULL, type='polygon', ...) {
 #'                  lower = round(rnorm(24, tmp -10, .5)),
 #'                  upper = round(rnorm(24, tmp + 5, .8)),
 #'                  cat= rep(c('A','B'),24) )
+#'                  
 #' df |> ec.init(load='custom', tooltip= list(show=TRUE)) |> ecr.ebars()
 #'   
 #' #------ riErrBarSimple ------
-#' p <- df |> ec.init(load='custom',
-#'                    title= list(text= "riErrBarSimple"),
-#'                    legend= list(show=TRUE) )
-#' p$x$opts$xAxis= list(data= df$category)
-#' p$x$opts$series <- append(p$x$opts$series, list(list(
-#'   type= "custom", name= "error",
-#'   itemStyle = list(borderWidth= 1.5, color= 'brown'), 
-#'   encode = list(x= 0, y= list(1, 2)), 
-#'   data = ec.data(df |> select(x,lower,upper)),
-#'   renderItem = htmlwidgets::JS("riErrBarSimple") )))
-#' p
+#' df |> ec.init(load= 'custom',
+#'               title= list(text= "riErrBarSimple"),
+#'               legend= list(show=TRUE),
+#'               xAxis= list(data= df$category)) |> ec.upd({
+#'   series <- append(series, list(list(
+#'     type= "custom", name= "error",
+#'     itemStyle= list(borderWidth= 1.5, color= 'brown'),
+#'     encode= list(x= 0, y= list(1, 2)),
+#'     data= ec.data(df |> select(x,lower,upper)),
+#'     renderItem= htmlwidgets::JS("riErrBarSimple") )))
+#' })
 #' 
 #' # ----- grouped -------
 #' df |> group_by(cat) |> 
@@ -920,9 +920,7 @@ ecr.ebars <- function(wt, df=NULL, hwidth=6, ...) {
     stop('ecr.ebars: df must be a data.frame', call.=FALSE)
   if (!'renderers' %in% unlist(lapply(wt$dependencies, function(d) d$name)))
     stop("ecr.ebars: use ec.init(load='custom') for ecr.ebars", call.=FALSE)
-  if (!is.null(wt$saved))
-    stop('ecr.ebars: did you place ec.snip at end-of-pipe?', call. = FALSE)
-  
+
   ser <- wt$x$opts$series  # all series
   if (is.null(ser)) stop('ecr.ebars: series are missing', call.=FALSE)
   args <- list(...)
@@ -1201,7 +1199,7 @@ ec.layout <- function (plots, rows = NULL, cols = NULL, width = "xs",
 #' @examples
 #' iris |> dplyr::group_by(Species) |> ec.init(ctype='parallel')
 #' 
-#' ec.init(preset=FALSE,
+#' ec.init(preset= FALSE,
 #'         parallelAxis= ec.paxis(mtcars, 
 #'                                cols= c('gear','cyl','hp','carb'), nameRotate= 45),
 #'         series= list(list(type= 'parallel', smooth= TRUE, 
@@ -1263,9 +1261,7 @@ ec.theme <- function (wt, name, code= NULL)
 {
   if (missing(name))
     stop('ec.theme: must define a name', call. = FALSE)
-  if (!is.null(wt$saved))
-    stop('ec.theme: did you place ec.snip at end-of-pipe?', call. = FALSE)
-  
+
   #if (length(wt$x[[1]])==0) wt$x[[1]] <- NULL  # parasite list
   wt$x$theme <- name
   if (!is.null(code))
@@ -1293,8 +1289,7 @@ ec.theme <- function (wt, name, code= NULL)
 #' @return A JSON string if \code{json} is \code{TRUE} and
 #'  a \code{list} otherwise.
 #'
-#' @note Must be invoked or chained as last command.\cr
-#' ec.inspect is incompatible with [ec.snip]
+#' @details Must be invoked or chained as last command.\cr
 #'
 #' @examples
 #' # extract JSON
@@ -1306,9 +1301,7 @@ ec.theme <- function (wt, name, code= NULL)
 #'
 #' @export
 ec.inspect <- function(wt, target=NULL, json=TRUE, ...) {
-  if (!is.null(wt$saved))
-    stop('ec.inspect: incompatible with ec.snip', call. = FALSE)
-  
+
   opts <- wt$x$opts
   
   if (!is.null(target)) {
@@ -1380,43 +1373,32 @@ ec.fromJson <- function(txt, ...) {
 }
 
 
-#' Options list shortcut
+#' Update option lists
 #' 
-#' Utility to improve readability and typing speed
+#' Improve readability by chaining commands
 #' 
-#' @param wt A widget to be converted to option list \cr
-#'    OR an option list to a plot
-#' @details 
-#' On initialization, add _ec.snip_ at the end of the [ec.init] pipe, \cr
-#'   or set for the entire R session with \code{options('echarty.short'=TRUE)}.\cr
-#' Note: ec.theme, ecr.ebars, ec.inspect will not work with the session setting. 
+#' @param wt An echarty widget
+#' @param ... A commands expression to update option lists
 #'
-#' @examples 
-#' p <- cars |> ec.init() |> ec.snip()
-#' p$dataZoom <- list(start=70)   # instead of p$x$opts$dataZoom
-#' p$legend  <- list(show=TRUE)   # instead of p$x$opts$tooltip
-#' ec.snip(p)                     # instead of just p
-#' 
+#' @details Replaces syntax\cr
+#'   \verb{   }p <- ec.init(...)\cr
+#'   \verb{   }p$x$opts$series <- ...\cr
+#' with\cr
+#'   \verb{   }ec.init(...) |> \verb{   } # set or preset chart params\cr
+#'   \verb{   }ec.upd(\{series <- ...\}) # update params thru R commands
+#' @examples
+#' Orange |> dplyr::group_by(Tree) |> ec.init() |>
+#' ec.upd({ 
+#'   series <- lapply(series, function(x) {
+#'     x$symbolSize= 10; x$encode= list(x='age', y='circumference'); x } )
+#' })
 #' @export
-ec.snip <- function(wt) {
-  if (missing(wt))
-    stop('ec.snip: expecting wt as htmlwidget or list', call.=FALSE)
+ec.upd <- function(wt, ...) {
+  if (!'echarty' %in% class(wt))
+    stop('ec.upd: expecting wt as echarty widget', call.=FALSE)
 
-  if ('echarty' %in% class(wt)) {
-    # prepare for shorthand writing
-    op <- wt$x$opts
-    op$saved <- wt
-    op$saved$opts <- NULL
-    op
-  } 
-  else {
-    # return the chart widget to plot
-    # wt$x holds theme, registerMap, jcode, locale, renderer, etc.
-    p <- wt$saved
-    wt$saved <- NULL
-    p$x$opts <- wt
-    p
-  }
+    wt$x$opts <- within(wt$x$opts, ...)
+    wt
 }
 
 

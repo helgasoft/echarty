@@ -38,20 +38,21 @@ df <- data.frame(x = 1:24, val = tmp,
                  lower = round(rnorm(24, tmp -10, .5)),
                  upper = round(rnorm(24, tmp + 5, .8)),
                  cat= rep(c('A','B'),24) )
+                 
 df |> ec.init(load='custom', tooltip= list(show=TRUE)) |> ecr.ebars()
   
 #------ riErrBarSimple ------
-p <- df |> ec.init(load='custom',
-                   title= list(text= "riErrBarSimple"),
-                   legend= list(show=TRUE) )
-p$x$opts$xAxis= list(data= df$category)
-p$x$opts$series <- append(p$x$opts$series, list(list(
-  type= "custom", name= "error",
-  itemStyle = list(borderWidth= 1.5, color= 'brown'), 
-  encode = list(x= 0, y= list(1, 2)), 
-  data = ec.data(df |> select(x,lower,upper)),
-  renderItem = htmlwidgets::JS("riErrBarSimple") )))
-p
+df |> ec.init(load= 'custom',
+              title= list(text= "riErrBarSimple"),
+              legend= list(show=TRUE),
+              xAxis= list(data= df$category)) |> ec.upd({
+  series <- append(series, list(list(
+    type= "custom", name= "error",
+    itemStyle= list(borderWidth= 1.5, color= 'brown'),
+    encode= list(x= 0, y= list(1, 2)),
+    data= ec.data(df |> select(x,lower,upper)),
+    renderItem= htmlwidgets::JS("riErrBarSimple") )))
+})
 
 # ----- grouped -------
 df |> group_by(cat) |> 

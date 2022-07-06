@@ -36,15 +36,14 @@ Useful for attributes like formatter, color, symbolSize.
 \examples{
 tmp <- data.frame(Species = as.vector(unique(iris$Species)),
                   emoji = c('\U0001F33B','\U0001F335','\U0001F33A'))
-df <- iris |> dplyr::inner_join(tmp)         # add 6th column emoji
-p <- df |> dplyr::group_by(Species) |> ec.init()
-p$x$opts$series <- lapply(p$x$opts$series,
-   function(s) append(s, list(label= list(show= TRUE, 
-                                          formatter= ec.clmn('emoji')))) 
-)
-p$x$opts$tooltip <- list(formatter=     
-   # ec.clmn with sprintf + multiple column indexes
-   ec.clmn('\%M@ species <b>\%@</b><br>s.len <b>\%@</b><br>s.wid <b>\%@</b>', 5,1,2))
-p
+df <- iris |> dplyr::inner_join(tmp)      # add 6th column emoji
+df |> dplyr::group_by(Species) |> ec.init() |> ec.upd({
+  series <- lapply(series,
+    function(s) append(s,
+      list(label= list(show= TRUE, formatter= ec.clmn('emoji')))) )
+  tooltip <- list(formatter=
+    # ec.clmn with sprintf + multiple column indexes
+    ec.clmn('\%M@ species <b>\%@</b><br>s.len <b>\%@</b><br>s.wid <b>\%@</b>', 5,1,2))
+})
 
 }

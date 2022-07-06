@@ -422,8 +422,7 @@ server <- function(input, output, session) {
   
   # --------- bar series ------
   output$barplot_vert <- ecs.render({
-    p <- ec.init()
-    p$x$opts <- list(
+    p <- ec.init(preset= FALSE,
       legend = list(show=TRUE),
       yAxis = list(show=TRUE),
       xAxis = list(data=base_df$ValX),
@@ -441,15 +440,14 @@ server <- function(input, output, session) {
   })
   
   output$barplot_horiz <- ecs.render({
-    p <- ec.init()
-    p$x$opts <- list(
+    p <- ec.init(preset= FALSE,
       legend = list(show=TRUE),
       xAxis = list(show=TRUE),
       yAxis = list(data=base_df$ValX),
       series = list(list(type='bar', data=base_df$ValY, name='h1st')),
-      toolbox = list(feature=list(brush=list(type=list("lineY", "clear"))))
-      ,brush = list(brushMode='multiple', throttleType='debounce', throttleDelay=222)  # group selection
-      #,brush = list(show=TRUE)   # single selection
+      toolbox = list(feature=list(brush=list(type=list("lineY", "clear")))),
+      brush = list(brushMode='multiple', throttleType='debounce', throttleDelay=222)  # group selection
+      #brush = list(show=TRUE)   # single selection
     )
     p$x$capture <- 'brushselected'
     p

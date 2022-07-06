@@ -1,9 +1,10 @@
 # history of echarty package development
 
-## v.1.4.6.02
+## v.1.4.6.03
 
 - _ec.util_: add POLYGON/MULTIPOINT, rename param _type_ to _cmd_, new sf.unzip
 - improved _ec.data_ format='treeTK', see example in _test-other.R_
+- _ec.snip_ replaced with _ec.upd_ for chained commands
 
 ## v.1.4.6
 

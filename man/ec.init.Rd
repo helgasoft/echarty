@@ -96,13 +96,13 @@ cars |> ec.init()
  
  # a timeline with two series and autoPlay
 p <- iris |> dplyr::group_by(Species) |> ec.init(
-  tl.series=list(
+  legend= list(show=TRUE),
+  tl.series= list(
     encode=list(x=NULL, y=c('Sepal.Width', 'Petal.Length')),
     markPoint = list(data=list(list(type='max'), list(type='min')))
   )
-)
+) #|> ec.upd(
 p$x$opts$timeline <- append(p$x$opts$timeline, list(autoPlay=TRUE))
-p$x$opts$legend <- list(show=TRUE)  # add legend
 p
 
 }
