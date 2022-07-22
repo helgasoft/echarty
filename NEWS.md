@@ -1,10 +1,11 @@
 # history of echarty package development
 
-## v.1.4.6.03
+## v.1.4.6.04
 
-- _ec.util_: add POLYGON/MULTIPOINT, rename param _type_ to _cmd_, new sf.unzip
+- _ec.util_: add POLYGON/MULTIPOINT, rename param 'type' to 'cmd', new _sf.unzip_
 - improved _ec.data_ format='treeTK', see example in _test-other.R_
-- _ec.snip_ replaced with _ec.upd_ for chained commands
+- _ec.upd_ replaces _ec.snip_ for chained commands
+- support for _lotties_ in _graphic_, see web gallery for sample
 
 ## v.1.4.6
 
@@ -16,7 +17,7 @@
 - new _ec.data_ formats 'treePC' and 'treeTK' for hierarchies
 - changed _ec.data_ default parameter _header_ to FALSE
 - fixes in _ec.clmn_ and allow empty _col_ parameter for pie,sunburst,etc.
-- add _ec.util_ to support map shapefiles thru sf
+- add _ec.util_ to support map shapefiles thru library 'sf'
 
 ## v.1.4.5
 

@@ -31,7 +31,7 @@ support](https://helgasoft.github.io/echarty/xtalk.html).
 
 ## Installation
 
-[![Github version](https://img.shields.io/github/v/release/helgasoft/echarty?label=github)](https://github.com/helgasoft/echarty/releases) 
+<!-- [![Github version](https://img.shields.io/github/v/release/helgasoft/echarty?label=github)](https://github.com/helgasoft/echarty/releases) -->
 Latest development version:
 
 ``` r

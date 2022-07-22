@@ -12,7 +12,6 @@
 #'   If grouping is on multiple columns, only the first one is used to determine settings.
 #' @param ctype Chart type of series. Default is 'scatter'. Set to NULL to disable series preset.
 #' @param preset Build preset xAxis,yAxis,serie for 2D, or grid3D,xAxis3D,yAxis3D,zAxis3D for 3D, default TRUE (enable).
-#' @param load Name(s) of plugin(s) to load. Could be a character vector or comma-delimited string. default NULL.
 #' @param width,height A valid CSS unit (like \code{'100\%'},
 #'   \code{'500px'}, \code{'auto'}) or a number, which will be coerced to a
 #'   string and have \code{'px'} appended.
@@ -31,8 +30,9 @@
 #'   Auto-generated \emph{timeline} and \emph{options} will be preset for the chart.\cr
 #'   \emph{tl.series} cannot be used for hierarchical charts like graph,tree,treemap,sankey. Chart options/timeline have to be built directly, see \href{https://helgasoft.github.io/echarty/uc4.html}{example}.
 #' @param ... other arguments to pass to the widget. \cr
-#'   Custom widget arguments include: \cr
+#'   Custom echarty widget arguments include: \cr
 #'  * elementId - Id of the widget, default is NULL(auto-generated)
+#'  * load - name(s) of plugin(s) to load. Could be a character vector or comma-delimited string. default NULL.
 #'  * ask - prompt user before downloading plugins when \emph{load} is present, FALSE by default
 #'  * js - single string or a vector with JavaScript expressions to evaluate.\cr 
 #'      First expression is evaluated before chart initialization. \cr
@@ -50,16 +50,16 @@
 #'  Users can delete or overwrite any presets as needed. \cr
 #'  [ec.plugjs] will be called internally for each \emph{load} entry, popup prompts controlled by parameter \emph{ask}. \cr
 #'  
-#'   Built-in plugins: \cr \itemize{
-#'   \item leaflet - Leaflet maps with customizable tiles, see \href{https://github.com/gnijuohz/echarts-leaflet#readme}{source}\cr
-#'   \item custom - renderers for [ecr.band] and [ecr.ebars] \cr 
-#'  } Plugins with one-time installation: \cr \itemize{
-#'   \item 3D - 3D charts and WebGL acceleration, see \href{https://github.com/ecomfe/echarts-gl}{source} and \href{https://echarts.apache.org/en/option-gl.html#series}{docs} \cr
-#'   \item world - world map with country boundaries, see \href{https://github.com/apache/echarts/tree/master/test/data/map/js}{source} \cr
-#'   \item liquid - liquid fill, see \href{https://github.com/ecomfe/echarts-liquidfill}{source}  \cr
-#'   \item gmodular - graph modularity, see \href{https://github.com/ecomfe/echarts-graph-modularity}{source}  \cr
-#'   \item wordcloud - cloud of words, see \href{https://github.com/ecomfe/echarts-wordcloud}{source} \cr
-#'  } or install your own third-party plugins.
+#'  Built-in plugins: \cr 
+#'  * leaflet - Leaflet maps with customizable tiles, see \href{https://github.com/gnijuohz/echarts-leaflet#readme}{source}\cr
+#'  * custom - renderers for [ecr.band] and [ecr.ebars] \cr 
+#'  Plugins with one-time installation: \cr
+#'  * 3D - 3D charts and WebGL acceleration, see \href{https://github.com/ecomfe/echarts-gl}{source} and \href{https://echarts.apache.org/en/option-gl.html#series}{docs} \cr
+#'  * world - world map with country boundaries, see \href{https://github.com/apache/echarts/tree/master/test/data/map/js}{source} \cr
+#'  * liquid - liquid fill, see \href{https://github.com/ecomfe/echarts-liquidfill}{source}  \cr
+#'  * gmodular - graph modularity, see \href{https://github.com/ecomfe/echarts-graph-modularity}{source}  \cr
+#'  * wordcloud - cloud of words, see \href{https://github.com/ecomfe/echarts-wordcloud}{source} \cr
+#'  or install your own third-party plugins.
 #' 
 #' @return A widget to plot, or to save and expand with more features.
 #' 
@@ -74,7 +74,7 @@
 #'     encode=list(x=NULL, y=c('Sepal.Width', 'Petal.Length')),
 #'     markPoint = list(data=list(list(type='max'), list(type='min')))
 #'   )
-#' ) #|> ec.upd(
+#' ) # |> ec.upd(...
 #' p$x$opts$timeline <- append(p$x$opts$timeline, list(autoPlay=TRUE))
 #' p
 #' 
@@ -85,7 +85,7 @@
 #' @import dplyr
 #' 
 #' @export
-ec.init <- function( df=NULL, preset=TRUE, ctype='scatter', load=NULL,
+ec.init <- function( df=NULL, preset=TRUE, ctype='scatter',
                      tl.series=NULL,
                      width=NULL, height=NULL, ...) {
   
@@ -139,6 +139,7 @@ ec.init <- function( df=NULL, preset=TRUE, ctype='scatter', load=NULL,
     )
   )
   
+  # ------------- data.frame -------------------
   if (!is.null(df)) {
     # if data.frame given, assign to dataset regardless of parameter 'preset'
     if (!'data.frame' %in% class(df)) 
@@ -213,9 +214,9 @@ ec.init <- function( df=NULL, preset=TRUE, ctype='scatter', load=NULL,
   if (!is.null(theme)) {
     wt <- ec.theme(wt, theme)
   }
-  
-  #if (is.null(load)) return(wt)
 
+  # ------------- plugins loading -----------------------------
+  load <- opts$load;
   if (length(load)==1 && grepl(',', load, fixed=TRUE))
       load <- unlist(strsplit(load, ','))
       
@@ -300,153 +301,147 @@ ec.init <- function( df=NULL, preset=TRUE, ctype='scatter', load=NULL,
   # load unknown plugins
   unk <- load[! load %in% c('leaflet','custom','3D','world','liquid','gmodular','wordcloud')]
   if (length(unk)>0) {
-    for(p in unk) wt <- ec.plugjs(wt, p, ask)
+    for(pg in unk)
+      wt <- ec.plugjs(wt, pg, ask)
   }
   
+  # ------------- timeline  -----------------
+  if (is.null(tl.series)) return(wt)
   # timeline is evaluated last
-  if (!is.null(tl.series)) {
-    if (is.null(df))
-      stop('ec.init: tl.series requires a grouped data.frame df', call. = FALSE)
-    if (!is.grouped_df(df))
-      stop('ec.init: tl.series requires a grouped data.frame df', call. = FALSE)
+  if (is.null(df))
+    stop('ec.init: tl.series requires a grouped data.frame df', call. = FALSE)
+  if (!is.grouped_df(df))
+    stop('ec.init: tl.series requires a grouped data.frame df', call. = FALSE)
 
-    if (is.null(tl.series$encode))
-      stop('ec.init: encode is required for tl.series', call. = FALSE)
+  if (is.null(tl.series$encode))
+    stop('ec.init: encode is required for tl.series', call. = FALSE)
 
-    # add missing defaults
-    if (is.null(tl.series$type)) tl.series$type <- 'scatter' # 'unknown'
-    #if (is.null(tl.series$coordinateSystem)) tl.series$coordinateSystem <- 'cartesian2d' # not for gauge
-    # not in any coordinate system: pie,funnel,gauge,graph, tree/treemap/sankey
-    if ('leaflet' %in% load && preset)
-      tl.series$coordinateSystem <- 'leaflet'
-    if (is.null(tl.series$coordinateSystem))
-      tl.series$coordinateSystem <- 'unknown'
-    if (tl.series$type %in% c('line','scatter','bar','pictorialBar','candlestick','boxplot'))
-      tl.series$coordinateSystem <- 'cartesian2d'
-    if (startsWith(tl.series$coordinateSystem, 'cartesian')) { 
-      xtem <- 'x'; ytem <- 'y'; ztem <- 'z' }
-    if (tl.series$type == 'pie') {
-      xtem <- 'value'; ytem <- 'itemName' }
-    if (tl.series$coordinateSystem=='polar') { 
-      xtem <- 'radius'; ytem <- 'angle' }
-    if (tl.series$coordinateSystem %in% c('geo','leaflet')) {
-        xtem <- 'lng'; ytem <- 'lat'
-        center <- c(mean(unlist(df[,tl.series$encode$lng])),
-                    mean(unlist(df[,tl.series$encode$lat])))
-        if (tl.series$coordinateSystem=='geo')
-          wt$x$opts$geo$center <- center
-        if (tl.series$coordinateSystem=='leaflet') 
-          wt$x$opts$leaflet$center <- center
-    } 
-    
-    if (tl.series$type == 'map') {
-      xtem <- 'name'; ytem <- 'value'
-      # tl.series type='map' has no encode/dataset API, needs 'data'
-      wt$x$opts$dataset <- NULL
-      if (is.null(unlist(tl.series$encode[xtem])))
-        stop(paste0("tl.series: encode '",xtem,"' is required "), call.=FALSE)
-      if (is.null(unlist(tl.series$encode[ytem])))
-        stop(paste0("tl.series: encode '",ytem,"' is required "), call.=FALSE)
-      
-      gvar <- df |> group_vars() |> first() |> as.character()  # convert if factor
-      optl <- lapply(df |> group_split(), function(gp) {
-        tmp <- gp
-        names(tmp)[names(tmp)==tl.series$encode[xtem]] <- 'name'
-        names(tmp)[names(tmp)==tl.series$encode[ytem]] <- 'value'
-        series <- list(list(type= "map", geoIndex=0,
-                            data= ec.data(tmp, 'names')))
-        list(title= list(text= as.character(unique(gp[gvar]))),  
-             series= series)
-      })
-    }
-    else {
-      if (is.null(unlist(tl.series$encode[xtem]))) {
-        # append col XcolX 1:max for each group
-        df <- df |> group_modify(~ { .x |> mutate(XcolX = 1:nrow(.)) })
-        tl.series$encode[xtem] <- 'XcolX'    # instead of relocate(XcolX)
-        # replace only source, transforms stay
-        wt$x$opts$dataset[[1]] <- list(source=ec.data(df, header=TRUE))
-      }
-      if (is.null(unlist(tl.series$encode[ytem])))
-        stop(paste0("tl.series: encode '",ytem,"' is required for ",
-                    tl.series$coordinateSystem), call.=FALSE)
-      
-      # dataset is already in, now loop group column(s)
-      gvar <- df |> group_vars() |> first() |> as.character()  # convert if factor
-      di <- 0
-      optl <- lapply(df |> group_split(), function(gp) {
-        di <<- di+1
-        # nicer looking lines with sorted X 
-        #if (!is.null(xcol)) gp <- gp |> arrange(across(all_of(xcol)))
-        
-        # multiple series for each Y, like y=c('col1', 'col3')
-        series <- lapply(unname(unlist(tl.series$encode[ytem])), 
-          function(sname) {
-            append(list(datasetIndex= di, name= sname), tl.series)
-        })
-        series <- lapply(series, function(s) {
-          s$encode[ytem] <- s$name   # replace multiple col.names with one
-          s
-        })
+  # add missing defaults
+  if (is.null(tl.series$type)) tl.series$type <- 'scatter' # 'unknown'
+  #if (is.null(tl.series$coordinateSystem)) tl.series$coordinateSystem <- 'cartesian2d' # not for gauge
+  # not in any coordinate system: pie,funnel,gauge,graph, tree/treemap/sankey
+  if ('leaflet' %in% load && preset)
+    tl.series$coordinateSystem <- 'leaflet'
+  if (is.null(tl.series$coordinateSystem))
+    tl.series$coordinateSystem <- 'unknown'
+  if (tl.series$type %in% c('line','scatter','bar','pictorialBar','candlestick','boxplot'))
+    tl.series$coordinateSystem <- 'cartesian2d'
+  if (startsWith(tl.series$coordinateSystem, 'cartesian')) { 
+    xtem <- 'x'; ytem <- 'y'; ztem <- 'z' }
+  if (tl.series$type == 'pie') {
+    xtem <- 'value'; ytem <- 'itemName' }
+  if (tl.series$coordinateSystem=='polar') { 
+    xtem <- 'radius'; ytem <- 'angle' }
+  if (tl.series$coordinateSystem %in% c('geo','leaflet')) {
+      xtem <- 'lng'; ytem <- 'lat'
+      center <- c(mean(unlist(df[,tl.series$encode$lng])),
+                  mean(unlist(df[,tl.series$encode$lat])))
+      if (tl.series$coordinateSystem=='geo')
+        wt$x$opts$geo$center <- center
+      if (tl.series$coordinateSystem=='leaflet') 
+        wt$x$opts$leaflet$center <- center
+  } 
   
-        list(title= list(text= as.character(unique(gp[gvar]))),  
-             series= unname(series))
+  if (tl.series$type == 'map') {
+    xtem <- 'name'; ytem <- 'value'
+    # tl.series type='map' has no encode/dataset API, needs 'data'
+    wt$x$opts$dataset <- NULL
+    if (is.null(unlist(tl.series$encode[xtem])))
+      stop(paste0("tl.series: encode '",xtem,"' is required "), call.=FALSE)
+    if (is.null(unlist(tl.series$encode[ytem])))
+      stop(paste0("tl.series: encode '",ytem,"' is required "), call.=FALSE)
+    
+    gvar <- df |> group_vars() |> first() |> as.character()  # convert if factor
+    optl <- lapply(df |> group_split(), function(gp) {
+      tmp <- gp
+      names(tmp)[names(tmp)==tl.series$encode[xtem]] <- 'name'
+      names(tmp)[names(tmp)==tl.series$encode[ytem]] <- 'value'
+      series <- list(list(type= "map", geoIndex=0,
+                          data= ec.data(tmp, 'names')))
+      list(title= list(text= as.character(unique(gp[gvar]))),  
+           series= series)
+    })
+  }
+  else {
+    if (is.null(unlist(tl.series$encode[xtem]))) {
+      # append col XcolX 1:max for each group
+      df <- df |> group_modify(~ { .x |> mutate(XcolX = 1:nrow(.)) })
+      tl.series$encode[xtem] <- 'XcolX'    # instead of relocate(XcolX)
+      # replace only source, transforms stay
+      wt$x$opts$dataset[[1]] <- list(source=ec.data(df, header=TRUE))
+    }
+    if (is.null(unlist(tl.series$encode[ytem])))
+      stop(paste0("tl.series: encode '",ytem,"' is required for ",
+                  tl.series$coordinateSystem), call.=FALSE)
+    
+    # dataset is already in, now loop group column(s)
+    gvar <- df |> group_vars() |> first() |> as.character()  # convert if factor
+    di <- 0
+    optl <- lapply(df |> group_split(), function(gp) {
+      di <<- di+1
+      # nicer looking lines with sorted X 
+      #if (!is.null(xcol)) gp <- gp |> arrange(across(all_of(xcol)))
+      
+      # multiple series for each Y, like y=c('col1', 'col3')
+      series <- lapply(unname(unlist(tl.series$encode[ytem])), 
+        function(sname) {
+          append(list(datasetIndex= di, name= sname), tl.series)
       })
-    }
-    
-    #wt$x$opts$xAxis <- list(type='category')  # geo,leaf do not like
-    wt$x$opts$series <- NULL
-    wt$x$opts$legend <- NULL
-    wt$x$opts$options <- optl
-    
-    if (preset && !is.null(tl.series$groupBy)) {
-      if (!(tl.series$groupBy %in% colnames(df)))
-        stop('ec.init: tl.series groupBy column missing in df', call.= FALSE)
-      gvar <- df |> group_vars() |> first() |> as.character()  # convert if factor
-      tgrp <- tl.series$groupBy
-      # define additional filter transformations and option series based on preset ones
-      dsf <- list()  # new filters
-      opts <- list()  # new options
-      filterIdx <- 0
-      for (i in 1:length(unlist(unname(lapply(unique(df[gvar]), as.list))))) {
-        snames <- c()
-        for (x2 in unlist(unname(lapply(unique(df[tgrp]), as.list)))) {
-          dst <- wt$x$opts$dataset[[i+1]]  # skip source-dataset 1st
-          dst$transform$config <- list(and= list(
-            dst$transform$config,
-            list(dimension= tgrp, `=`= x2)
-          ))
-          dsf <- append(dsf, list(dst))
-          snames <- c(snames, x2)
-        }
-        ooo <- wt$x$opts$options[[i]]
-        sss <- lapply(snames, function(s) {
-          filterIdx <<- filterIdx + 1
-          tmp <- ooo$series[[1]]
-          tmp$name <- s
-          tmp$datasetIndex <- filterIdx
-          tmp$groupBy <- NULL
-          tmp
-        })
-        opts <- append(opts, list(
-          list(title= ooo$title, series= sss)))
-      }
-      wt$x$opts$dataset <- append(wt$x$opts$dataset[1], dsf)   # keep source-dataset [1]
-      wt$x$opts$options <- opts
-      wt$x$opts$legend <- list(show=TRUE)  # needed for sub-group
-    }
-    
-    steps <- lapply(optl, function(x) { paste(x$title$text, collapse=' ') })
-    wt$x$opts$timeline <- list(data=steps, axisType='category')
+      series <- lapply(series, function(s) {
+        s$encode[ytem] <- s$name   # replace multiple col.names with one
+        s
+      })
+
+      list(title= list(text= as.character(unique(gp[gvar]))),  
+           series= unname(series))
+    })
   }
   
-  snip <- getOption('echarty.short')
-  if (!is.null(snip) && snip) {
-    snip <- wt$x$opts
-    snip$saved <- wt
-    snip$saved$opts <- NULL
-    wt <- snip
+  #wt$x$opts$xAxis <- list(type='category')  # geo,leaf do not like
+  wt$x$opts$series <- NULL
+  wt$x$opts$legend <- NULL
+  wt$x$opts$options <- optl
+  
+  if (preset && !is.null(tl.series$groupBy)) {
+    if (!(tl.series$groupBy %in% colnames(df)))
+      stop('ec.init: tl.series groupBy column missing in df', call.= FALSE)
+    gvar <- df |> group_vars() |> first() |> as.character()  # convert if factor
+    tgrp <- tl.series$groupBy
+    # define additional filter transformations and option series based on preset ones
+    dsf <- list()  # new filters
+    opts <- list()  # new options
+    filterIdx <- 0
+    for (i in 1:length(unlist(unname(lapply(unique(df[gvar]), as.list))))) {
+      snames <- c()
+      for (x2 in unlist(unname(lapply(unique(df[tgrp]), as.list)))) {
+        dst <- wt$x$opts$dataset[[i+1]]  # skip source-dataset 1st
+        dst$transform$config <- list(and= list(
+          dst$transform$config,
+          list(dimension= tgrp, `=`= x2)
+        ))
+        dsf <- append(dsf, list(dst))
+        snames <- c(snames, x2)
+      }
+      ooo <- wt$x$opts$options[[i]]
+      sss <- lapply(snames, function(s) {
+        filterIdx <<- filterIdx + 1
+        tmp <- ooo$series[[1]]
+        tmp$name <- s
+        tmp$datasetIndex <- filterIdx
+        tmp$groupBy <- NULL
+        tmp
+      })
+      opts <- append(opts, list(
+        list(title= ooo$title, series= sss)))
+    }
+    wt$x$opts$dataset <- append(wt$x$opts$dataset[1], dsf)   # keep source-dataset [1]
+    wt$x$opts$options <- opts
+    wt$x$opts$legend <- list(show=TRUE)  # needed for sub-group
   }
+  
+  steps <- lapply(optl, function(x) { paste(x$title$text, collapse=' ') })
+  wt$x$opts$timeline <- list(data=steps, axisType='category')
+  
   return(wt)
 }
 
@@ -515,7 +510,7 @@ ec.data <- function(df, format='dataset', header=FALSE) {
   if (missing(df))
     stop('ec.data: expecting parameter df', call. = FALSE)
   if (format=='dendrogram') { 
-    if (class(df) != 'hclust')
+    if (!inherits(df, 'hclust'))
       stop('ec.data: df should be hclust for dendrogram', call. = FALSE)
     hc <- df
     # decode hc$merge with hc$labels

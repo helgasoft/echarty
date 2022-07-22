@@ -38,7 +38,7 @@
 #'          group_by(Species) |> ec.init()      # by non-factor column
 #' 
 #' Orange |> group_by(Tree) |> ec.init() |>
-#'   ec.cmd({ series <- lapply(series, function(x) {
+#'   ec.upd({ series <- lapply(series, function(x) {
 #'     x$symbolSize= 10; x$encode= list(x='age', y='circumference'); x } )
 #'   })
 #' 
@@ -100,7 +100,7 @@
 #'       lineStyle= list(curveness=0.3, width=3, color=ec.clmn('colr'))
 #'     ))
 #'   })
-#' }
+#' } }
 #' 
 #' #------ registerMap JSON
 #' # registerMap supports also maps in SVG format, see website gallery
@@ -357,9 +357,9 @@
 #' data = list(list(name='Grandpa',children=list(list(name='Uncle Leo',value=15,
 #'      children=list(list(name='Cousin Jack',value=2), list(name='Cousin Mary',value=5,
 #'      children=list(list(name='Jackson',value=2))), list(name='Cousin Ben',value=4))), 
-#'    list(name='Father',value=10,children=list(list(name='Me',value=5), 
+#'    list(name='Father',value=10,children=list(list(name='Me',value=5),
 #'    list(name='Brother Peter',value=1))))), list(name='Nancy',children=list(
-#'    list(name='Uncle Nike',children=list(list(name='Cousin Betty',value=1), 
+#'    list(name='Uncle Nike',children=list(list(name='Cousin Betty',value=1),
 #'    list(name='Cousin Jenny',value=2))))))
 #' ec.init( preset= FALSE,
 #'          series= list(list(type= 'sunburst', data= data,

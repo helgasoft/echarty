@@ -1,7 +1,7 @@
 Package: echarty
 Title: Minimal R/Shiny Interface to JavaScript Library 'ECharts'
-Date: 2022-07-06
-Version: 1.4.6.03
+Date: 2022-07-16
+Version: 1.4.6.04
 Authors@R: c( 
   person("Larry", "Helgason", email = "larry@helgasoft.com", role = c("aut", "cre", "cph")),
   person("John", "Coene", role = c("aut", "cph"), comment = "echarts4r library")
@@ -26,7 +26,7 @@ Suggests:
   knitr,
   testthat (>= 3.0.0),
   sf
-RoxygenNote: 7.2.0
+RoxygenNote: 7.2.1
 Roxygen: list(markdown = TRUE)
 URL: https://github.com/helgasoft/echarty
 BugReports: https://github.com/helgasoft/echarty/issues/

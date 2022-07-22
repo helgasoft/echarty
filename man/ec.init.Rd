@@ -8,7 +8,6 @@ ec.init(
   df = NULL,
   preset = TRUE,
   ctype = "scatter",
-  load = NULL,
   tl.series = NULL,
   width = NULL,
   height = NULL,
@@ -26,8 +25,6 @@ If grouping is on multiple columns, only the first one is used to determine sett
 \item{preset}{Build preset xAxis,yAxis,serie for 2D, or grid3D,xAxis3D,yAxis3D,zAxis3D for 3D, default TRUE (enable).}
 
 \item{ctype}{Chart type of series. Default is 'scatter'. Set to NULL to disable series preset.}
-
-\item{load}{Name(s) of plugin(s) to load. Could be a character vector or comma-delimited string. default NULL.}
 
 \item{tl.series}{A list to build a timeline or NULL(default). The list defines options \href{https://echarts.apache.org/en/option.html#series}{series} and their attributes. \cr
 The only required attribute is \href{https://echarts.apache.org/en/option.html#series-line.encode}{encode}.\cr
@@ -51,9 +48,10 @@ Auto-generated \emph{timeline} and \emph{options} will be preset for the chart.\
 string and have \code{'px'} appended.}
 
 \item{...}{other arguments to pass to the widget. \cr
-Custom widget arguments include: \cr
+Custom echarty widget arguments include: \cr
 \itemize{
 \item elementId - Id of the widget, default is NULL(auto-generated)
+\item load - name(s) of plugin(s) to load. Could be a character vector or comma-delimited string. default NULL.
 \item ask - prompt user before downloading plugins when \emph{load} is present, FALSE by default
 \item js - single string or a vector with JavaScript expressions to evaluate.\cr
 First expression is evaluated before chart initialization. \cr
@@ -79,16 +77,18 @@ Plugins 'leaflet' and 'world' preset zoom=6 and center to the mean of all coordi
 Users can delete or overwrite any presets as needed. \cr
 \link{ec.plugjs} will be called internally for each \emph{load} entry, popup prompts controlled by parameter \emph{ask}. \cr
 
-Built-in plugins: \cr \itemize{
+Built-in plugins: \cr
+\itemize{
 \item leaflet - Leaflet maps with customizable tiles, see \href{https://github.com/gnijuohz/echarts-leaflet#readme}{source}\cr
 \item custom - renderers for \link{ecr.band} and \link{ecr.ebars} \cr
-} Plugins with one-time installation: \cr \itemize{
+Plugins with one-time installation: \cr
 \item 3D - 3D charts and WebGL acceleration, see \href{https://github.com/ecomfe/echarts-gl}{source} and \href{https://echarts.apache.org/en/option-gl.html#series}{docs} \cr
 \item world - world map with country boundaries, see \href{https://github.com/apache/echarts/tree/master/test/data/map/js}{source} \cr
 \item liquid - liquid fill, see \href{https://github.com/ecomfe/echarts-liquidfill}{source}  \cr
 \item gmodular - graph modularity, see \href{https://github.com/ecomfe/echarts-graph-modularity}{source}  \cr
 \item wordcloud - cloud of words, see \href{https://github.com/ecomfe/echarts-wordcloud}{source} \cr
-} or install your own third-party plugins.
+or install your own third-party plugins.
+}
 }
 \examples{
  # basic scatter chart from a data.frame, using presets
@@ -101,7 +101,7 @@ p <- iris |> dplyr::group_by(Species) |> ec.init(
     encode=list(x=NULL, y=c('Sepal.Width', 'Petal.Length')),
     markPoint = list(data=list(list(type='max'), list(type='min')))
   )
-) #|> ec.upd(
+) # |> ec.upd(...
 p$x$opts$timeline <- append(p$x$opts$timeline, list(autoPlay=TRUE))
 p
 

@@ -42,7 +42,7 @@ HTMLWidgets.widget({
               eva2 = x.jcode[1];
               eva3 = x.jcode[2];
             } else
-              tmp = x.jcode;
+              tmp = x.jcode;  // #1 run before init
             try {
               eval(tmp);
             } catch(err) { console.log('eva1: ' + err.message) }
@@ -54,7 +54,7 @@ HTMLWidgets.widget({
         
         opts = x.opts;
         
-        if (eva2) {	// to change opts
+        if (eva2) {	// #2 to change opts
           try {
             eval(eva2);
           } catch(err) { console.log('eva2: ' + err.message) }
@@ -63,11 +63,32 @@ HTMLWidgets.widget({
         if(x.draw === true)
           chart.setOption(opts);
         
-        if (eva3) {	// to use chart object
+        if (eva3) {	// #3 to use chart object
           try {
             eval(eva3);
           } catch(err) { console.log('eva3: ' + err.message) }
         }
+        
+        load = opts.load;
+        if (Array.isArray(load)) load = load.join();
+        if (load && load.includes('lottie-parser')) {
+          lottieParser.install(echarts);
+          // lottie without timeline
+          tmp = chart.getModel().option.graphic;
+          if (tmp) {
+            tmp = updLGraphic(tmp);
+            chart.setOption({graphic: tmp}, { replaceMerge: 'graphic'});
+          }
+        }
+        
+        // TODO: timeline -   ECUnitOption, OptionManager ?
+        // find how to set timeline 'options'...
+//        tmp = chart.getModel()._optionManager._timelineOptions;
+//        if (tmp) {  
+//          tmp = updGraphic(tmp);
+//          //tmp.forEach((opt) => { if (opt.graphic) opt.graphic = updGraphic(opt.graphic); });
+//        //  chart.setOption({options: tmp}, { replaceMerge: 'graphic'});
+//        }
         
         if (HTMLWidgets.shinyMode) {    // shiny callbacks
 
@@ -245,6 +266,34 @@ HTMLWidgets.widget({
     };
   }
 });
+
+updLGraphic = (tmp) => { 
+  // transform lottie graphic element
+  if (!tmp) return tmp;
+    // tmp.forEach((grf) => 
+  for(i=0; i<tmp.length; i++) {
+    if (!tmp[i].elements) continue;
+    grf = tmp[i];      //debugger;
+    grf.elements.forEach((elem) => { 
+      //if (elem.id && !elem.id.startsWith('lottie')) return;
+      loty = elem; 
+      data = loty.info; if (!data) return;
+      delete loty.info;
+      if (!data.v || data.v.search('\\d\\.\\d\\.\\d')<0) return;
+      loop= loty.loop; if (loop==undefined) loop = true;
+      const { elements, width, height } = lottieParser.parse(data, {loop: loop});
+      scale= loty.scale; 
+      if (scale) {
+        delete loty.scale; 
+        const sfactor = scale / Math.min(width, height);
+        loty.scaleX= sfactor; loty.scaleY= sfactor;
+      }
+      loty.type= 'group';  loty.children= elements;
+      elem = loty; 
+    });
+  };
+  return tmp;
+}
 
 function get_e_charts(id){
 
