@@ -1061,16 +1061,51 @@ option1 <- list(
     universalTransition= list(enabled= TRUE, delay= 600) # animation
   ))
 )
-option2 <- option1
-option2$title <- list(text= 'Orthogonal Dendrogram', subtext= subt)
-option2$series[[1]]$layout <- 'orthogonal'
-option2$series[[1]]$orient <- 'TB'
-option2$series[[1]]$leaves <- list(label= list(
-  position= 'middle',	rotate= 90, verticalAlign= 'top', align= 'right' ))
-option2$series[[1]]$label$offset <- c(-12,0)
+option2 <- within(option1, {
+	title <- list(text= 'Orthogonal Dendrogram', subtext= subt)
+	series[[1]]$layout <- 'orthogonal'
+	series[[1]]$orient <- 'TB'
+	series[[1]]$leaves <- list(label= list(
+		position= 'middle',	rotate= 90, verticalAlign= 'top', align= 'right' ))
+	series[[1]]$label$offset <- c(-12,0)
+})
 p$x$opts <- option2
 p$x$opts$o2 <- option1
 p
+```
+</details>
+<br />
+
+<a id='lottie'></a>
+
+### Lotties are lotta fun
+Add animations to charts <br />
+<img src='img/cb-ghost.gif' alt='lottie demo' />
+<details><summary>🔻 View code</summary>
+
+```r
+# data from https://lottiefiles.com
+# plugin by https://github.com/pissang/lottie-parser
+json <- 'https://helgasoft.github.io/echarty/js/spooky-ghost.json'
+cont <- jsonlite::fromJSON(json, simplifyDataFrame=FALSE)
+
+# remotes::install_github('helgasoft/echarty')
+library(echarty)     # v.1.4.6.04+ 
+iris |> group_by(Species) |> ec.init(
+  load= 'https://helgasoft.github.io/echarty/js/lottie-parser.js',
+  graphic= list(elements= list(
+    list( type= "group", 
+		# lottie params: info + optional scale and loop 
+		info= cont, scale= 250, # loop= FALSE,
+        left= 'center', top= 'middle' # ,rotation= -20
+    ),
+    list( type= "image", left= 20, top= 'top',
+       	style= list(
+          image= 'https://www.r-project.org/logo/Rlogo.png',
+          width= 150, height= 150, opacity= .4)
+	)
+  ))
+)
 ```
 </details>
 <br />
