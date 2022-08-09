@@ -69,9 +69,9 @@ ec.init(preset= FALSE,
 <details><summary>🔻 View code</summary>
 
 ```r
+library(echarty); library(dplyr)
 isl <- data.frame(name= names(islands), value= islands) |> filter(value>60) |> arrange(value)
 
-library(echarty)
 ec.init(preset= FALSE,
 	title= list(text= "Landmasses over 60,000 mi\u00B2", left= 'center'),
 	tooltip= list(show= TRUE),
@@ -87,12 +87,14 @@ ec.init(preset= FALSE,
 <details><summary>🔻 View code</summary>
 
 ```r
-library(echarty)
+library(echarty); library(dplyr)
 iris |> group_by(Species) |> 
 	ec.init(ctype='parallel', color= rainbow(10)) |> 
 	ec.upd({   # update preset series
 		series <- lapply(series, function(s) { 
-			s$smooth=TRUE; s$lineStyle=list(width=3); s })  
+			s$smooth <- TRUE
+			s$lineStyle <- list(width=3)
+			s })  
 	}) |> ec.theme('dark-mushroom')
 
 ```
@@ -139,7 +141,7 @@ ec.init(
 		label= list(show= TRUE, position= "top"),
 		dimensions= list("from", "to", "profit"),
 		encode= list(x= list(0, 1), y= 2,
-						 tooltip= list(0, 1, 2), itemName= 3),
+		tooltip= list(0, 1, 2), itemName= 3),
 		data= rdata ))
 ) |> ec.theme('dark-mushroom')      # only 2 commands used
 
@@ -160,9 +162,11 @@ myfun_binom <- function(n,all){
 	round((binom::binom.confint(n, all, methods= "wilson", conf.level=0.95)[,c(4:6)])*100,2)
 }
 #  --- 1. data prep
-stackbar <- data.table(Year= c(2010, 2010, 2010, 2011, 2011, 2011, 2012, 2012, 2012, 2013,2013, 2013),
-							         Category= c("A", "B", "C", "A", "B", "C", "A", "B", "C", "A", "B", "C"),
-       							   n= c(10, 20, 30, 30, 20, 10, 11,12,13, 15, 15, 15))
+stackbar <- data.table(
+	Year= c(2010, 2010, 2010, 2011, 2011, 2011, 2012, 2012, 2012, 2013,2013, 2013),
+	Category= c("A", "B", "C", "A", "B", "C", "A", "B", "C", "A", "B", "C"),
+    n= c(10, 20, 30, 30, 20, 10, 11,12,13, 15, 15, 15)
+)
 # calculate percent and 95% CI
 stackbar <- stackbar[,`:=`(all=sum(n)), by= c("Year")][,c("perc","low","up") := myfun_binom(n,all)]
 stackbar <- stackbar |> mutate(xlbl= paste0(Year,' (N=',all,')')) |>
@@ -277,7 +281,7 @@ p <- sdf |> ec.init(
 	title= list(text= 'Crosstalk two-way selection'),
 	toolbox= list(feature= list(brush= list(show=TRUE))),
 	brush= list(brushLink='all', throttleType='debounce', 
-					brushStyle= list(borderColor= 'red')),
+				brushStyle= list(borderColor= 'red')),
 	tooltip= list(show=TRUE),
 	xAxis= list(scale=TRUE, boundaryGap= c('5%', '5%'))
 ) |> 
@@ -350,9 +354,9 @@ library(onion); library(echarty)
 data(bunny)
 tmp <- as.data.frame(bunny)
 tmp |> ec.init(load= '3D', 
-					visualMap= list(
-	inRange= list(color= rainbow(10)), calculable= TRUE,
-	min= min(tmp$y), max= max(tmp$y), dimension= 1)) |> 
+	visualMap= list(
+		inRange= list(color= rainbow(10)), calculable= TRUE,
+		min= min(tmp$y), max= max(tmp$y), dimension= 1)) |> 
 ec.upd({ 
   series[[1]] <- list(type='scatter3D', symbolSize=2) }) |>
 ec.theme('dark-mushroom')
@@ -395,13 +399,15 @@ for(i in 2:nrow(tmp$series)) {
 	df <- rbind(df, as.data.frame(tmp$series[i,,]))
 }  # convert array to data.frame
 colnames(df) <- c('Income','Life','Population','Country','Year')
-tt <- df$Country;	df <- df[,-4]; df[] <- lapply(df, as.numeric); df$Country<-tt
+tt <- df$Country
+df <- df[,-4]; df[] <- lapply(df, as.numeric)
+df$Country <- tt
 df$SymSize <- (sqrt(df$Population / 5e2) + 0.1) *80
 df <- df |> relocate(Year, .after= last_col())
 
 # set colors for countries
-colors <- rep(c('#8b0069','#75c165', '#ce5c5c', '#fbc357', '#8fbf8f', '#659d84',
-					 '#fb8e6a', '#c77288', '#786090', '#91c4c5', '#6890ba'), 2)
+colors <- rep(c('#8b0069','#75c165', '#ce5c5c', '#fbc357',
+	 '#8fbf8f', '#659d84', '#fb8e6a', '#c77288', '#786090', '#91c4c5', '#6890ba'), 2)
 i <- 0
 pieces <- lapply(unique(df$Country), function(x) { 
   i <<- i+1;	list(value= x, color= colors[i]) 
@@ -409,7 +415,7 @@ pieces <- lapply(unique(df$Country), function(x) {
 
 # remotes::install_github("helgasoft/echarty")  # needs v.1.4.4+
 library(echarty)
-p <- df |> group_by(Year) |> ec.init(
+df |> group_by(Year) |> ec.init(
 	load= '3D',
 	tl.series= list(
 		type= 'scatter3D', coordinateSystem= 'cartesian3D',
@@ -419,30 +425,32 @@ p <- df |> group_by(Year) |> ec.init(
 		tooltip= list( backgroundColor= 'transparent',
 			formatter= ec.clmn('<b>%@</b><br>life exp: <b>%@</b><br>income: <b>$%@</b><br>populat: <b>%@M</b>',4,2,1,3)
 		)
-)) |> 
-  ec.theme('dark-mushroom') |> ec.snip()
-
-p$title= list(list(left=5, top='top', textStyle=list(fontSize=50, color='#11111166')),
-					list(text= "Life expectancy and GDP by year", top= 10, 
-						left= "center", textStyle= list(fontWeight= "normal", fontSize= 20)) )
-p$timeline <- append(p$timeline, list(
+	),
+	title= list(
+		list(left=5, top='top', textStyle=list(fontSize=50, color='#11111166')),
+		list(text= "Life expectancy and GDP by year", top= 10, 
+			  left= "center", textStyle= list(fontWeight= "normal", fontSize= 20)) ),
+	grid3D=  list(axisLabel= list(textStyle= list(color='#ddd'))),
+	xAxis3D= list(name= 'Income', min= 15, axisLabel= list(formatter= "${value}"), 
+						 nameTextStyle= list(color= '#ddd'), nameGap= 25),
+	yAxis3D= list(name= 'Life Expectancy', min= 15, 
+						 nameTextStyle= list(color= '#ddd')),
+	zAxis3D= list(name= 'Year', min= 1790, max=2022, 
+			 nameTextStyle= list(color= '#ddd'), nameGap= 25,
+			 # minInterval= 1 does not work in 3D, use formatter to show integers for Year
+			 axisLabel= list(formatter= htmlwidgets::JS("function(val) {if (val % 1 === 0) return val;}"))
+	),
+	visualMap= list(show= FALSE, dimension= 'Country', type= 'piecewise', pieces= pieces),
+	tooltip= list(show= TRUE)
+) |> ec.upd({
+	timeline <- append(timeline, list(
 		orient= "vertical", 
 		autoPlay= TRUE, playInterval= 500, left= NULL, right= 0, top= 20, bottom= 20, 
 		width= 55, height= NULL, symbol= "none", checkpointStyle= list(borderWidth= 2)
-))
-p$grid3D=  list(axisLabel= list(textStyle= list(color='#ddd')))
-p$xAxis3D= list(name= 'Income', min= 15, axisLabel= list(formatter= "${value}"), 
-					  nameTextStyle= list(color= '#ddd'), nameGap= 25)
-p$yAxis3D= list(name= 'Life Expectancy', min= 15, 
-					  nameTextStyle= list(color= '#ddd'))
-p$zAxis3D= list(name= 'Year', min= 1790, max=2022, 
-					  nameTextStyle= list(color= '#ddd'), nameGap= 25,
-	# minInterval= 1 does not work in 3D, use formatter to show integers for Year
-	axisLabel= list(formatter= htmlwidgets::JS("function(val) {if (val % 1 === 0) return val;}"))
-)
-p$visualMap= list(show= FALSE, dimension= 'Country', type= 'piecewise', pieces= pieces)
-p$tooltip <- list(show= TRUE)
-ec.snip(p)
+	))
+}) |>
+ec.theme('dark-mushroom') 
+
 
 ```
 </details>
@@ -571,48 +579,49 @@ yax <- paste(rnames, collapse="','")   # for Y axis labels
 yax <- paste0("function (params) { return ['",yax,"'][params.value]; }")
 
 library(echarty)
-p <- ec.init() |> ec.theme('dark-mushroom') |> ec.snip()
-p$title <- list(
-	list(text="Giant Pumpkins", subtext='inspiration',
-		sublink='https://juliasilge.com/blog/giant-pumpkins/') 
-	,list(text=paste(nrow(pumpkins),'records for 2013-2021'), 
-		textStyle= list(fontSize= 12), left= '50%', top= '90%' )
-)
-p$xAxis <- list(name='weigth (lbs)', min=0, 
-			nameLocation='center', nameGap=20)
-p$yAxis <- list(
-	list(type= 'category'), 
-	list(type= 'value', max=11, show=FALSE))
-p$dataset <- list(
-	list(source= tt),
-	list(transform= list(type='boxplot',
-			config=list(itemNameFormatter= htmlwidgets::JS(yax))
-	)),
-	list(fromDatasetIndex= 1, fromTransformResult= 1)
-)
-p$series <- list(      # use ECharts built-in boxplot
-	list(name= 'boxplot', type= 'boxplot', datasetIndex= 1
-		  ,color='LightGrey', itemStyle= list(color='DimGray'), 
-		  boxWidth=c(13,50) )
-)
-i <- 0.5
-sers <- lapply(p$dataset[[1]]$source, function(xx) {
-	yy <- jitter(rep(i, length(xx)), amount=0.2); i <<- i + 1
-	xx <- jitter(xx, amount=0.2)
-	data <- list()
-	for(j in 1:length(xx)) data <- append(data, list(list(xx[j], yy[j])))
-	list(name='data', type= 'scatter', data=data, yAxisIndex=1, 
-		  symbolSize=3, itemStyle=list(opacity=0.3), color=heat.colors(11)[i-0.5],
-		  emphasis= list(itemStyle= list(color= 'chartreuse', borderWidth=4, opacity=1)) )
-})
-p$series <- append(p$series, sers)
-p$legend <- list(show=TRUE)
-p$tooltip <- list(show=TRUE, 
-		backgroundColor= 'rgba(30,30,30,0.5)', 
-		textStyle= list(color='#eee'),
-		formatter=ec.clmn('%@ lbs', 1, scale=0))
-p$toolbox <- list(left='right', feature=list(dataZoom=list(show=TRUE)))
-ec.snip(p)
+ec.init(
+	title= list(
+		list(text="Giant Pumpkins", subtext='inspiration',
+			sublink='https://juliasilge.com/blog/giant-pumpkins/') 
+		,list(text=paste(nrow(pumpkins),'records for 2013-2021'), 
+			textStyle= list(fontSize= 12), left= '50%', top= '90%' )
+	),
+	xAxis= list(name='weigth (lbs)', min=0, 
+					nameLocation='center', nameGap=20),
+	yAxis= list(
+		list(type= 'category'), 
+		list(type= 'value', max=11, show=FALSE)),
+	dataset= list(
+		list(source= tt),
+		list(transform= list(type='boxplot',
+					config=list(itemNameFormatter= htmlwidgets::JS(yax))
+		)),
+		list(fromDatasetIndex= 1, fromTransformResult= 1)
+	),
+	series= list(      # use ECharts built-in boxplot
+		list(name= 'boxplot', type= 'boxplot', datasetIndex= 1
+			  ,color='LightGrey', itemStyle= list(color='DimGray'), 
+			  boxWidth=c(13,50) )
+	),
+	legend= list(show=TRUE),
+	tooltip= list(show=TRUE, 
+				backgroundColor= 'rgba(30,30,30,0.5)', 
+				textStyle= list(color='#eee'),
+				formatter=ec.clmn('%@ lbs', 1, scale=0)),
+	toolbox= list(left='right', feature=list(dataZoom=list(show=TRUE)))
+) |> ec.upd({
+	i <- 0.5
+	sers <- lapply(dataset[[1]]$source, function(xx) {
+		yy <- jitter(rep(i, length(xx)), amount=0.2); i <<- i + 1
+		xx <- jitter(xx, amount=0.2)
+		data <- list()
+		for(j in 1:length(xx)) data <- append(data, list(list(xx[j], yy[j])))
+		list(name='data', type= 'scatter', data=data, yAxisIndex=1, 
+			  symbolSize=3, itemStyle=list(opacity=0.3), color=heat.colors(11)[i-0.5],
+			  emphasis= list(itemStyle= list(color= 'chartreuse', borderWidth=4, opacity=1)) )
+	})
+	series <- append(series, sers)
+}) |> ec.theme('dark-mushroom')
 
 ```
 
@@ -639,7 +648,7 @@ df |> relocate(Var2) |> ec.init(ctype='heatmap',
 	title= list(text='Infertility after abortion correlation'),
 	xAxis= list(axisLabel= list(rotate=45)),
 	visualMap= list(min=-1, max=1, orient='vertical',left='right',
-						 calculable=TRUE, inRange=list( color=heat.colors(11)) )
+					calculable=TRUE, inRange=list( color=heat.colors(11)) )
 ) |> ec.theme('dark')
 ```
 
@@ -665,21 +674,22 @@ do.histogram(rnorm(44)) |> ec.init(ctype='bar') |> ec.theme('dark')
 hh <- do.histogram(rnorm(44))
 nrm <- dnorm(hh$x, mean=mean(hh$x), sd=sd(hh$x))  # normal distribution
 hh |> ec.init(ctype= 'bar',
-				  xAxis= list(list(show=TRUE), list(data=c(1:length(nrm)))),
-				  yAxis= list(list(show=TRUE), list(show=TRUE))
+		xAxis= list(list(show= TRUE), list(data= c(1:length(nrm)))),
+		yAxis= list(list(show= TRUE), list(show= TRUE))
 ) |> ec.upd({
 	series <- append(series, 
-		list(list(type='line', data=nrm, xAxisIndex=1, yAxisIndex=1, color='yellow')))
+		list(list(type= 'line', data= nrm, 
+				xAxisIndex= 1, yAxisIndex= 1, color= 'yellow')))
 }) |> ec.theme('dark')
 
 # same with timeline
 hh <- data.frame()
 for(i in 1:5) {
-  tmp <- do.histogram(rnorm(44)) |> mutate(time=rep(i,n()))
+  tmp <- do.histogram(rnorm(44)) |> mutate(time= rep(i,n()))
   hh <- rbind(hh, tmp)
 }
 hh |> group_by(time) |> 
-	ec.init(tl.series= list(type='bar', encode= list(x='x',y='y'))) |> 
+	ec.init(tl.series= list(type= 'bar', encode= list(x='x',y='y'))) |> 
 	ec.theme('dark')
 ```
 
@@ -714,13 +724,13 @@ ec.init(load='gmodular', preset=FALSE,
 	animationDurationUpdate= "function(idx) list(return idx * 100; )",
 	animationEasingUpdate= 'bounceIn',
 	series= list(list(
-		type='graph', layout='force', 
-		force=list(repulsion=250,edgeLength=10),
+		type= 'graph', layout= 'force', 
+		force= list(repulsion=250, edgeLength=10),
 		modularity= list(resolution=7, sort=TRUE),
-		roam=TRUE, label=list(show=TRUE),
+		roam= TRUE, label= list(show=TRUE),
 		data= lapply(ec.data(wt, 'names'), function(x)
-			list(name= x$tic, lname=x$name, value=x$bn, 
-				  symbolSize=x$size, draggable=TRUE 
+			list(name= x$tic, lname= x$name, value= x$bn, 
+				  symbolSize= x$size, draggable= TRUE 
 			)) )),
 	tooltip= list(formatter= ec.clmn('<b>%@</b><br>%@ bn','lname','value'))
 )
@@ -741,22 +751,23 @@ library(echarty); library(dplyr)
 les <- jsonlite::fromJSON('https://echarts.apache.org/examples/data/asset/data/les-miserables.json')
 les$categories$name <- as.character(1:9)
 ec.init(preset=FALSE, 
-		  title=list(text='Les Miserables',top='bottom',left='right'),
-		  series= list(list(
-				 	type='graph', layout='circular',
-				 	circular= list(rotateLabel=TRUE),
-				 	nodes= ec.data(les$nodes, 'names'), 
-				 	links= ec.data(les$links, 'names'), 
-				 	categories= ec.data(les$categories, 'names'),
-				 	roam= TRUE, label=list(position='right', formatter='{b}'),
-				 	lineStyle= list(color='source', curveness=0.3)
-		  )),
-		  legend= list(data=c(les$categories$name), textStyle=list(color='#ccc')),
-		  tooltip= list(show=TRUE),
-		  backgroundColor= '#191919'
+		title=list(text='Les Miserables',top='bottom',left='right'),
+		series= list(list(
+				type= 'graph', layout= 'circular',
+				circular= list(rotateLabel=TRUE),
+				nodes= ec.data(les$nodes, 'names'), 
+				links= ec.data(les$links, 'names'), 
+				categories= ec.data(les$categories, 'names'),
+				roam= TRUE, label= list(position='right', formatter='{b}'),
+				lineStyle= list(color='source', curveness=0.3)
+		)),
+		legend= list(data=c(les$categories$name), textStyle=list(color='#ccc')),
+		tooltip= list(show=TRUE),
+		backgroundColor= '#191919'
 ) |> ec.upd({    # labels only for most important
 	series[[1]]$nodes <- lapply(series[[1]]$nodes, function(n) {
-		n$label <- list(show=n$symbolSize > 30); n })
+		n$label <- list(show= n$symbolSize > 30)
+		n })
 })
 
 ```
@@ -797,23 +808,24 @@ svg <- url |> readLines(encoding='UTF-8') |> paste0(collapse="")
 p <- ec.init(preset=FALSE,
  	tooltip= list(zz= ""), 
  	geo= list(left= 10, right= "50%", map= "organs", selectedMode= "multiple",
- 				 emphasis= list(focus= "self", itemStyle= list(color= NULL), 
- 				 					label= list(position= "bottom", distance= 0, textBorderColor= "#fff", textBorderWidth= 2)),
- 				 blur= list(zz= ""), 
- 				 select= list(itemStyle= list(color= "#b50205"), 
- 				 				 label= list(show= FALSE, textBorderColor= "#fff", textBorderWidth= 2))), 
+		emphasis= list(focus= "self", itemStyle= list(color= NULL), 
+			label= list(position= "bottom", distance= 0, textBorderColor= "#fff", textBorderWidth= 2)),
+		blur= list(zz= ""), 
+		select= list(itemStyle= list(color= "#b50205"), 
+			label= list(show= FALSE, textBorderColor= "#fff", textBorderWidth= 2))), 
  	grid= list(left= "60%", top= "20%", bottom= "20%"), 
  	xAxis= list(zz= ""), 
  	yAxis= list(data= list("heart", "large-intestine", "small-intestine", "spleen", "kidney", "lung", "liver")), 
  	series= list(list(type= "bar", emphasis= list(focus= "self"), 
- 							data= list(121, 321, 141, 52, 198, 289, 139)))
+						data= list(121, 321, 141, 52, 198, 289, 139)))
 ) |> ec.theme('dark-mushroom')
-p$x$registerMap <- list(list(mapName='organs', svg=svg))
-p$x$on <- list(list(event='mouseover', query=list(seriesIndex=0), 
-						  handler=htmlwidgets::JS("function (event) {
+p$x$registerMap <- list(list(mapName= 'organs', svg= svg))
+p$x$on <- list(
+	list(event='mouseover', query=list(seriesIndex=0), 
+				  handler=htmlwidgets::JS("function (event) {
   this.dispatchAction({ type: 'highlight', geoIndex: 0, name: event.name }); }") ),
-					list(event='mouseout', query=list(seriesIndex=0),
-						  handler=htmlwidgets::JS("function (event) {
+	list(event='mouseout', query=list(seriesIndex=0),
+				  handler=htmlwidgets::JS("function (event) {
   this.dispatchAction({ type: 'downplay', geoIndex: 0, name: event.name }); }") )
 )
 p
@@ -855,8 +867,9 @@ options <-  lapply(df, function(y) {
 library(echarty)
 ec.init(preset=FALSE, load='world',
 	# timeline labels need to match option titles
-	timeline= list(data=unlist(lapply(options, 
-										function(x) x$title$text)), axisType='category'),
+	timeline= list(
+		data= unlist(lapply(options, function(x) x$title$text)), 
+		axisType= 'category'),
 	options= options
 )
 ```
@@ -991,26 +1004,27 @@ for (i in 1:length(counts)) {
 mx <- as.integer(length(q)/2)
 colors <- hcl.colors(mx, palette= 'sunset', alpha= 0.9)
 dxy <- data.frame(x=x, y=y)
+series <- list()
+for (i in 1:mx) {
+	tmp <- data.frame(x= counts, hi= mat[i,], low= mat[length(q)+1-i,])
+	series <- append(series,
+		ecr.band(tmp, 'low', 'hi', name=paste0(round((1-q[i]*2)*100),'%'), color=colors[i])
+	)
+}
+series <- append(series, 
+	list(list(type='scatter', symbolSize= 3, itemStyle= list(color='cyan'), 
+	 			tooltip= list(formatter='{c}'))) )
 
 library(echarty)
-p <- dxy |> ec.init(load='custom', preset=FALSE) |> ec.theme('dark') |> ec.snip()
-p$xAxis <- p$yAxis <- list(show=TRUE)
-p$tooltip <- list(formatter= '{a}', backgroundColor= '#55555599', 
-                  textStyle= list(color='#eee'))
-p$title <- list(text= 'Data + Quantiles + Tooltips + Zoom', subtext= 'inspiration article', 
-                sublink= 'https://ptarroso.github.io/quantileplot/')
-# p$dataZoom <- list(type='inside', start=1)
-p$toolbox=list(feature= list(dataZoom=list(show=TRUE), saveAsImage=list(show=TRUE)))
-for (i in 1:mx) {
-  tmp <- data.frame(x= counts, hi= mat[i,], low= mat[length(q)+1-i,])
-  p$series <- append(p$series,
-      ecr.band(tmp, 'low', 'hi', name=paste0(round((1-q[i]*2)*100),'%'), color=colors[i])
-  )
-}
-p$series <- append(p$series, 
-    list(list(type='scatter', symbolSize= 3, itemStyle= list(color='cyan'), 
-              tooltip= list(formatter='{c}'))) )
-p |> ec.snip()
+dxy |> ec.init(load='custom', preset=FALSE,
+	  xAxis= list(show=TRUE), yAxis= list(show=TRUE),
+	  tooltip= list(formatter= '{a}', backgroundColor= '#55555599', 
+	  					 textStyle= list(color='#eee')),
+	  title= list(text= 'Data + Quantiles + Tooltips + Zoom', subtext= 'inspiration article', 
+	  					 sublink= 'https://ptarroso.github.io/quantileplot/'),
+	  toolbox= list(feature= list(dataZoom=list(show=TRUE), saveAsImage=list(show=TRUE))),
+	  series= series
+) |> ec.theme('dark')
 ```
 </details>
 <br />
@@ -1044,7 +1058,7 @@ hc <- hclust(dist(USArrests), "ave")
 subt <- paste(as.character(hc$call)[2:3], collapse=' ')
 
 library(echarty)   # v.1.4.4+
-p <- ec.init(preset=FALSE, js=jscode) |> ec.theme('dark-mushroom')
+p <- ec.init(preset= FALSE, js= jscode) |> ec.theme('dark-mushroom')
 option1 <- list(
   title= list(text= 'Radial Dendrogram', subtext= subt),
   tooltip= list(show= TRUE),

@@ -54,21 +54,23 @@ animl$children[[1]]$children[[3]]$children <-
 	list(data.frame(name = c("hammerhead", "thresher"), value = c(10,20)))
 # -------------------------------------------------
 
-p <- ec.init(preset=FALSE)
-p$x$opts$series <- list(list(type='tree', 
-    data = jsonlite::toJSON(animl), 
-    label = list(offset=c(0, -12)), 
-    symbolSize = htmlwidgets::JS("function(d) { return d; }") ))  # size by value
-p
+ec.init(preset=FALSE,
+	series= list(list(type= 'tree', 
+	  data= jsonlite::toJSON(animl), 
+	  label= list(offset=c(0, -12)), 
+	  symbolSize= htmlwidgets::JS("function(d) { return d; }")  # size by value
+)))
 
-p$x$opts$series <- list(list(type='treemap', 
-    data=jsonlite::toJSON(animl), leafDepth=1)) 
-p
+ec.init(preset=FALSE,
+	series= list(list(type= 'treemap', 
+	  data=jsonlite::toJSON(animl), leafDepth=1)) 
+)
 
-p$x$opts$series <- list(list(type='sunburst', 
-    data=jsonlite::toJSON(animl$children[[1]]), 
-    radius=c(0, '90%'), label=list(rotate='radial') ))
-p
+ec.init(preset= FALSE,
+	series= list(list(type= 'sunburst', 
+	  data=jsonlite::toJSON(animl$children[[1]]), 
+		radius=c(0, '90%'), label=list(rotate='radial') ))
+)
 
 ```
 <br />
@@ -118,16 +120,16 @@ df <- as.data.frame(Titanic) |>
 dat <- ec.data(df, format='treeTK')
 dat[[1]] <- within(dat[[1]], { itemStyle <- list(color= 'white'); pct <- 0 })  # customize top
 
-p <- ec.init(preset= FALSE, 
-            title= list(text= 'Titanic: Survival by Class'),
-            tooltip= list(formatter= ec.clmn('%@%','pct')))
-p$x$opts$series <- list(list(
-    type= 'sunburst', radius= c(0, '90%'), label= list(rotate=0),
-    # type= 'tree', symbolSize= ec.clmn(scale=0.08),
-    # type= 'treemap', upperLabel= list(show=TRUE, height=30), itemStyle= list(borderColor= '#999'), #leafDepth=4,
-    data= dat,
-    emphasis= list(focus='none') 
-))
-p
+ec.init(preset= FALSE,
+	title= list(text= 'Titanic: Survival by Class'),
+	tooltip= list(formatter= ec.clmn('%@%','pct')),
+	series= list(list(
+	  type= 'sunburst', radius= c(0, '90%'), label= list(rotate=0),
+	  # type= 'tree', symbolSize= ec.clmn(scale=0.08),
+	  # type= 'treemap', upperLabel= list(show=TRUE, height=30), itemStyle= list(borderColor= '#999'), #leafDepth=4,
+	  data= dat,
+	  emphasis= list(focus='none') 
+	))
+)
 ```
 <img src="img/uc3-2.png" alt="sunburst" />

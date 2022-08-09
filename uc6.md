@@ -14,24 +14,24 @@ A few noticeable details
 During the making of this example we confirmed an important fact. In current ECharts v.5, **option series** work only with [data](https://echarts.apache.org/en/option.html#series-bar.data), but not with [datasets](https://echarts.apache.org/en/option.html#dataset). So although tempting, [datasetIndex](https://echarts.apache.org/en/option.html#series-bar.datasetIndex) cannot be used in option series. 
 -->
 
-Data *vv* credit goes to [vituri](https://vituri.github.io).
 ```r
 library(echarty);  library(dplyr)
-vv = iris |> mutate(Year = rep(2020:2022, 50)) |> 
-  tidyr::pivot_longer(cols = Sepal.Length:Petal.Width) |> 
+# data made by vituri (https://vituri.github.io)
+vv = iris |> mutate(Year= rep(2020:2022, 50)) |> 
+  tidyr::pivot_longer(cols= Sepal.Length:Petal.Width) |> 
   group_by(Year, Species, name) |> 
-  summarise(value = sum(value))
+  summarise(value= sum(value))
 # rearrange columns for axes: X = Species (1st), Y = value (2nd)
-vv <- vv |> relocate(Species,value) |> mutate(Species=as.character(Species))
+vv <- vv |> relocate(Species, value) |> mutate(Species= as.character(Species))
 options <-  lapply(vv |> group_by(Year) |> group_split(), function(y) {
   series <- lapply(y |> group_by(name) |> group_split(), function(s) {
      list(type = 'bar', stack = 'grp', data = ec.data(s,'values'))
   })
-  list(title=list(text=unique(y$Year), top=30), series = series)
+  list(title= list(text= unique(y$Year), top= 30), series= series)
 })
 
 vv |> group_by(name) |> ec.init(
-	timeline= list(data=unique(vv$Year), axisType='category'),
+	timeline= list(data= unique(vv$Year), axisType= 'category'),
 	options= options
 )
 ```

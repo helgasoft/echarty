@@ -1,7 +1,8 @@
 
 ## Introduction
 
-The goal of **echarty** is to provide a minimal interface, a "glue", between R and ECharts, then let your R data lists build the chart. There are utilities included to assist with data preparation (*ec.data*, *js2r*), Shiny with proxy (*ecs.\**) and JS plugins (*ec.plugjs*).  
+The goal of **echarty** is to provide a minimal interface between R and native ECharts [components](https://echarts.apache.org/en/option.html).
+Use R data lists and a few _echarty_ commands to build a chart. There are utilities included to assist with data preparation (*ec.data*), Shiny with proxy (*ecs.\**) and formatting (*ec.clmn*).  
 Have the **full functionality** of [ECharts](https://echarts.apache.org/examples/en/index.html) in R with minimal overhead!   
 <br/>  
 <!-- 

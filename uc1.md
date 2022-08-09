@@ -10,9 +10,8 @@ Let start by initializing the chart, load the map as a plugin and make sure it s
 ```r
 library(echarty); library(dplyr)
 url <- 'https://raw.githubusercontent.com/echarts-maps/echarts-countries-js/master/echarts-countries-js/France.js'
-# ec.init() %>% ec.plugjs(url)   # alternative
 ec.init(load= url, preset= FALSE,
-		  series= list(list(type= 'map', map= 'France', roam= TRUE))
+	series= list(list(type= 'map', map= 'France', roam= TRUE))
 )
 ```
 
@@ -35,7 +34,7 @@ The map has been already installed, so we just load it by name ('file://France.j
 <img src="img/uc1-1.png" alt="chart1"/>  
 \
 The map is indeed of France, it's zoomable and we see the regions highlighted on hover.  
-Ok, map part done ✔. Data is next (and it has some surprises).   
+Ok, map part done ✔. Data is next (with some surprises).   
 Our [data page](https://www.ined.fr/en/everything_about_population/data/france/population-structure/regions_departments) shows a blue table. Source code inspection reveals a data table and we'll use library *rvest* to extract it.  
 
 ```r
@@ -52,17 +51,15 @@ library(rvest)
 wp <- read_html('https://www.ined.fr/en/everything_about_population/data/france/population-structure/regions_departments')
 wt <- wp %>% html_node('#para_nb_1 > div > div > div > table') %>% html_table(header=TRUE)
 names(wt) <- c('region','v1','v2','v3','ppl') # rename columns
-wt$ppl <- as.numeric(gsub(' ','', wt$ppl))    # remove weird(binary) spaces
 wt <- wt[-nrow(wt),]     # delete summary row, contaminates color values
+wt$ppl <- as.numeric(gsub('[^\x01-\x7f]', '', wt$ppl))    # remove weird spaces
 
 ec.init(load='file://France.js', preset= FALSE,
-	title= list(show=TRUE, text='France'),
-	series= list(list(type= 'map', map= '法国', 
-							roam= TRUE,
-							data= lapply(ec.data(wt,'names'), 
-			function(x) list(name=x$region, value=x$ppl))
+	title = list(text= 'France'),
+	series = list(list(type='map', map='法国', roam=TRUE,
+	   data = lapply(ec.data(wt, 'names'), function(x) list(name= x$region, value= x$ppl))
 	)),
-	visualMap= list(type= 'continuous', calculable= TRUE, max= max(wt$ppl))
+	visualMap = list(type= 'continuous', calculable= TRUE, max= max(wt$ppl))
 )
 ```
 
@@ -98,16 +95,13 @@ wt <- wt %>% mutate(region = case_when(
 library(echarty)
 url <- 'https://raw.githubusercontent.com/echarts-maps/echarts-countries-js/master/echarts-countries-js/France.js'
 ec.init(load= url, preset= FALSE,
-	title = list(text= 'France Population'),
-	backgroundColor= 'whitesmoke',
-	series= list(list(type= 'map', map= '法国', 
-							roam= TRUE,
-							data= lapply(ec.data(wt,'names'), 
-			function(x) list(name=x$region, value=x$ppl))
-	)),
-	visualMap= list(type= 'continuous', calculable= TRUE, max= max(wt$ppl),
-						 formatter = htmlwidgets::JS("function(value) { 
-         return value.toLocaleString(undefined, {maximumFractionDigits: 0}); }"))
+  title = list(show=TRUE, text='France Population'),
+  backgroundColor = 'whitesmoke',
+  series = list(list(type='map', map='法国', roam=TRUE,
+	data = lapply(ec.data(wt, 'names'), function(x) list(name= x$region, value= x$ppl)) 
+  )),
+  visualMap = list(type= 'continuous', calculable= TRUE, max= max(wt$ppl),
+	formatter = ec.clmn('%L@', -1))		  
 )
 
 ```
