@@ -83,9 +83,9 @@ ECharts**](https://echarts.apache.org/examples/en/index.html) (and
 <p align="center">
 <a href='https://helgasoft.github.io/echarty/gallery.html' target='_blank'>
 <img src="man/figs/ssPolarStack.png" alt="Polar Stack" width="180"/>
-![]("./man/figs/ssBars.gif")
+<img src="https://raw.githubusercontent.com/helgasoft/echarty/main/man/figs/ssBars.gif"/>
 <img src="man/figs/ssThemeRiver.png" width="180"/>
-![]("./man/figs/ssBunny.gif") <br />
+<img src="https://raw.githubusercontent.com/helgasoft/echarty/main/man/figs/ssBunny.gif"/> <br />
 <!-- img src="man/figs/ssMorph.gif" width="180"/ -->
 <img src="man/figs/ssRose.png" width="180"/>
 <img src="man/figs/ssSpeed.png" width="180"/>
