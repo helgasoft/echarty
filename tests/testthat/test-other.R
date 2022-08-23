@@ -92,7 +92,7 @@ test_that("ec.data format boxlpot", {
   ds <- mtcars |> dplyr::relocate(am,mpg) |> ec.data(format='boxplot')
   expect_equal(ds$series[[1]]$type, 'boxplot')
   expect_equal(ds$dataset$source[[1]], c("V1","V2","V3","V4","V5","V6"))
-  expect_equal(class(ds$axlbl), 'JS_EVAL')
+  expect_equal(class(ds$axlbl), 'list')  # was 'JS_EVAL'
 })
 
 test_that("ec.data for treePC", {
@@ -198,4 +198,15 @@ test_that("shapefile from ZIP", {
     
   }
   else expect_equal(1,1)
+})
+
+test_that("tabset", {
+   p1 <- cars |> ec.init(width= 300, height= 300, grid= list(top= 20))
+   p2 <- mtcars |> ec.init(width= 300, height= 300)
+   r <- htmltools::browsable(
+     ec.util(cmd='tabset', cars=p1, mtcars=p2)
+   )
+   expect_equal(r[[2]]$children[[5]]$children[[1]]$children[[1]][[1]]$x$opts$dataset[[1]]$source[[1]], c("speed", "dist"))
+   expect_equal(r[[2]]$children[[5]]$children[[1]]$name, "section")
+   expect_equal(r[[2]]$children[[2]]$children[[1]], "cars")
 })

@@ -17,7 +17,7 @@ ec.init(
 \arguments{
 \item{df}{A data.frame to be preset as \href{https://echarts.apache.org/en/option.html#dataset}{dataset}, default NULL \cr
 By default the first column is for X values, second column is for Y, and third is for Z when in 3D.\cr
-Best practice is to have the grouping column placed last.\cr
+Best practice is to have the grouping column placed last. Grouping column cannot be used as axis.\cr
 For crosstalk df should be of type \link[crosstalk]{SharedData}, see \href{https://helgasoft.github.io/echarty/xtalk.html}{more info}.\cr
 Timeline requires a \emph{grouped data.frame} to build its \href{https://echarts.apache.org/en/option.html#options}{options}.\cr
 If grouping is on multiple columns, only the first one is used to determine settings.}

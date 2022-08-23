@@ -6,6 +6,7 @@ df <- data.frame(
   size = rnorm(10, 10, 2),
   symbol = sample(c("circle", "rect", "triangle"), 10, replace= TRUE)
 )
+
 test_that("ec.init presets for non-grouped data.frame", {
   p <- df |> ec.init()
   expect_equal(p$x$opts$xAxis$type, 'category')
@@ -65,9 +66,24 @@ test_that("ec.init presets for timeline groupBy", {
   expect_equal(p$x$opts$options[[4]]$series[[1]]$encode$y, 'x5')
 })
 
+test_that("presets for parallel chart", {
+  p <- mtcars |> group_by(cyl) |> ec.init(ctype='parallel')
 
+  expect_equal(length(p$x$opts$dataset), 4)
+  expect_equal(p$x$opts$series[[3]]$datasetIndex, 3)
+  expect_equal(p$x$opts$parallelAxis[[2]]$name, 'disp')
+})
 
+test_that("presets for parallelAxis", {
+  df <- as.data.frame(state.x77) |> head(10)
+  p <- df |> ec.init(ctype= 'parallel',
+              parallelAxis= ec.paxis(df, cols=c('Illiteracy','Population','Income')) ) |>
+    ec.upd({ series <- lapply(series, 
+                              function(ss) { ss$lineStyle <- list(width=3); ss }) })
 
+expect_equal(length(p$x$opts$dataset[[1]]$source[[1]]), 8)
+expect_equal(p$x$opts$parallelAxis[[3]]$name, 'Income')
+})
 
 
 

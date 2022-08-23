@@ -22,7 +22,7 @@ Helper function to display/format data column(s) by index or name
 }
 \details{
 Column indexes are counted in R and start at 1.\cr
-Omit \emph{col} for single values like \emph{tree} chart, \emph{axisLabel.formatter} or \emph{valueFormatter}. See \link{ec.data} dendrogram example.\cr
+Omit \emph{col} or use index -1 for single values tree/pie charts, \emph{axisLabel.formatter} or \emph{valueFormatter}. See \link{ec.data} dendrogram example.\cr
 Use only column index(es) when setting \emph{symbolSize}.\cr
 Column indexes are decimals for combo charts with multiple series, see \link{ecr.band} example. The whole number part is the serie index, the decimal part is the column index inside.\cr
 \emph{col} as sprintf has the same placeholder \emph{\%@} for both column indexes or column names.\cr

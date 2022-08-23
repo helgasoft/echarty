@@ -37,23 +37,33 @@ Make data lists from a data.frame
 \item column with (numeric) data to compute the five boxplot values
 }
 Grouped \emph{df} is supported. Groups will show in the legend, if enabled.\cr
-Returns a \code{list(dataset, series, axlbl)} to set the chart. \emph{axlbl} is a formatter for the category axis.\cr
+Returns a \code{list(dataset, series, axlbl)} to set the chart. \emph{axlbl} is the category axis label list when data grouped.\cr
 Make sure there is enough data for computation, like >4 values per boxplot. Otherwise ECharts may exit with a \emph{Object.transform} error.
 }
 \examples{
 library(dplyr)
-#ds <- Orange |> relocate(age,circumference) |> ec.data(format='boxplot')
-#ds <- Orange |> relocate(age,circumference) |> group_by(Tree) |> ec.data(format='boxplot')
-#ds <- mtcars |> relocate(am,mpg) |> ec.data(format='boxplot')
-ds <- mtcars |> relocate(am,mpg) |> group_by(cyl) |> ec.data(format='boxplot')
+variety <- rep(LETTERS[1:7], each=40)
+treatment <- rep(c("high","low"), each=20)
+note <- seq(1:280)+sample(1:150, 280, replace=TRUE)
+ds <- data.frame(variety, note, treatment) |> group_by(treatment) |> 
+        ec.data(format='boxplot')
 ec.init(
   dataset= ds$dataset,
   series=  ds$series,
   yAxis= list(type= 'category',  # categorical yAxis = horizontal boxplots
-              axisLabel= list(formatter= ds$axlbl)),
+              axisLabel= ds$axlbl),
   xAxis= list(show= TRUE),       # categorical xAxis = vertical boxplots
   legend= list(show= TRUE)
-) 
+)
+
+ds <- airquality |> mutate(Day=round(Day/10)) |> relocate(Day,Wind) |> ec.data(format='boxplot')
+ec.init(
+  dataset= ds$dataset, 
+  series= ds$series, 
+  yAxis= list(type= 'category'), 
+  xAxis= list(show= TRUE),
+  legend= list(show= TRUE) #, tooltip= list(show=TRUE)
+)  
 
 hc <- hclust(dist(USArrests), "complete")
 ec.init(preset= FALSE,

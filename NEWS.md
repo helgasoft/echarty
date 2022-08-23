@@ -1,11 +1,13 @@
 # history of echarty package development
 
-## v.1.4.6.04
+## v.1.4.7
 
 - _ec.util_: add POLYGON/MULTIPOINT, rename param 'type' to 'cmd', new _sf.unzip_
+- _ec.util_: new cmd='tabset' to show charts in tabs
 - improved _ec.data_ format='treeTK', see example in _test-other.R_
 - _ec.upd_ replaces _ec.snip_ for chained commands
 - support for _lotties_ in _graphic_, see web gallery for sample
+- grouping column in 2D charts now could be at any position
 
 ## v.1.4.6
 

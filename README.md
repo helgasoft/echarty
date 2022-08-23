@@ -18,10 +18,7 @@ downloads](https://cranlogs.r-pkg.org/badges/last-day/echarty)](https://cranlogs
 <a href='https://helgasoft.github.io/echarty'><img src="man/figs/echarty.gallery.png" alt="echarty.gallery" /></a>
 
 This package is a thin R wrapper around Javascript library
-[ECharts](https://echarts.apache.org/en/index.html). The list
-parameters in R replicate [ECharts
-documentation](https://echarts.apache.org/en/option.html). There are
-just a few additional commands.  
+[ECharts](https://echarts.apache.org/en/index.html). A few commands use R lists to enclose the entire [ECharts API](https://echarts.apache.org/en/option.html). 
 Users can benefit from ECharts **full functionality** to build
 interactive charts in R and Shiny with minimal overhead.  
 
@@ -32,7 +29,7 @@ support](https://helgasoft.github.io/echarty/xtalk.html).
 ## Installation
 
 <!-- [![Github version](https://img.shields.io/github/v/release/helgasoft/echarty?label=github)](https://github.com/helgasoft/echarty/releases) -->
-Latest development version:
+Latest development version 1.4.7:
 
 ``` r
 if (!requireNamespace('remotes')) install.packages('remotes')
@@ -53,10 +50,20 @@ install.packages('echarty')
 library(echarty)
 
 #  2D chart
-cars %>% ec.init()
+cars |> ec.init()
 
 #  3D chart with GL plugin
-iris %>% ec.init(load='3D')
+iris |> group_by(Species) |> ec.init(load='3D')
+
+# grouping, tooltips, formatting
+iris |> group_by(Species) |> 
+ec.init(tooltip= list(show= TRUE)) |>   # init with presets
+ec.upd({                                # update some
+  series <- lapply(series, function(s) { 
+    s$symbolSize <- ec.clmn(4, scale=7)
+    s$tooltip <- list(formatter= ec.clmn('Petal.Width: %@', 4))
+    s })
+})
 ```
 
 ## Get started
@@ -76,12 +83,13 @@ ECharts**](https://echarts.apache.org/examples/en/index.html) (and
 <p align="center">
 <a href='https://helgasoft.github.io/echarty/gallery.html' target='_blank'>
 <img src="man/figs/ssPolarStack.png" alt="Polar Stack" width="180"/>
-<img src="man/figs/ssBars.gif" width="180"/>
+![]("./man/figs/ssBars.gif")
 <img src="man/figs/ssThemeRiver.png" width="180"/>
-<img src="man/figs/ssBunny.gif" width="180"/> <br />
-<img src="man/figs/ssMorph.gif" width="180"/>
+![]("./man/figs/ssBunny.gif") <br />
+<!-- img src="man/figs/ssMorph.gif" width="180"/ -->
 <img src="man/figs/ssRose.png" width="180"/>
 <img src="man/figs/ssSpeed.png" width="180"/>
-<img src="man/figs/ssStackBar.png" width="180"/></a> 
+<img src="man/figs/ssStackBar.png" width="180"/>
+</a> 
 <br />Made with echarty. Powered by ECharts.
 </p>

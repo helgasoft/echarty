@@ -4,35 +4,45 @@
 \alias{ec.util}
 \title{Utility functions}
 \usage{
-ec.util(..., cmd = "sf.series", cs = "leaflet", verbose = FALSE)
+ec.util(..., cmd = "sf.series", verbose = FALSE)
 }
 \arguments{
-\item{...}{Optional parameters for \href{https://echarts.apache.org/en/option.html#series-scatter.type}{scatter}(points) or \href{https://echarts.apache.org/en/option.html#series-lines.type}{lines}(polylines) or itemStyle(polygons).\cr}
+\item{...}{Optional parameters for the command \cr
+for \emph{sf.series} - see \href{https://echarts.apache.org/en/option.html#series-scatter.type}{points}, \href{https://echarts.apache.org/en/option.html#series-lines.type}{polylines}, polygons(itemStyle).\cr
+for \emph{tabset} parameters should be in format \emph{name1=chart1, name2=chart2}, see example\cr}
 
-\item{cmd}{Utility command - sf.series(default), sf.bbox, sf.unzip\cr
+\item{cmd}{Utility command\cr
 \itemize{
 \item \emph{sf.series} returns a list of chart series\cr
 required parameter \emph{df} - value from \link[sf]{st_read}\cr
 optional parameter \emph{nid} - column name for name-id used in tooltips\cr
+optional coordinate system \emph{cs} - \emph{leaflet}(default) or \emph{geo}\cr
 \item \emph{sf.bbox} returns JavaScript code to position a map inside a bounding box from \link[sf]{st_bbox}, for leaflet only.\cr
 \item \emph{sf.unzip} unzips a remote file and returns local file name of the unzipped .shp file\cr
 required parameter \emph{url} - URL of remote zipped shapefile\cr
-optional parameter \emph{shp} - name of .shp file inside ZIP file if multiple exist. Do not add extension. \cr
+optional parameter \emph{shp} - name of .shp file inside ZIP file if multiple exist. Do not add file extension. \cr
+\item \emph{tabset} returns a \emph{tagList} of tabs, each tab may contain a chart.\cr
+\item \emph{layout} returns a container \link[htmltools]{div} in rmarkdown, otherwise \link[htmltools]{browsable}.\cr
 }}
-
-\item{cs}{Optional coordinate system, \emph{leaflet}(default) or \emph{geo}\cr}
 
 \item{verbose}{Print shapefile item names in console, default is FALSE.}
 }
 \description{
-currently only for GIS shapefiles as read by library sf
+tabset, table layout, support for GIS shapefiles thru library sf
 }
 \details{
-Goal is to build leaflet or \href{https://echarts.apache.org/en/option.html#geo.map}{geo} map series from shapefiles.\cr
-Supported types: POINT,MULTIPOINT,LINESTRING,MULTILINESTRING,POLYGON,MULTIPOLYGON \cr
-Limitations:\cr
-polygons can have only a name in tooltip,  \cr
-assumes Geodetic CRS is WGS 84, use \link[sf]{st_transform} with \emph{crs=4326} to convert.
+\strong{cmd='sf.series'}\cr
+\verb{   }Goal is to build leaflet or \href{https://echarts.apache.org/en/option.html#geo.map}{geo} map series from shapefiles.\cr
+\verb{   }Supported types: POINT, MULTIPOINT, LINESTRING, MULTILINESTRING, POLYGON, MULTIPOLYGON \cr
+\verb{   }Limitations:\cr
+\verb{     }polygons can have only their name in tooltip,  \cr
+\verb{     }assumes Geodetic CRS is WGS 84, use \link[sf]{st_transform} with \emph{crs=4326} to convert.\cr
+\strong{cmd='layout'} \cr
+\verb{   }multiple charts in table-like rows/columns format, parameters are:\cr
+\verb{   }charts= List of charts, rows= Number of rows, cols= Number of columns,\cr
+\verb{   }width= Width of columns (one of xs, md, lg), title= Title for the set.\cr
+\verb{   }For 3-4 charts one would use multiple series within a \href{https://echarts.apache.org/en/option.html#grid}{grid}. \cr
+\verb{   }For greater number of charts \emph{ec.util(cmd='layout')} comes in handy.
 }
 \examples{
 if (interactive()) {
@@ -45,4 +55,14 @@ if (interactive()) {
      tooltip= list(formatter= '{a}')
   )
 }
+   
+p1 <- cars |> ec.init(width= 300, height= 300, grid= list(top= 20))
+p2 <- mtcars |> ec.init(width= 300, height= 300)
+htmltools::browsable(
+  ec.util(cmd= 'tabset', cars= p1, mtcars= p2)
+)
+
+tmp <- lapply(list('dark','macarons','gray','jazz','dark-mushroom'),
+              function(x) cars |> ec.init() |> ec.theme(x) )
+ec.util(cmd='layout', charts=tmp, cols=2, title='my layout' )
 }

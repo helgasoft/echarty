@@ -354,6 +354,7 @@
 #'
 #' #------ Sunburst
 #' # see website for different ways to set hierarchical data
+#' # https://helgasoft.github.io/echarty/uc3.html
 #' data = list(list(name='Grandpa',children=list(list(name='Uncle Leo',value=15,
 #'      children=list(list(name='Cousin Jack',value=2), list(name='Cousin Mary',value=5,
 #'      children=list(list(name='Jackson',value=2))), list(name='Cousin Ben',value=4))), 
@@ -441,19 +442,21 @@
 #' 
 #' 
 #' #------ group connect 
-#' main <- mtcars |> ec.init(height= 200, legend= list(show=FALSE))
-#' main$x$opts$series[[1]]$name <- "this legend is shared"
+#' main <- mtcars |> ec.init(height= 200, legend= list(show=FALSE)) |>
+#'   ec.upd({ series[[1]]$name <- "this legend is shared" })
 #' main$x$group <- 'group1' # same group name for all charts
 #' 
-#' q1 <- main; q1$x$opts$series[[1]]$encode <- list(y='hp', x='mpg'); 
-#' q1$x$opts$legend <- list(show=TRUE)  # show first legend to share
-#' q2 <- main; q2$x$opts$series[[1]]$encode <- list(y='wt', x='mpg'); 
-#' q3 <- main; q3$x$opts$series[[1]]$encode <- list(y='drat', x='mpg'); 
-#' q4 <- main; q4$x$opts$series[[1]]$encode <- list(y='qsec', x='mpg'); 
+#' q1 <- main |> ec.upd({ 
+#'   series[[1]]$encode <- list(y='hp', x='mpg')
+#'   legend <- list(show=TRUE)  # show first legend to share
+#' })
+#' q2 <- main |> ec.upd({ series[[1]]$encode <- list(y='wt', x='mpg') })
+#' q3 <- main |> ec.upd({ series[[1]]$encode <- list(y='drat', x='mpg') })
+#' q4 <- main |> ec.upd({ series[[1]]$encode <- list(y='qsec', x='mpg')})
 #' q4$x$connect <- 'group1'
 #' # q4$x$disconnect <- 'group1'  # ok too
 #' if (interactive()) {
-#'   ec.layout(list(q1,q2,q3,q4), cols=2, title='group connect')
+#'   ec.util(cmd='layout', charts=list(q1,q2,q3,q4), cols=2, title='group connect')
 #' }
 #' 
 #' 
@@ -464,7 +467,7 @@
 #' ui <- fluidPage( ecs.output('plot') )
 #' server <- function(input, output, session) {
 #'   output$plot <- ecs.render({
-#'     p <- cars |> group_by(speed) |> 
+#'     p <- mtcars |> group_by(cyl) |> 
 #'       ec.init(dataZoom= list(type= 'inside'))
 #'     p$x$on <- list(         # event(s) with Javascript handler
 #'       list(event= 'legendselectchanged',
