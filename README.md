@@ -29,7 +29,7 @@ support](https://helgasoft.github.io/echarty/xtalk.html).
 ## Installation
 
 <!-- [![Github version](https://img.shields.io/github/v/release/helgasoft/echarty?label=github)](https://github.com/helgasoft/echarty/releases) -->
-Latest development version 1.4.7:
+Latest development version <strong>1.4.7<sup>.01</sup></strong>:
 
 ``` r
 if (!requireNamespace('remotes')) install.packages('remotes')
@@ -83,9 +83,9 @@ ECharts**](https://echarts.apache.org/examples/en/index.html) (and
 <p align="center">
 <a href='https://helgasoft.github.io/echarty/gallery.html' target='_blank'>
 <img src="man/figs/ssPolarStack.png" alt="Polar Stack" width="180"/>
-<img src="https://raw.githubusercontent.com/helgasoft/echarty/main/man/figs/ssBars.gif"/>
+<img src="man/figs/ssBars.gif"/>
 <img src="man/figs/ssThemeRiver.png" width="180"/>
-<img src="https://raw.githubusercontent.com/helgasoft/echarty/main/man/figs/ssBunny.gif"/> <br />
+<img src="man/figs/ssBunny.gif"/> <br />
 <!-- img src="man/figs/ssMorph.gif" width="180"/ -->
 <img src="man/figs/ssRose.png" width="180"/>
 <img src="man/figs/ssSpeed.png" width="180"/>

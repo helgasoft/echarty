@@ -1477,12 +1477,18 @@ ec.upd <- function(wt, ...) {
 #' \verb{     }polygons can have only their name in tooltip,  \cr
 #' \verb{     }assumes Geodetic CRS is WGS 84, use \link[sf]{st_transform} with \emph{crs=4326} to convert.\cr
 #' **cmd='layout'** \cr
-#' \verb{   }multiple charts in table-like rows/columns format, parameters are:\cr
-#' \verb{   }charts= List of charts, rows= Number of rows, cols= Number of columns,\cr
-#' \verb{   }width= Width of columns (one of xs, md, lg), title= Title for the set.\cr
+#' \verb{   }multiple charts in table-like rows/columns format, ...= List of charts\cr
+#' \verb{   }optional parameters are: \cr
+#' \verb{     }title= Title for the set, rows= Number of rows, cols= Number of columns,\cr
+#' \verb{     }width= Width of columns (one of xs, md, lg)\cr
 #' \verb{   }For 3-4 charts one would use multiple series within a \href{https://echarts.apache.org/en/option.html#grid}{grid}. \cr
-#' \verb{   }For greater number of charts _ec.util(cmd='layout')_ comes in handy.
-
+#' \verb{   }For greater number of charts _ec.util(cmd='layout')_ comes in handy\cr
+#' **cmd='tabset'** \cr
+#' \verb{   }...= a list of charts OR tab-name/chart pairs like \emph{n1=chart1, n2=chart2}\cr
+#' \verb{   }optional parameters are: \cr
+#' \verb{     }width= Width of tabs in pixels, height= Height of tabs in pixels\cr
+#' \verb{     }tabStyle= tab style string, see default \emph{tabStyle} variable in the code
+#' 
 #' @examples 
 #' if (interactive()) {
 #'   library(sf)
@@ -1495,15 +1501,22 @@ ec.upd <- function(wt, ...) {
 #'   )
 #' }
 #'    
-#' p1 <- cars |> ec.init(width= 300, height= 300, grid= list(top= 20))
-#' p2 <- mtcars |> ec.init(width= 300, height= 300)
 #' htmltools::browsable(
-#'   ec.util(cmd= 'tabset', cars= p1, mtcars= p2)
+#'   lapply(iris |> group_by(Species) |> group_split(), function(x) { 
+#'     x |> ec.init(ctype= 'scatter', title= list(text= unique(x$Species)))
+#'   }) |> 
+#'   ec.util(cmd= 'tabset')
 #' )
 #' 
-#' tmp <- lapply(list('dark','macarons','gray','jazz','dark-mushroom'),
-#'               function(x) cars |> ec.init() |> ec.theme(x) )
-#' ec.util(cmd='layout', charts=tmp, cols=2, title='my layout' )
+#' p1 <- cars |> ec.init(grid= list(top= 20))
+#' p2 <- mtcars |> ec.init()
+#' htmltools::browsable(
+#'   ec.util(cmd= 'tabset', cars= p1, mtcars= p2, width= 200, height= 200)
+#' )
+#' 
+#' lapply(list('dark','macarons','gray','jazz','dark-mushroom'),
+#'               function(x) cars |> ec.init() |> ec.theme(x) ) |>
+#' ec.util(cmd='layout', cols= 2, title= 'my layout')
 #' @importFrom utils unzip
 #' @export
 ec.util <- function( ..., cmd='sf.series', verbose=FALSE) {
@@ -1513,6 +1526,16 @@ ec.util <- function( ..., cmd='sf.series', verbose=FALSE) {
   if (!is.null(opts$cs)) {
     cs <- opts$cs
     opts$cs <- NULL
+  }
+  do.opties <- function(name) {
+    for(n in name) {
+      val <- NULL
+      if (!is.null(opts[n])) {
+        val <- unname(unlist(opts[n]))
+        opts[n] <<- NULL
+      }
+      assign(n, val, envir= parent.frame()) #.GlobalEnv)
+    }
   }
   
   switch( cmd,
@@ -1651,7 +1674,10 @@ ec.util <- function( ..., cmd='sf.series', verbose=FALSE) {
     },
     
     'tabset'= {
-      ecStyle <- "<style>			
+      do.opties(c('tabStyle','width','height'))
+      if (is.null(width)) width <- 300
+      if (is.null(height)) height <- 300
+      if (is.null(tabStyle)) tabStyle <- "<style>			
 /*	CSS for the main interaction */
 .tabset > input[type='radio'] {
 	position: absolute;
@@ -1715,13 +1741,15 @@ body {
 body { padding: 10px; }
 .tabset { max-width: 65em; }
 </style>"
-      
-      if (!is.null(opts$tabStyle)) {
-        ecStyle <- opts$tabStyle
-        opts$tabStyle <- NULL
-      }
+
       tnames <- names(opts)
-      tpans <-	htmltools::tags$div(class='tab-panels')
+      if ((is.null(tnames) || length(tnames)==1) && 
+          ('echarty' %in% class(opts[[1]][[1]]))) {  # pipe
+        opts <- opts[[1]]
+        tnames <- names(opts) <- paste0('chart', 1:length(opts))
+      }
+      
+      tpans <- htmltools::tags$div(class='tab-panels')
       tset <- htmltools::tags$div(class='tabset')
       cnt <- 1
       for(n in tnames) {
@@ -1730,22 +1758,26 @@ body { padding: 10px; }
         if (cnt==1) tinp <- htmltools::tagAppendAttributes(tinp, checked=1)
         tset <- htmltools::tagAppendChildren(tset, 
             tinp, htmltools::tags$label(`for`=tid, n))
+        cont <- unname(opts[n]) 
+        cont[[1]]$width <- width
+        cont[[1]]$height <- height
         tpans <- htmltools::tagAppendChild(tpans, 
-            htmltools::tags$section(id=n, class='tab-panel', unname(opts[n])))
+            htmltools::tags$section(id=n, class='tab-panel', cont))
         tout <- htmltools::tagAppendChild(tset, tpans)
         cnt <- cnt + 1
       }
-      out <- htmltools::tagList(htmltools::HTML(ecStyle), tout)
+      out <- htmltools::tagList(htmltools::HTML(tabStyle), tout)
     },
+
     'layout'= {
-      if (!is.list(opts$charts))
-        stop("ec.util: layout 'charts' must be a list", call. = FALSE)
-      rows <- opts$rows; cols <- opts$cols; lplots <- length(opts$charts)
+
+      do.opties(c('rows','cols','width','title'))
+      lplots <- length(opts[[1]])
       if (is.null(rows) & !is.null(cols)) rows <- ceiling(lplots/cols)
       if (!is.null(rows) & is.null(cols)) cols <- ceiling(lplots/rows)
       if (is.null(rows) & is.null(cols)) { rows <- lplots; cols <- 1 }
       w <- "-xs"
-      if (!is.null(opts$width)) w <- paste0('-',opts$width)
+      if (!is.null(width)) w <- paste0('-',width)
       if (!isTRUE(getOption("knitr.in.progress"))) w <- ""
       x <- 0
       tg <- htmltools::tagList()
@@ -1754,15 +1786,14 @@ body { padding: 10px; }
         for (j in 1:cols) {
           x <- x + 1
           cl <- paste0("col", w, "-", 12/cols)
-          if (x <= length(opts$charts))
-            c <- htmltools::div(class = cl, opts$charts[[x]])
+          if (x <= lplots)
+            c <- htmltools::div(class = cl, opts[[1]][[x]])
           else 
             c <- htmltools::div(class = cl)
           r <- htmltools::tagAppendChild(r, c)
         }
         tg <- htmltools::tagAppendChild(tg, r)
       }
-      title <- opts$title
       if (isTRUE(getOption("knitr.in.progress"))) {
         if (!is.null(title))
           out <- htmltools::div(title, tg)
@@ -1777,11 +1808,11 @@ body { padding: 10px; }
               htmltools::tags$link(
                 rel = "stylesheet", 
                 href = "https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css"
-            )),
+              )),
             htmltools::div(class= 'row justify-content-center text-center', 
                            htmltools::h3(title) ),
             tg
-        ))
+          ))
     },
     
     stop(paste("ec.util: invalid 'cmd' parameter",cmd), call. = FALSE)

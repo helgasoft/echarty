@@ -210,3 +210,13 @@ test_that("tabset", {
    expect_equal(r[[2]]$children[[5]]$children[[1]]$name, "section")
    expect_equal(r[[2]]$children[[2]]$children[[1]], "cars")
 })
+
+test_that("tabset with pipe", {
+  r <- htmltools::browsable(
+    lapply(iris |> group_by(Species) |> group_split(), function(x) { 
+      x |> ec.init(ctype= 'scatter', title= list(text= unique(x$Species)))
+    }) |> ec.util(cmd='tabset')
+  )
+  expect_equal(r[[2]]$children[[7]]$children[[2]]$children[[1]][[1]]$width, 300)
+  expect_equal(r[[2]]$children[[6]]$children[[1]], "chart3")
+})

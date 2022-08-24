@@ -1,5 +1,9 @@
 # history of echarty package development
 
+## v.1.4.7.01
+
+- _ec.util_ enhancements for _tabset_ and _layout_
+
 ## v.1.4.7
 
 - _ec.util_: add POLYGON/MULTIPOINT, rename param 'type' to 'cmd', new _sf.unzip_

@@ -38,11 +38,17 @@ tabset, table layout, support for GIS shapefiles thru library sf
 \verb{     }polygons can have only their name in tooltip,  \cr
 \verb{     }assumes Geodetic CRS is WGS 84, use \link[sf]{st_transform} with \emph{crs=4326} to convert.\cr
 \strong{cmd='layout'} \cr
-\verb{   }multiple charts in table-like rows/columns format, parameters are:\cr
-\verb{   }charts= List of charts, rows= Number of rows, cols= Number of columns,\cr
-\verb{   }width= Width of columns (one of xs, md, lg), title= Title for the set.\cr
+\verb{   }multiple charts in table-like rows/columns format, ...= List of charts\cr
+\verb{   }optional parameters are: \cr
+\verb{     }title= Title for the set, rows= Number of rows, cols= Number of columns,\cr
+\verb{     }width= Width of columns (one of xs, md, lg)\cr
 \verb{   }For 3-4 charts one would use multiple series within a \href{https://echarts.apache.org/en/option.html#grid}{grid}. \cr
 \verb{   }For greater number of charts \emph{ec.util(cmd='layout')} comes in handy.
+\strong{cmd='tabset'} \cr
+\verb{   }...= a list of charts OR named tabs like \emph{name1=chart1, name2=chart2}\cr
+\verb{   }optional parameters are: \cr
+\verb{     }width= Width of tabs in pixels, height= Height of tabs in pixels\cr
+\verb{     }tabStyle= tab style string, see default \emph{tabStyle} variable in the code
 }
 \examples{
 if (interactive()) {
@@ -61,8 +67,13 @@ p2 <- mtcars |> ec.init(width= 300, height= 300)
 htmltools::browsable(
   ec.util(cmd= 'tabset', cars= p1, mtcars= p2)
 )
+htmltools::browsable(
+  lapply(iris |> group_by(Species) |> group_split(), function(x) { 
+    x |> ec.init(ctype= 'scatter', title= list(text= unique(x$Species)))
+  }) |> ec.util(cmd= 'tabset')
+)
 
-tmp <- lapply(list('dark','macarons','gray','jazz','dark-mushroom'),
-              function(x) cars |> ec.init() |> ec.theme(x) )
-ec.util(cmd='layout', charts=tmp, cols=2, title='my layout' )
+lapply(list('dark','macarons','gray','jazz','dark-mushroom'),
+              function(x) cars |> ec.init() |> ec.theme(x) ) |>
+ec.util(cmd='layout', cols= 2, title= 'my layout')
 }
