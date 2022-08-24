@@ -1500,9 +1500,9 @@ ec.upd <- function(wt, ...) {
 #'      tooltip= list(formatter= '{a}')
 #'   )
 #' }
-#'    
+#'
 #' htmltools::browsable(
-#'   lapply(iris |> group_by(Species) |> group_split(), function(x) { 
+#'   lapply(iris |> group_by(Species) |> dplyr::group_split(), function(x) {
 #'     x |> ec.init(ctype= 'scatter', title= list(text= unique(x$Species)))
 #'   }) |> 
 #'   ec.util(cmd= 'tabset')
