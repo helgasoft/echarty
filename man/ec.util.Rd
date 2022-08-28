@@ -4,7 +4,7 @@
 \alias{ec.util}
 \title{Utility functions}
 \usage{
-ec.util(..., cmd = "sf.series", verbose = FALSE)
+ec.util(..., cmd = "sf.series")
 }
 \arguments{
 \item{...}{Optional parameters for the command \cr
@@ -24,8 +24,6 @@ optional parameter \emph{shp} - name of .shp file inside ZIP file if multiple ex
 \item \emph{tabset} returns a \emph{tagList} of tabs, each tab may contain a chart.\cr
 \item \emph{layout} returns a container \link[htmltools]{div} in rmarkdown, otherwise \link[htmltools]{browsable}.\cr
 }}
-
-\item{verbose}{Print shapefile item names in console, default is FALSE.}
 }
 \description{
 tabset, table layout, support for GIS shapefiles thru library sf
@@ -37,15 +35,17 @@ tabset, table layout, support for GIS shapefiles thru library sf
 \verb{   }Limitations:\cr
 \verb{     }polygons can have only their name in tooltip,  \cr
 \verb{     }assumes Geodetic CRS is WGS 84, use \link[sf]{st_transform} with \emph{crs=4326} to convert.\cr
+\verb{   }optional parameter: \cr
+\verb{     }verbose= Print shapefile item names in console\cr
 \strong{cmd='layout'} \cr
 \verb{   }multiple charts in table-like rows/columns format, ...= List of charts\cr
 \verb{   }optional parameters are: \cr
 \verb{     }title= Title for the set, rows= Number of rows, cols= Number of columns,\cr
 \verb{     }width= Width of columns (one of xs, md, lg)\cr
 \verb{   }For 3-4 charts one would use multiple series within a \href{https://echarts.apache.org/en/option.html#grid}{grid}. \cr
-\verb{   }For greater number of charts \emph{ec.util(cmd='layout')} comes in handy.
+\verb{   }For greater number of charts \emph{ec.util(cmd='layout')} comes in handy\cr
 \strong{cmd='tabset'} \cr
-\verb{   }...= a list of charts OR named tabs like \emph{name1=chart1, name2=chart2}\cr
+\verb{   }...= a list of charts OR tab-name/chart pairs like \emph{n1=chart1, n2=chart2}\cr
 \verb{   }optional parameters are: \cr
 \verb{     }width= Width of tabs in pixels, height= Height of tabs in pixels\cr
 \verb{     }tabStyle= tab style string, see default \emph{tabStyle} variable in the code
@@ -61,16 +61,19 @@ if (interactive()) {
      tooltip= list(formatter= '{a}')
   )
 }
-   
-p1 <- cars |> ec.init(width= 300, height= 300, grid= list(top= 20))
-p2 <- mtcars |> ec.init(width= 300, height= 300)
+
+library(dplyr)
 htmltools::browsable(
-  ec.util(cmd= 'tabset', cars= p1, mtcars= p2)
-)
-htmltools::browsable(
-  lapply(iris |> group_by(Species) |> group_split(), function(x) { 
+  lapply(iris |> group_by(Species) |> group_split(), function(x) {
     x |> ec.init(ctype= 'scatter', title= list(text= unique(x$Species)))
-  }) |> ec.util(cmd= 'tabset')
+  }) |> 
+  ec.util(cmd= 'tabset')
+)
+
+p1 <- cars |> ec.init(grid= list(top= 20))
+p2 <- mtcars |> ec.init()
+htmltools::browsable(
+  ec.util(cmd= 'tabset', cars= p1, mtcars= p2, width= 200, height= 200)
 )
 
 lapply(list('dark','macarons','gray','jazz','dark-mushroom'),

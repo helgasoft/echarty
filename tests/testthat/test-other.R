@@ -148,36 +148,36 @@ test_that("ec.data format treeTK", {
 })
 
 test_that("load 3D surface", {
-  if (interactive()) {  # first time will load echarts-gl.js in source folder 'js'
+  #if (interactive()) {  # first time will load echarts-gl.js in source folder 'js'
     data <- list()
     for(y in 1:dim(volcano)[2]) for(x in 1:dim(volcano)[1])
       data <- append(data, list(c(x, y, volcano[x,y])))
     p <- ec.init(load= '3D', series= list(list(type= 'surface',	data= data)) )
     
     expect_equal(length(p$x$opts$series[[1]]$data), 5307)
-  }
-  else expect_equal(1,1)
+  #}
+  #else expect_equal(1,1)
 })
 
 test_that("shapefiles with multi-polygons", {
-  if (interactive()) {
+  #if (interactive()) {
     library(sf)
     fname <- system.file("shape/nc.shp", package="sf")
     nc <- as.data.frame(st_read(fname))
     p <- ec.init(load= c('leaflet', 'custom'),  # load custom for polygons
        js= ec.util(cmd= 'sf.bbox', bbox= st_bbox(nc$geometry)),
-       series= ec.util(df= nc, nid= 'NAME', itemStyle= list(opacity= 0.3)),
+       series= ec.util(cmd= 'sf.series', df= nc, nid= 'NAME', itemStyle= list(opacity= 0.3)),
        tooltip= list(show= TRUE, formatter= '{a}')
     )
     expect_true(p$x$opts$leaflet$roam)
     expect_equal(p$x$opts$series[[108]]$name, 'Brunswick')
     expect_equal(p$x$opts$series[[108]]$itemStyle$opacity, 0.3)
-  }
-  else expect_equal(1,1)
+  #}
+  #else expect_equal(1,1)
 })
 
 test_that("shapefile from ZIP", {
-  if (interactive()) {
+  if (interactive()) {  # creates a subfolder 'railways'
     library(sf)
     fname <- ec.util(cmd= 'sf.unzip', 
                      url= 'https://mapcruzin.com/sierra-leone-shapefiles/railways.zip')
@@ -212,6 +212,7 @@ test_that("tabset", {
 })
 
 test_that("tabset with pipe", {
+  library(dplyr)
   r <- htmltools::browsable(
     lapply(iris |> group_by(Species) |> group_split(), function(x) { 
       x |> ec.init(ctype= 'scatter', title= list(text= unique(x$Species)))

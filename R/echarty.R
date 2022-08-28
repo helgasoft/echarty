@@ -1170,71 +1170,6 @@ ecs.exec <- function(proxy, cmd='p_merge') {
 # ----------- Utilities ----------------------
 
 
-#' Charts layout
-#' 
-#' Set multiple charts in rows/columns format
-#' 
-#' @param plots A list of charts
-#' @param rows Number of rows
-#' @param cols Number of columns
-#' @param width Width of columns, one of xs, md, lg
-#' @param title Title for the set
-#' @return A container \link[htmltools]{div} in rmarkdown, otherwise \link[htmltools]{browsable}
-#' @details  
-#' For 3-4 charts one would use multiple series with a \href{https://echarts.apache.org/en/option.html#grid}{grid}. \cr
-#' For greater number of charts _ec.layout_ come in handy.
-#' @examples
-#' options(browser = 'firefox')
-#' tmp <- lapply(list('dark','macarons','gray','jazz','dark-mushroom'),
-#'               function(x) cars |> ec.init() |> ec.theme(x) )
-#' ec.layout(tmp, cols=2, title='layout' )
-#' 
-#' @export 
-ec.layout <- function (plots, rows = NULL, cols = NULL, width = "xs", 
-                       title = NULL) 
-{
-  if (!is.list(plots))
-    stop('ec.layout: charts must be a list', call. = FALSE)
-  cat("\n ec.layout is deprecated, use ec.util(cmd='layout',...) instead")
-  if (is.null(rows) & !is.null(cols)) rows <- ceiling(length(plots)/cols)
-  if (!is.null(rows) & is.null(cols)) cols <- ceiling(length(plots)/rows)
-  if (is.null(rows) & is.null(cols)) { rows <- length(plots); cols <- 1 }
-  w <- "-xs"
-  if (!isTRUE(getOption("knitr.in.progress"))) w <- ""
-  x <- 0
-  tg <- htmltools::tagList()
-  for (i in 1:rows) {
-    r <- htmltools::div(class = "row")
-    for (j in 1:cols) {
-      x <- x + 1
-      cl <- paste0("col", w, "-", 12/cols)
-      if (x <= length(plots))
-        c <- htmltools::div(class = cl, plots[[x]])
-      else 
-        c <- htmltools::div(class = cl)
-      r <- htmltools::tagAppendChild(r, c)
-    }
-    tg <- htmltools::tagAppendChild(tg, r)
-  }
-  if (isTRUE(getOption("knitr.in.progress"))) {
-    if (!is.null(title))
-      htmltools::div(title, tg)
-    else
-      tg
-  }
-  else
-    htmltools::browsable(
-      htmltools::div(
-        class = "container-fluid", 
-        htmltools::tags$head(
-          htmltools::tags$link(
-            rel = "stylesheet", 
-            href = "https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css"
-          )),
-        htmltools::h3(title), tg))
-}
-
-
 #' Parallel Axis
 #' 
 #' Create 'parallelAxis' for a parallel chart
@@ -1468,7 +1403,6 @@ ec.upd <- function(wt, ...) {
 #' @param ... Optional parameters for the command \cr
 #'      for \emph{sf.series} - see \href{https://echarts.apache.org/en/option.html#series-scatter.type}{points}, \href{https://echarts.apache.org/en/option.html#series-lines.type}{polylines}, polygons(itemStyle).\cr
 #'      for \emph{tabset} parameters should be in format \emph{name1=chart1, name2=chart2}, see example\cr
-#' @param verbose Print shapefile item names in console, default is FALSE.
 #' @details 
 #' **cmd='sf.series'**\cr
 #' \verb{   }Goal is to build leaflet or \href{https://echarts.apache.org/en/option.html#geo.map}{geo} map series from shapefiles.\cr
@@ -1476,6 +1410,8 @@ ec.upd <- function(wt, ...) {
 #' \verb{   }Limitations:\cr 
 #' \verb{     }polygons can have only their name in tooltip,  \cr
 #' \verb{     }assumes Geodetic CRS is WGS 84, use \link[sf]{st_transform} with \emph{crs=4326} to convert.\cr
+#' \verb{   }optional parameter: \cr
+#' \verb{     }verbose= Print shapefile item names in console\cr
 #' **cmd='layout'** \cr
 #' \verb{   }multiple charts in table-like rows/columns format, ...= List of charts\cr
 #' \verb{   }optional parameters are: \cr
@@ -1501,8 +1437,9 @@ ec.upd <- function(wt, ...) {
 #'   )
 #' }
 #'
+#' library(dplyr)
 #' htmltools::browsable(
-#'   lapply(iris |> group_by(Species) |> dplyr::group_split(), function(x) {
+#'   lapply(iris |> group_by(Species) |> group_split(), function(x) {
 #'     x |> ec.init(ctype= 'scatter', title= list(text= unique(x$Species)))
 #'   }) |> 
 #'   ec.util(cmd= 'tabset')
@@ -1519,28 +1456,28 @@ ec.upd <- function(wt, ...) {
 #' ec.util(cmd='layout', cols= 2, title= 'my layout')
 #' @importFrom utils unzip
 #' @export
-ec.util <- function( ..., cmd='sf.series', verbose=FALSE) {
+ec.util <- function( ..., cmd='sf.series') {
   
   opts <- list(...)
-  cs <- 'leaflet'   # default coordinateSystem for shapefiles, alternative is 'geo'
-  if (!is.null(opts$cs)) {
-    cs <- opts$cs
-    opts$cs <- NULL
-  }
-  do.opties <- function(name) {
+
+  do.opties <- function(name, dflt=NULL) {
+    j <- 0
     for(n in name) {
+      j <- j + 1
       val <- NULL
-      if (!is.null(opts[n])) {
-        val <- unname(unlist(opts[n]))
+      if (!is.null(dflt)) val <- dflt[[j]]
+      tmp <- unname(unlist(opts[n]))
+      if (!is.null(tmp)) {
+        val <- tmp
         opts[n] <<- NULL
       }
-      assign(n, val, envir= parent.frame()) #.GlobalEnv)
+      assign(n, val, envir= parent.frame())
     }
   }
   
   switch( cmd,
     'sf.series'= {
-      do.series <- function(df=NULL, ..., verbose=FALSE) {
+      do.series <- function() {
         polig <- function(geom) {
           for(k in 1:length(geom)) {
             if ('matrix' %in% class(geom[[k]])) {
@@ -1558,77 +1495,78 @@ ec.util <- function( ..., cmd='sf.series', verbose=FALSE) {
           }
         }
         geometry <- L1 <- cmd <- NULL  # trick to avoid code checking NOTES
-        opts <- list(...)
         sers <- list()
-        switch( class(df$geometry)[1],
-                'sfc_MULTIPOINT' =,
-                'sfc_POINT'= {
-                  df <- df |> rename(value= geometry)
-                  #df$value <- lapply(df$value, function(x) x[1:2])  # XY, remove Z if any
-                  tt <- NULL
-                  flds <- colnames(df)[! colnames(df) %in% c("value")]
-                  if (length(flds)>0) {
-                    if (length(flds)>10) flds <- flds[1:10]
-                    tt <- c(paste(rep('%@', length(flds)), collapse='<br>'), flds)
-                  }
-                  pnts <- ec.data(df, 'names')
-                  sers <- list(
-                    list(type= 'scatter', coordinateSystem= cs,
-                         data= pnts, ...
-                    ))
-                  if (!is.null(tt)) 
-                    sers[[1]]$tooltip= list(formatter= do.call("ec.clmn", as.list(tt)))
-                },
-                'sfc_POLYGON' =,
-                'sfc_MULTIPOLYGON' = {
-                  for(i in 1:nrow(df)) {
-                    dname <- i
-                    if (!is.null(opts$nid) && opts$nid %in% colnames(df)) dname <- df[i,opts$nid][[1]]
-                    if (verbose) cat(dname,',', sep='')
-                    geom <- df$geometry[[i]]
-                    polig(geom)
-                  }
-                },
-                'sfc_LINESTRING' = {
-                  tmp <- df$geometry
-                  tmp <- as.data.frame(cbind(do.call(rbind, tmp), 
-                                             L1= rep(seq_along(tmp), times= vapply(tmp, nrow, 0L))))
-                  for(i in 1:nrow(df)) {
-                    dname <- ifelse(is.null(opts$nid), i, df[i,opts$nid][[1]])
-                    if (verbose) cat(dname,',', sep='')
-                    coords <- list()
-                    geom <- tmp |> filter(L1==i)
-                    for(k in 1:nrow(geom))
-                      coords <- append(coords, list(c(geom[k,1], geom[k,2])))
-                    
-                    sers <- append(sers, list(list(
-                      type='lines', coordinateSystem= cs, polyline= TRUE,
-                      name= dname, 
-                      tooltip= list(formatter= '{a}'),
-                      data= list(coords), ... )))
-                  }
-                },
-                'sfc_MULTILINESTRING' = {
-                  for(i in 1:nrow(df)) {
-                    dname <- ifelse(is.null(opts$nid), i, df[i,opts$nid][[1]])
-                    if (verbose) cat(dname,',', sep='')
-                    corda <- list()
-                    geom <- df$geometry[[i]]
-                    for(k in 1:length(geom)) {
-                      gm <- as.data.frame(geom[[k]])
-                      coords <- list()
-                      for(j in 1:nrow(gm))
-                        coords <- append(coords, list(c(gm[j,1], gm[j,2])))
-                      corda <- append(corda, list(coords))
-                    }
-                    sers <- append(sers, list(list(
-                      type='lines', coordinateSystem= cs, polyline= TRUE,
-                      name= dname, 
-                      tooltip= list(formatter= '{a}'),
-                      data= corda, ... )))
-                  }
-                },
-                stop(paste('ec.util:',class(df$geometry)[1],'geometry not supported'), call.= FALSE)
+        dff <- opts$df
+        switch( class(dff$geometry)[1],
+          'sfc_MULTIPOINT' =,
+          'sfc_POINT'= {
+            dff <- dff |> rename(value= geometry)
+            #dff$value <- lapply(dff$value, function(x) x[1:2])  # XY, remove Z if any
+            tt <- NULL
+            flds <- colnames(dff)[! colnames(dff) %in% c("value")]
+            if (length(flds)>0) {
+              if (length(flds)>10) flds <- flds[1:10]
+              tt <- c(paste(rep('%@', length(flds)), collapse='<br>'), flds)
+            }
+            pnts <- ec.data(dff, 'names')
+            sers <- list(
+              list(type= 'scatter', coordinateSystem= cs,
+                   data= pnts, ...
+              ))
+            if (!is.null(tt)) 
+              sers[[1]]$tooltip= list(formatter= do.call("ec.clmn", as.list(tt)))
+          },
+          'sfc_POLYGON' =,
+          'sfc_MULTIPOLYGON' = {
+            for(i in 1:nrow(dff)) {
+              dname <- i
+              if (!is.null(opts$nid) && opts$nid %in% colnames(dff)) 
+                dname <- dff[i, opts$nid][[1]]
+              if (verbose) cat(dname,',', sep='')
+              geom <- dff$geometry[[i]]
+              polig(geom)
+            }
+          },
+          'sfc_LINESTRING' = {
+            tmp <- dff$geometry
+            tmp <- as.data.frame(cbind(do.call(rbind, tmp), 
+                                       L1= rep(seq_along(tmp), times= vapply(tmp, nrow, 0L))))
+            for(i in 1:nrow(dff)) {
+              dname <- ifelse(is.null(opts$nid), i, dff[i, opts$nid][[1]])
+              if (verbose) cat(dname,',', sep='')
+              coords <- list()
+              geom <- tmp |> filter(L1==i)
+              for(k in 1:nrow(geom))
+                coords <- append(coords, list(c(geom[k,1], geom[k,2])))
+              
+              sers <- append(sers, list(list(
+                type='lines', coordinateSystem= cs, polyline= TRUE,
+                name= dname, 
+                tooltip= list(formatter= '{a}'),
+                data= list(coords), ... )))
+            }
+          },
+          'sfc_MULTILINESTRING' = {
+            for(i in 1:nrow(dff)) {
+              dname <- ifelse(is.null(opts$nid), i, dff[i,opts$nid][[1]])
+              if (verbose) cat(dname,',', sep='')
+              corda <- list()
+              geom <- dff$geometry[[i]]
+              for(k in 1:length(geom)) {
+                gm <- as.data.frame(geom[[k]])
+                coords <- list()
+                for(j in 1:nrow(gm))
+                  coords <- append(coords, list(c(gm[j,1], gm[j,2])))
+                corda <- append(corda, list(coords))
+              }
+              sers <- append(sers, list(list(
+                type='lines', coordinateSystem= cs, polyline= TRUE,
+                name= dname, 
+                tooltip= list(formatter= '{a}'),
+                data= corda, ... )))
+            }
+          },
+          stop(paste('ec.util:',class(dff$geometry)[1],'geometry not supported'), call.= FALSE)
         )
         cnt <- length(sers)
         recs <- sum(unlist(lapply(sers, function(x) {
@@ -1644,7 +1582,9 @@ ec.util <- function( ..., cmd='sf.series', verbose=FALSE) {
         stop('ec.util: expecting parameter df', call. = FALSE)
       if (is.null(opts$df$geometry))
         stop('ec.util: expecting df$geometry', call. = FALSE)
-      out <- do.series(..., cs=cs, verbose=verbose)
+      cs <- verbose <- NULL   # CRAN check fix
+      do.opties(c('cs','verbose'), list('leaflet', FALSE))
+      out <- do.series()
     },
     
     'sf.bbox'= {
@@ -1674,10 +1614,9 @@ ec.util <- function( ..., cmd='sf.series', verbose=FALSE) {
     },
     
     'tabset'= {
-      do.opties(c('tabStyle','width','height'))
-      if (is.null(width)) width <- 300
-      if (is.null(height)) height <- 300
-      if (is.null(tabStyle)) tabStyle <- "<style>			
+      width <- height <- tabStyle <- NULL   # CRAN check fix
+      do.opties(c('width','height','tabStyle'), list(300, 300, 
+"<style>
 /*	CSS for the main interaction */
 .tabset > input[type='radio'] {
 	position: absolute;
@@ -1740,7 +1679,7 @@ body {
 }
 body { padding: 10px; }
 .tabset { max-width: 65em; }
-</style>"
+</style>" ))
 
       tnames <- names(opts)
       if ((is.null(tnames) || length(tnames)==1) && 
@@ -1770,7 +1709,8 @@ body { padding: 10px; }
     },
 
     'layout'= {
-
+      
+      title <- NULL   # CRAN check fix
       do.opties(c('rows','cols','width','title'))
       lplots <- length(opts[[1]])
       if (is.null(rows) & !is.null(cols)) rows <- ceiling(lplots/cols)
