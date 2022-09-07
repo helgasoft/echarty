@@ -1,12 +1,11 @@
 Package: echarty
 Title: Minimal R/Shiny Interface to JavaScript Library 'ECharts'
-Date: 2022-08-28
-Version: 1.4.7
+Date: 2022-09-02
+Version: 1.4.7.01
 Authors@R: c( 
-  person("Larry", "Helgason", email = "larry@helgasoft.com", role = c("aut", "cre", "cph")),
+  person("Larry", "Helgason", email = "larry@helgasoft.com", role = c("cre", "aut", "cph")),
   person("John", "Coene", role = c("aut", "cph"), comment = "echarts4r library")
   )
-Author: Larry Helgason [cre, aut, cph], John Coene [aut, cph]
 Maintainer: Larry Helgason <larry@helgasoft.com>
 Description: Deliver the full functionality of 'ECharts' with minimal overhead. 'echarty' users build R lists for 'ECharts' API. Lean set of powerful commands.
 Depends: R (>= 4.1.0)

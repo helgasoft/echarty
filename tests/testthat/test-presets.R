@@ -7,6 +7,25 @@ df <- data.frame(
   symbol = sample(c("circle", "rect", "triangle"), 10, replace= TRUE)
 )
 
+test_that("options preset", {
+  options(echarty.theme='jazz')
+  p <- ec.init()
+  expect_equal(p$x$theme, 'jazz')
+  expect_equal(p$dependencies[[1]]$name, 'jazz')
+  
+  p <- cars |> ec.init() |> ec.theme(name='mine', code='{ "backgroundColor": "pink" }')
+  expect_equal(p$x$theme, 'mine')
+  
+  options(echarty.theme=NULL)
+  p <- cars |> ec.init()
+  expect_equal(p$x$theme, '')
+  
+  options(echarty.font='monospace')
+  p <- cars |> ec.init()
+  expect_equal(p$x$opts$textStyle$fontFamily, 'monospace')
+  options(echarty.font=NULL)
+})
+
 test_that("ec.init presets for non-grouped data.frame", {
   p <- df |> ec.init()
   expect_equal(p$x$opts$xAxis$type, 'category')

@@ -15,13 +15,13 @@ for \emph{tabset} parameters should be in format \emph{name1=chart1, name2=chart
 \itemize{
 \item \emph{sf.series} returns a list of chart series\cr
 required parameter \emph{df} - value from \link[sf]{st_read}\cr
-optional parameter \emph{nid} - column name for name-id used in tooltips\cr
-optional coordinate system \emph{cs} - \emph{leaflet}(default) or \emph{geo}\cr
+optional \emph{nid} - column name for name-id used in tooltips\cr
+optional \emph{verbose} - print shapefile item names in console\cr
 \item \emph{sf.bbox} returns JavaScript code to position a map inside a bounding box from \link[sf]{st_bbox}, for leaflet only.\cr
 \item \emph{sf.unzip} unzips a remote file and returns local file name of the unzipped .shp file\cr
 required parameter \emph{url} - URL of remote zipped shapefile\cr
-optional parameter \emph{shp} - name of .shp file inside ZIP file if multiple exist. Do not add file extension. \cr
-\item \emph{tabset} returns a \emph{tagList} of tabs, each tab may contain a chart.\cr
+optional \emph{shp} - name of .shp file inside ZIP file if multiple exist. Do not add file extension. \cr
+\item \emph{tabset} returns a \link[htmltools]{tagList} of tabs, each tab may contain a chart.\cr
 \item \emph{layout} returns a container \link[htmltools]{div} in rmarkdown, otherwise \link[htmltools]{browsable}.\cr
 }}
 }
@@ -29,29 +29,29 @@ optional parameter \emph{shp} - name of .shp file inside ZIP file if multiple ex
 tabset, table layout, support for GIS shapefiles thru library sf
 }
 \details{
-\strong{cmd='sf.series'}\cr
-\verb{   }Goal is to build leaflet or \href{https://echarts.apache.org/en/option.html#geo.map}{geo} map series from shapefiles.\cr
+\strong{cmd = 'sf.series'}\cr
+\verb{   }Goal is to build \emph{leaflet} or \href{https://echarts.apache.org/en/option.html#geo.map}{geo} map series from shapefiles.\cr
 \verb{   }Supported types: POINT, MULTIPOINT, LINESTRING, MULTILINESTRING, POLYGON, MULTIPOLYGON \cr
+\verb{   }Coordinate system is \emph{leaflet}(default) or \emph{geo}\cr
 \verb{   }Limitations:\cr
 \verb{     }polygons can have only their name in tooltip,  \cr
 \verb{     }assumes Geodetic CRS is WGS 84, use \link[sf]{st_transform} with \emph{crs=4326} to convert.\cr
-\verb{   }optional parameter: \cr
-\verb{     }verbose= Print shapefile item names in console\cr
-\strong{cmd='layout'} \cr
-\verb{   }multiple charts in table-like rows/columns format, ...= List of charts\cr
+\strong{cmd = 'layout'} \cr
+\verb{   }multiple charts in table-like rows/columns format\cr
+\verb{   }...= List of charts\cr
 \verb{   }optional parameters are: \cr
 \verb{     }title= Title for the set, rows= Number of rows, cols= Number of columns,\cr
 \verb{     }width= Width of columns (one of xs, md, lg)\cr
 \verb{   }For 3-4 charts one would use multiple series within a \href{https://echarts.apache.org/en/option.html#grid}{grid}. \cr
 \verb{   }For greater number of charts \emph{ec.util(cmd='layout')} comes in handy\cr
-\strong{cmd='tabset'} \cr
+\strong{cmd = 'tabset'} \cr
 \verb{   }...= a list of charts OR tab-name/chart pairs like \emph{n1=chart1, n2=chart2}\cr
 \verb{   }optional parameters are: \cr
 \verb{     }width= Width of tabs in pixels, height= Height of tabs in pixels\cr
 \verb{     }tabStyle= tab style string, see default \emph{tabStyle} variable in the code
 }
 \examples{
-if (interactive()) {
+if (interactive()) {  # comm.out: Fedora errors about some 'browser'
   library(sf)
   fname <- system.file("shape/nc.shp", package="sf")
   nc <- as.data.frame(st_read(fname))
@@ -60,23 +60,23 @@ if (interactive()) {
      series= ec.util(df= nc, nid= 'NAME', itemStyle= list(opacity= 0.3)),
      tooltip= list(formatter= '{a}')
   )
+
+  htmltools::browsable(
+    lapply(iris |> dplyr::group_by(Species) |> dplyr::group_split(), 
+           function(x) {
+     x |> ec.init(ctype= 'scatter', title= list(text= unique(x$Species)))
+           }) |> 
+    ec.util(cmd= 'tabset')
+  )
+
+  p1 <- cars |> ec.init(grid= list(top= 20))
+  p2 <- mtcars |> ec.init()
+  htmltools::browsable(
+    ec.util(cmd= 'tabset', cars= p1, mtcars= p2, width= 200, height= 200)
+  )
+
+  lapply(list('dark','macarons','gray','jazz','dark-mushroom'),
+                function(x) cars |> ec.init() |> ec.theme(x) ) |>
+  ec.util(cmd='layout', cols= 2, title= 'my layout')
 }
-
-library(dplyr)
-htmltools::browsable(
-  lapply(iris |> group_by(Species) |> group_split(), function(x) {
-    x |> ec.init(ctype= 'scatter', title= list(text= unique(x$Species)))
-  }) |> 
-  ec.util(cmd= 'tabset')
-)
-
-p1 <- cars |> ec.init(grid= list(top= 20))
-p2 <- mtcars |> ec.init()
-htmltools::browsable(
-  ec.util(cmd= 'tabset', cars= p1, mtcars= p2, width= 200, height= 200)
-)
-
-lapply(list('dark','macarons','gray','jazz','dark-mushroom'),
-              function(x) cars |> ec.init() |> ec.theme(x) ) |>
-ec.util(cmd='layout', cols= 2, title= 'my layout')
 }

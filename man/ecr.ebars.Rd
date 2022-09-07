@@ -25,39 +25,37 @@ Custom series to display error-bars for scatter,bar or line series
 \details{
 \emph{ecr.ebars} are custom series, so \emph{ec.init(load='custom')} is required. \cr
 Grouped series are supported, but \emph{df} is required with group column included. \cr
-Will add a chart legend and its own tooltip if none is provided.\cr
-Add a name attribute to show error bars separate in the legend. \cr
-Command should be called last, after all other series.\cr
+Will add its own tooltip if none is provided.\cr
+Adding a name parameter will show error bars separate in the legend. \cr
+Command should be called after all other series are already set.\cr
 Simple non-grouped series could be displayed with formatter \emph{riErrBarSimple} instead of \emph{ecr.ebars}. See example below.
 }
 \examples{
-if (interactive()) {
 library(dplyr)
-tmp <- round(rnorm(24, sin(1:24/2)*10, .5))
-df <- data.frame(x = 1:24, val = tmp, 
-                 lower = round(rnorm(24, tmp -10, .5)),
-                 upper = round(rnorm(24, tmp + 5, .8)),
-                 cat= rep(c('A','B'),24) )
-                 
-df |> ec.init(load='custom', tooltip= list(show=TRUE)) |> ecr.ebars()
+df <- iris |> distinct(Sepal.Length, .keep_all= TRUE) |> 
+  mutate(lo= Sepal.Width-Petal.Length/2, hi= Sepal.Width+Petal.Width) |>
+  select(Sepal.Length, Sepal.Width, lo, hi, Species)
   
-#------ riErrBarSimple ------
+df |> ec.init(load='custom', legend=list(show=TRUE), xAxis=list(scale=TRUE)) |> 
+  ecr.ebars(name= 'err')
+
+# ----- grouped -------
+dfg <- df |> group_by(Species)
+dfg |> 
+  ec.init(load= 'custom', legend= list(show=TRUE), xAxis= list(scale=TRUE)) |>
+  ecr.ebars(dfg)
+  
+# ----- riErrBarSimple ------
 df |> ec.init(load= 'custom',
               title= list(text= "riErrBarSimple"),
               legend= list(show=TRUE),
-              xAxis= list(data= df$category)) |> ec.upd({
-  series <- append(series, list(list(
-    type= "custom", name= "error",
-    itemStyle= list(borderWidth= 1.5, color= 'brown'),
-    encode= list(x= 0, y= list(1, 2)),
-    data= ec.data(df |> select(x,lower,upper)),
-    renderItem= htmlwidgets::JS("riErrBarSimple") )))
+              xAxis= list(scale= TRUE)
+) |> ec.upd({
+  series <- append(series, list(
+    list(type= "custom", name= "error",
+         itemStyle= list(color= 'brown'),
+         data= ec.data(df |> select(Sepal.Length,lo,hi)),
+         renderItem= htmlwidgets::JS("riErrBarSimple")) ))
 })
 
-# ----- grouped -------
-df |> group_by(cat) |> 
-  ec.init(load= 'custom',
-          xAxis= list(type='value')) |>  # fix preset 'category'
-	 ecr.ebars(df)
-}
 }

@@ -1,4 +1,5 @@
 
+
 test_that("registerMap", {
   json <- jsonlite::read_json("https://echarts.apache.org/examples/data/asset/geo/USA.json")
   dusa <- USArrests
@@ -34,7 +35,7 @@ test_that("tl.series and timeline options", {
   expect_true(p$x$opts$dataset[[5]]$transform$config['='] == 1004)
 })
 test_that("tl.series type 'map'", {
-  if (interactive()) {
+#  if (interactive()) {
     cns <- data.frame(
       country = c('United States','China','Russia'),
       value = runif(3, 1, 100)
@@ -44,8 +45,8 @@ test_that("tl.series type 'map'", {
         visualMap= list(calculable=TRUE, max=100)
     )
     expect_equal(p$x$opts$options[[1]]$series[[1]]$data[[1]]$name, "China")
-  }
-  else expect_equal(1,1)
+#  }
+#  else expect_equal(1,1)
 })
   
 test_that("ec.upd(), echarts.registerTransform and ecStat", {
@@ -61,7 +62,7 @@ test_that("ec.upd(), echarts.registerTransform and ecStat", {
 })
 
 test_that("leaflet with ec.clmn", {
-  if (interactive()) {
+#  if (interactive()) {
     tmp <- quakes |> dplyr::relocate('long') |>  # set order to lon,lat
       dplyr::mutate(size= exp(mag)/20) |> head(100)  # add accented size
     p <- tmp |> ec.init(load= 'leaflet',
@@ -72,8 +73,8 @@ test_that("leaflet with ec.clmn", {
     
     expect_equal(p$x$opts$leaflet$zoom, 6)
     expect_equal(class(p$x$opts$tooltip$formatter), 'JS_EVAL')
-  }
-  else expect_equal(1,1)
+#  }
+#  else expect_equal(1,1)
 })
 
 test_that("ec.data format dendrogram", {
@@ -159,8 +160,21 @@ test_that("load 3D surface", {
   #else expect_equal(1,1)
 })
 
+test_that("serie from ec.util with cartesian3D", {
+  # usage for LIDAR data
+  library(sf)
+  tmp <- st_as_sf(data.frame(x=c(-70,-70,-70), y=c(45, 46, 47), z=c(1,2,3)), 
+                  coords= c('x','y','z'), crs= st_crs(4326))
+  p <- ec.init(load= c('3D'),
+        series= ec.util(df= tmp, 
+                        coordinateSystem= 'cartesian3D', type= 'scatter3D')
+        #,tooltip= list(formatter= '{b}')
+  )
+  expect_equal(p$x$opts$series[[1]]$data[[2]][[2]], 46)
+  expect_true( class(p$x$opts$xAxis3D[[1]])=='list')
+})
+
 test_that("shapefiles with multi-polygons", {
-  #if (interactive()) {
     library(sf)
     fname <- system.file("shape/nc.shp", package="sf")
     nc <- as.data.frame(st_read(fname))
@@ -172,8 +186,6 @@ test_that("shapefiles with multi-polygons", {
     expect_true(p$x$opts$leaflet$roam)
     expect_equal(p$x$opts$series[[108]]$name, 'Brunswick')
     expect_equal(p$x$opts$series[[108]]$itemStyle$opacity, 0.3)
-  #}
-  #else expect_equal(1,1)
 })
 
 test_that("shapefile from ZIP", {

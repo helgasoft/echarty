@@ -1,5 +1,16 @@
 # ----------- General --------------
 
+#' Introduction
+#' 
+#' echarty provides a lean interface between R and native ECharts components.\cr
+#' It does not mimic original ECharts statements, but wraps them in R lists. \cr
+#' Therefore two major benefits  - just a **few commands** to learn, and enjoy the **full functionality** of ECharts.
+#' 
+#' @includeRmd vignettes/info.Rmd
+#'
+#' @name -- Introduction --
+NULL
+
 #' Initialize command
 #'
 #' Required to build a chart. In most cases this will be the only command necessary.
@@ -32,12 +43,12 @@
 #' @param ... other arguments to pass to the widget. \cr
 #'   Custom echarty widget arguments include: \cr
 #'  * elementId - Id of the widget, default is NULL(auto-generated)
-#'  * load - name(s) of plugin(s) to load. Could be a character vector or comma-delimited string. default NULL.
+#'  * load - name(s) of plugin(s) to load. A character vector or comma-delimited string. default NULL.
 #'  * ask - prompt user before downloading plugins when \emph{load} is present, FALSE by default
 #'  * js - single string or a vector with JavaScript expressions to evaluate.\cr 
 #'      First expression is evaluated before chart initialization. \cr
-#'      Second is evaluated with an exposed object \emph{opts}. \cr
-#'      Third is evaluated with an exposed \emph{chart} object after \emph{opts} have been set.
+#'      Second is evaluated with exposed object \emph{opts}. \cr
+#'      Third is evaluated with exposed \emph{chart} object after \emph{opts} have been set.
 #'  * renderer - 'canvas'(default) or 'svg'
 #'  * locale - 'EN'(default) or 'ZH'. Use predefined or custom \href{https://gist.github.com/helgasoft/0618c6537c45bfd9e86d3f9e1da497b8}{like so}.
 #'  * useDirtyRect - enable dirty rectangle rendering or not, FALSE by default, see \href{https://echarts.apache.org/en/api.html#echarts.init}{here}
@@ -77,9 +88,6 @@
 #' ) # |> ec.upd(...
 #' p$x$opts$timeline <- append(p$x$opts$timeline, list(autoPlay=TRUE))
 #' p
-#' 
-#' @seealso 
-#' Package information in [echarty-package].
 #' 
 #' @importFrom htmlwidgets createWidget sizingPolicy getDependency JS shinyWidgetOutput shinyRenderWidget
 #' @import dplyr
@@ -244,7 +252,7 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter',
     }
   }
 
-  # create widget
+  # ------------- create widget ----------------
   wt <- htmlwidgets::createWidget(
     name = 'echarty',
     x,
@@ -252,7 +260,7 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter',
     height = height,
     package = 'echarty',
     elementId = elementId,
-    preRenderHook = .preRender,
+    # preRenderHook = .preRender,
     sizingPolicy = htmlwidgets::sizingPolicy(
       defaultWidth = '100%',
       knitr.figure = FALSE,
@@ -260,13 +268,16 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter',
     ),
     dependencies = deps
   )
-
-  # check for theme
-  theme <- getOption('echarty.theme')   # default
-  if (!is.null(theme)) {
-    wt <- ec.theme(wt, theme)
+  
+  tmp <- getOption('echarty.font')
+  if (!is.null(tmp))
+    wt$x$opts$textStyle <- list(fontFamily= tmp)
+  
+  tmp <- getOption('echarty.theme')   # default
+  if (!is.null(tmp)) {
+    wt <- ec.theme(wt, tmp)
   }
-
+  
   # ------------- plugins loading -----------------------------
   load <- opts$load;
   if (length(load)==1 && grepl(',', load, fixed=TRUE))
@@ -279,7 +290,7 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter',
       # customizations for leaflet
       wt$x$opts$xAxis <- NULL
       wt$x$opts$yAxis <- NULL
-      urltls <- getOption('echarty.tiles')
+      urltls <- getOption('echarty.urlTiles')
       if (is.null(urltls))
         urltls <- 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
       wt$x$opts$leaflet = list(
@@ -924,41 +935,39 @@ ecr.band <- function(df=NULL, lower=NULL, upper=NULL, type='polygon', ...) {
 #' @details 
 #'  \emph{ecr.ebars} are custom series, so \emph{ec.init(load='custom')} is required. \cr
 #'  Grouped series are supported, but \emph{df} is required with group column included. \cr
-#'  Will add a chart legend and its own tooltip if none is provided.\cr
-#'  Add a name attribute to show error bars separate in the legend. \cr
-#'  Command should be called last, after all other series.\cr
+#'  Will add its own tooltip if none is provided.\cr
+#'  Adding a name parameter will show error bars separate in the legend. \cr
+#'  Command should be called after all other series are already set.\cr
 #'  Simple non-grouped series could be displayed with formatter \emph{riErrBarSimple} instead of \emph{ecr.ebars}. See example below.
 #'
 #' @examples
-#' if (interactive()) {
 #' library(dplyr)
-#' tmp <- round(rnorm(24, sin(1:24/2)*10, .5))
-#' df <- data.frame(x = 1:24, val = tmp, 
-#'                  lower = round(rnorm(24, tmp -10, .5)),
-#'                  upper = round(rnorm(24, tmp + 5, .8)),
-#'                  cat= rep(c('A','B'),24) )
-#'                  
-#' df |> ec.init(load='custom', tooltip= list(show=TRUE)) |> ecr.ebars()
+#' df <- iris |> distinct(Sepal.Length, .keep_all= TRUE) |> 
+#'   mutate(lo= Sepal.Width-Petal.Length/2, hi= Sepal.Width+Petal.Width) |>
+#'   select(Sepal.Length, Sepal.Width, lo, hi, Species)
 #'   
-#' #------ riErrBarSimple ------
+#' df |> ec.init(load='custom', legend=list(show=TRUE), xAxis=list(scale=TRUE)) |> 
+#'   ecr.ebars(name= 'err')
+#' 
+#' # ----- grouped -------
+#' dfg <- df |> group_by(Species)
+#' dfg |> 
+#'   ec.init(load= 'custom', legend= list(show=TRUE), xAxis= list(scale=TRUE)) |>
+#'   ecr.ebars(dfg)
+#'   
+#' # ----- riErrBarSimple ------
 #' df |> ec.init(load= 'custom',
 #'               title= list(text= "riErrBarSimple"),
 #'               legend= list(show=TRUE),
-#'               xAxis= list(data= df$category)) |> ec.upd({
-#'   series <- append(series, list(list(
-#'     type= "custom", name= "error",
-#'     itemStyle= list(borderWidth= 1.5, color= 'brown'),
-#'     encode= list(x= 0, y= list(1, 2)),
-#'     data= ec.data(df |> select(x,lower,upper)),
-#'     renderItem= htmlwidgets::JS("riErrBarSimple") )))
+#'               xAxis= list(scale= TRUE)
+#' ) |> ec.upd({
+#'   series <- append(series, list(
+#'     list(type= "custom", name= "error",
+#'          itemStyle= list(color= 'brown'),
+#'          data= ec.data(df |> select(Sepal.Length,lo,hi)),
+#'          renderItem= htmlwidgets::JS("riErrBarSimple")) ))
 #' })
 #' 
-#' # ----- grouped -------
-#' df |> group_by(cat) |> 
-#'   ec.init(load= 'custom',
-#'           xAxis= list(type='value')) |>  # fix preset 'category'
-#' 	 ecr.ebars(df)
-#' }
 #' @export
 ecr.ebars <- function(wt, df=NULL, hwidth=6, ...) {
   # alternating bars with custom series doesn't work, first bars then customs
@@ -1007,7 +1016,7 @@ ecr.ebars <- function(wt, df=NULL, hwidth=6, ...) {
       c <- list(type='custom', name=name, renderItem = htmlwidgets::JS(info), ...)
     else
       c <- list(type='custom', name=name, renderItem = htmlwidgets::JS(info),
-                data=ec.data(df, 'values'), ...)
+                data= ec.data(df), ...)
     
     if (is.null(c$z)) c$z <- 3
     if (is.null(c$itemStyle$borderWidth)) c$itemStyle$borderWidth <- 1.5
@@ -1017,8 +1026,7 @@ ecr.ebars <- function(wt, df=NULL, hwidth=6, ...) {
       c$itemStyle$color <- 'black'
     }
     if (is.null(c$tooltip))  # shows up on non-grouped data
-      c$tooltip <- list(formatter=htmlwidgets::JS("function(x) { let h=(typeof x.data[1] !== 'undefined') ? ",
-                                                  "'high '+x.value[3]+'<br>value <b>'+x.value[1] + '</b><br>low '+x.value[2] : ''; return h; }"))
+      c$tooltip <- list(formatter= ec.clmn('<br>value <b>%@</b> <br>range <b>%@ to %@</b>', 2,3,4))
     c
   }
   
@@ -1028,7 +1036,7 @@ ecr.ebars <- function(wt, df=NULL, hwidth=6, ...) {
       if (is.null(name)) name <- wt$x$opts$dataset[[1]]$source[[1]][2]
       cser <- list(oneSerie(name))
     } else 
-      stop('ecr.ebars: dataset is grouped, use df parameter', call. = FALSE)
+      stop('ecr.ebars: dataset is grouped, set df parameter', call. = FALSE)
   }
   else {
     if (dplyr::is.grouped_df(df)) {    # groups
@@ -1038,13 +1046,12 @@ ecr.ebars <- function(wt, df=NULL, hwidth=6, ...) {
         name <- unlist(unique(unname(gp[,grnm])))
         oneSerie(name, gp)
       })
-      wt$x$opts$xAxis$type <- 'category'
     }
     else
       cser <- list(oneSerie(names(df)[2], df))
   }
   wt$x$opts$series <- append(wt$x$opts$series, cser)
-  if (!("legend" %in% names(wt$x$opts))) wt$x$opts$legend <- list(show=TRUE)
+  #if (!"legend" %in% names(wt$x$opts)) wt$x$opts$legend <- list(show=TRUE)
   wt
 }
 
@@ -1131,7 +1138,7 @@ ecs.proxy <- function(id) {
 #' @return A proxy object to update the chart.
 #' 
 #' @seealso [ecs.proxy], [ecs.render], [ecs.output] \cr
-#' Read about event handling in [echarty-package], code in [ec.examples].
+#' Read about event handling in [-- Introduction --], code in [ec.examples].
 #' 
 #' @examples
 #' if (interactive()) {
@@ -1245,7 +1252,6 @@ ec.theme <- function (wt, name, code= NULL)
   if (missing(name))
     stop('ec.theme: must define a name', call. = FALSE)
 
-  #if (length(wt$x[[1]])==0) wt$x[[1]] <- NULL  # parasite list
   wt$x$theme <- name
   if (!is.null(code))
     wt$x$themeCode <- code
@@ -1358,12 +1364,14 @@ ec.fromJson <- function(txt, ...) {
 
 #' Update option lists
 #' 
-#' Improve readability by chaining commands
+#' And improve readability by chaining commands after ec.init
 #' 
 #' @param wt An echarty widget
-#' @param ... A commands expression to update option lists
+#' @param ... R commands to update chart option lists
 #'
-#' @details Replaces syntax\cr
+#' @details ec.upd makes changes to chart elements already set by ec.init.\cr
+#' It should be always piped after ec.init.
+#' Replaces syntax\cr
 #'   \verb{   }p <- ec.init(...)\cr
 #'   \verb{   }p$x$opts$series <- ...\cr
 #' with\cr
@@ -1392,41 +1400,41 @@ ec.upd <- function(wt, ...) {
 #' @param cmd Utility command\cr
 #' * \emph{sf.series} returns a list of chart series\cr
 #'      required parameter \emph{df} - value from \link[sf]{st_read}\cr
-#'      optional parameter \emph{nid} - column name for name-id used in tooltips\cr
-#'      optional coordinate system \emph{cs} - \emph{leaflet}(default) or \emph{geo}\cr
+#'      optional \emph{nid} - column name for name-id used in tooltips\cr
+#'      optional \emph{verbose} - print shapefile item names in console\cr
 #' * \emph{sf.bbox} returns JavaScript code to position a map inside a bounding box from \link[sf]{st_bbox}, for leaflet only.\cr
 #' * \emph{sf.unzip} unzips a remote file and returns local file name of the unzipped .shp file\cr
 #'      required parameter \emph{url} - URL of remote zipped shapefile\cr
-#'      optional parameter \emph{shp} - name of .shp file inside ZIP file if multiple exist. Do not add file extension. \cr
-#' * \emph{tabset} returns a \emph{tagList} of tabs, each tab may contain a chart.\cr
+#'      optional \emph{shp} - name of .shp file inside ZIP file if multiple exist. Do not add file extension. \cr
+#' * \emph{tabset} returns a \link[htmltools]{tagList} of tabs, each tab may contain a chart.\cr
 #' * \emph{layout} returns a container \link[htmltools]{div} in rmarkdown, otherwise \link[htmltools]{browsable}.\cr
 #' @param ... Optional parameters for the command \cr
 #'      for \emph{sf.series} - see \href{https://echarts.apache.org/en/option.html#series-scatter.type}{points}, \href{https://echarts.apache.org/en/option.html#series-lines.type}{polylines}, polygons(itemStyle).\cr
 #'      for \emph{tabset} parameters should be in format \emph{name1=chart1, name2=chart2}, see example\cr
 #' @details 
-#' **cmd='sf.series'**\cr
-#' \verb{   }Goal is to build leaflet or \href{https://echarts.apache.org/en/option.html#geo.map}{geo} map series from shapefiles.\cr
+#' **cmd = 'sf.series'**\cr
+#' \verb{   }Goal is to build \emph{leaflet} or \href{https://echarts.apache.org/en/option.html#geo.map}{geo} map series from shapefiles.\cr
 #' \verb{   }Supported types: POINT, MULTIPOINT, LINESTRING, MULTILINESTRING, POLYGON, MULTIPOLYGON \cr
+#' \verb{   }Coordinate system is \emph{leaflet}(default) or \emph{geo}\cr
 #' \verb{   }Limitations:\cr 
 #' \verb{     }polygons can have only their name in tooltip,  \cr
 #' \verb{     }assumes Geodetic CRS is WGS 84, use \link[sf]{st_transform} with \emph{crs=4326} to convert.\cr
-#' \verb{   }optional parameter: \cr
-#' \verb{     }verbose= Print shapefile item names in console\cr
-#' **cmd='layout'** \cr
-#' \verb{   }multiple charts in table-like rows/columns format, ...= List of charts\cr
+#' **cmd = 'layout'** \cr
+#' \verb{   }multiple charts in table-like rows/columns format\cr
+#' \verb{   }...= List of charts\cr
 #' \verb{   }optional parameters are: \cr
 #' \verb{     }title= Title for the set, rows= Number of rows, cols= Number of columns,\cr
 #' \verb{     }width= Width of columns (one of xs, md, lg)\cr
 #' \verb{   }For 3-4 charts one would use multiple series within a \href{https://echarts.apache.org/en/option.html#grid}{grid}. \cr
 #' \verb{   }For greater number of charts _ec.util(cmd='layout')_ comes in handy\cr
-#' **cmd='tabset'** \cr
+#' **cmd = 'tabset'** \cr
 #' \verb{   }...= a list of charts OR tab-name/chart pairs like \emph{n1=chart1, n2=chart2}\cr
 #' \verb{   }optional parameters are: \cr
 #' \verb{     }width= Width of tabs in pixels, height= Height of tabs in pixels\cr
 #' \verb{     }tabStyle= tab style string, see default \emph{tabStyle} variable in the code
 #' 
 #' @examples 
-#' if (interactive()) {
+#' if (interactive()) {  # comm.out: Fedora errors about some 'browser'
 #'   library(sf)
 #'   fname <- system.file("shape/nc.shp", package="sf")
 #'   nc <- as.data.frame(st_read(fname))
@@ -1435,31 +1443,31 @@ ec.upd <- function(wt, ...) {
 #'      series= ec.util(df= nc, nid= 'NAME', itemStyle= list(opacity= 0.3)),
 #'      tooltip= list(formatter= '{a}')
 #'   )
+#' 
+#'   htmltools::browsable(
+#'     lapply(iris |> dplyr::group_by(Species) |> dplyr::group_split(), 
+#'            function(x) {
+#'      x |> ec.init(ctype= 'scatter', title= list(text= unique(x$Species)))
+#'            }) |> 
+#'     ec.util(cmd= 'tabset')
+#'   )
+#' 
+#'   p1 <- cars |> ec.init(grid= list(top= 20))
+#'   p2 <- mtcars |> ec.init()
+#'   htmltools::browsable(
+#'     ec.util(cmd= 'tabset', cars= p1, mtcars= p2, width= 200, height= 200)
+#'   )
+#' 
+#'   lapply(list('dark','macarons','gray','jazz','dark-mushroom'),
+#'                 function(x) cars |> ec.init() |> ec.theme(x) ) |>
+#'   ec.util(cmd='layout', cols= 2, title= 'my layout')
 #' }
-#'
-#' library(dplyr)
-#' htmltools::browsable(
-#'   lapply(iris |> group_by(Species) |> group_split(), function(x) {
-#'     x |> ec.init(ctype= 'scatter', title= list(text= unique(x$Species)))
-#'   }) |> 
-#'   ec.util(cmd= 'tabset')
-#' )
-#' 
-#' p1 <- cars |> ec.init(grid= list(top= 20))
-#' p2 <- mtcars |> ec.init()
-#' htmltools::browsable(
-#'   ec.util(cmd= 'tabset', cars= p1, mtcars= p2, width= 200, height= 200)
-#' )
-#' 
-#' lapply(list('dark','macarons','gray','jazz','dark-mushroom'),
-#'               function(x) cars |> ec.init() |> ec.theme(x) ) |>
-#' ec.util(cmd='layout', cols= 2, title= 'my layout')
 #' @importFrom utils unzip
 #' @export
 ec.util <- function( ..., cmd='sf.series') {
   
   opts <- list(...)
-
+  
   do.opties <- function(name, dflt=NULL) {
     j <- 0
     for(n in name) {
@@ -1485,88 +1493,112 @@ ec.util <- function( ..., cmd='sf.series') {
               coords <- list()
               for(j in 1:nrow(gm))
                 coords <- append(coords, list(c(gm[j,1], gm[j,2])))
-              sers <<- append(sers, list(list(
-                type= 'custom', coordinateSystem= cs, 
+              s1 <- list(
+                type= 'custom',
                 renderItem= htmlwidgets::JS('riPolygon'),
                 name= dname, 
                 data= coords, ...
-              )))
+              )
+              if (is.null(s1$coordinateSystem)) s1$coordinateSystem <- 'leaflet'
+              s1$df <- NULL
+              sers <<- append(sers, list(s1))
             } else polig(geom[[k]])  # recursive
           }
         }
-        geometry <- L1 <- cmd <- NULL  # trick to avoid code checking NOTES
+        #geometry <- cmd <- 
+        L1 <- NULL     # avoid code checking NOTES
         sers <- list()
         dff <- opts$df
+        opts$df <<- NULL
+        if (is.null(opts$coordinateSystem)) opts$coordinateSystem <<- 'leaflet'
+        
         switch( class(dff$geometry)[1],
-          'sfc_MULTIPOINT' =,
-          'sfc_POINT'= {
-            dff <- dff |> rename(value= geometry)
-            #dff$value <- lapply(dff$value, function(x) x[1:2])  # XY, remove Z if any
-            tt <- NULL
-            flds <- colnames(dff)[! colnames(dff) %in% c("value")]
-            if (length(flds)>0) {
-              if (length(flds)>10) flds <- flds[1:10]
-              tt <- c(paste(rep('%@', length(flds)), collapse='<br>'), flds)
-            }
-            pnts <- ec.data(dff, 'names')
-            sers <- list(
-              list(type= 'scatter', coordinateSystem= cs,
-                   data= pnts, ...
-              ))
-            if (!is.null(tt)) 
-              sers[[1]]$tooltip= list(formatter= do.call("ec.clmn", as.list(tt)))
-          },
-          'sfc_POLYGON' =,
-          'sfc_MULTIPOLYGON' = {
-            for(i in 1:nrow(dff)) {
-              dname <- i
-              if (!is.null(opts$nid) && opts$nid %in% colnames(dff)) 
-                dname <- dff[i, opts$nid][[1]]
-              if (verbose) cat(dname,',', sep='')
-              geom <- dff$geometry[[i]]
-              polig(geom)
-            }
-          },
-          'sfc_LINESTRING' = {
-            tmp <- dff$geometry
-            tmp <- as.data.frame(cbind(do.call(rbind, tmp), 
-                                       L1= rep(seq_along(tmp), times= vapply(tmp, nrow, 0L))))
-            for(i in 1:nrow(dff)) {
-              dname <- ifelse(is.null(opts$nid), i, dff[i, opts$nid][[1]])
-              if (verbose) cat(dname,',', sep='')
-              coords <- list()
-              geom <- tmp |> filter(L1==i)
-              for(k in 1:nrow(geom))
-                coords <- append(coords, list(c(geom[k,1], geom[k,2])))
-              
-              sers <- append(sers, list(list(
-                type='lines', coordinateSystem= cs, polyline= TRUE,
-                name= dname, 
-                tooltip= list(formatter= '{a}'),
-                data= list(coords), ... )))
-            }
-          },
-          'sfc_MULTILINESTRING' = {
-            for(i in 1:nrow(dff)) {
-              dname <- ifelse(is.null(opts$nid), i, dff[i,opts$nid][[1]])
-              if (verbose) cat(dname,',', sep='')
-              corda <- list()
-              geom <- dff$geometry[[i]]
-              for(k in 1:length(geom)) {
-                gm <- as.data.frame(geom[[k]])
-                coords <- list()
-                for(j in 1:nrow(gm))
-                  coords <- append(coords, list(c(gm[j,1], gm[j,2])))
-                corda <- append(corda, list(coords))
-              }
-              sers <- append(sers, list(list(
-                type='lines', coordinateSystem= cs, polyline= TRUE,
-                name= dname, 
-                tooltip= list(formatter= '{a}'),
-                data= corda, ... )))
-            }
-          },
-          stop(paste('ec.util:',class(dff$geometry)[1],'geometry not supported'), call.= FALSE)
+                'sfc_POINT' =,
+                'sfc_MULTIPOINT'= {
+                  #            dff <- dff |> rename(value= geometry)
+                  #dff$value <- lapply(dff$value, function(x) x[1:2])  # XY, remove Z if any
+                  tt <- NULL
+                  flds <- colnames(dff)[! colnames(dff) %in% c("geometry")]
+                  if (length(flds)>0) {
+                    if (length(flds)>10) flds <- flds[1:10]
+                    tt <- c(paste(rep('%@', length(flds)), collapse='<br>'), flds)
+                  }
+                  #            pnts <- ec.data(dff, 'names')
+                  pnts <- ec.data(do.call(rbind, dff$geometry) |> as.data.frame())
+                  s1 <- list(data= pnts, ...)
+                  if (is.null(s1$type)) s1$type <- 'scatter'
+                  if (!is.null(tt)) 
+                    s1$tooltip= list(formatter= do.call("ec.clmn", as.list(tt)))
+                  s1$df <- NULL
+                  sers <- list(s1)
+                  # opts$type <<- NULL   # cleanup
+                  # opts$coordinateSystem <<- NULL
+                  # sers <- list(append(list(sers), opts))
+                  # sers[[1]]$df <- NULL  #ok
+                  #opts$df <<- NULL
+                  # sers <- list(
+                  #   # list(type= 'scatter', coordinateSystem= cs,
+                  #   list(type= ?, data= pnts, ...))
+                  # if (!is.null(tt)) 
+                  #   sers[[1]]$tooltip= list(formatter= do.call("ec.clmn", as.list(tt)))
+                },
+                'sfc_POLYGON' =,
+                'sfc_MULTIPOLYGON' = {
+                  for(i in 1:nrow(dff)) {
+                    dname <- i
+                    if (!is.null(nid) && (nid %in% colnames(dff))) 
+                      dname <- dff[i, nid][[1]]
+                    if (verbose) cat(dname,',', sep='')
+                    geom <- dff$geometry[[i]]
+                    polig(geom)
+                  }
+                },
+                'sfc_LINESTRING' = {
+                  tmp <- dff$geometry
+                  tmp <- as.data.frame(cbind(do.call(rbind, tmp), 
+                                             L1= rep(seq_along(tmp), times= vapply(tmp, nrow, 0L))))
+                  for(i in 1:nrow(dff)) {
+                    dname <- ifelse(is.null(nid), i, dff[i, nid][[1]])
+                    if (verbose) cat(dname,',', sep='')
+                    coords <- list()
+                    geom <- tmp |> filter(L1==i)
+                    for(k in 1:nrow(geom))
+                      coords <- append(coords, list(c(geom[k,1], geom[k,2])))
+                    s1 <- list(
+                      type='lines', polyline= TRUE,
+                      name= dname, 
+                      tooltip= list(formatter= '{a}'),
+                      data= list(coords), ... )
+                    
+                    if (is.null(s1$coordinateSystem)) s1$coordinateSystem <- 'leaflet'
+                    s1$df <- NULL
+                    sers <- append(sers, list(s1))
+                  }
+                },
+                'sfc_MULTILINESTRING' = {
+                  for(i in 1:nrow(dff)) {
+                    dname <- ifelse(is.null(nid), i, dff[i,nid][[1]])
+                    if (verbose) cat(dname,',', sep='')
+                    corda <- list()
+                    geom <- dff$geometry[[i]]
+                    for(k in 1:length(geom)) {
+                      gm <- as.data.frame(geom[[k]])
+                      coords <- list()
+                      for(j in 1:nrow(gm))
+                        coords <- append(coords, list(c(gm[j,1], gm[j,2])))
+                      corda <- append(corda, list(coords))
+                    }
+                    s1 <- list(
+                      type='lines', polyline= TRUE, 
+                      name= dname, 
+                      tooltip= list(formatter= '{a}'),
+                      data= corda, ... )
+                    if (is.null(s1$coordinateSystem)) s1$coordinateSystem <- 'leaflet'
+                    s1$df <- NULL
+                    sers <- append(sers, list(s1))
+                  }
+                },
+                stop(paste('ec.util:',class(dff$geometry)[1],'geometry not supported'), call.= FALSE)
         )
         cnt <- length(sers)
         recs <- sum(unlist(lapply(sers, function(x) {
@@ -1582,8 +1614,8 @@ ec.util <- function( ..., cmd='sf.series') {
         stop('ec.util: expecting parameter df', call. = FALSE)
       if (is.null(opts$df$geometry))
         stop('ec.util: expecting df$geometry', call. = FALSE)
-      cs <- verbose <- NULL   # CRAN check fix
-      do.opties(c('cs','verbose'), list('leaflet', FALSE))
+      nid <- verbose <- NULL   # fix for CRAN check
+      do.opties(c('nid','verbose'), list(NULL, FALSE))
       out <- do.series()
     },
     
@@ -1616,71 +1648,62 @@ ec.util <- function( ..., cmd='sf.series') {
     'tabset'= {
       width <- height <- tabStyle <- NULL   # CRAN check fix
       do.opties(c('width','height','tabStyle'), list(300, 300, 
-"<style>
+                                                     "<style>
 /*	CSS for the main interaction */
 .tabset > input[type='radio'] {
-	position: absolute;
-	left: -200vw;
+position: absolute;
+left: -200vw;
 }
-
 .tabset .tab-panel {	display: none; }
-
 .tabset > input:first-child:checked ~ .tab-panels > .tab-panel:first-child,
 .tabset > input:nth-child(3):checked ~ .tab-panels > .tab-panel:nth-child(2),
 .tabset > input:nth-child(5):checked ~ .tab-panels > .tab-panel:nth-child(3),
 .tabset > input:nth-child(7):checked ~ .tab-panels > .tab-panel:nth-child(4),
 .tabset > input:nth-child(9):checked ~ .tab-panels > .tab-panel:nth-child(5),
 .tabset > input:nth-child(11):checked ~ .tab-panels > .tab-panel:nth-child(6) {
-	display: block;
+display: block;
 }
-
 /*	Styling */
 body {
-		font: 16px/1.5em 'Overpass', 'Open Sans', Helvetica, sans-serif;
-		color: #333; font-weight: 300;
+font: 16px/1.5em 'Overpass', 'Open Sans', Helvetica, sans-serif;
+color: #333; font-weight: 300;
 }
-
 .tabset > label {
-	position: relative;
-	display: inline-block;
-	padding: 15px 15px 25px;
-	border: 1px solid transparent;
-	border-bottom: 0;
-	cursor: pointer;
-	font-weight: 600;
+position: relative;
+display: inline-block;
+padding: 15px 15px 25px;
+border: 1px solid transparent;
+border-bottom: 0;
+cursor: pointer;
+font-weight: 600;
 }
-
 .tabset > label::after {
-	content: '';
-	position: absolute;
-	left: 15px;
-	bottom: 10px;
-	width: 22px;
-	height: 4px;
-	background: #8d8d8d;
+content: '';
+position: absolute;
+left: 15px;
+bottom: 10px;
+width: 22px;
+height: 4px;
+background: #8d8d8d;
 }
-
 .tabset > label:hover,
 .tabset > input:focus + label { color: #06c; }
-
 .tabset > label:hover::after,
 .tabset > input:focus + label::after,
 .tabset > input:checked + label::after { background: #06c;}
-
 .tabset > input:checked + label {
-	border-color: #ccc;
-	border-bottom: 1px solid #fff;
-	margin-bottom: -1px;
+border-color: #ccc;
+border-bottom: 1px solid #fff;
+margin-bottom: -1px;
 }
-
 .tab-panel {
-	padding: 10px 0;
-	border-top: 1px solid #ccc;
+padding: 10px 0;
+border-top: 1px solid #ccc;
 }
 body { padding: 10px; }
 .tabset { max-width: 65em; }
 </style>" ))
-
+      
       tnames <- names(opts)
       if ((is.null(tnames) || length(tnames)==1) && 
           ('echarty' %in% class(opts[[1]][[1]]))) {  # pipe
@@ -1696,12 +1719,12 @@ body { padding: 10px; }
         tinp <- htmltools::tags$input(type='radio', name='tabso', id=tid, `aria-controls`=n)
         if (cnt==1) tinp <- htmltools::tagAppendAttributes(tinp, checked=1)
         tset <- htmltools::tagAppendChildren(tset, 
-            tinp, htmltools::tags$label(`for`=tid, n))
+                                             tinp, htmltools::tags$label(`for`=tid, n))
         cont <- unname(opts[n]) 
         cont[[1]]$width <- width
         cont[[1]]$height <- height
         tpans <- htmltools::tagAppendChild(tpans, 
-            htmltools::tags$section(id=n, class='tab-panel', cont))
+                                           htmltools::tags$section(id=n, class='tab-panel', cont))
         tout <- htmltools::tagAppendChild(tset, tpans)
         cnt <- cnt + 1
       }
@@ -1758,6 +1781,7 @@ body { padding: 10px; }
     stop(paste("ec.util: invalid 'cmd' parameter",cmd), call. = FALSE)
   )
   out
+  
 }
 
 
@@ -1831,16 +1855,12 @@ ec.plugjs <- function(wt=NULL, source=NULL, ask=FALSE) {
   return(wt)
 }
 
-# needed by widget init
-.preRender <- function(wt) {
+# called by widget init
+# .preRender <- function(wt) {
+#   wt
+# }
 
-  ff <- getOption('echarty.font')
-  if (!is.null(ff))
-    wt$x$opts$textStyle <- list(fontFamily = ff)
-  wt
-}
-
-if (requireNamespace("shiny", quietly = TRUE)) {
+if (requireNamespace("shiny", quietly= TRUE)) {
   
   # for Shiny actions
   .onAttach <- function(libname, pkgname) {
@@ -1859,7 +1879,7 @@ if (requireNamespace("shiny", quietly = TRUE)) {
 
 #  ------------- Global Options -----------------
 #' 
-#' For info on options and prefixes, type \emph{?echarty} in the R console.
+#' For info on options and prefixes, see [-- Introduction --].
 
 
 

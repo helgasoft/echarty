@@ -9,12 +9,14 @@ ec.upd(wt, ...)
 \arguments{
 \item{wt}{An echarty widget}
 
-\item{...}{A commands expression to update option lists}
+\item{...}{R commands to update chart option lists}
 }
 \description{
-Improve readability by chaining commands
+And improve readability by chaining commands after ec.init
 }
 \details{
+ec.upd makes changes to chart elements already set by ec.init.\cr
+It should be always piped after ec.init.
 Replaces syntax\cr
 \verb{   }p <- ec.init(...)\cr
 \verb{   }p$x$opts$series <- ...\cr

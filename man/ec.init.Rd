@@ -51,12 +51,12 @@ string and have \code{'px'} appended.}
 Custom echarty widget arguments include: \cr
 \itemize{
 \item elementId - Id of the widget, default is NULL(auto-generated)
-\item load - name(s) of plugin(s) to load. Could be a character vector or comma-delimited string. default NULL.
+\item load - name(s) of plugin(s) to load. A character vector or comma-delimited string. default NULL.
 \item ask - prompt user before downloading plugins when \emph{load} is present, FALSE by default
 \item js - single string or a vector with JavaScript expressions to evaluate.\cr
 First expression is evaluated before chart initialization. \cr
-Second is evaluated with an exposed object \emph{opts}. \cr
-Third is evaluated with an exposed \emph{chart} object after \emph{opts} have been set.
+Second is evaluated with exposed object \emph{opts}. \cr
+Third is evaluated with exposed \emph{chart} object after \emph{opts} have been set.
 \item renderer - 'canvas'(default) or 'svg'
 \item locale - 'EN'(default) or 'ZH'. Use predefined or custom \href{https://gist.github.com/helgasoft/0618c6537c45bfd9e86d3f9e1da497b8}{like so}.
 \item useDirtyRect - enable dirty rectangle rendering or not, FALSE by default, see \href{https://echarts.apache.org/en/api.html#echarts.init}{here}
@@ -105,7 +105,4 @@ p <- iris |> dplyr::group_by(Species) |> ec.init(
 p$x$opts$timeline <- append(p$x$opts$timeline, list(autoPlay=TRUE))
 p
 
-}
-\seealso{
-Package information in \link{echarty-package}.
 }

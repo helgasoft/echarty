@@ -50,7 +50,6 @@
 #' 
 #' 
 #' #------ Plugin leaflet
-#' if (interactive()) {
 #' tmp <- quakes |> dplyr::relocate('long') |>  # set order to long,lat
 #'   dplyr::mutate(size= exp(mag)/20) |> head(100)   # add accented size
 #' tmp |> ec.init(load= 'leaflet',
@@ -60,10 +59,8 @@
 #'   series[[1]]$name <- 'quakes'
 #'   series[[1]]$symbolSize = ec.clmn(6, scale=2)  # 6th column is size
 #' })
-#' }
 #'
 #' #------ Plugin 'world' with visualMap
-#' if (interactive()) {
 #' cns <- data.frame(
 #'   country = c('United States','China','Russia'),
 #'   value = runif(3, 1, 100)
@@ -75,7 +72,6 @@
 #'   tl.series= list(type= 'map', 
 #'                   encode= list(value='value', name='country')) 
 #' )
-#' }
 #'
 #' #------ Plugin 'world' with lines and color coding
 #' if (interactive()) {
@@ -455,8 +451,8 @@
 #' q4 <- main |> ec.upd({ series[[1]]$encode <- list(y='qsec', x='mpg')})
 #' q4$x$connect <- 'group1'
 #' # q4$x$disconnect <- 'group1'  # ok too
-#' if (interactive()) {
-#'   ec.util(cmd='layout', charts=list(q1,q2,q3,q4), cols=2, title='group connect')
+#' if (interactive()) {   # browsable
+#'   ec.util(cmd='layout', list(q1,q2,q3,q4), cols=2, title='group connect')
 #' }
 #' 
 #' 

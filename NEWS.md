@@ -1,4 +1,11 @@
-# history of echarty package development
+# history of package _echarty_
+
+## v.1.4.7.01 in development
+
+- added vignette with introduction
+- _ecr.ebars_ fix bug, enhance tooltips
+- _ec.util_ improvements in sf.series, added support for 3D
+- fixes to global options theme & font
 
 ## v.1.4.7
 
