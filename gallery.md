@@ -159,37 +159,39 @@ library(data.table)
 library(binom); library(dplyr)
 # function for percent and CI calculation
 myfun_binom <- function(n,all){
-	round((binom::binom.confint(n, all, methods= "wilson", conf.level=0.95)[,c(4:6)])*100,2)
+  round((binom::binom.confint(n, all, methods= "wilson", conf.level=0.95)[,c(4:6)])*100,2)
 }
+
 #  --- 1. data prep
 stackbar <- data.table(
-	Year= c(2010, 2010, 2010, 2011, 2011, 2011, 2012, 2012, 2012, 2013,2013, 2013),
-	Category= c("A", "B", "C", "A", "B", "C", "A", "B", "C", "A", "B", "C"),
-    n= c(10, 20, 30, 30, 20, 10, 11,12,13, 15, 15, 15)
+  Year= c(2010, 2010, 2010, 2011, 2011, 2011, 2012, 2012, 2012, 2013,2013, 2013),
+  Category= c("A", "B", "C", "A", "B", "C", "A", "B", "C", "A", "B", "C"),
+  n= c(10, 20, 30, 30, 20, 10, 11,12,13, 15, 15, 15)
 )
 # calculate percent and 95% CI
 stackbar <- stackbar[,`:=`(all=sum(n)), by= c("Year")][,c("perc","low","up") := myfun_binom(n,all)]
 stackbar <- stackbar |> mutate(xlbl= paste0(Year,' (N=',all,')')) |>
-	relocate(xlbl,perc) |>  # move in front as default X & Y columns
-	group_by(Category)      # both ec.init & ecr.ebars need grouped data
-#  --- 2. plot
-q <- stackbar |> ec.init(ctype='bar', load='custom') |>
-	ec.theme('dark-mushroom') |>
-	# only columns for x,y,low,high,category
-	ecr.ebars(stackbar[,c('xlbl','perc','low','up','Category')],
-				    hwidth= 4)    # (optional) half-width of err.bar in pixels
-#  --- 3. customization
+  relocate(xlbl,perc) |>  # move in front as default X & Y columns
+  group_by(Category)      # both ec.init & ecr.ebars need grouped data
 groupColors <- c("#387e78","#eeb422","#d9534f")
-q$x$opts$series <- lapply(q$x$opts$series, function(s, i) {
-	if (s$type=='bar') {
-		s$emphasis <- list(focus= 'series')
-		s$color <- groupColors[parent.frame()$i[]]  # iteration hack, for fun only
-	}
-	else if (s$type=='custom')
-		s$itemStyle$color <- 'cyan'
-	s
+
+#  --- 2. plot
+stackbar |> ec.init(ctype='bar', load='custom') |>
+    # only columns x,y,low,high,category for ebars
+ecr.ebars(stackbar[, c('xlbl','perc','low','up','Category')],
+          hwidth= 4) |>   # (optional) half-width of err.bar in pixels
+#  --- 3. color customization
+ec.theme('dark-mushroom') |>
+ec.upd({
+  series <- lapply(series, function(s, i) {
+    if (s$type=='bar') {
+      s$color <- groupColors[parent.frame()$i[]]  # iteration hack
+    }
+    else if (s$type=='custom')
+      s$itemStyle$color <- 'cyan'
+    s
+  })
 })
-q   # display customized
 ```
 </details>
 <br />
@@ -343,6 +345,7 @@ ec.init(load= '3D', preset= FALSE,
 </details>
 <br />
 
+<a id='bunny'></a>
 
 ### scatter3D
 plugin **3D**, test with 36,000 points  
@@ -357,8 +360,7 @@ tmp |> ec.init(load= '3D',
 	visualMap= list(
 		inRange= list(color= rainbow(10)), calculable= TRUE,
 		min= min(tmp$y), max= max(tmp$y), dimension= 1)) |> 
-ec.upd({ 
-  series[[1]] <- list(type='scatter3D', symbolSize=2) }) |>
+ec.upd({ series[[1]]$symbolSize <- 2 }) |>
 ec.theme('dark-mushroom')
 ```
 </details>
@@ -1119,6 +1121,33 @@ iris |> group_by(Species) |> ec.init(
           width= 150, height= 150, opacity= .4)
 	)
   ))
+)
+```
+</details>
+<br />
+
+### Tabset
+Multiple charts in their own tabs<br />
+<img src='img/cb-tabs.gif' alt='tabs demo' />
+<details><summary>🔻 View code</summary>
+
+```r
+# remotes::install_github('helgasoft/echarty')
+library(echarty)     # v.1.4.7+ 
+library(dplyr) 
+htmltools::browsable(
+  lapply(iris |> group_by(Species) |> group_split(), function(x) { 
+    x |> ec.init(ctype= 'scatter', 
+                 yAxis= list(scale=TRUE), title= list(text= unique(x$Species))) |> 
+      ec.theme('dark-mushroom')
+  }) |> 
+  ec.util(cmd= 'tabset')
+)
+
+p1 <- cars |> ec.init(grid= list(top= 20))
+p2 <- mtcars |> ec.init()
+htmltools::browsable(
+  ec.util(cmd= 'tabset', cars= p1, mtcars= p2, width= 200, height= 200)
 )
 ```
 </details>
