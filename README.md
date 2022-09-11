@@ -29,7 +29,7 @@ support](https://helgasoft.github.io/echarty/xtalk.html).
 ## Installation
 
 <!-- [![Github version](https://img.shields.io/github/v/release/helgasoft/echarty?label=github)](https://github.com/helgasoft/echarty/releases) -->
-Latest development version <strong>1.4.7<sup>.01</sup></strong>:
+Latest development version <strong>1.4.7<sup>.01</sup></strong>
 
 ``` r
 if (!requireNamespace('remotes')) install.packages('remotes')
@@ -77,7 +77,7 @@ see the result.
 
 Now you can start building [**beautiful
 ECharts**](https://echarts.apache.org/examples/en/index.html) (and
-[**more**](https://www.makeapie.com)) with R and Shiny!
+[**more**](https://www.makeapie.cn/echarts)) with R and Shiny!
 
 <br />
 <p align="center">

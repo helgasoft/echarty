@@ -72,7 +72,7 @@ test_that("leaflet with ec.clmn", {
     })
     
     expect_equal(p$x$opts$leaflet$zoom, 6)
-    expect_equal(class(p$x$opts$tooltip$formatter), 'JS_EVAL')
+    expect_s3_class(p$x$opts$tooltip$formatter, 'JS_EVAL')
 #  }
 #  else expect_equal(1,1)
 })
@@ -90,10 +90,10 @@ test_that("ec.data format dendrogram", {
 })
 
 test_that("ec.data format boxlpot", {
-  ds <- mtcars |> dplyr::relocate(am,mpg) |> ec.data(format='boxplot')
-  expect_equal(ds$series[[1]]$type, 'boxplot')
-  expect_equal(ds$dataset$source[[1]], c("V1","V2","V3","V4","V5","V6"))
-  expect_equal(class(ds$axlbl), 'list')  # was 'JS_EVAL'
+  p <- mtcars |> dplyr::relocate(am,mpg) |> ec.data(format='boxplot')
+  expect_equal(p$series[[1]]$type, 'boxplot')
+  expect_equal(p$dataset$source[[1]], c("V1","V2","V3","V4","V5","V6"))
+  expect_type(p$axlbl, 'list')  # was 'JS_EVAL'
 })
 
 test_that("ec.data for treePC", {
@@ -171,7 +171,7 @@ test_that("serie from ec.util with cartesian3D", {
         #,tooltip= list(formatter= '{b}')
   )
   expect_equal(p$x$opts$series[[1]]$data[[2]][[2]], 46)
-  expect_true( class(p$x$opts$xAxis3D[[1]])=='list')
+  expect_type( p$x$opts$xAxis3D[[1]],'list')
 })
 
 test_that("shapefiles with multi-polygons", {
