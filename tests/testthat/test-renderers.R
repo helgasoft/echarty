@@ -13,7 +13,7 @@ test_that("custom renderers - ecr.ebars", {
   expect_true( p$x$opts$series[[4]]$renderItem == "sessionStorage.setItem('ErrorBar.oss','[\"\",\"\",\"3\",\"6\"]'); riErrorBar;")
   expect_s3_class(p$x$opts$series[[4]]$renderItem, 'JS_EVAL')
   expect_equal(p$x$opts$xAxis$type, 'category')
-  expect_equal(p$x$opts$series[[6]][['name']], 8)
+  expect_equal(as.character(p$x$opts$series[[6]][['name']]), '8')
 })
 
 test_that("custom renderers - riErrBarSimple", {
