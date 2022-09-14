@@ -183,7 +183,7 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter',
       x$opts$dataset <- list(list(source = ec.data(df, header=TRUE)))
       grvals <- unname(unlist(dplyr::group_data(df)[grnm]))
       txfm <- list(); k <- 0
-      x$opts$legend = list(data=list())
+      legd = list(data= list())
       for(nm in grvals) { 
         k <- k+1
         txfm <- append(txfm, list(list(transform = list(
@@ -191,8 +191,9 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter',
         x$opts$series[[k]] <- list(
           type=ctype, datasetIndex=k, name=as.character(nm))
         # if (colnames(df)[1]==grnm)  # grouping by 1st column - breaks prll,map,etc.
-        x$opts$legend$data <- append(x$opts$legend$data, list(list(name=as.character(nm))))
+        legd$data <- append(legd$data, list(list(name=as.character(nm))))
       }
+      if (is.null(x$opts$legend)) x$opts$legend <- legd
       x$opts$dataset <- append(x$opts$dataset, txfm)
     } 
     else 
