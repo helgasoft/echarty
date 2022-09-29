@@ -1409,6 +1409,7 @@ ec.upd <- function(wt, ...) {
 #'      optional \emph{shp} - name of .shp file inside ZIP file if multiple exist. Do not add file extension. \cr
 #' * \emph{tabset} returns a \link[htmltools]{tagList} of tabs, each tab may contain a chart.\cr
 #' * \emph{layout} returns a container \link[htmltools]{div} in rmarkdown, otherwise \link[htmltools]{browsable}.\cr
+#' @param js optional JavaScript function, default is NULL.\cr
 #' @param ... Optional parameters for the command \cr
 #'      for \emph{sf.series} - see \href{https://echarts.apache.org/en/option.html#series-scatter.type}{points}, \href{https://echarts.apache.org/en/option.html#series-lines.type}{polylines}, polygons(itemStyle).\cr
 #'      for \emph{tabset} parameters should be in format \emph{name1=chart1, name2=chart2}, see example\cr
@@ -1429,11 +1430,15 @@ ec.upd <- function(wt, ...) {
 #' \verb{   }For 3-4 charts one would use multiple series within a \href{https://echarts.apache.org/en/option.html#grid}{grid}. \cr
 #' \verb{   }For greater number of charts _ec.util(cmd='layout')_ comes in handy\cr
 #' **cmd = 'tabset'** \cr
-#' \verb{   }...= a list of charts OR tab-name/chart pairs like \emph{n1=chart1, n2=chart2}\cr
+#' \verb{   }...= a list tab-name/chart pairs like \emph{n1=chart1, n2=chart2}\cr
 #' \verb{   }optional parameters are: \cr
 #' \verb{     }width= Width of tabs in pixels, height= Height of tabs in pixels\cr
-#' \verb{     }tabStyle= tab style string, see default \emph{tabStyle} variable in the code
-#' 
+#' \verb{     }tabStyle= tab style string, see default \emph{tabStyle} variable in the code\cr
+#' **cmd = 'morph'** \cr
+#' \verb{   }...= a list of charts or chart options\cr
+#' \verb{   }optional parameter: \cr
+#' \verb{     }js= JS function for switching charts. Default function is on \emph{mouseover}.\cr
+
 #' @examples 
 #' if (interactive()) {  # comm.out: Fedora errors about some 'browser'
 #'   library(sf)
@@ -1462,19 +1467,34 @@ ec.upd <- function(wt, ...) {
 #'   lapply(list('dark','macarons','gray','jazz','dark-mushroom'),
 #'                 function(x) cars |> ec.init() |> ec.theme(x) ) |>
 #'   ec.util(cmd='layout', cols= 2, title= 'my layout')
+#'   
+#'   setd <- function(type) {
+#'     mtcars |> group_by(cyl) |> ec.init(ctype=type) |> ec.upd({
+#'     title <- list(subtext='mouseover points to morph')
+#'     xAxis <- list(scale=TRUE)
+#'     series <- lapply(series, function(ss) {
+#'       ss$groupId <- ss$name
+#'       ss$universalTransition <- list(enabled=TRUE)
+#'       ss })
+#'     })
+#'   }
+#'   oscatter <- setd('scatter')
+#'   obar <- setd('bar')
+#'   ec.util(cmd='morph', oscatter, obar)
 #' }
 #' @importFrom utils unzip
 #' @export
-ec.util <- function( ..., cmd='sf.series') {
+ec.util <- function( ..., cmd='sf.series', js=NULL) {
   
   opts <- list(...)
   
-  do.opties <- function(name, dflt=NULL) {
+  do.opties <- function(names, dflts=NULL) {
+    # set default optional parameters
     j <- 0
-    for(n in name) {
+    for(n in names) {
       j <- j + 1
       val <- NULL
-      if (!is.null(dflt)) val <- dflt[[j]]
+      if (!is.null(dflts)) val <- dflts[[j]]
       tmp <- unname(unlist(opts[n]))
       if (!is.null(tmp)) {
         val <- tmp
@@ -1777,6 +1797,39 @@ body { padding: 10px; }
                            htmltools::h3(title) ),
             tg
           ))
+    },
+    
+    'morph'= {
+
+      opts <- lapply(opts, function(oo) {
+        if ('echarty' %in% class(oo)) oo$x$opts
+        else oo
+      })
+      # series types should be different for morph options
+      defaultHandler <- htmlwidgets::JS("
+function(event) {
+    opt= this.getOption();
+    keep= opt.morph;
+    delete opt.morph;
+    for(i=0; i<keep.length; i++) {
+	    if (opt.series[0].type==keep[i].series[0].type) {
+	      next= (i+1) % keep.length;
+   		optcurr= Object.assign({}, keep[next]);
+   		break;
+	    }
+	 };
+	 if (!optcurr) return;
+	 optcurr.morph= keep;
+	 this.setOption(optcurr, true);
+}")
+      out <- ec.init(preset=FALSE, js=js)
+      out$x$opts <- opts[[1]]
+      out$x$opts$morph <- opts
+      if (is.null(js))
+        out$x$on <- list(list(
+          event= 'mouseover', handler= defaultHandler
+        ))
+      out    
     },
     
     stop(paste("ec.util: invalid 'cmd' parameter",cmd), call. = FALSE)

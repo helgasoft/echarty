@@ -233,3 +233,52 @@ test_that("tabset with pipe", {
   expect_equal(r[[2]]$children[[7]]$children[[2]]$children[[1]][[1]]$width, 300)
   expect_equal(r[[2]]$children[[6]]$children[[1]], "chart3")
 })
+
+test_that("morph", {
+  mc <- mtcars |> filter(cyl<8)
+  datt <- function(idx) { return(mc[mc$cyl==idx,]$hp) }
+  colors <- c("blue","red","green","yellow")
+  
+  oscatter <- list(
+    xAxis= list(scale=TRUE),
+    yAxis= list(scale=TRUE), color= colors,
+    series=list(
+      list(type='scatter', id='4', dataGroupId='4', data= datt(4),
+           universalTransition= list(enabled= TRUE)),
+      list(type='scatter', id='6', dataGroupId='6', data= datt(6),
+           universalTransition= list(enabled=TRUE)) 
+    )
+  )
+  obar <- list(
+    title= list(text='Average'),
+    xAxis=list(type='category', data=list('cyl4', 'cyl6')),
+    yAxis=list(show= TRUE), color=colors,
+    series=list(list(
+      type='bar', id='average', colorBy='data',
+      data=list(
+        list(value= mean(datt(4)), groupId='4'),
+        list(value= mean(datt(6)), groupId='6')),
+      universalTransition=list(enabled= TRUE, 
+                               seriesKey=list('4', '6'))
+    ))
+  )
+  
+  auto <- "
+  cnt = 0;
+  setInterval(() => {
+    cnt++;
+    opts= chart.getOption();
+    keep= opts.morph;
+    delete opts.morph;
+    optcurr= Object.assign({}, keep[cnt % 2]);
+    optcurr.morph= keep;
+    chart.setOption(optcurr, true);
+  }, 2000);
+  "
+  p <- ec.util(cmd='morph', oscatter, obar, js=auto)
+  expect_equal(p$x$opts$morph[[1]]$series[[1]]$type, 'scatter')
+  expect_equal(p$x$opts$morph[[2]]$series[[1]]$type, 'bar')
+  expect_true(grepl('setInterval', p$x$jcode, fixed=TRUE))
+  p <- ec.util(cmd='morph', oscatter, obar)
+  expect_equal(p$x$on[[1]]$event, 'mouseover')
+})

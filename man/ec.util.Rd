@@ -4,7 +4,7 @@
 \alias{ec.util}
 \title{Utility functions}
 \usage{
-ec.util(..., cmd = "sf.series")
+ec.util(..., cmd = "sf.series", js = NULL)
 }
 \arguments{
 \item{...}{Optional parameters for the command \cr
@@ -24,6 +24,8 @@ optional \emph{shp} - name of .shp file inside ZIP file if multiple exist. Do no
 \item \emph{tabset} returns a \link[htmltools]{tagList} of tabs, each tab may contain a chart.\cr
 \item \emph{layout} returns a container \link[htmltools]{div} in rmarkdown, otherwise \link[htmltools]{browsable}.\cr
 }}
+
+\item{js}{optional JavaScript function, default is NULL.\cr}
 }
 \description{
 tabset, table layout, support for GIS shapefiles thru library sf
@@ -45,10 +47,14 @@ tabset, table layout, support for GIS shapefiles thru library sf
 \verb{   }For 3-4 charts one would use multiple series within a \href{https://echarts.apache.org/en/option.html#grid}{grid}. \cr
 \verb{   }For greater number of charts \emph{ec.util(cmd='layout')} comes in handy\cr
 \strong{cmd = 'tabset'} \cr
-\verb{   }...= a list of charts OR tab-name/chart pairs like \emph{n1=chart1, n2=chart2}\cr
+\verb{   }...= a list tab-name/chart pairs like \emph{n1=chart1, n2=chart2}\cr
 \verb{   }optional parameters are: \cr
 \verb{     }width= Width of tabs in pixels, height= Height of tabs in pixels\cr
-\verb{     }tabStyle= tab style string, see default \emph{tabStyle} variable in the code
+\verb{     }tabStyle= tab style string, see default \emph{tabStyle} variable in the code\cr
+\strong{cmd = 'morph'} \cr
+\verb{   }...= a list of charts or chart options\cr
+\verb{   }optional parameter: \cr
+\verb{     }js= JS function for switching charts. Default function is on \emph{mouseover}.\cr
 }
 \examples{
 if (interactive()) {  # comm.out: Fedora errors about some 'browser'
@@ -78,5 +84,19 @@ if (interactive()) {  # comm.out: Fedora errors about some 'browser'
   lapply(list('dark','macarons','gray','jazz','dark-mushroom'),
                 function(x) cars |> ec.init() |> ec.theme(x) ) |>
   ec.util(cmd='layout', cols= 2, title= 'my layout')
+  
+  setd <- function(type) {
+    mtcars |> group_by(cyl) |> ec.init(ctype=type) |> ec.upd({
+    title <- list(subtext='mouseover points to morph')
+    xAxis <- list(scale=TRUE)
+    series <- lapply(series, function(ss) {
+      ss$groupId <- ss$name
+      ss$universalTransition <- list(enabled=TRUE)
+      ss })
+    })
+  }
+  oscatter <- setd('scatter')
+  obar <- setd('bar')
+  ec.util(cmd='morph', oscatter, obar)
 }
 }
