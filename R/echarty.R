@@ -1409,6 +1409,7 @@ ec.upd <- function(wt, ...) {
 #'      optional \emph{shp} - name of .shp file inside ZIP file if multiple exist. Do not add file extension. \cr
 #' * \emph{tabset} returns a \link[htmltools]{tagList} of tabs, each tab may contain a chart.\cr
 #' * \emph{layout} returns a container \link[htmltools]{div} in rmarkdown, otherwise \link[htmltools]{browsable}.\cr
+#' * \emph{morph} returns a chart with ability to morph into other charts\cr
 #' @param js optional JavaScript function, default is NULL.\cr
 #' @param ... Optional parameters for the command \cr
 #'      for \emph{sf.series} - see \href{https://echarts.apache.org/en/option.html#series-scatter.type}{points}, \href{https://echarts.apache.org/en/option.html#series-lines.type}{polylines}, polygons(itemStyle).\cr
@@ -1810,7 +1811,6 @@ body { padding: 10px; }
 function(event) {
     opt= this.getOption();
     keep= opt.morph;
-    delete opt.morph;
     for(i=0; i<keep.length; i++) {
 	    if (opt.series[0].type==keep[i].series[0].type) {
 	      next= (i+1) % keep.length;

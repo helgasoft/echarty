@@ -243,35 +243,32 @@ test_that("morph", {
     xAxis= list(scale=TRUE),
     yAxis= list(scale=TRUE), color= colors,
     series=list(
-      list(type='scatter', id='4', dataGroupId='4', data= datt(4),
+      list(type='scatter', id=4, dataGroupId=4, data= datt(4),
            universalTransition= list(enabled= TRUE)),
-      list(type='scatter', id='6', dataGroupId='6', data= datt(6),
+      list(type='scatter', id=6, dataGroupId=6, data= datt(6),
            universalTransition= list(enabled=TRUE)) 
     )
   )
   obar <- list(
-    title= list(text='Average'),
-    xAxis=list(type='category', data=list('cyl4', 'cyl6')),
-    yAxis=list(show= TRUE), color=colors,
-    series=list(list(
-      type='bar', id='average', colorBy='data',
-      data=list(
-        list(value= mean(datt(4)), groupId='4'),
-        list(value= mean(datt(6)), groupId='6')),
+    title= list(text= 'Average'),
+    xAxis= list(type= 'category', data= list('cyl4', 'cyl6')),
+    yAxis= list(show= TRUE), color= colors,
+    series= list(list(
+      type= 'bar', id= 'average', colorBy= 'data',
+      data= list(
+        list(value= mean(datt(4)), groupId=4),
+        list(value= mean(datt(6)), groupId=6)),
       universalTransition=list(enabled= TRUE, 
-                               seriesKey=list('4', '6'))
+                               seriesKey=c(4, 6))
     ))
   )
   
-  auto <- "
-  cnt = 0;
+  auto <- " cnt = 0;
   setInterval(() => {
     cnt++;
     opts= chart.getOption();
-    keep= opts.morph;
-    delete opts.morph;
-    optcurr= Object.assign({}, keep[cnt % 2]);
-    optcurr.morph= keep;
+    optcurr= Object.assign({}, opts.morph[cnt % 2]);
+    optcurr.morph= opts.morph;
     chart.setOption(optcurr, true);
   }, 2000);
   "
