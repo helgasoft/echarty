@@ -1,12 +1,13 @@
 # history of package _echarty_
 
-## v.1.4.7.03 in development
+## v.1.4.7.b4 in development
 
+- upgrade ECharts to v.5.4.0
 - added vignette with introduction
 - _ecr.ebars_ fix bug, enhance tooltips
 - _ec.util_ improvements in sf.series, added support for 3D, morph
 - fixes to global options theme & font, group legend
-- upgrade ECharts to v.5.4.0
+- fixed load='world' with series
 
 ## v.1.4.7
 

@@ -23,6 +23,7 @@ required parameter \emph{url} - URL of remote zipped shapefile\cr
 optional \emph{shp} - name of .shp file inside ZIP file if multiple exist. Do not add file extension. \cr
 \item \emph{tabset} returns a \link[htmltools]{tagList} of tabs, each tab may contain a chart.\cr
 \item \emph{layout} returns a container \link[htmltools]{div} in rmarkdown, otherwise \link[htmltools]{browsable}.\cr
+\item \emph{morph} returns a chart with ability to morph into other charts\cr
 }}
 
 \item{js}{optional JavaScript function, default is NULL.\cr}

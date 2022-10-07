@@ -133,11 +133,13 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter',
     # list(show=TRUE) or list(list()) is to create an empty object{} in JS
     if (!('xAxis' %in% names(opts))) opts$xAxis <- list(show=TRUE)
     if (!('yAxis' %in% names(opts))) opts$yAxis <- list(show=TRUE)
-    if (!('series' %in% names(opts))) opts$series <- list(
-    	list(type=if (is.null(ctype)) 'scatter' else ctype) 
-    ) else if (is.null(opts$series[[1]]$type))
+    if (!('series' %in% names(opts))) {
+    	if (!'world' %in% opts$load)   # world will add its own default serie
+    	  opts$series <- list(list(type=if (is.null(ctype)) 'scatter' else ctype) )
+    } else if (is.null(opts$series[[1]]$type))  # set default to user serie if omitted
       opts$series[[1]]$type <- if (is.null(ctype)) 'scatter' else ctype
-    if (opts$series[[1]]$type %in% c('parallel','map','gauge','pie','funnel','graph', 'sunburst','tree','treemap','sankey')) {
+    if (('series' %in% names(opts)) && 
+        opts$series[[1]]$type %in% c('parallel','map','gauge','pie','funnel','graph', 'sunburst','tree','treemap','sankey')) {
       opts$xAxis <- opts$yAxis <- NULL
     }
   }
@@ -298,7 +300,14 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter',
         roam = TRUE,
         tiles = list( list(urlTemplate = urltls))
       )
-      wt$x$opts$series[[1]]$coordinateSystem <- 'leaflet'
+      if ('series' %in% names(wt$x$opts)) {
+        wt$x$opts$series <- lapply(wt$x$opts$series,
+          function(ss) {
+            if (is.null(ss$coordinateSystem)) 
+              ss$coordinateSystem <- 'leaflet'
+            ss })
+      }
+      #wt$x$opts$series[[1]]$coordinateSystem <- 'leaflet'
       
       if (!is.null(df)) {
 	      wt$x$opts$leaflet$center= c(mean(unlist(df[,1])), mean(unlist(df[,2])))
@@ -345,9 +354,14 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter',
     if (preset) {
       wt$x$opts$xAxis <- NULL
       wt$x$opts$yAxis <- NULL
-      # world.js dataset works by country only, not GPS lng/lat
-      if (is.null(opts$series) || is.null(opts$series$type) || opts$series$type!='map')
-        wt$x$opts$series <- list(list(type='map', geoIndex=0))
+      #if (is.null(opts$series) || is.null(opts$series$type) || opts$series$type!='map')
+      #  wt$x$opts$series <- list(list(type='map', geoIndex=0))
+      if (!is.null(df)) {  # add map serie if missing
+        tmp <- sapply(wt$x$opts$series, function(x) {x$type} )
+        if (!'map' %in% tmp)
+          wt$x$opts$series <- append(wt$x$opts$series,
+            list(list(type='map', geoIndex=0)))
+      }
       # map will duplicate if series have map='world' too
       wt$x$opts$geo = list(map='world', roam=TRUE)
       # if (!is.null(df))  # cancelled: don't know if first 2 cols are 'lng','lat'
