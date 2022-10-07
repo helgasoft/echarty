@@ -1,6 +1,6 @@
 # history of package _echarty_
 
-## v.1.4.7.b4 in development
+## v.1.4.7.04 in development
 
 - upgrade ECharts to v.5.4.0
 - added vignette with introduction
