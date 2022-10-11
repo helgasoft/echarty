@@ -242,15 +242,14 @@ sdf <- mtcars |> rownames_to_column(var='name') |> relocate(mpg,wt,hp)
 sdf <- SharedData$new(sdf)
 
 library(echarty)
-p3 <- sdf |> ec.init(load='3D', 
-            title= list(text="3D brush listener")) |>
-            ec.theme('dark-mushroom')
-p3$x$opts$series[[1]] <- list(
-  type='scatter3D', symbolSize=11,
-  itemStyle=list(color= htmlwidgets::JS("function(params){
-    let cyl=params.value[4]; return (cyl==4 ? 'RoyalBlue' : cyl==6 ? 'OrangeRed':'green');}") ),
-  emphasis= list(focus='self', blurScope='series', itemStyle=list(color='red'))
-)
+p3 <- sdf |> ec.init(load= '3D', 
+	title= list(text="3D brush listener"),
+	series= list(list(type='scatter3D', symbolSize=11,
+		itemStyle= list(color= htmlwidgets::JS("function(params){
+   	  		let cyl=params.value[4]; return (cyl==4 ? 'RoyalBlue' : cyl==6 ? 'OrangeRed':'green');}") ),
+		emphasis= list(focus='self', blurScope='series', itemStyle= list(color='red'))
+	))
+) |> ec.theme('dark-mushroom')
 
 bscols( list(
     d3scatter(sdf, ~mpg, ~wt, ~factor(cyl), width="100%", height=300),br(),
@@ -589,27 +588,27 @@ ec.init(
 			textStyle= list(fontSize= 12), left= '50%', top= '90%' )
 	),
 	xAxis= list(name='weigth (lbs)', min=0, 
-					nameLocation='center', nameGap=20),
+				nameLocation='center', nameGap=20),
 	yAxis= list(
 		list(type= 'category'), 
 		list(type= 'value', max=11, show=FALSE)),
 	dataset= list(
 		list(source= tt),
 		list(transform= list(type='boxplot',
-					config=list(itemNameFormatter= htmlwidgets::JS(yax))
+			config=list(itemNameFormatter= htmlwidgets::JS(yax))
 		)),
 		list(fromDatasetIndex= 1, fromTransformResult= 1)
 	),
 	series= list(      # use ECharts built-in boxplot
 		list(name= 'boxplot', type= 'boxplot', datasetIndex= 1
-			  ,color='LightGrey', itemStyle= list(color='DimGray'), 
-			  boxWidth=c(13,50) )
+			,color='LightGrey', itemStyle= list(color='DimGray'), 
+			boxWidth=c(13,50) )
 	),
 	legend= list(show=TRUE),
 	tooltip= list(show=TRUE, 
-				backgroundColor= 'rgba(30,30,30,0.5)', 
-				textStyle= list(color='#eee'),
-				formatter=ec.clmn('%@ lbs', 1, scale=0)),
+			backgroundColor= 'rgba(30,30,30,0.5)', 
+			textStyle= list(color='#eee'),
+			formatter=ec.clmn('%@ lbs', 1, scale=0)),
 	toolbox= list(left='right', feature=list(dataZoom=list(show=TRUE)))
 ) |> ec.upd({
 	i <- 0.5
@@ -619,8 +618,8 @@ ec.init(
 		data <- list()
 		for(j in 1:length(xx)) data <- append(data, list(list(xx[j], yy[j])))
 		list(name='data', type= 'scatter', data=data, yAxisIndex=1, 
-			  symbolSize=3, itemStyle=list(opacity=0.3), color=heat.colors(11)[i-0.5],
-			  emphasis= list(itemStyle= list(color= 'chartreuse', borderWidth=4, opacity=1)) )
+			symbolSize=3, itemStyle=list(opacity=0.3), color=heat.colors(11)[i-0.5],
+			emphasis= list(itemStyle= list(color= 'chartreuse', borderWidth=4, opacity=1)) )
 	})
 	series <- append(series, sers)
 }) |> ec.theme('dark-mushroom')
@@ -916,19 +915,19 @@ sd <- list()
 for(i in 1:nrow(nc)) {
 	sd <- append(sd, list(
 		list(type= 'lines', coordinateSystem= 'leaflet', polyline= TRUE, 
-			  name= nc$name[i], lineStyle= list(width=0), color= 'blue',
-			  effect= list(show= TRUE, constantSpeed= 80, trailLength= 0.1, symbolSize= 3),
-			  data= list(list(coords= xy2df(nc$geometry[i]))
-			  ))))
+			name= nc$name[i], lineStyle= list(width=0), color= 'blue',
+			effect= list(show= TRUE, constantSpeed= 80, trailLength= 0.1, symbolSize= 3),
+			data= list(list(coords= xy2df(nc$geometry[i]))
+	))))
 }
-
 ec.init(load= c('leaflet'),
-		  js= ec.util(cmd= 'sf.bbox', bbox= st_bbox(nc$geometry)), 
-		  series= ec.util(df= nc, nid= 'name', lineStyle= list(width= 4), verbose=TRUE),
-		  tooltip= list(formatter= '{a}'), legend= list(show= TRUE),
-		  color=c('red','purple','green')
-) |> 
-ec.upd({ series <- append(series, sd) })
+	js= ec.util(cmd= 'sf.bbox', bbox= st_bbox(nc$geometry)), 
+	series= append( 
+		ec.util(df= nc, nid= 'name', lineStyle= list(width= 4), verbose=TRUE),
+		sd ),
+	tooltip= list(formatter= '{a}'), legend= list(show= TRUE),
+	color=c('red','purple','green')
+)
 
 # ----- MULTIPOINT -----
 nc <- as.data.frame(urban_agglomerations) |> filter(year==2020) |> 
@@ -940,7 +939,7 @@ nc <- as.data.frame(urban_agglomerations) |> filter(year==2020) |>
 ec.init(load= c('leaflet'),
     js= ec.util(cmd= 'sf.bbox', bbox= st_bbox(nc$geometry)), 
     series= ec.util(df= nc, name= 'Largest Cities', itemStyle= list(color= 'red')
-          ,symbolSize= ec.clmn(3, scale=0.5) # urban_agglomerations
+        ,symbolSize= ec.clmn(3, scale=0.5) # urban_agglomerations
     ),
     tooltip= list(formatter= '{a}'), legend= list(show= TRUE), animation= FALSE
 )
@@ -1150,5 +1149,16 @@ htmltools::browsable(
   ec.util(cmd= 'tabset', cars= p1, mtcars= p2, width= 200, height= 200)
 )
 ```
+</details>
+<br />
+
+### Pies on map
+Position pies on a map, supported by ECharts 5.4.0+<br />
+<img src='img/cb-eubaro.png' alt='pies demo' />
+<details><summary>🔻 Details</summary>
+🗺️ The <a href='https://europa.eu/eurobarometer'>Eurobarometer</a> public opinion survey Summer 2022<br>
+180 questions with multiple answers mapped by country<br>
+An interactive R/Shiny/echarty app.  <a href='https://twitter.com/echarty_R/status/1578263627622031360?s=20&t=coA2-hzGDjtprmHat_9wSQ'>🔗 Tweet with clip</a> 
+<a href='https://helgalabs.shinyapps.io/eurobarometer'>🔗 Live Demo</a>
 </details>
 <br />

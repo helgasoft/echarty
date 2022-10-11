@@ -188,23 +188,25 @@ styl &lt;- &#39;width:50%;display:block;float:left;&#39;
 sdf &lt;- mtcars %&gt;% rownames_to_column(var=&#39;name&#39;) %&gt;% relocate(mpg,wt)
 sdf &lt;- SharedData$new(sdf)
 
-p &lt;- sdf %&gt;% ec.init(height=500, title=list(text=&quot;echarty 2D&quot;))
-p$x$opts$xAxis$scale &lt;- TRUE
-p$x$opts$yAxis$scale &lt;- TRUE
-p$x$opts &lt;- append(p$x$opts, list(
-   toolbox = list(feature=list(brush=list(ey=&#39;&#39;))),
-   brush = list(brushLink=&#39;all&#39;, throttleType=&#39;debounce&#39;),
-   dataZoom = list(type=&#39;inside&#39;),
-   tooltip = list(formatter = htmlwidgets::JS(&quot;function(params){return params.value[2];}&quot;))
-))
-p$x$opts$series[[1]] = append(p$x$opts$series[[1]], list(
-  itemStyle = list(color = htmlwidgets::JS(&quot;function(params){
-    let cyl=params.value[3]; return (cyl==4 ? &#39;RoyalBlue&#39; : cyl==6 ? &#39;OrangeRed&#39;:&#39;green&#39;);}&quot;) ),
-  selectedMode = &#39;multiple&#39;,
-  select = list(itemStyle=list(color=&#39;magenta&#39;)), 
-  emphasis = list(focus=&#39;self&#39;, blurScope=&#39;series&#39;), # for brush rcv
-  blur = list(opacity = 0.2)
-))
+p &lt;- sdf |&gt; ec.init(height=500, 
+    title=list(text=&quot;echarty 2D&quot;),
+    xAxis= list(scale= TRUE),
+    yAxis= list(scale= TRUE), 
+    toolbox= list(feature=list(brush=list(show=TRUE))),
+    brush= list(brushLink=&#39;all&#39;, throttleType=&#39;debounce&#39;, 
+                brushStyle= list(borderColor=&#39;brown&#39;), 
+                outOfBrush= list(opacity=0.3)),
+    dataZoom = list(type=&#39;inside&#39;),
+    tooltip = list(formatter= ec.clmn(&#39;name&#39;)),
+    series= list(list(
+      itemStyle = list(color = htmlwidgets::JS(&quot;function(params){
+          let cyl=params.value[3]; return (cyl==4 ? &#39;RoyalBlue&#39; : cyl==6 ? &#39;OrangeRed&#39;:&#39;green&#39;);}&quot;) ),
+      selectedMode = &#39;multiple&#39;,
+      select = list(itemStyle= list(color=&#39;magenta&#39;)), 
+      emphasis = list(focus=&#39;self&#39;, blurScope=&#39;series&#39;)
+      ,blur= list(itemStyle= list(opacity = 0.5))
+    ))
+)
 
 bscols(
   list(
