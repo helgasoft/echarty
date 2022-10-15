@@ -27,8 +27,9 @@ test_that("options preset", {
 })
 
 test_that("ec.init presets for non-grouped data.frame", {
-  p <- df |> ec.init()
+  p <- df |> ec.init(xAxis= list(scale=TRUE))
   expect_equal(p$x$opts$xAxis$type, 'category')
+  #expect_true(is.null(p$x$opts$xAxis$type))  # assume default='category' = WRONG
   expect_true(!is.null(p$x$opts$yAxis))
   expect_equal(length(p$x$opts$dataset[[1]]$source), 11)
   expect_equal(p$x$opts$series[[1]]$type, 'scatter')
@@ -36,7 +37,7 @@ test_that("ec.init presets for non-grouped data.frame", {
 
 
 test_that("ec.init presets for grouped data.frame", {
-  p <- df |> dplyr::group_by(symbol) |> ec.init()
+  p <- df |> dplyr::group_by(symbol) |> ec.init(yAxis= list(scale=TRUE))
   expect_equal(p$x$opts$xAxis$type, 'category')
   expect_true(!is.null(p$x$opts$yAxis))
   expect_equal(length(p$x$opts$dataset[[1]]$source), 11)
@@ -97,13 +98,22 @@ test_that("presets for parallelAxis", {
   df <- as.data.frame(state.x77) |> head(10)
   p <- df |> ec.init(ctype= 'parallel',
               parallelAxis= ec.paxis(df, cols=c('Illiteracy','Population','Income')) ) |>
-    ec.upd({ series <- lapply(series, 
-                              function(ss) { ss$lineStyle <- list(width=3); ss }) })
-
-expect_equal(length(p$x$opts$dataset[[1]]$source[[1]]), 8)
-expect_equal(p$x$opts$parallelAxis[[3]]$name, 'Income')
+    ec.upd({ series <- lapply(series,
+        function(ss) { ss$lineStyle <- list(width=3); ss }) 
+    })
+  expect_equal(length(p$x$opts$dataset[[1]]$source[[1]]), 8)
+  expect_equal(p$x$opts$parallelAxis[[3]]$name, 'Income')
 })
 
+test_that("presets for crosstalk", {
+  library(crosstalk)
+  df <- cars
+  df <- SharedData$new(df)
+  p <- df |> ec.init()
+  expect_equal(p$x$opts$dataset[[2]]$id, 'Xtalk')
+  expect_equal(p$x$opts$series[[1]]$datasetId, 'Xtalk')
+  expect_equal(p$x$opts$dataset[[1]]$source[[1]][3], 'XkeyX')
+})
 
 
 

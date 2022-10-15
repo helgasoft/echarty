@@ -11,269 +11,264 @@ HTMLWidgets.widget({
 
     return {
 
-      renderValue: function(x) {
-        
-        chart = echarts.init(document.getElementById(el.id));
-        chart.dispose();
-        if (!initialized) {
-          initialized = true;
-          if(x.themeCode){
-            let tcode = JSON.parse(x.themeCode);
-            echarts.registerTheme(x.theme, tcode);
-          }
+    renderValue: function(x) {
+      
+      chart = echarts.init(document.getElementById(el.id));
+      chart.dispose();
+      if (!initialized) {
+        initialized = true;
+        if(x.themeCode){
+          let tcode = JSON.parse(x.themeCode);
+          echarts.registerTheme(x.theme, tcode);
         }
-        if(x.hasOwnProperty('registerMap')){
-          for( let map = 0; map < x.registerMap.length; map++){
-            if (x.registerMap[map].geoJSON)
-              echarts.registerMap(x.registerMap[map].mapName, 
-                                  x.registerMap[map].geoJSON);
-            else if (x.registerMap[map].svg)
-              echarts.registerMap(x.registerMap[map].mapName, 
-                { svg: x.registerMap[map].svg });
-          }
+      }
+      if(x.hasOwnProperty('registerMap')){
+        for( let map = 0; map < x.registerMap.length; map++){
+          if (x.registerMap[map].geoJSON)
+            echarts.registerMap(x.registerMap[map].mapName, 
+                                x.registerMap[map].geoJSON);
+          else if (x.registerMap[map].svg)
+            echarts.registerMap(x.registerMap[map].mapName, 
+              { svg: x.registerMap[map].svg });
         }
-        
-        let eva2 = eva3 = null;
-        if (x.hasOwnProperty('jcode')) {
-          if (x.jcode) {
-            let tmp = null;
-            if (Array.isArray(x.jcode)) {
-              tmp = x.jcode[0];
-              eva2 = x.jcode[1];
-              eva3 = x.jcode[2];
-            } else
-              tmp = x.jcode;  // #1 run before init
-            try {
-              eval(tmp);
-            } catch(err) { console.log('eva1: ' + err.message) }
-          }
-        }
-        
-        chart = echarts.init(document.getElementById(el.id), x.theme, 
-        	{renderer: x.renderer, locale: x.locale, useDirtyRect: x.useDirtyRect});
-        
-        opts = x.opts;
-        
-        if (eva2) {	// #2 to change opts
+      }
+      
+      let eva2 = eva3 = null;
+      if (x.hasOwnProperty('jcode')) {
+        if (x.jcode) {
+          let tmp = null;
+          if (Array.isArray(x.jcode)) {
+            tmp = x.jcode[0];
+            eva2 = x.jcode[1];
+            eva3 = x.jcode[2];
+          } else
+            tmp = x.jcode;  // #1 run before init
           try {
-            eval(eva2);
-          } catch(err) { console.log('eva2: ' + err.message) }
+            eval(tmp);
+          } catch(err) { console.log('eva1: ' + err.message) }
         }
-        
-        if(x.draw === true)
-          chart.setOption(opts);
-        
-        if (eva3) {	// #3 to use chart object
-          try {
-            eval(eva3);
-          } catch(err) { console.log('eva3: ' + err.message) }
+      }
+      
+      chart = echarts.init(document.getElementById(el.id), x.theme, 
+      	{renderer: x.renderer, locale: x.locale, useDirtyRect: x.useDirtyRect});
+      
+      opts = x.opts;
+      
+      if (eva2) {	// #2 to change opts
+        try {
+          eval(eva2);
+        } catch(err) { console.log('eva2: ' + err.message) }
+      }
+      
+      if(x.draw === true)
+        chart.setOption(opts);
+      
+      if (eva3) {	// #3 to use chart object
+        try {
+          eval(eva3);
+        } catch(err) { console.log('eva3: ' + err.message) }
+      }
+      
+      load = opts.load;
+      if (Array.isArray(load)) load = load.join();
+      if (load && load.includes('lottie-parser')) {
+        lottieParser.install(echarts);
+        // lottie without timeline
+        tmp = chart.getModel().option.graphic;
+        if (tmp) {
+          tmp = updLGraphic(tmp);
+          chart.setOption({graphic: tmp}, { replaceMerge: 'graphic'});
         }
-        
-        load = opts.load;
-        if (Array.isArray(load)) load = load.join();
-        if (load && load.includes('lottie-parser')) {
-          lottieParser.install(echarts);
-          // lottie without timeline
-          tmp = chart.getModel().option.graphic;
-          if (tmp) {
-            tmp = updLGraphic(tmp);
-            chart.setOption({graphic: tmp}, { replaceMerge: 'graphic'});
-          }
-        }
-        
-        // TODO: timeline -   ECUnitOption, OptionManager ?
-        // find how to set timeline 'options'...
+      }
+      
+      // TODO: timeline to include graphic, etc.   (ECUnitOption, OptionManager ?)
+      // find how to set timeline 'options'...
 //        tmp = chart.getModel()._optionManager._timelineOptions;
 //        if (tmp) {  
 //          tmp = updGraphic(tmp);
 //          //tmp.forEach((opt) => { if (opt.graphic) opt.graphic = updGraphic(opt.graphic); });
 //        //  chart.setOption({options: tmp}, { replaceMerge: 'graphic'});
 //        }
-        
-        if (HTMLWidgets.shinyMode) {    // shiny callbacks
+      
+      if (HTMLWidgets.shinyMode) {    // shiny callbacks
 
-          ecp = ":echartyParse";
-          
-          chart.on("click", function(e){
-            Shiny.onInputChange(el.id + '_click' + ecp, 
-              { name: e.name, data: e.data, dataIndex: e.dataIndex,
-                seriesName: e.seriesName, value: e.value
-              },  {priority:'event'});
-          });
-          
-          chart.on("mouseover", function(e){
-            Shiny.onInputChange(el.id + '_mouseover' + ecp, 
-              { name: e.name, data: e.data, dataIndex: e.dataIndex,
-                seriesName: e.seriesName, value: e.value
-              },  {priority:'event'});
-          });
+        ecp = ":echartyParse";
+        
+        chart.on("click", function(e){
+          Shiny.onInputChange(el.id + '_click' + ecp, 
+            { name: e.name, data: e.data, dataIndex: e.dataIndex,
+              seriesName: e.seriesName, value: e.value
+            },  {priority:'event'});
+        });
+        
+        chart.on("mouseover", function(e){
+          Shiny.onInputChange(el.id + '_mouseover' + ecp, 
+            { name: e.name, data: e.data, dataIndex: e.dataIndex,
+              seriesName: e.seriesName, value: e.value
+            },  {priority:'event'});
+        });
 
-          if(x.hasOwnProperty('capture')){
-            // for events like datazoom, click, etc
-            // defined in https://echarts.apache.org/en/api.html#events
-            if (Array.isArray(x.capture)) {  // multiple events
-              for( let evt= 0; evt < x.capture.length; evt++) {
-                chart.on(x.capture[evt], function(e) {
-                  Shiny.setInputValue(el.id +'_' +x.capture[evt] +ecp, e, {priority: 'event'});
-                });
-              }
-            } else   // just one event
-                chart.on(x.capture, function(e) {
-                  Shiny.setInputValue(el.id +'_' +x.capture +ecp, e, {priority: 'event'});
-                });
-          }
-        }
-        
-        if(x.hasOwnProperty('on')){
-          for(var e = 0; e < x.on.length; e++){
-            chart.on(x.on[e].event, x.on[e].query, x.on[e].handler);
-          }
-        }
-        
-        if(x.hasOwnProperty('off')){
-          for(var ev = 0; ev < x.off.length; ev++){
-            chart.off(x.off[ev].event, x.off[ev].query, x.off[ev].handler);
-          }
-        }
-        
-        if(x.hasOwnProperty('group')){
-          chart.group = x.group;
-        }
-        
-        if(x.hasOwnProperty('connect')){
-          if (Array.isArray(x.connect)) {
-            let connections = [];
-            for(var c = 0; c < x.connect.length; c++){
-              connections.push(get_e_charts(x.connect[c]));
+        if(x.hasOwnProperty('capture')){
+          // for events like datazoom, click, etc
+          // defined in https://echarts.apache.org/en/api.html#events
+          if (Array.isArray(x.capture)) {  // multiple events
+            for( let evt= 0; evt < x.capture.length; evt++) {
+              chart.on(x.capture[evt], function(e) {
+                Shiny.setInputValue(el.id +'_' +x.capture[evt] +ecp, e, {priority: 'event'});
+              });
             }
-            connections.push(chart);
-            echarts.connect(connections);  
-          } else
-            echarts.connect(x.connect);
+          } else   // just one event
+              chart.on(x.capture, function(e) {
+                Shiny.setInputValue(el.id +'_' +x.capture +ecp, e, {priority: 'event'});
+              });
         }
-        
-        if(x.hasOwnProperty('disconnect')){
-          echarts.disconnect(x.disconnect);
-        }
-        
-    // ---------------- crosstalk ----------------
-        // keys are numbered differently depending on the source: 
-        //      R = 1:n, JS = 0:(n-1)
-        // unselect all if sel.count==total
-
-    	// check crosstalk bindings
-    if ((typeof x.settings)!='undefined' &&
-      	    (typeof x.settings.crosstalk_key)!='undefined' && 
-      	    (typeof x.settings.crosstalk_group)!='undefined' &&
-      	    x.settings.crosstalk_key !=null && 
-      	    x.settings.crosstalk_group !=null) {
-
-    	console.log(' echarty crosstalk on');
-    	
-    	var sel_handle = new crosstalk.SelectionHandle();
-    	var ct_filter = new crosstalk.FilterHandle();
-    	
-    	chart.on("brushselected", function(keys) {    // send keys FROM echarty
-    		let items = [];
-    		if (keys.batch)
-    			items = keys.batch[0].selected[0].dataIndex;
-    		if (items && items.length>0) {
-    		//console.log('dindex='+items);
-    			for (let i=0; i < items.length; ++i) ++items[i];
-    			sel_handle.set(items);
-    		}
-    	});
-    	chart.on("brushEnd", function(keys) {    // release selection FROM echarty
-    		if (keys.areas.length==0)
-    			sel_handle.set([]);
-    	})
-    	
-          	  // Highlight points selected by another widget
-    	sel_handle.on("change", function(e) {  
-    	    if (e.sender !== sel_handle) {     // get external keys to highlight/brush
-                  
-            	if (e.value.length>0) {
-            	      for (let i=0; i < e.value.length; ++i) --e.value[i];
-            	      chart.dispatchAction({type:'highlight', 
-            	                            seriesIndex:0, dataIndex:e.value });
-            	      sel_handle.save = e.value;
-            	} 
-            	else if (sel_handle.save) {   // clear selected
-    			chart.dispatchAction({type:'downplay', 
-    				seriesIndex:0, dataIndex:sel_handle.save }); 
-    			sel_handle.save = null;
-    		}
-    	    }
-    	});
-          	  
-    	chart.key = x.settings.crosstalk_key;
-    	
-    	sel_handle.setGroup(x.settings.crosstalk_group);
-    	
-    	// --- filtering ---
-    	chart.on("selectchanged", function(keys) {
-    		let items = [];
-    		if (keys.selected.length>0)
-    		      items = keys.selected[0].dataIndex;
-    		  //console.log('fselchg=' + items);
-    		if (keys.isFromClick) {           // send keys FROM echarty
-    		for (let i=0; i < items.length; ++i) ++items[i];
-    		if (items.length==0) items = this.key;   // send all keys = filter off
-    		    ct_filter.set(items);
-    		} else if (keys.fromAction != 'unselect')
-    		    ct_filter.save = items;
-    	})
-    	ct_filter.on("change", function(e) {    // only external keys to filter
-    		if (e.sender == ct_filter) return;
-    		//console.log('filter='+e.value);
-    		if (ct_filter.save) {   // clear selected 
-    		chart.dispatchAction({type:'unselect', 
-    		                    seriesIndex:0, dataIndex:ct_filter.save });
-    		ct_filter.save = null;
-    		}
-    		if (e.value) {
-    			for (let i=0; i < e.value.length; ++i) --e.value[i];
-    			if (e.value.length == chart.key.length) {
-    			chart.dispatchAction({type:'unselect', 
-    			                            seriesIndex:0, dataIndex:e.value });
-    			return;
-    			}
-    			    chart.dispatchAction({type:'select', 
-    			                          seriesIndex:0, dataIndex:e.value });
-    			    ct_filter.save = e.value;  // save to unselect later
-    		}
-    	})
-    	// Choose group for Filter
-    	ct_filter.setGroup(x.settings.crosstalk_group);	  
-      
-    }   // ---------------- end crosstalk
-
-	},   // end renderValue
-      
-      getChart: function(){
-        return chart;
-      },
-      
-      getOpts: function(){
-        return opts;
-      },
-
-      resize: function(width, height) {
-        if (chart)
-          chart.resize({width: width, height: height});
       }
+      
+      if(x.hasOwnProperty('on')){
+        for(var e = 0; e < x.on.length; e++){
+          chart.on(x.on[e].event, x.on[e].query, x.on[e].handler);
+        }
+      }
+      
+      if(x.hasOwnProperty('off')){
+        for(var ev = 0; ev < x.off.length; ev++){
+          chart.off(x.off[ev].event, x.off[ev].query, x.off[ev].handler);
+        }
+      }
+      
+      if(x.hasOwnProperty('group')){
+        chart.group = x.group;
+      }
+      
+      if(x.hasOwnProperty('connect')){
+        if (Array.isArray(x.connect)) {
+          let connections = [];
+          for(var c = 0; c < x.connect.length; c++){
+            connections.push(get_e_charts(x.connect[c]));
+          }
+          connections.push(chart);
+          echarts.connect(connections);  
+        } else
+          echarts.connect(x.connect);
+      }
+      
+      if(x.hasOwnProperty('disconnect')){
+        echarts.disconnect(x.disconnect);
+      }
+      
+  // ---------------- crosstalk ----------------
+      // keys are numbered differently depending on the source: 
+      //      R = 1:n, JS = 0:(n-1)
+      //  ECharts 5.4.0: map selections are 'hidden' after filtering:
+      //  see https://github.com/apache/echarts/issues/17772
 
-    };
+      if ((typeof x.settings)!='undefined' &&
+    	    (typeof x.settings.crosstalk_key)!='undefined' && 
+    	    (typeof x.settings.crosstalk_group)!='undefined' &&
+    	    x.settings.crosstalk_key !=null && 
+    	    x.settings.crosstalk_group !=null) {
+
+        tmp = opts.series.findIndex(x => x.datasetId === 'Xtalk');
+        if (tmp==undefined) 
+          console.log('no series found preset for crosstalk')
+      	console.log(' echarty crosstalk on');
+        chart.sext = tmp;
+      	chart.akeys = chart.filk = x.settings.crosstalk_key.map(x=>Number(x));
+        chart.sele = [];
+      	// chart.isMap = opts.geo != undefined;
+      	
+      	var sel_handle = new crosstalk.SelectionHandle();
+      	sel_handle.setGroup(x.settings.crosstalk_group);
+      	var ct_filter =  new crosstalk.FilterHandle();
+      	ct_filter.setGroup(x.settings.crosstalk_group);
+      	
+      	chart.on("brushselected", function(keys) {    // send keys FROM echarty
+      		let items = [];
+      		if (keys.batch && keys.batch.length>0)
+      			items = keys.batch[0].selected[0].dataIndex;
+    	    tmp = items.map(i=> chart.filk[i])
+      		sel_handle.set(tmp);
+      	});
+      	chart.on("brushEnd", function(keys) {    // release selection FROM echarty
+      		if (keys.areas.length==0)
+      			sel_handle.set([]);
+      			//sel_handle.set(this.akeys.map(String));  // restore
+      	})
+      	chart.on("selectchanged", function(keys) { // send keys FROM echarty
+        		let items = [];
+        		if (keys.selected.length>0)
+        		    items = keys.selected[0].dataIndex;
+        		if (keys.isFromClick) {
+        		  //if (items.length==0) items = this.akeys; // send all keys: bad 4 map
+        	    tmp = items.map(i=> chart.filk[i])
+        		  //console.log('s=',items,' > ',tmp);
+        		  sel_handle.set(tmp.map(String));
+              chart.sele = items;
+        		}
+      	})
+    
+    	  sel_handle.on("change", function(e) {  // external keys to our select
+        	if (e.sender == sel_handle) return;
+          if (e.oldValue && e.oldValue.length>0) {   // clear previous
+      	    tmp = e.oldValue.map(x=>Number(x))  //.map(v => v-1);
+      	    tmp = tmp.map(r=> chart.filk.indexOf(r))
+            chart.dispatchAction({type: 'downplay', 
+                  seriesIndex: chart.sext, dataIndex: tmp });
+          }
+          if (e.value.length>0) {
+    	      tmp = e.value.map(x=>Number(x))
+      	    tmp = tmp.map(r=> chart.filk.indexOf(r))
+    	      chart.dispatchAction({type: 'highlight', 
+    	            seriesIndex: chart.sext, dataIndex: tmp });
+          }
+    	  });
+    	  
+      	ct_filter.on('change', function(e) {    // external keys to filter
+      		if (e.sender == ct_filter) return;
+      		if (e.value == undefined) return;
+        //  if (chart.sele.length>0) {    // clear selection(s) before new filter
+        //    chart.dispatchAction({type: 'unselect',   // works for self only
+        //          seriesIndex: chart.sext, dataIndex: chart.sele });
+        //    chart.sele = [];
+      	//  }
+          
+          rexp = '^('+ e.value.join('|') +')$';
+          if (e.value.length == chart.akeys.length) rexp <- '^'
+          opt = chart.getOption();
+          dtf = opt.dataset.find(x => x.id === 'Xtalk');
+          dtf.transform = {type: 'filter', config:
+              {dimension: 'XkeyX', reg: rexp } }
+          chart.filk = e.value.map(x=>Number(x)).sort((a, b) => a - b);
+          chart.setOption(opt, false);
+      	});
+  	
+      }   // ---------------- end crosstalk
+
+    },   // end renderValue
+    
+    getChart: function(){
+      return chart;
+    },
+    
+    getOpts: function(){
+      return opts;
+    },
+
+    resize: function(width, height) {
+      if (chart)
+        chart.resize({width: width, height: height});
+    }
+
+    };  // return
   }
 });
 
 updLGraphic = (tmp) => { 
   // transform lottie graphic element
-  if (!tmp) return tmp;
-    // tmp.forEach((grf) => 
+  if (tmp==undefined) return tmp;
   for(i=0; i<tmp.length; i++) {
     if (!tmp[i].elements) continue;
-    grf = tmp[i];      //debugger;
+    grf = tmp[i];
     grf.elements.forEach((elem) => { 
       //if (elem.id && !elem.id.startsWith('lottie')) return;
       loty = elem; 

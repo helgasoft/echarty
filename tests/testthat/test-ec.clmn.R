@@ -58,4 +58,42 @@ test_that("ec.clmn works with sprintf, column indexes and names", {
   expect_equal(p$x$opts$series$data[[1]]$name, 'Celebes')
 })
 
+test_that("ec.clmn layout", {
+  p <- lapply(list('dark','macarons','gray','jazz','dark-mushroom'),
+                function(x) cars |> ec.init() |> ec.theme(x) ) |>
+    ec.util(cmd='layout', cols= 2, title= 'my layout')
+  expect_equal(p$children[[3]]$children[[1]]$children[[2]]$children[[1]]$x$theme, 'macarons')
+})
+
+test_that("ec.clmn tabset", {
+  p1 <- cars |> ec.init(grid= list(top= 20))
+  p2 <- mtcars |> ec.init()
+  p <- htmltools::browsable(
+    ec.util(cmd= 'tabset', cars= p1, mtcars= p2, width= 200, height= 200)
+  )
+  expect_s3_class(p[[2]]$children[[5]]$children[[2]]$children[[1]][[1]], 'echarty')
+})
+
+test_that("ec.clmn morph", {
+  setd <- function(type) {
+    mtcars |> group_by(cyl) |> ec.init(ctype=type) |> ec.upd({
+    title <- list(subtext='mouseover points to morph')
+    xAxis <- list(scale=TRUE)
+    series <- lapply(series, function(ss) {
+      ss$groupId <- ss$name
+      ss$universalTransition <- list(enabled=TRUE)
+      ss })
+    })
+  }
+  oscatter <- setd('scatter')
+  obar <- setd('bar')
+  p <- ec.util(cmd='morph', oscatter, obar)
+  expect_equal(p$x$opts$morph[[2]]$series[[3]]$type, 'bar')
+  expect_true (p$x$opts$morph[[2]]$series[[3]]$universalTransition$enabled)
+})
+
+test_that("ec.clmn rescale", {
+  p <- ec.util(cmd='rescale', v=c(4,5,6,7,8), s=20)
+  expect_equal(p, c(1, 6, 11, 16, 21))
+})
 

@@ -1,7 +1,7 @@
 Package: echarty
 Title: Minimal R/Shiny Interface to JavaScript Library 'ECharts'
-Date: 2022-10-06
-Version: 1.4.7.04
+Date: 2022-10-15
+Version: 1.4.7.05
 Authors@R: c( 
   person("Larry", "Helgason", email = "larry@helgasoft.com", role = c("cre", "aut", "cph")),
   person("John", "Coene", role = c("aut", "cph"), comment = "echarts4r library")

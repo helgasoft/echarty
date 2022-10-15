@@ -18,7 +18,6 @@ NULL
 #' @param df A data.frame to be preset as \href{https://echarts.apache.org/en/option.html#dataset}{dataset}, default NULL \cr
 #'   By default the first column is for X values, second column is for Y, and third is for Z when in 3D.\cr
 #'   Best practice is to have the grouping column placed last. Grouping column cannot be used as axis.\cr
-#'   For crosstalk df should be of type \link[crosstalk]{SharedData}, see \href{https://helgasoft.github.io/echarty/xtalk.html}{more info}.\cr
 #'   Timeline requires a \emph{grouped data.frame} to build its \href{https://echarts.apache.org/en/option.html#options}{options}.\cr
 #'   If grouping is on multiple columns, only the first one is used to determine settings.
 #' @param ctype Chart type of series. Default is 'scatter'. Set to NULL to disable series preset.
@@ -55,11 +54,10 @@ NULL
 #'
 #' @details  Command \emph{ec.init} creates a widget with \link[htmlwidgets]{createWidget}, then adds some ECharts features to it.\cr
 #'  When \emph{ec.init} is chained after a data.frame, a \href{https://echarts.apache.org/en/option.html#dataset}{dataset} is preset. \cr
-#'  When the data.frame is grouped and \emph{ctype} is not null, more datasets with legend and series are also preset. Grouped series are preset as type \emph{scatter}. \cr
+#'  When data.frame is grouped and \emph{ctype} is not null, more datasets with legend and series are also preset. Grouped series are preset as type \emph{scatter}. \cr
 #'  Plugin '3D' presets will not work for 'scatterGL'. Instead, use \emph{preset=FALSE} and set explicitly \emph{xAxis,yAxis}. \cr
 #'  Plugins 'leaflet' and 'world' preset zoom=6 and center to the mean of all coordinates. \cr
 #'  Users can delete or overwrite any presets as needed. \cr
-#'  [ec.plugjs] will be called internally for each \emph{load} entry, popup prompts controlled by parameter \emph{ask}. \cr
 #'  
 #'  Built-in plugins: \cr 
 #'  * leaflet - Leaflet maps with customizable tiles, see \href{https://github.com/gnijuohz/echarts-leaflet#readme}{source}\cr
@@ -70,7 +68,13 @@ NULL
 #'  * liquid - liquid fill, see \href{https://github.com/ecomfe/echarts-liquidfill}{source}  \cr
 #'  * gmodular - graph modularity, see \href{https://github.com/ecomfe/echarts-graph-modularity}{source}  \cr
 #'  * wordcloud - cloud of words, see \href{https://github.com/ecomfe/echarts-wordcloud}{source} \cr
-#'  or install your own third-party plugins.
+#'  or install your own third-party plugins.\cr
+#'  
+#'  Crosstalk:\cr
+#'  Parameter \emph{df} should be of type \link[crosstalk]{SharedData}, see \href{https://helgasoft.github.io/echarty/xtalk.html}{more info}.\cr
+#'  It should NOT have string row names. Use \link[tibble]{rownames} to remove or convert to column.\cr
+#'  Enabling \emph{crosstalk} will generate an additional dataset called _Xtalk_ and bind the first serie to it if \emph{datasetId} not set.\cr
+#'  
 #' 
 #' @return A widget to plot, or to save and expand with more features.
 #' 
@@ -85,7 +89,7 @@ NULL
 #'     encode=list(x=NULL, y=c('Sepal.Width', 'Petal.Length')),
 #'     markPoint = list(data=list(list(type='max'), list(type='min')))
 #'   )
-#' ) # |> ec.upd(...
+#' ) # |> ec.upd({...})
 #' p$x$opts$timeline <- append(p$x$opts$timeline, list(autoPlay=TRUE))
 #' p
 #' 
@@ -107,6 +111,17 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter',
   # remove the above arguments since they are not valid ECharts options
   opts$ask <- opts$js <- opts$renderer <- opts$locale <- opts$useDirtyRect <- opts$elementId <- NULL
   
+  doType <- function(how) {
+    .ty <- 'category'
+    switch(how,
+           'Date'= .ty <- 'time',
+           'character' = .ty <- 'category',
+           'factor' = .ty <- 'category',
+           'numeric' = .ty <- 'value',
+           'integer' = .ty <- 'value'
+    )
+    return(.ty)
+  }
   xyItems <- function(ser) {
     # without coordinateSystem: pie,funnel,gauge,graph, sunburst/tree/treemap/sankey
     xtem <- 'x'; ytem <- 'y'
@@ -131,9 +146,15 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter',
   # user can also ignore or replace them
   if (preset) {
     # list(show=TRUE) or list(list()) is to create an empty object{} in JS
-    if (!('xAxis' %in% names(opts))) opts$xAxis <- list(show=TRUE)
-    if (!('yAxis' %in% names(opts))) opts$yAxis <- list(show=TRUE)
-    if (!('series' %in% names(opts))) {
+    if (!'xAxis' %in% names(opts)) 
+      opts$xAxis <- list(show=TRUE)
+    if (is.null(opts$xAxis$type) && !is.null(opts$xAxis$data))
+      opts$xAxis$type <- doType(class(opts$xAxis$data))
+    if (!'yAxis' %in% names(opts)) 
+      opts$yAxis <- list(show=TRUE)
+    if (is.null(opts$yAxis$type) && !is.null(opts$yAxis$data))
+      opts$yAxis$type <- doType(class(opts$yAxis$data))
+    if (!'series' %in% names(opts)) {
     	if (!'world' %in% opts$load)   # world will add its own default serie
     	  opts$series <- list(list(type=if (is.null(ctype)) 'scatter' else ctype) )
     } else if (is.null(opts$series[[1]]$type))  # set default to user serie if omitted
@@ -144,14 +165,18 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter',
     }
   }
 
-  key <- group <- deps <- NULL
-  if (requireNamespace("crosstalk", quietly = TRUE)) {
+  key <- group <- deps <- NULL; isCrosstalk <- FALSE
+  if (requireNamespace("crosstalk", quietly= TRUE)) {
     if (crosstalk::is.SharedData(df)) {
-      # Using Crosstalk
+      isCrosstalk <- TRUE
       key <- as.list(df$key())
       group <- df$groupName()
-      df <- df$origData()
       deps <- crosstalk::crosstalkLibs()
+      tmp <- df$key()
+      if (suppressWarnings( all(is.na(as.numeric(tmp)))))
+        stop('ec.init crosstalk: df has non-numeric row names', call. = FALSE)
+      df <- df$origData()
+      df$XkeyX <- as.numeric(tmp)   # add for Xtalk filtering
     }
   }
   
@@ -200,7 +225,7 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter',
     } 
     else 
       x$opts$dataset <- list(list(source = ec.data(df, header=TRUE)))
-
+    
     if (preset) {
       colX <- 1     # by default 1st column is X, 2nd is Y, 3rd is Z
       colY <- 2
@@ -233,20 +258,31 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter',
         })
       }
       
-      # update xAxis/yAxis type if columns are categorical
+      # update xAxis/yAxis type depending on column type , TODO: 'log' type
+      # cannot depend on default type of being NEITHER category, NOR value
+      # axis source is data, dataset (or series.data = not applicable under df)
       clss <- unname(sapply(df, class))
-      if (!is.null(x$opts$xAxis) && is.null(x$opts$xAxis$type)) { 
-        if (clss[colX]=='Date')
-          x$opts$xAxis$type <- 'time'
-        #else if (!is.numeric(unname(unlist(df[,colX]))))
-        else if (clss[colX]=='character' || clss[colX]=='factor')
-          x$opts$xAxis$type <- 'category'
+      xx <- x$opts$xAxis    
+      if (!is.null(xx) && is.null(xx$type)) {
+        x$opts$xAxis$type <- doType(clss[colX])
+        # tmpc <- ifelse(!is.null(xx$data), class(xx$data), clss[colX])
+        # switch(tmpc,
+        #   'Date'= x$opts$xAxis$type <- 'time',
+        #   'character' = x$opts$xAxis$type <- 'category',
+        #   'factor' = x$opts$xAxis$type <- 'category',
+        #   'numeric' = x$opts$xAxis$type <- 'value'
+        # )
       }
-      if (!is.null(x$opts$yAxis) && is.null(x$opts$yAxis$type)) { 
-        if (clss[colY]=='Date')
-          x$opts$yAxis$type <- 'time'
-        else if (clss[colY]=='character' || clss[colY]=='factor')
-          x$opts$yAxis$type <- 'category'
+      yy <- x$opts$yAxis
+      if (!is.null(yy) && is.null(yy$type)) {
+        x$opts$yAxis$type <- doType(clss[colY])
+        # tmpc <- ifelse(!is.null(yy$data), class(yy$data), clss[colY])
+        # switch(tmpc,
+        #   'Date'= x$opts$yAxis$type <- 'time',
+        #   'character' = x$opts$yAxis$type <- 'category',
+        #   'factor' = x$opts$yAxis$type <- 'category',
+        #   'numeric' = x$opts$yAxis$type <- 'value'
+        # )
       }
       if (!is.null(x$opts$series) && !is.null(x$opts$series[[1]]$type))
         if (x$opts$series[[1]]$type == 'parallel')
@@ -282,7 +318,8 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter',
   }
   
   # ------------- plugins loading -----------------------------
-  load <- opts$load;
+  load <- wt$x$opts$load;
+  wt$x$opts$load <- NULL
   if (length(load)==1 && grepl(',', load, fixed=TRUE))
       load <- unlist(strsplit(load, ','))
       
@@ -362,9 +399,10 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter',
           wt$x$opts$series <- append(wt$x$opts$series,
             list(list(type='map', geoIndex=0)))
       }
-      # map will duplicate if series have map='world' too
-      wt$x$opts$geo = list(map='world', roam=TRUE)
-      # if (!is.null(df))  # cancelled: don't know if first 2 cols are 'lng','lat'
+      # WARN: map will duplicate if series have map='world' too
+      if (!'geo' %in% names(wt$x$opts))
+        wt$x$opts$geo = list(map='world', roam=TRUE)
+      # if (!is.null(df))  # cancelled: don't know if df first 2 cols are 'lng','lat'
       #   wt$x$opts$geo$center= c(mean(unlist(df[,1])), mean(unlist(df[,2])))
     }
   }
@@ -383,6 +421,19 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter',
     for(pg in unk)
       wt <- ec.plugjs(wt, pg, ask)
   }
+  
+  if (isCrosstalk) {  # add transformation filter
+    tmp <- list(list( 
+      id= 'Xtalk',
+      transform = list(type= 'filter', 
+                       config= list(dimension= 'XkeyX', reg='^')
+                       #"^(50|56|62|68|74|152|158)$")
+    )))
+    wt$x$opts$dataset <- append(wt$x$opts$dataset, tmp)
+    if (!is.null(wt$x$opts$series) && is.null(wt$x$opts$series[[1]]$datasetId))
+      wt$x$opts$series[[1]]$datasetId= 'Xtalk'
+  }
+  
   
   # ------------- timeline  -----------------
   if (is.null(tl.series)) return(wt)
@@ -776,9 +827,11 @@ ec.data <- function(df, format='dataset', header=FALSE) {
 #' @export
 ec.clmn <- function(col=NULL, ..., scale=1) {
   if (is.null(scale)) scale=1
-  if (scale==1) scl <- 'return c;' 
-  else { if (scale==0) scl <- 'return Math.round(c);'
-  else scl <- paste0('return (parseFloat(c)*',scale,');') }
+  if (scale==1) scl <- 'return c;'
+  else {
+    if (scale==0) scl <- 'return Math.round(c);'
+    else scl <- paste0('return (parseFloat(c)*',scale,');') 
+  }
   args <- list(...)
   ret <- paste("let c=String(typeof x=='object' ? x.value : x);", scl)
   
@@ -1755,12 +1808,12 @@ body { padding: 10px; }
         tinp <- htmltools::tags$input(type='radio', name='tabso', id=tid, `aria-controls`=n)
         if (cnt==1) tinp <- htmltools::tagAppendAttributes(tinp, checked=1)
         tset <- htmltools::tagAppendChildren(tset, 
-                                             tinp, htmltools::tags$label(`for`=tid, n))
+                    tinp, htmltools::tags$label(`for`=tid, n))
         cont <- unname(opts[n]) 
         cont[[1]]$width <- width
         cont[[1]]$height <- height
         tpans <- htmltools::tagAppendChild(tpans, 
-                                           htmltools::tags$section(id=n, class='tab-panel', cont))
+                    htmltools::tags$section(id=n, class='tab-panel', cont))
         tout <- htmltools::tagAppendChild(tset, tpans)
         cnt <- cnt + 1
       }
@@ -1844,6 +1897,19 @@ function(event) {
           event= 'mouseover', handler= defaultHandler
         ))
       out    
+    },
+    
+    'rescale'= {
+      scale <- opts$s
+      if (!is.numeric(scale)) scale <- 1
+      vect <- opts$v
+      if (is.null(vect))
+        stop("ec.util: rescale 'v' paramater missing")
+      if (!is.numeric(vect))
+        stop("ec.util: rescale 'v' is not a numeric vector")
+      out <- drop(scale(vect, center=min(vect)-min(vect)*0.05, scale=diff(range(vect)))) * scale
+      #out <- as.numeric(out)  # rem attr
+      out <- sapply(out, as.vector)
     },
     
     stop(paste("ec.util: invalid 'cmd' parameter",cmd), call. = FALSE)
@@ -1969,4 +2035,3 @@ if (requireNamespace("shiny", quietly= TRUE)) {
 #' See the License for the specific language governing permissions and
 #' limitations under the License.
 #' ---------------------------------------
-
