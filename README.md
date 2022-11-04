@@ -29,7 +29,7 @@ support](https://helgasoft.github.io/echarty/xtalk.html).
 ## Installation
 
 <!-- [![Github version](https://img.shields.io/github/v/release/helgasoft/echarty?label=github)](https://github.com/helgasoft/echarty/releases) -->
-Latest development build <strong>1.4.7<sup>.05</sup></strong>
+Latest development build <strong>1.4.7<sup>.06</sup></strong>
 
 ``` r
 if (!requireNamespace('remotes')) install.packages('remotes')

@@ -4,17 +4,17 @@
 \alias{-- Introduction --}
 \title{Introduction}
 \description{
-echarty provides a lean interface between R and native ECharts components.\cr
-It does not mimic original ECharts statements, but wraps them in R lists. \cr
-Therefore two major benefits  - just a \strong{few commands} to learn, and enjoy the \strong{full functionality} of ECharts.
+echarty provides a lean interface between R and Javascript library ECharts.\cr
+With only two major commands (\emph{ec.init} and \emph{ec.upd}), it can trigger multiple native ECharts options to build a chart. \cr
+The benefits - learn a very limited set of commands, and enjoy the \strong{full functionality} of ECharts.
 }
 \section{Package Conventions}{
 \enumerate{
 \item pipe-friendly - supports both \%>\% and |>
-\item functions have three prefixes to help with auto-completion:
+\item commands have three prefixes to help with auto-completion:
 }
 \itemize{
-\item \emph{ec.} for general functions, like \link{ec.data}
+\item \emph{ec.} for general functions, like \link{ec.init}
 \item \emph{ecs.} for Shiny functions, like \link{ecs.output}
 \item \emph{ecr.} for rendering functions, like \link{ecr.band}
 }
@@ -23,7 +23,7 @@ Therefore two major benefits  - just a \strong{few commands} to learn, and enjoy
 \section{Global Options}{
 Options are set with R command
 \href{https://www.rdocumentation.org/packages/base/versions/3.6.2/topics/options}{options}.
-echarty uses the following options:
+Echarty uses the following options:
 \itemize{
 \item echarty.theme = name of theme file, without extension, from folder
 /inst/themes
@@ -47,7 +47,7 @@ These are \code{htmlwidget} and \code{ECharts} initialization parameters support
 by echarty. There are code samples for most of them in
 \link{ec.examples}.
 \itemize{
-\item capture = event name(s), to monitor events usually in Shiny
+\item capture = event name(s), to monitor events, usually in Shiny
 \item on = define JavaScript code for event handling, see it in
 \href{https://echarts.apache.org/en/api.html#echartsInstance.on}{ECharts}
 \item registerMap = define a map from a geoJSON file, see it in
@@ -65,6 +65,15 @@ by echarty. There are code samples for most of them in
 \item jcode = custom JavaScript code to execute, set from \code{js} parameter
 of \link{ec.init}
 }
+}
+
+\section{R vs Javascript numbering}{
+R indexes are counted starting from 1.
+JS indexes are counted starting from 0.
+echarty supports R-counting in series-encode \strong{x,y,tooltip} and
+visualMap-continuous \strong{dimension} when set through \emph{ec.init}. All other
+indexes like \emph{xAxisIndex}, \emph{gridIndex}, etc. need to be set in
+JS-counting (for now).
 }
 
 \section{Code examples}{

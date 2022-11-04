@@ -22,6 +22,7 @@ HTMLWidgets.widget({
           echarts.registerTheme(x.theme, tcode);
         }
       }
+      
       if(x.hasOwnProperty('registerMap')){
         for( let map = 0; map < x.registerMap.length; map++){
           if (x.registerMap[map].geoJSON)
@@ -33,6 +34,13 @@ HTMLWidgets.widget({
         }
       }
       
+      ecfun.hwid = el.id;
+      if (window.onresize==undefined)
+        window.onresize = function() {
+        	chart.resize();
+        	ecfun.fs = ecfun.IsFullScreen();  // handle ESC key
+        }
+        
       let eva2 = eva3 = null;
       if (x.hasOwnProperty('jcode')) {
         if (x.jcode) {
@@ -69,26 +77,15 @@ HTMLWidgets.widget({
         } catch(err) { console.log('eva3: ' + err.message) }
       }
       
-      load = opts.load;
-      if (Array.isArray(load)) load = load.join();
-      if (load && load.includes('lottie-parser')) {
-        lottieParser.install(echarts);
-        // lottie without timeline
-        tmp = chart.getModel().option.graphic;
-        if (tmp) {
-          tmp = updLGraphic(tmp);
+      if (opts.graphic && lottieParser) {
+          tmp = ecfun.lottieGraphic(opts.graphic);
           chart.setOption({graphic: tmp}, { replaceMerge: 'graphic'});
-        }
       }
       
       // TODO: timeline to include graphic, etc.   (ECUnitOption, OptionManager ?)
       // find how to set timeline 'options'...
-//        tmp = chart.getModel()._optionManager._timelineOptions;
-//        if (tmp) {  
-//          tmp = updGraphic(tmp);
-//          //tmp.forEach((opt) => { if (opt.graphic) opt.graphic = updGraphic(opt.graphic); });
-//        //  chart.setOption({options: tmp}, { replaceMerge: 'graphic'});
-//        }
+      //  tmp = chart.getModel()._optionManager._timelineOptions;
+      //  if (tmp) {  }
       
       if (HTMLWidgets.shinyMode) {    // shiny callbacks
 
@@ -225,15 +222,15 @@ HTMLWidgets.widget({
     	  
       	ct_filter.on('change', function(e) {    // external keys to filter
       		if (e.sender == ct_filter) return;
-      		if (e.value == undefined) return;
+      		if (e.value == undefined) e.value = [];  // sent by filter_checkbox ?!
         //  if (chart.sele.length>0) {    // clear selection(s) before new filter
         //    chart.dispatchAction({type: 'unselect',   // works for self only
         //          seriesIndex: chart.sext, dataIndex: chart.sele });
         //    chart.sele = [];
       	//  }
           
-          rexp = '^('+ e.value.join('|') +')$';
-          if (e.value.length == chart.akeys.length) rexp <- '^'
+          rexp = (e.value.length == chart.akeys.length ||
+                  e.value.length == 0) ? '^' : '^('+ e.value.join('|') +')$';
           opt = chart.getOption();
           dtf = opt.dataset.find(x => x.id === 'Xtalk');
           dtf.transform = {type: 'filter', config:
@@ -262,33 +259,6 @@ HTMLWidgets.widget({
     };  // return
   }
 });
-
-updLGraphic = (tmp) => { 
-  // transform lottie graphic element
-  if (tmp==undefined) return tmp;
-  for(i=0; i<tmp.length; i++) {
-    if (!tmp[i].elements) continue;
-    grf = tmp[i];
-    grf.elements.forEach((elem) => { 
-      //if (elem.id && !elem.id.startsWith('lottie')) return;
-      loty = elem; 
-      data = loty.info; if (!data) return;
-      delete loty.info;
-      if (!data.v || data.v.search('\\d\\.\\d\\.\\d')<0) return;
-      loop= loty.loop; if (loop==undefined) loop = true;
-      const { elements, width, height } = lottieParser.parse(data, {loop: loop});
-      scale= loty.scale; 
-      if (scale) {
-        delete loty.scale; 
-        const sfactor = scale / Math.min(width, height);
-        loty.scaleX= sfactor; loty.scaleY= sfactor;
-      }
-      loty.type= 'group';  loty.children= elements;
-      elem = loty; 
-    });
-  };
-  return tmp;
-}
 
 function get_e_charts(id){
 
@@ -321,6 +291,80 @@ function get_e_charts_opts(id){
 function distinct(value, index, self) { 
   return self.indexOf(value) === index;
 }
+      
+// extra functions
+ecfun = {
+  IsFullScreen: function() {
+    	var full_screen_element = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement || null;
+    	if (full_screen_element === null)
+    	  return false;
+    	else
+    	  return true;
+  },
+  
+  fs: false,   // fullscreen flag Y/N
+  fscreen: function() {
+    // see also window.onresize
+    function GoInFullscreen(element) {
+       if (element.requestFullscreen)
+           element.requestFullscreen();
+       else if (element.mozRequestFullScreen)
+           element.mozRequestFullScreen();
+       else if (element.webkitRequestFullscreen)
+           element.webkitRequestFullscreen();
+       else if (element.msRequestFullscreen)
+           element.msRequestFullscreen();
+    }
+    function GoOutFullscreen() {
+       if (document.exitFullscreen)
+           document.exitFullscreen();
+       else if (document.mozCancelFullScreen)
+           document.mozCancelFullScreen();
+       else if (document.webkitExitFullscreen)
+           document.webkitExitFullscreen();
+       else if (document.msExitFullscreen)
+           document.msExitFullscreen();
+    }
+
+    if (this.fs) {
+      if (this.IsFullScreen())
+        GoOutFullscreen();
+    }
+    else {
+      tmp = document.getElementById(ecfun.hwid);
+      GoInFullscreen(tmp)
+    }
+    this.fs = !this.fs;
+  },
+  
+  lottieGraphic: function(vv) {
+    // transform lottie graphic element
+    if (vv==undefined) return vv;
+    if (vv.length) return vv;
+    if (!vv.elements) return vv;
+    vv.elements.forEach((elem) => {
+      loty = elem; 
+      data = loty.info; 
+      if (!data) return;
+      delete loty.info;
+      if (!data.v || data.v.search('\\d\\.\\d\\.\\d')<0) return;  // not a lottie
+      if (lottieParser==undefined) return;
+      lottieParser.install(echarts);
+      loop= loty.loop; if (loop==undefined) loop = true;
+      const { elements, width, height } = lottieParser.parse(data, {loop: loop});
+      scale= loty.scale; 
+      if (scale) {
+        delete loty.scale; 
+        const sfactor = scale / Math.min(width, height);
+        loty.scaleX= sfactor; loty.scaleY= sfactor;
+      }
+      loty.type= 'group';  loty.children= elements;
+      elem = loty; 
+    });
+    return vv;
+  }
+
+};
 
 if (HTMLWidgets.shinyMode) {
 

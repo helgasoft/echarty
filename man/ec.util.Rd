@@ -56,6 +56,11 @@ tabset, table layout, support for GIS shapefiles thru library sf
 \verb{   }...= a list of charts or chart options\cr
 \verb{   }optional parameter: \cr
 \verb{     }js= JS function for switching charts. Default function is on \emph{mouseover}.\cr
+\strong{cmd = 'fullscreen'} \cr
+\verb{   }a toolbox feature to toggle fullscreen on/off. Works in a browser, not in RStudio.\cr
+\strong{cmd = 'rescale'} \cr
+\verb{   }t = target range c(min,max), numeric vector of two\cr
+\verb{   }v = vector of numeric values to rescale\cr
 }
 \examples{
 if (interactive()) {  # comm.out: Fedora errors about some 'browser'

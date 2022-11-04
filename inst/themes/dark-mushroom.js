@@ -114,7 +114,12 @@
             fillerColor: 'rgba(200,200,200,0.2)', // Fill the color
             handleColor: '#cc0e00' // Handle color
         },
-
+        visualMap: {
+            textStyle: {
+                color: '#bbb'
+            }
+        },
+                
         timeline: {
             itemStyle: {
                 color: '#aaa' //colorPalette[1]

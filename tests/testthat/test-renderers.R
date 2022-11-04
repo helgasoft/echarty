@@ -49,7 +49,7 @@ test_that("custom renderers - ecr.band", {
   df <- Orange |> mutate(Tree=as.numeric(Tree)) |> relocate(Tree, .after= last_col())
   p <- df |> group_by(Tree) |> ec.init(load='custom')
   p$x$opts$legend <- list(ii='')
-  p$x$opts$series <- append(
+  p$x$opts$series <- c(
     ecr.band(df |> filter(Tree==4) |> inner_join(df |> filter(Tree=='1'), by='age'),
              'circumference.y', 'circumference.x', name='poly1'),
     list(list(type='line', datasetIndex=3, color='orange', name='line1'))
@@ -61,3 +61,28 @@ test_that("custom renderers - ecr.band", {
   expect_true( p$x$opts$series[[1]]$renderItem == "riPolygon")
   expect_s3_class(p$x$opts$series[[1]]$renderItem, 'JS_EVAL')
 })
+
+test_that("custom renderers - ecr.band tooltips", {
+  df <- airquality |> mutate(lwr= round(Temp-Wind*2),
+                             upr= round(Temp+Wind*2),
+                             x= paste0(Month,'-',Day) ) |>
+                      relocate(x,Temp)
+  bands <- ecr.band(df, 'lwr', 'upr', type='stack',
+                    name='stak', areaStyle= list(opacity=0.4))
+  p <- df |> ec.init(load='custom',
+     legend= list(show= TRUE),
+     xAxis= list(type='category', boundaryGap=FALSE),
+     series= list(
+       list(type='line', color='blue', name='line'),
+       bands[[1]], bands[[2]]
+     ),
+     tooltip= list( trigger= 'axis',
+       formatter= ec.clmn(
+          'high <b>%@</b><br>line <b>%@</b><br>low <b>%@</b>',
+                    3.3, 1.2, 2.2)
+       )  # 3.3= upper_serie_index +.+ index_of_column_inside
+  )
+  expect_equal(p$x$opts$series[[2]]$stack, 'band')
+  expect_match(p$x$opts$tooltip$formatter, 'ss=[2.3,0.2,1.2]', fixed=TRUE)
+})
+

@@ -92,8 +92,3 @@ test_that("ec.clmn morph", {
   expect_true (p$x$opts$morph[[2]]$series[[3]]$universalTransition$enabled)
 })
 
-test_that("ec.clmn rescale", {
-  p <- ec.util(cmd='rescale', v=c(4,5,6,7,8), s=20)
-  expect_equal(p, c(1, 6, 11, 16, 21))
-})
-

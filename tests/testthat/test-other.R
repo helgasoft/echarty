@@ -279,3 +279,17 @@ test_that("morph", {
   p <- ec.util(cmd='morph', oscatter, obar)
   expect_equal(p$x$on[[1]]$event, 'mouseover')
 })
+
+test_that("fullscreen", {
+  tbox <- list(right='20%', feature= ec.util(cmd='fullscreen'))
+  p <- cars |> ec.init(toolbox= tbox)
+  expect_match(p$x$opts$toolbox$feature$myecfs$onclick, 'ecfun.fscreen', fixed=TRUE)
+})
+
+test_that("rescale", {
+  p <- ec.util(cmd='rescale', t=c(5,25), v=44:64)
+  expect_equal(p[5], 9)
+})
+
+
+

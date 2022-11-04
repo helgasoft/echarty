@@ -2,13 +2,16 @@
 % Please edit documentation in R/echarty.R
 \name{ec.clmn}
 \alias{ec.clmn}
-\title{Data column}
+\title{Data column format}
 \usage{
 ec.clmn(col = NULL, ..., scale = 1)
 }
 \arguments{
 \item{col}{A single column index(number) or column name(quoted string), \cr
-or a \link[base]{sprintf} format string. Default is NULL, for charts with single values like tree, pie.}
+or a \link[base]{sprintf} format string. Or 'log' for debugging.
+Default is NULL, for charts with single values like tree, pie.\cr
+'json' - display tooltip with all available values to choose from\cr
+'log' will write all values in the JS console (F12)}
 
 \item{...}{A comma separated column indexes or names, only when \emph{col} is \emph{sprintf}. This allows formatting of multiple columns, as for a tooltip.\cr}
 
@@ -21,17 +24,20 @@ A JavaScript code string (usually a function) marked as executable, see \link[ht
 Helper function to display/format data column(s) by index or name
 }
 \details{
+This function is useful for attributes like formatter, color, symbolSize.\cr
 Column indexes are counted in R and start at 1.\cr
-Omit \emph{col} or use index -1 for single values tree/pie charts, \emph{axisLabel.formatter} or \emph{valueFormatter}. See \link{ec.data} dendrogram example.\cr
-Use only column index(es) when setting \emph{symbolSize}.\cr
+Omit \emph{col} or use index -1 for single values in tree/pie charts, \emph{axisLabel.formatter} or \emph{valueFormatter}. See \link{ec.data} dendrogram example.\cr
+Use only column indexes when setting \emph{symbolSize}.\cr
 Column indexes are decimals for combo charts with multiple series, see \link{ecr.band} example. The whole number part is the serie index, the decimal part is the column index inside.\cr
 \emph{col} as sprintf has the same placeholder \emph{\%@} for both column indexes or column names.\cr
 \emph{col} as sprintf can contain double quotes, but not single or backquotes.\cr
-Placeholder \emph{\%L@} will display a number in locale format, like '12,345.09'.\cr
-Placeholder \emph{\%LR@} will display a rounded number in locale format, like '12,345'.\cr
-Placeholder \emph{\%R@} will display a rounded number, like '12345'.\cr
-Placeholder \emph{\%M@} will display a marker in serie's color.\cr
-Useful for attributes like formatter, color, symbolSize.
+Placeholders:\cr
+\itemize{
+\item \emph{\%L@} will display a number in locale format, like '12,345.09'.\cr
+\item \emph{\%LR@} rounded number in locale format, like '12,345'.\cr
+\item \emph{\%R@} rounded number, like '12345'.\cr
+\item \emph{\%M@} marker in serie's color.\cr
+}
 }
 \examples{
 tmp <- data.frame(Species = as.vector(unique(iris$Species)),

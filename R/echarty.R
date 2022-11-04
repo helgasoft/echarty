@@ -2,9 +2,9 @@
 
 #' Introduction
 #' 
-#' echarty provides a lean interface between R and native ECharts components.\cr
-#' It does not mimic original ECharts statements, but wraps them in R lists. \cr
-#' Therefore two major benefits  - just a **few commands** to learn, and enjoy the **full functionality** of ECharts.
+#' echarty provides a lean interface between R and Javascript library ECharts.\cr
+#' With only two major commands (_ec.init_ and _ec.upd_), it can trigger multiple native ECharts options to build a chart. \cr
+#' The benefits - learn a very limited set of commands, and enjoy the **full functionality** of ECharts.
 #' 
 #' @includeRmd vignettes/info.Rmd
 #'
@@ -61,10 +61,11 @@ NULL
 #'  
 #'  Built-in plugins: \cr 
 #'  * leaflet - Leaflet maps with customizable tiles, see \href{https://github.com/gnijuohz/echarts-leaflet#readme}{source}\cr
+#'  * world - world map with country boundaries, see \href{https://github.com/apache/echarts/tree/master/test/data/map/js}{source} \cr
+#'  * lottie - support for \href{https://lottiefiles.com}{lotties} \cr
 #'  * custom - renderers for [ecr.band] and [ecr.ebars] \cr 
 #'  Plugins with one-time installation: \cr
 #'  * 3D - 3D charts and WebGL acceleration, see \href{https://github.com/ecomfe/echarts-gl}{source} and \href{https://echarts.apache.org/en/option-gl.html#series}{docs} \cr
-#'  * world - world map with country boundaries, see \href{https://github.com/apache/echarts/tree/master/test/data/map/js}{source} \cr
 #'  * liquid - liquid fill, see \href{https://github.com/ecomfe/echarts-liquidfill}{source}  \cr
 #'  * gmodular - graph modularity, see \href{https://github.com/ecomfe/echarts-graph-modularity}{source}  \cr
 #'  * wordcloud - cloud of words, see \href{https://github.com/ecomfe/echarts-wordcloud}{source} \cr
@@ -122,8 +123,8 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter',
     )
     return(.ty)
   }
-  xyItems <- function(ser) {
-    # without coordinateSystem: pie,funnel,gauge,graph, sunburst/tree/treemap/sankey
+  xyNamesCS <- function(ser) {
+    # no coordinateSystem = pie,funnel,gauge,graph, sunburst/tree/treemap/sankey
     xtem <- 'x'; ytem <- 'y'
     if (is.null(ser$coordinateSystem))
       ser$coordinateSystem <- 'unknown'
@@ -203,7 +204,8 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter',
     
     # skip default group settings on map timeline
     if (!is.null(tl.series) && paste0(tl.series$type,'')=='map') ctype <- NULL
-    # grouping uses transform - a v.5 feature
+    
+    # grouping uses transform
     grnm <- NULL
     if (!is.null(ctype) && dplyr::is.grouped_df(df)) {
       grnm <- dplyr::group_vars(df)[[1]]   # name of 1st grouping column 
@@ -229,31 +231,32 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter',
     if (preset) {
       colX <- 1     # by default 1st column is X, 2nd is Y, 3rd is Z
       colY <- 2
-      # allow grouping by any column, group columns dont become X or Y
+      # grouping by any column, group columns do not become X or Y
       if (!is.null(grnm)) {  # find pos of grp column
         pos <- which(colnames(df)==grnm)
         if (!is.null(tl.series) && !is.null(tl.series$groupBy))
           pos <- c(pos, which(colnames(df)==tl.series$groupBy))
         allp <- rep(TRUE, length(colnames(df)))
         allp <- replace(allp, pos, FALSE)
-        colX <- which(allp==TRUE)[1]
+        colX <- which(allp==TRUE)[1]   # first two=TRUE are X,Y
         colY <- which(allp==TRUE)[2]
         if (is.na(colY))
           stop('ec.init: df must have at least 3 columns when grouping by one', call.= FALSE)
       }
-      # add encode to series when grouping front column(s)
+      # add encode(if missing) to series when grouping
       if (!(colX==1 && colY==2)) {
         x$opts$series <- lapply(x$opts$series, function(ss) {
-          tmp <- xyItems(ss)
+          tmp <- xyNamesCS(ss)
           if (tmp[3] != 'unknown') {
             if (is.null(ss$coordinateSystem)) ss$coordinateSystem <- tmp[3]
-            if (is.null(ss$encode)) {
+          }
+          if (is.null(ss$encode)) {
               xtem <- tmp[1]; ytem <- tmp[2]
               ss$encode <- list()
-              ss$encode[xtem] <- colX -1  # JS count
-              ss$encode[ytem] <- colY -1
-            }
+              ss$encode[xtem] <- colX   # R count
+              ss$encode[ytem] <- colY 
           }
+          # else dont overwrite user's encode
           ss
         })
       }
@@ -265,32 +268,50 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter',
       xx <- x$opts$xAxis    
       if (!is.null(xx) && is.null(xx$type)) {
         x$opts$xAxis$type <- doType(clss[colX])
-        # tmpc <- ifelse(!is.null(xx$data), class(xx$data), clss[colX])
-        # switch(tmpc,
-        #   'Date'= x$opts$xAxis$type <- 'time',
-        #   'character' = x$opts$xAxis$type <- 'category',
-        #   'factor' = x$opts$xAxis$type <- 'category',
-        #   'numeric' = x$opts$xAxis$type <- 'value'
-        # )
       }
       yy <- x$opts$yAxis
       if (!is.null(yy) && is.null(yy$type)) {
         x$opts$yAxis$type <- doType(clss[colY])
-        # tmpc <- ifelse(!is.null(yy$data), class(yy$data), clss[colY])
-        # switch(tmpc,
-        #   'Date'= x$opts$yAxis$type <- 'time',
-        #   'character' = x$opts$yAxis$type <- 'category',
-        #   'factor' = x$opts$yAxis$type <- 'category',
-        #   'numeric' = x$opts$yAxis$type <- 'value'
-        # )
       }
       if (!is.null(x$opts$series) && !is.null(x$opts$series[[1]]$type))
         if (x$opts$series[[1]]$type == 'parallel')
           if (is.null(x$opts$parallelAxis))
             x$opts$parallelAxis <- ec.paxis(df)
-    }
+    }  # end preset
   }
-
+  
+  # ------------- convert from R to JS numbering --------------
+  renumber <- function(opa) {
+    r2jsEncode <- function(ss) {
+      if (is.null(ss$encode)) return(ss)
+      if (!is.null(ss$encode$x) && is.numeric(ss$encode$x))
+        ss$encode$x <- ss$encode$x -1
+      if (!is.null(ss$encode$y) && is.numeric(ss$encode$y))
+        ss$encode$y <- ss$encode$y -1
+      if (!is.null(ss$encode$tooltip) && is.numeric(unlist(ss$encode$tooltip)))
+        ss$encode$tooltip <- unlist(ss$encode$tooltip) -1
+      ss
+    }
+    opa$series <- lapply(opa$series, r2jsEncode)
+    
+    tmp <- opa$visualMap
+    if (!is.null(tmp)) {
+      doVmap <- function(x) {
+        if (is.null(x$type) || x$type=='continuous') {
+          if (!is.null(x$dimension))
+            x$dimension <- x$dimension -1
+        }
+        x
+      }
+      if (all(sapply(tmp, is.list)))
+        opa$visualMap <- lapply(tmp, doVmap)
+      else
+        opa$visualMap <- doVmap(tmp)
+    }
+    opa
+  }
+  x$opts <- renumber(x$opts)
+  
   # ------------- create widget ----------------
   wt <- htmlwidgets::createWidget(
     name = 'echarty',
@@ -313,9 +334,8 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter',
     wt$x$opts$textStyle <- list(fontFamily= tmp)
   
   tmp <- getOption('echarty.theme')   # default
-  if (!is.null(tmp)) {
+  if (!is.null(tmp))
     wt <- ec.theme(wt, tmp)
-  }
   
   # ------------- plugins loading -----------------------------
   load <- wt$x$opts$load;
@@ -323,7 +343,7 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter',
   if (length(load)==1 && grepl(',', load, fixed=TRUE))
       load <- unlist(strsplit(load, ','))
       
-  path <- system.file('js', package = 'echarty')
+  path <- system.file('js', package= 'echarty')
   dep <- NULL
   if ('leaflet' %in% load) {
     if (preset) {
@@ -333,10 +353,15 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter',
       urltls <- getOption('echarty.urlTiles')
       if (is.null(urltls))
         urltls <- 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
-      wt$x$opts$leaflet = list(
-        roam = TRUE,
-        tiles = list( list(urlTemplate = urltls))
-      )
+      if (!'leaflet' %in% names(wt$x$opts)) {
+        wt$x$opts$leaflet = list(
+          roam = TRUE,
+          tiles = list( list(urlTemplate = urltls))
+        )
+      } 
+      else if (is.null(wt$x$opts$leaflet$tiles))
+        wt$x$opts$leaflet$tiles <- list( list(urlTemplate = urltls))
+      
       if ('series' %in% names(wt$x$opts)) {
         wt$x$opts$series <- lapply(wt$x$opts$series,
           function(ss) {
@@ -361,9 +386,40 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter',
   }
   if ('custom' %in% load) {
     dep <- htmltools::htmlDependency(
-      name = 'renderers', version = '1.0.2', 
-      src = c(file = path), script = 'renderers.js')
+      name = 'renderers', version= '1.0.2', 
+      src = c(file = path), script= 'renderers.js')
     wt$dependencies <- append(wt$dependencies, list(dep))
+  }
+  if ('lottie' %in% load) {
+    dep <- htmltools::htmlDependency(
+      name = 'lottieParser', version = '1.0.0', 
+      src = c(file = path), script= 'lottie-parser.js')
+    wt$dependencies <- append(wt$dependencies, list(dep))
+  }
+  if ('world' %in% load) {
+    #wt <- ec.plugjs(wt, 'https://cdn.jsdelivr.net/npm/echarts@4.9.0/map/js/world.js', ask)
+    dep <- htmltools::htmlDependency(
+      name = 'world', version = '1.0.0', 
+      src = c(file = path), script= 'world.js')
+    wt$dependencies <- append(wt$dependencies, list(dep))
+    
+    if (preset) {
+      wt$x$opts$xAxis <- NULL
+      wt$x$opts$yAxis <- NULL
+      #if (is.null(opts$series) || is.null(opts$series$type) || opts$series$type!='map')
+      #  wt$x$opts$series <- list(list(type='map', geoIndex=0))
+      if (!is.null(df)) {  # add map serie if missing
+        tmp <- sapply(wt$x$opts$series, function(x) {x$type} )
+        if (!'map' %in% tmp)
+          wt$x$opts$series <- append(wt$x$opts$series,
+                                     list(list(type='map', geoIndex=0)))
+      }
+      # WARN: map will duplicate if series have map='world' too
+      if (!'geo' %in% names(wt$x$opts))
+        wt$x$opts$geo = list(map='world', roam=TRUE)
+      # if (!is.null(df))  # cancelled: don't know if df first 2 cols are 'lng','lat'
+      #   wt$x$opts$geo$center= c(mean(unlist(df[,1])), mean(unlist(df[,2])))
+    }
   }
   
   # Plugins implemented as dynamic load on-demand
@@ -386,26 +442,6 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter',
     }
     wt <- ec.plugjs(wt, 'https://cdn.jsdelivr.net/npm/echarts-gl@2.0.9/dist/echarts-gl.min.js', ask)
   }
-  if ('world' %in% load) {
-    wt <- ec.plugjs(wt, 'https://cdn.jsdelivr.net/npm/echarts@4.9.0/map/js/world.js', ask)
-    if (preset) {
-      wt$x$opts$xAxis <- NULL
-      wt$x$opts$yAxis <- NULL
-      #if (is.null(opts$series) || is.null(opts$series$type) || opts$series$type!='map')
-      #  wt$x$opts$series <- list(list(type='map', geoIndex=0))
-      if (!is.null(df)) {  # add map serie if missing
-        tmp <- sapply(wt$x$opts$series, function(x) {x$type} )
-        if (!'map' %in% tmp)
-          wt$x$opts$series <- append(wt$x$opts$series,
-            list(list(type='map', geoIndex=0)))
-      }
-      # WARN: map will duplicate if series have map='world' too
-      if (!'geo' %in% names(wt$x$opts))
-        wt$x$opts$geo = list(map='world', roam=TRUE)
-      # if (!is.null(df))  # cancelled: don't know if df first 2 cols are 'lng','lat'
-      #   wt$x$opts$geo$center= c(mean(unlist(df[,1])), mean(unlist(df[,2])))
-    }
-  }
   if ('liquid' %in% load) 
     wt <- ec.plugjs(wt, 'https://cdn.jsdelivr.net/npm/echarts-liquidfill@latest/dist/echarts-liquidfill.min.js', ask)
   
@@ -416,7 +452,7 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter',
     wt <- ec.plugjs(wt, 'https://cdn.jsdelivr.net/npm/echarts-wordcloud@2.0.0/dist/echarts-wordcloud.min.js', ask)
   
   # load unknown plugins
-  unk <- load[! load %in% c('leaflet','custom','3D','world','liquid','gmodular','wordcloud')]
+  unk <- load[! load %in% c('leaflet','custom','world','lottie','3D','liquid','gmodular','wordcloud')]
   if (length(unk)>0) {
     for(pg in unk)
       wt <- ec.plugjs(wt, pg, ask)
@@ -438,6 +474,7 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter',
   # ------------- timeline  -----------------
   if (is.null(tl.series)) return(wt)
   # timeline is evaluated last
+  
   if (is.null(df) || !is.grouped_df(df))
     stop('ec.init: tl.series requires a grouped data.frame df', call. = FALSE)
 
@@ -447,7 +484,7 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter',
   # add missing defaults
   if (is.null(tl.series$type)) tl.series$type <- 'scatter'
   
-  tmp <- xyItems(tl.series)
+  tmp <- xyNamesCS(tl.series)
   xtem <- tmp[1]; ytem <- tmp[2]
   if (is.null(tl.series$coordinateSystem)) tl.series$coordinateSystem <- tmp[3]
   
@@ -476,8 +513,9 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter',
       names(tmp)[names(tmp)==tl.series$encode[ytem]] <- 'value'
       series <- list(list(type= "map", geoIndex=0,
                           data= ec.data(tmp, 'names')))
-      list(title= list(text= as.character(unique(gp[gvar]))),  
-           series= series)
+      tmp <- list(title= list(text= as.character(unique(gp[gvar]))),  
+                  series= series)
+      tmp <- renumber(tmp)
     })
   }
   else {
@@ -509,9 +547,10 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter',
         s$encode[ytem] <- s$name   # replace multiple col.names with one
         s
       })
-
-      list(title= list(text= as.character(unique(gp[gvar]))),  
-           series= unname(series))
+      
+      tmp <- list(title= list(text= as.character(unique(gp[gvar]))),  
+                  series= unname(series))
+      tmp <- renumber(tmp)
     })
   }
   
@@ -564,336 +603,34 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter',
 }
 
 
-#' Data helper
+#' Update option lists
 #' 
-#' Make data lists from a data.frame
+#' And improve readability by chaining commands after ec.init
 #' 
-#' @param df Chart data in data.frame format, required. \cr
-#' Except when format is 'dendrogram', then df is a list, result of \link[stats]{hclust} function.
-#' @param format A key on how to format the output list \cr \itemize{
-#'  \item 'dataset' = list to be used in \href{https://echarts.apache.org/en/option.html#dataset.source}{dataset} (default), or in \href{https://echarts.apache.org/en/option.html#series-scatter.data}{series.data} (without header). \cr
-#'  \item 'values' = list for customized \href{https://echarts.apache.org/en/option.html#series-scatter.data}{series.data} \cr
-#'  \item 'names' = named lists useful for named data like \href{https://echarts.apache.org/en/option.html#series-sankey.links}{sankey links}.
-#'  \item 'boxplot' = build dataset and source lists, see Details
-#'  \item 'dendrogram' = build series data for Hierarchical Clustering dendrogram
-#'  \item 'treePC' = build series data for sunburst,tree,treemap from parent/children data.frame
-#'  \item 'treeTK' = build series data for sunburst,tree,treemap from data.frame like Titanic. Supports column \emph{itemStyle}.
-#'  }
-#' @param header Boolean to include the column names in dataset, default TRUE.\cr
-#'    Set this to FALSE when used in \href{https://echarts.apache.org/en/option.html#series-scatter.data}{series.data}.
-#' @return A list for \emph{dataset.source}, \emph{series.data} or a list of named lists.\cr
-#'   For boxplot - a named list, see Details and Examples \cr
-#'   For dendrogram & treePC - a tree structure, see format in \href{https://echarts.apache.org/en/option.html#series-tree.data}{tree data}
-#' @details `format='boxplot'` requires the first two \emph{df} columns as: \itemize{
-#'   \item column for the non-computational categorical axis
-#'   \item column with (numeric) data to compute the five boxplot values
-#'  }
-#'  Grouped \emph{df} is supported. Groups will show in the legend, if enabled.\cr
-#'  Returns a `list(dataset, series, axlbl)` to set the chart. \emph{axlbl} is the category axis label list when data grouped.\cr
-#'  Make sure there is enough data for computation, like >4 values per boxplot. Otherwise ECharts may exit with a \emph{Object.transform} error.
-#' @seealso some live \href{https://rpubs.com/echarty/data-models}{code samples}
-#' 
+#' @param wt An echarty widget
+#' @param ... R commands to update chart option lists
+#'
+#' @details ec.upd makes changes to chart elements already set by ec.init.\cr
+#' It should be always piped after ec.init.
+#' Replaces syntax\cr
+#'   \verb{   }p <- ec.init(...)\cr
+#'   \verb{   }p$x$opts$series <- ...\cr
+#' with\cr
+#'   \verb{   }ec.init(...) |> \verb{   } # set or preset chart params\cr
+#'   \verb{   }ec.upd(\{series <- ...\}) # update params thru R commands
 #' @examples
-#' library(dplyr)
-#' variety <- rep(LETTERS[1:7], each=40)
-#' treatment <- rep(c("high","low"), each=20)
-#' note <- seq(1:280)+sample(1:150, 280, replace=TRUE)
-#' ds <- data.frame(variety, note, treatment) |> group_by(treatment) |> 
-#'         ec.data(format='boxplot')
-#' ec.init(
-#'   dataset= ds$dataset,
-#'   series=  ds$series,
-#'   yAxis= list(type= 'category',  # categorical yAxis = horizontal boxplots
-#'               axisLabel= ds$axlbl),
-#'   xAxis= list(show= TRUE),       # categorical xAxis = vertical boxplots
-#'   legend= list(show= TRUE)
-#' )
-#' 
-#' ds <- airquality |> mutate(Day=round(Day/10)) |> relocate(Day,Wind) |> ec.data(format='boxplot')
-#' ec.init(
-#'   dataset= ds$dataset, 
-#'   series= ds$series, 
-#'   yAxis= list(type= 'category'), 
-#'   xAxis= list(show= TRUE),
-#'   legend= list(show= TRUE) #, tooltip= list(show=TRUE)
-#' )  
-#' 
-#' hc <- hclust(dist(USArrests), "complete")
-#' ec.init(preset= FALSE,
-#'         series= list(list(
-#'           type= 'tree', orient= 'TB', roam= TRUE, initialTreeDepth= -1,
-#'           data= ec.data(hc, format='dendrogram'),
-#'           # layout= 'radial', symbolSize= ec.clmn(scale= 0.33),
-#'           ## exclude added labels like 'pXX', leaving only the originals
-#'           label= list(formatter= htmlwidgets::JS(
-#'             "function(n) { out= /p\\d+/.test(n.name) ? '' : n.name; return out;}"))
-#'         ))
-#' )
-#' 
-#' @importFrom utils tail
-#' @importFrom grDevices boxplot.stats
-#' @importFrom data.tree Aggregate
-#' @export
-ec.data <- function(df, format='dataset', header=FALSE) {
-  if (missing(df))
-    stop('ec.data: expecting parameter df', call. = FALSE)
-  if (format=='dendrogram') { 
-    if (!inherits(df, 'hclust'))
-      stop('ec.data: df should be hclust for dendrogram', call. = FALSE)
-    hc <- df
-    # decode hc$merge with hc$labels
-    inew <- list()
-    i <- 0
-    tmp <- apply(hc$merge, 1, function(x) {
-      fst <- if (x[1]<0) { if (is.null(hc$labels)) -x[1] else hc$labels[-x[1]] } else inew[[x[1]]]$p[1]
-      snd <- if (x[2]<0) { if (is.null(hc$labels)) -x[2] else hc$labels[-x[2]] } else inew[[x[2]]]$p[1]
-      i <<- i+1
-      inew <<- append(inew, list(
-        list(p= rep(paste0('p',i),2), c= c(fst, snd), 
-             h= rep(round(hc$height[i], 2), 2))))
-    })
-    tmp <- unlist(inew)
-    parents <- children <- vals <- c()
-    for(i in 1:length(tmp)) {
-      fst <- substr(names(tmp[i]), 1, 1)
-      switch(fst,
-             'p'= parents <- c(parents, tmp[i]),
-             'c'= children <- c(children, tmp[i]),
-             'h'= vals <- c(vals, as.numeric(tmp[i]))
-      )
-    }
-    # add top element, required for tree chart
-    vals <- c(unname(vals), 1)
-    children <- c(unname(children), unname(tail(parents,1)))
-    parents <- c(unname(parents), '')
-    
-    # convert from data.frame to JSON
-    dafr <- data.frame(parents=parents, children=children, value=vals)
-    tmp <- data.tree::FromDataFrameNetwork(dafr)
-    json <- data.tree::ToListExplicit(tmp, unname=TRUE)
-    return(json$children)
-    
-  } 
-  if (!'data.frame' %in% class(df))
-    stop('ec.data: df has to be data.frame', call. = FALSE)
-  
-  if (format=='treePC') {
-    # for sunburst,tree,treemap
-    if (!all(colnames(df) == c('parents', 'children', 'value')) ||
-        !all(unlist(unname(lapply(as.list(df[,1:3]), class))) == c('character','character','numeric')) )
-      stop('ec.data: tree df columns need to be (parents, children, value) with value as numeric', call. = FALSE)
-
-    tryCatch({
-      tmp <- data.tree::FromDataFrameNetwork(df)
-    },
-    error=function(e) { stop(e) })
-    json <- data.tree::ToListExplicit(tmp, unname=TRUE)
-    return(json$children)
-  }
-  if (format=='treeTK') {
-    # for sunburst,tree,treemap from Titanic-like data
-    chNames <- function(lest) {  
-      # recursive, build pct and itemStyle
-      cldrn <- lest$children
-      nm <- names(cldrn)
-      tot <- unlist(sapply(cldrn, '[[', 'value'))
-      if (!is.null(tot)) {
-        tot <- sum(sapply(cldrn, '[[', 'value'))
-        lest$value <- tot
-      }
-      #cat('\nnames:',nm,' ',tot)
-      cldrn <- unname(cldrn)
-      cnt <- 0
-      lest$children <- lapply(cldrn, function(x) {
-        cnt <<- cnt+1; x$name <- nm[cnt]
-        if (!is.null(tot)) x$pct <- round(x$value / tot * 100, 2)
-        if (!is.null(x$itemStyle)) x$itemStyle <- eval(parse(text=paste0('list(',x$itemStyle,')')))
-        if (!is.null(x$children)) x <- chNames(x)
-        x })
-      if (!is.null(lest$children[[1]]$itemStyle))
-        lest$itemStyle <- lest$children[[1]]$itemStyle
-      lest
-    }
-    
-    tryCatch({
-      nod <- data.tree::FromDataFrameTable(df)
-    },
-    error= function(e) { stop(e) })
-    nod$Do(function(x) x$value <- data.tree::Aggregate(x, "value", sum))
-    json <- data.tree::ToListExplicit(nod)
-    tmp <- chNames(json)
-    return(list(tmp))
-  }
-  
-  rownames(df) <- NULL
-  n <- seq_along(df[[1]])       # assuming all lists in df have the same length
-  tmp <- lapply(n, function(i) lapply(df, "[[", i))  # preserve column types
-  
-  if (format=='dataset') {
-    datset <- lapply(tmp, unname)
-    if (header)
-      datset <- c(list(colnames(df)), datset)
-    
-  } 
-  else if (format=='values' || isTRUE(format)) {
-    datset <- lapply(tmp, function(x) list(value=unlist(unname(x))))
-    
-  } 
-  else if (format=='boxplot') {
-    cn <- colnames(df)
-    if (length(cn)<2) stop('boxplot: df should have 2+ columns', call.=FALSE)
-    colas <- cn[1]; colb5 <- cn[2]
-    if (!is.numeric(df[[colb5]])) stop('boxplot: 2nd column must be numeric', call.=FALSE)
-    # will group by colas column anyway
-    colgrp <- if (is.grouped_df(df) && group_vars(df)[1]!=colas) 
-      group_vars(df)[1] else NULL
-    
-    if (!is.null(colgrp)) {   # grouped
-      series <- list()
-      tmp <- df |> group_split()
-      dataset <- lapply(tmp, function(dd) { 
-        dv <- dd |> dplyr::group_by(.data[[colas]]) |> group_split()
-        src <- lapply(dv, function(vv) vv[[colb5]])
-        list(source= if (length(src[[1]])==1) list(src) else src)
-      })
-      for (i in 1:length(tmp)) { 
-        dataset <- append(dataset, list(list(
-          fromDatasetIndex= i-1, transform= list(type= 'boxplot')))) 
-        series <- append(series, list(list(
-          name= tmp[[i]][[colgrp]][1], 
-          type= 'boxplot', datasetIndex= i+length(tmp)-1)) )
-      }
-      # default is horizontal, for vertical switch xAxis/yAxis category type
-      
-    } else {  # non-grouped
-      bdf <- ungroup(df) |> dplyr::group_by(across({colas})) |> group_split()
-      dats <- lapply(bdf, function(x) {
-        c(unique(pull(x,colas)), round(boxplot.stats( pull(x,colb5) )$stats, 4))
-      })
-      dataset <- list(source= ec.data( as.data.frame(do.call(rbind, dats)), header=TRUE ))
-      series <- list(list(type='boxplot', encode= list(y='V1', x=c('V2','V3','V4','V5','V6'))))
-    }
-    # category axis labels
-    axe <- paste(sort(unique(df[[colas]])), collapse="','")
-    axe <- paste0("function(v) { return ['",axe,"'][v]; }")			
-    
-    return(list(dataset= dataset, series= series, 
-                axlbl= list(formatter= htmlwidgets::JS(axe))
-    ))
-  } 
-  else {
-    datset <- tmp
-  }  # format=='names'
-
-  return(datset)
-}
-
-
-#' Data column
-#' 
-#' Helper function to display/format data column(s) by index or name
-#' 
-#' @param col A single column index(number) or column name(quoted string), \cr
-#'    or a \link[base]{sprintf} format string. Default is NULL, for charts with single values like tree, pie.
-#' @param ... A comma separated column indexes or names, only when \emph{col} is \emph{sprintf}. This allows formatting of multiple columns, as for a tooltip.\cr
-#' @param scale A positive number, multiplier for numeric columns. When scale is 0, all numeric values are rounded.
-#' @return A JavaScript code string (usually a function) marked as executable, see \link[htmlwidgets]{JS}.
-#'  
-#' @details Column indexes are counted in R and start at 1.\cr
-#' Omit _col_ or use index -1 for single values tree/pie charts, \emph{axisLabel.formatter} or \emph{valueFormatter}. See [ec.data] dendrogram example.\cr
-#' Use only column index(es) when setting \emph{symbolSize}.\cr
-#' Column indexes are decimals for combo charts with multiple series, see [ecr.band] example. The whole number part is the serie index, the decimal part is the column index inside.\cr
-#' \emph{col} as sprintf has the same placeholder \emph{%@} for both column indexes or column names.\cr
-#' \emph{col} as sprintf can contain double quotes, but not single or backquotes.\cr
-#' Placeholder \emph{%L@} will display a number in locale format, like '12,345.09'.\cr
-#' Placeholder \emph{%LR@} will display a rounded number in locale format, like '12,345'.\cr
-#' Placeholder \emph{%R@} will display a rounded number, like '12345'.\cr
-#' Placeholder \emph{%M@} will display a marker in serie's color.\cr
-#' Useful for attributes like formatter, color, symbolSize. 
-#' 
-#' @examples
-#' tmp <- data.frame(Species = as.vector(unique(iris$Species)),
-#'                   emoji = c('\U0001F33B','\U0001F335','\U0001F33A'))
-#' df <- iris |> dplyr::inner_join(tmp)      # add 6th column emoji
-#' df |> dplyr::group_by(Species) |> ec.init() |> ec.upd({
-#'   series <- lapply(series,
-#'     function(s) append(s,
-#'       list(label= list(show= TRUE, formatter= ec.clmn('emoji')))) )
-#'   tooltip <- list(formatter=
-#'     # ec.clmn with sprintf + multiple column indexes
-#'     ec.clmn('%M@ species <b>%@</b><br>s.len <b>%@</b><br>s.wid <b>%@</b>', 5,1,2))
+#' Orange |> dplyr::group_by(Tree) |> ec.init() |>
+#' ec.upd({ 
+#'   series <- lapply(series, function(x) {
+#'     x$symbolSize= 10; x$encode= list(x='age', y='circumference'); x } )
 #' })
-#' 
 #' @export
-ec.clmn <- function(col=NULL, ..., scale=1) {
-  if (is.null(scale)) scale=1
-  if (scale==1) scl <- 'return c;'
-  else {
-    if (scale==0) scl <- 'return Math.round(c);'
-    else scl <- paste0('return (parseFloat(c)*',scale,');') 
-  }
-  args <- list(...)
-  ret <- paste("let c=String(typeof x=='object' ? x.value : x);", scl)
+ec.upd <- function(wt, ...) {
+  if (!'echarty' %in% class(wt))
+    stop('ec.upd: expecting wt as echarty widget', call.=FALSE)
   
-  if (is.null(col)) {}   # for pie,sunburst
-  else if (is.na(suppressWarnings(as.numeric(col)))) {   # col is string
-    if (length(args)==0) {  # col is solitary name
-      args <- c(col); col <- '%@'   # replace
-    }
-    # col is sprintf
-    spf <- "var sprintf= (template, values) => { let j=0;
-return template.replace(/%@|%L@|%LR@|%R@|%M@/g, (m) => {
-  if (m=='%@') return values[j++];
-  if (m=='%L@') return Number(values[j++]).toLocaleString();
-  if (m=='%LR@') return Math.round(Number(values[j++])).toLocaleString();
-  if (m=='%R@') return Math.round(Number(values[j++]));
-  if (m=='%M@') return x.marker;
-}); };"
-    
-    tmp <- suppressWarnings(as.numeric(args) -1)
-    if (all(is.na(tmp))) {   
-      # multiple non-numeric strings = column names
-      t0 <- sapply(args, function(s) toString(paste0("x.data['", s,"']")) )
-      t0 <- paste(t0, collapse=',')
-      t1 <- paste(args, collapse='`,`')
-      # x.data = 1) object 2) array with x.dimensionNames 3) array only when dataset
-      ret <- paste0( spf, " if (!x.data) return `no data`; 
-let args=[`",t1,"`], vv=[",t0,"]; pos=[];
-if (x.dimensionNames && x.dimensionNames.length>0) 
-  pos= args.map(z => x.dimensionNames.indexOf(z));
-if (x.data.length)
-  vv= pos.map(p => x.data[p]);")
-    }
-    else {   
-      #  multiple numeric, they could be in x, x.data, x.value OR x[].value[]
-      #  in combo-charts (ec.band), get decimal portion as .value index
-      tmp <- paste(tmp, collapse=',')
-      ret <- paste0( spf, "let ss=[",tmp,"];
-let vv= ss.map((e) => { 
-  if (e<0) return x.value ? x.value : x;
-  let i= Math.floor(e);
-  return x.value!=null ? x.value[i] : 
-         x.data!=null  ? x.data[i] : 
-         x[i]!=null    ? x[i] : `no data` });
-if (vv.length > 0) // multi-series
-  vv = ss.map((e,idx) => {
-  if (typeof vv[idx] != 'object') return vv[idx];
-    f= Math.round(e % 1 *10) -1;
-    return vv[idx].value[f];  }); ")
-    }
-    
-    if (scale >0) ret <- paste(ret,"vv= vv.map(e => isNaN(e) ? e : e*",scale,");")
-    if (scale==0) ret <- paste(ret,"vv= vv.map(e => isNaN(e) ? e : Math.round(e));")
-    ret <- paste(ret, "let c = sprintf(`",col,"`, vv); return c; ")
-  }
-  else {      # col is solitary numeric
-    if (length(args) > 0)
-      warning('col is numeric, others are ignored', call.=FALSE)
-    col <- as.numeric(col) - 1   # from R to JS counting
-    if (col >= 0)
-      ret <- paste0('let c = String(x.value!=null ? x.value[',col,'] : x.data!=null ? x.data[',col,'] : x[',col,'] ); ',scl)
-  }
-  htmlwidgets::JS(paste0('function(x) {', ret, '}'))
+  wt$x$opts <- within(wt$x$opts, ...)
+  wt
 }
 
 
@@ -924,17 +661,17 @@ if (vv.length > 0) // multi-series
 #' bands <- ecr.band(df, 'lwr', 'upr', type='stack',
 #'                   name='stak', areaStyle= list(opacity=0.4))
 #' df |> ec.init(load='custom',
-#'               legend= list(show= TRUE),
-#'               xAxis= list(type='category', boundaryGap=FALSE),
-#'               series= list(list(
-#'                 type='line', color='blue', name='line'),
-#'                 bands[[1]], bands[[2]] ),
-#'               tooltip= list(
-#'                 trigger= 'axis',
-#'                 formatter= ec.clmn(
-#'                   'high <b>%@</b><br>line <b>%@</b><br>low <b>%@</b>',
+#'    legend= list(show= TRUE),
+#'    xAxis= list(type='category', boundaryGap=FALSE),
+#'    series= list(
+#'      list(type='line', color='blue', name='line'),
+#'      bands[[1]], bands[[2]]
+#'    ),
+#'    tooltip= list( trigger= 'axis',
+#'      formatter= ec.clmn(
+#'         'high <b>%@</b><br>line <b>%@</b><br>low <b>%@</b>',
 #'                   3.3, 1.2, 2.2)
-#'               )  # 3.3= upper-serie index +.+ index of column inside
+#'      )  # 3.3= upper_serie_index +.+ index_of_column_inside
 #' )
 #' }
 #' 
@@ -1245,6 +982,348 @@ ecs.exec <- function(proxy, cmd='p_merge') {
 # ----------- Utilities ----------------------
 
 
+#' Data helper
+#' 
+#' Make data lists from a data.frame
+#' 
+#' @param df Chart data in data.frame format, required. \cr
+#' Except when format is 'dendrogram', then df is a list, result of \link[stats]{hclust} function.
+#' @param format A key on how to format the output list \cr \itemize{
+#'  \item 'dataset' = list to be used in \href{https://echarts.apache.org/en/option.html#dataset.source}{dataset} (default), or in \href{https://echarts.apache.org/en/option.html#series-scatter.data}{series.data} (without header). \cr
+#'  \item 'values' = list for customized \href{https://echarts.apache.org/en/option.html#series-scatter.data}{series.data} \cr
+#'  \item 'names' = named lists useful for named data like \href{https://echarts.apache.org/en/option.html#series-sankey.links}{sankey links}.
+#'  \item 'boxplot' = build dataset and source lists, see Details
+#'  \item 'dendrogram' = build series data for Hierarchical Clustering dendrogram
+#'  \item 'treePC' = build series data for sunburst,tree,treemap from parent/children data.frame
+#'  \item 'treeTK' = build series data for sunburst,tree,treemap from data.frame like Titanic. Supports column \emph{itemStyle}.
+#'  }
+#' @param header Boolean to include the column names in dataset, default TRUE.\cr
+#'    Set this to FALSE when used in \href{https://echarts.apache.org/en/option.html#series-scatter.data}{series.data}.
+#' @return A list for \emph{dataset.source}, \emph{series.data} or a list of named lists.\cr
+#'   For boxplot - a named list, see Details and Examples \cr
+#'   For dendrogram & treePC - a tree structure, see format in \href{https://echarts.apache.org/en/option.html#series-tree.data}{tree data}
+#' @details `format='boxplot'` requires the first two \emph{df} columns as: \itemize{
+#'   \item column for the non-computational categorical axis
+#'   \item column with (numeric) data to compute the five boxplot values
+#'  }
+#'  Grouped \emph{df} is supported. Groups will show in the legend, if enabled.\cr
+#'  Returns a `list(dataset, series, axlbl)` to set the chart. \emph{axlbl} is the category axis label list when data grouped.\cr
+#'  Make sure there is enough data for computation, like >4 values per boxplot. Otherwise ECharts may exit with a \emph{Object.transform} error.
+#' @seealso some live \href{https://rpubs.com/echarty/data-models}{code samples}
+#' 
+#' @examples
+#' library(dplyr)
+#' variety <- rep(LETTERS[1:7], each=40)
+#' treatment <- rep(c("high","low"), each=20)
+#' note <- seq(1:280)+sample(1:150, 280, replace=TRUE)
+#' ds <- data.frame(variety, note, treatment) |> group_by(treatment) |> 
+#'         ec.data(format='boxplot')
+#' ec.init(
+#'   dataset= ds$dataset,
+#'   series=  ds$series,
+#'   yAxis= list(type= 'category',  # categorical yAxis = horizontal boxplots
+#'               axisLabel= ds$axlbl),
+#'   xAxis= list(show= TRUE),       # categorical xAxis = vertical boxplots
+#'   legend= list(show= TRUE)
+#' )
+#' 
+#' ds <- airquality |> mutate(Day=round(Day/10)) |> relocate(Day,Wind) |> ec.data(format='boxplot')
+#' ec.init(
+#'   dataset= ds$dataset, 
+#'   series= ds$series, 
+#'   yAxis= list(type= 'category'), 
+#'   xAxis= list(show= TRUE),
+#'   legend= list(show= TRUE) #, tooltip= list(show=TRUE)
+#' )  
+#' 
+#' hc <- hclust(dist(USArrests), "complete")
+#' ec.init(preset= FALSE,
+#'         series= list(list(
+#'           type= 'tree', orient= 'TB', roam= TRUE, initialTreeDepth= -1,
+#'           data= ec.data(hc, format='dendrogram'),
+#'           # layout= 'radial', symbolSize= ec.clmn(scale= 0.33),
+#'           ## exclude added labels like 'pXX', leaving only the originals
+#'           label= list(formatter= htmlwidgets::JS(
+#'             "function(n) { out= /p\\d+/.test(n.name) ? '' : n.name; return out;}"))
+#'         ))
+#' )
+#' 
+#' @importFrom utils tail
+#' @importFrom grDevices boxplot.stats
+#' @importFrom data.tree Aggregate
+#' @export
+ec.data <- function(df, format='dataset', header=FALSE) {
+  if (missing(df))
+    stop('ec.data: expecting parameter df', call. = FALSE)
+  if (format=='dendrogram') { 
+    if (!inherits(df, 'hclust'))
+      stop('ec.data: df should be hclust for dendrogram', call. = FALSE)
+    hc <- df
+    # decode hc$merge with hc$labels
+    inew <- list()
+    i <- 0
+    tmp <- apply(hc$merge, 1, function(x) {
+      fst <- if (x[1]<0) { if (is.null(hc$labels)) -x[1] else hc$labels[-x[1]] } else inew[[x[1]]]$p[1]
+      snd <- if (x[2]<0) { if (is.null(hc$labels)) -x[2] else hc$labels[-x[2]] } else inew[[x[2]]]$p[1]
+      i <<- i+1
+      inew <<- append(inew, list(
+        list(p= rep(paste0('p',i),2), c= c(fst, snd), 
+             h= rep(round(hc$height[i], 2), 2))))
+    })
+    tmp <- unlist(inew)
+    parents <- children <- vals <- c()
+    for(i in 1:length(tmp)) {
+      fst <- substr(names(tmp[i]), 1, 1)
+      switch(fst,
+             'p'= parents <- c(parents, tmp[i]),
+             'c'= children <- c(children, tmp[i]),
+             'h'= vals <- c(vals, as.numeric(tmp[i]))
+      )
+    }
+    # add top element, required for tree chart
+    vals <- c(unname(vals), 1)
+    children <- c(unname(children), unname(tail(parents,1)))
+    parents <- c(unname(parents), '')
+    
+    # convert from data.frame to JSON
+    dafr <- data.frame(parents=parents, children=children, value=vals)
+    tmp <- data.tree::FromDataFrameNetwork(dafr)
+    json <- data.tree::ToListExplicit(tmp, unname=TRUE)
+    return(json$children)
+    
+  } 
+  if (!'data.frame' %in% class(df))
+    stop('ec.data: df has to be data.frame', call. = FALSE)
+  
+  if (format=='treePC') {
+    # for sunburst,tree,treemap
+    if (!all(colnames(df) == c('parents', 'children', 'value')) ||
+        !all(unlist(unname(lapply(as.list(df[,1:3]), class))) == c('character','character','numeric')) )
+      stop('ec.data: tree df columns need to be (parents, children, value) with value as numeric', call. = FALSE)
+    
+    tryCatch({
+      tmp <- data.tree::FromDataFrameNetwork(df)
+    },
+    error=function(e) { stop(e) })
+    json <- data.tree::ToListExplicit(tmp, unname=TRUE)
+    return(json$children)
+  }
+  if (format=='treeTK') {
+    # for sunburst,tree,treemap from Titanic-like data
+    chNames <- function(lest) {  
+      # recursive, build pct and itemStyle
+      cldrn <- lest$children
+      nm <- names(cldrn)
+      tot <- unlist(sapply(cldrn, '[[', 'value'))
+      if (!is.null(tot)) {
+        tot <- sum(sapply(cldrn, '[[', 'value'))
+        lest$value <- tot
+      }
+      #cat('\nnames:',nm,' ',tot)
+      cldrn <- unname(cldrn)
+      cnt <- 0
+      lest$children <- lapply(cldrn, function(x) {
+        cnt <<- cnt+1; x$name <- nm[cnt]
+        if (!is.null(tot)) x$pct <- round(x$value / tot * 100, 2)
+        if (!is.null(x$itemStyle)) x$itemStyle <- eval(parse(text=paste0('list(',x$itemStyle,')')))
+        if (!is.null(x$children)) x <- chNames(x)
+        x })
+      if (!is.null(lest$children[[1]]$itemStyle))
+        lest$itemStyle <- lest$children[[1]]$itemStyle
+      lest
+    }
+    
+    tryCatch({
+      nod <- data.tree::FromDataFrameTable(df)
+    },
+    error= function(e) { stop(e) })
+    nod$Do(function(x) x$value <- data.tree::Aggregate(x, "value", sum))
+    json <- data.tree::ToListExplicit(nod)
+    tmp <- chNames(json)
+    return(list(tmp))
+  }
+  
+  rownames(df) <- NULL
+  n <- seq_along(df[[1]])       # assuming all lists in df have the same length
+  tmp <- lapply(n, function(i) lapply(df, "[[", i))  # preserve column types
+  
+  if (format=='dataset') {
+    datset <- lapply(tmp, unname)
+    if (header)
+      datset <- c(list(colnames(df)), datset)
+    
+  } 
+  else if (format=='values' || isTRUE(format)) {
+    datset <- lapply(tmp, function(x) list(value=unlist(unname(x))))
+    
+  } 
+  else if (format=='boxplot') {
+    cn <- colnames(df)
+    if (length(cn)<2) stop('boxplot: df should have 2+ columns', call.=FALSE)
+    colas <- cn[1]; colb5 <- cn[2]
+    if (!is.numeric(df[[colb5]])) stop('boxplot: 2nd column must be numeric', call.=FALSE)
+    # will group by colas column anyway
+    colgrp <- if (is.grouped_df(df) && group_vars(df)[1]!=colas) 
+      group_vars(df)[1] else NULL
+    
+    if (!is.null(colgrp)) {   # grouped
+      series <- list()
+      tmp <- df |> group_split()
+      dataset <- lapply(tmp, function(dd) { 
+        dv <- dd |> dplyr::group_by(.data[[colas]]) |> group_split()
+        src <- lapply(dv, function(vv) vv[[colb5]])
+        list(source= if (length(src[[1]])==1) list(src) else src)
+      })
+      for (i in 1:length(tmp)) { 
+        dataset <- append(dataset, list(list(
+          fromDatasetIndex= i-1, transform= list(type= 'boxplot')))) 
+        series <- append(series, list(list(
+          name= tmp[[i]][[colgrp]][1], 
+          type= 'boxplot', datasetIndex= i+length(tmp)-1)) )
+      }
+      # default is horizontal, for vertical switch xAxis/yAxis category type
+      
+    } else {  # non-grouped
+      bdf <- ungroup(df) |> dplyr::group_by(across({colas})) |> group_split()
+      dats <- lapply(bdf, function(x) {
+        c(unique(pull(x,colas)), round(boxplot.stats( pull(x,colb5) )$stats, 4))
+      })
+      dataset <- list(source= ec.data( as.data.frame(do.call(rbind, dats)), header=TRUE ))
+      series <- list(list(type='boxplot', encode= list(y='V1', x=c('V2','V3','V4','V5','V6'))))
+    }
+    # category axis labels
+    axe <- paste(sort(unique(df[[colas]])), collapse="','")
+    axe <- paste0("function(v) { return ['",axe,"'][v]; }")			
+    
+    return(list(dataset= dataset, series= series, 
+                axlbl= list(formatter= htmlwidgets::JS(axe))
+    ))
+  } 
+  else {
+    datset <- tmp
+  }  # format=='names'
+  
+  return(datset)
+}
+
+
+#' Data column format
+#' 
+#' Helper function to display/format data column(s) by index or name
+#' 
+#' @param col A single column index(number) or column name(quoted string), \cr
+#'    or a \link[base]{sprintf} format string. Or 'log' for debugging.
+#'    Default is NULL, for charts with single values like tree, pie.\cr
+#'    'json' - display tooltip with all available values to choose from\cr 
+#'    'log' will write all values in the JS console (F12)
+#' @param ... A comma separated column indexes or names, only when \emph{col} is \emph{sprintf}. This allows formatting of multiple columns, as for a tooltip.\cr
+#' @param scale A positive number, multiplier for numeric columns. When scale is 0, all numeric values are rounded.
+#' @return A JavaScript code string (usually a function) marked as executable, see \link[htmlwidgets]{JS}.
+#'  
+#' @details This function is useful for attributes like formatter, color, symbolSize.\cr
+#' Column indexes are counted in R and start at 1.\cr
+#' Omit _col_ or use index -1 for single values in tree/pie charts, \emph{axisLabel.formatter} or \emph{valueFormatter}. See [ec.data] dendrogram example.\cr
+#' Use only column indexes when setting \emph{symbolSize}.\cr
+#' Column indexes are decimals for combo charts with multiple series, see [ecr.band] example. The whole number part is the serie index, the decimal part is the column index inside.\cr
+#' \emph{col} as sprintf has the same placeholder \emph{%@} for both column indexes or column names.\cr
+#' \emph{col} as sprintf can contain double quotes, but not single or backquotes.\cr
+#' Placeholders:\cr
+#' * \emph{%L@} will display a number in locale format, like '12,345.09'.\cr
+#' * \emph{%LR@} rounded number in locale format, like '12,345'.\cr
+#' * \emph{%R@} rounded number, like '12345'.\cr
+#' * \emph{%M@} marker in serie's color.\cr
+#' 
+#' @examples
+#' tmp <- data.frame(Species = as.vector(unique(iris$Species)),
+#'                   emoji = c('\U0001F33B','\U0001F335','\U0001F33A'))
+#' df <- iris |> dplyr::inner_join(tmp)      # add 6th column emoji
+#' df |> dplyr::group_by(Species) |> ec.init() |> ec.upd({
+#'   series <- lapply(series,
+#'     function(s) append(s,
+#'       list(label= list(show= TRUE, formatter= ec.clmn('emoji')))) )
+#'   tooltip <- list(formatter=
+#'     # ec.clmn with sprintf + multiple column indexes
+#'     ec.clmn('%M@ species <b>%@</b><br>s.len <b>%@</b><br>s.wid <b>%@</b>', 5,1,2))
+#' })
+#' 
+#' @export
+ec.clmn <- function(col=NULL, ..., scale=1) {
+  if (is.null(scale)) scale=1
+  if (scale==1) scl <- 'return c;'
+  else {
+    if (scale==0) scl <- 'return Math.round(c);'
+    else scl <- paste0('return (parseFloat(c)*',scale,');') 
+  }
+  args <- list(...)
+  ret <- paste("let c=String(typeof x=='object' ? x.value : x);", scl)
+  
+  if (is.null(col)) {}   # for pie,sunburst
+  else if (col=='log')
+    ret <- "console.log(x); return 'logged';"
+  else if (col=='json')
+    ret <- 'return JSON.stringify(x, null, " ").replace(/{/g,"<br>{").replace(/"value":/g,"<br> value:").replace(/"data":/g,"<br> data:").replace(/"seriesIndex":/g,"<br> seriesIndex:");'
+  else if (is.na(suppressWarnings(as.numeric(col)))) {   
+    if (length(args)==0) {  # col is solitary name
+      args <- c(col); col <- '%@'   # replace
+    }
+    # col is sprintf
+    spf <- "var sprintf= (template, values) => { let j=0;
+return template.replace(/%@|%L@|%LR@|%R@|%M@/g, (m) => {
+  if (m=='%@') return values[j++];
+  if (m=='%L@') return Number(values[j++]).toLocaleString();
+  if (m=='%LR@') return Math.round(Number(values[j++])).toLocaleString();
+  if (m=='%R@') return Math.round(Number(values[j++]));
+  if (m=='%M@') return x.marker;
+}); };"
+    
+    tmp <- suppressWarnings(as.numeric(args) -1)
+    if (all(is.na(tmp))) {   
+      # multiple non-numeric strings = column names
+      t0 <- sapply(args, function(s) toString(paste0("x.data['", s,"']")) )
+      t0 <- paste(t0, collapse=',')
+      t1 <- paste(args, collapse='`,`')
+      # x.data = 1) object 2) array with x.dimensionNames 3) array only when dataset
+      ret <- paste0( spf, " if (!x.data) return `no data`; 
+let args=[`",t1,"`], vv=[",t0,"]; pos=[];
+if (x.dimensionNames && x.dimensionNames.length>0) 
+  pos= args.map(z => x.dimensionNames.indexOf(z));
+if (x.data.length)
+  vv= pos.map(p => x.data[p]);")
+    }   # col.names
+    else {   
+      #  multiple numeric, they could be in x, x.data, x.value OR x[].value[]
+      #  in combo-charts (ec.band), get decimal portion as .value index
+      tmp <- paste(tmp, collapse=',')
+      ret <- paste0( spf, "let ss=[",tmp,"];
+let vv= ss.map((e) => { 
+  if (e<0) return x.value ? x.value : x;
+  let i= Math.floor(e);
+  return x.value!=null ? x.value[i] : 
+         x.data!=null  ? x.data[i] : 
+         x[i]!=null    ? x[i] : `no data` });
+if (vv.length > 0) // multi-series 1.2, 3.1
+  vv = ss.map((e,idx) => {
+    if (typeof vv[idx] != 'object') return vv[idx];
+    f= Math.round(e % 1 *10) -1;
+    return vv[idx].value[f];
+  }); ")
+    }  # col.indexes
+    
+    if (scale >0) ret <- paste(ret,"vv= vv.map(e => isNaN(e) ? e : e*",scale,");")
+    if (scale==0) ret <- paste(ret,"vv= vv.map(e => isNaN(e) ? e : Math.round(e));")
+    ret <- paste(ret, "let c = sprintf(`",col,"`, vv); return c; ")
+  } # col is string
+  else {      # col is solitary numeric
+    if (length(args) > 0)
+      warning('col is numeric, others are ignored', call.=FALSE)
+    col <- as.numeric(col) - 1   # from R to JS counting
+    if (col >= 0)
+      ret <- paste0('let c = String(x.value!=null ? x.value[',col,'] : x.data!=null ? x.data[',col,'] : x[',col,'] ); ',scl)
+  }
+  htmlwidgets::JS(paste0('function(x) {', ret, '}'))
+}
+
+
 #' Parallel Axis
 #' 
 #' Create 'parallelAxis' for a parallel chart
@@ -1305,8 +1384,10 @@ ec.paxis <- function (df=NULL, minmax=TRUE, cols=NULL, ...) {
 #' @param code Custom theme as JSON formatted string, default NULL.
 #' @return An \code{echarty} widget.
 #'
-#' @details Just a few built-in themes are included in folder \code{inst/themes}. The entire collection could be found \href{https://github.com/apache/echarts/tree/master/theme}{here} and copied if needed.\cr
-#'   To create custom themes or view predefined ones, visit \href{https://echarts.apache.org/en/theme-builder.html}{this site}.
+#' @details Just a few built-in themes are included in folder \code{inst/themes}.\cr
+#' Their names are dark, gray, jazz, dark-mushroom and macarons.\cr
+#' The entire ECharts theme collection could be found \href{https://github.com/apache/echarts/tree/master/theme}{here} and files copied if needed.\cr
+#' To create custom themes or view predefined ones, visit \href{https://echarts.apache.org/en/theme-builder.html}{this site}.
 #'
 #' @examples
 #' mtcars |> ec.init() |> ec.theme('dark-mushroom')
@@ -1369,11 +1450,12 @@ ec.inspect <- function(wt, target=NULL, json=TRUE, ...) {
         if (!is.null(d$source[1])) paste('dataset:',paste(unlist(d$source[1]), collapse=', '))
         else if (!is.null(d$transform[1])) gsub('"', "'", paste(d$transform, collapse=', '))
       })
-    #if (!is.null(opts$series)) {
+    
     i <- 0
     out <- append(out, sapply(opts$series, function(s) {
       i <<- i+1 
       str <- paste0('serie',i,' name:',s$name)
+      if (!is.null(s$type)) str <- paste0(str, ' type:',s$type)
       if (!is.null(s$dimensions)) str <- paste0(str, ' dim:',s$dimensions)
       if (!is.null(s$datasetIndex)) str <- paste0(str, ' dsi:',s$datasetIndex)
       if (!is.null(s$encode)) str <- paste0(str, ' enc:',paste(s$encode, collapse=', '))
@@ -1381,7 +1463,7 @@ ec.inspect <- function(wt, target=NULL, json=TRUE, ...) {
         str <- paste(str, gsub('"', "'", paste(s$data[1], collapse=', ')))
       str
     }))
-    #}
+    
     return(unlist(out))
   }
   
@@ -1390,7 +1472,7 @@ ec.inspect <- function(wt, target=NULL, json=TRUE, ...) {
   if ('pretty' %in% names(params)) 
     opts <- jsonlite::toJSON(opts, force=TRUE, auto_unbox=TRUE, 
                              null='null', ...)
-  else
+  else  # pretty by default
     opts <- jsonlite::toJSON(opts, force=TRUE, auto_unbox=TRUE, 
                              null='null', pretty=TRUE, ...)
   
@@ -1427,37 +1509,6 @@ ec.fromJson <- function(txt, ...) {
   e <- ec.init(...)
   e$x$opts <- json
   e
-}
-
-
-#' Update option lists
-#' 
-#' And improve readability by chaining commands after ec.init
-#' 
-#' @param wt An echarty widget
-#' @param ... R commands to update chart option lists
-#'
-#' @details ec.upd makes changes to chart elements already set by ec.init.\cr
-#' It should be always piped after ec.init.
-#' Replaces syntax\cr
-#'   \verb{   }p <- ec.init(...)\cr
-#'   \verb{   }p$x$opts$series <- ...\cr
-#' with\cr
-#'   \verb{   }ec.init(...) |> \verb{   } # set or preset chart params\cr
-#'   \verb{   }ec.upd(\{series <- ...\}) # update params thru R commands
-#' @examples
-#' Orange |> dplyr::group_by(Tree) |> ec.init() |>
-#' ec.upd({ 
-#'   series <- lapply(series, function(x) {
-#'     x$symbolSize= 10; x$encode= list(x='age', y='circumference'); x } )
-#' })
-#' @export
-ec.upd <- function(wt, ...) {
-  if (!'echarty' %in% class(wt))
-    stop('ec.upd: expecting wt as echarty widget', call.=FALSE)
-
-    wt$x$opts <- within(wt$x$opts, ...)
-    wt
 }
 
 
@@ -1506,6 +1557,11 @@ ec.upd <- function(wt, ...) {
 #' \verb{   }...= a list of charts or chart options\cr
 #' \verb{   }optional parameter: \cr
 #' \verb{     }js= JS function for switching charts. Default function is on \emph{mouseover}.\cr
+#' **cmd = 'fullscreen'** \cr
+#' \verb{   }a toolbox feature to toggle fullscreen on/off. Works in a browser, not in RStudio.\cr
+#' **cmd = 'rescale'** \cr
+#' \verb{   }t = target range c(min,max), numeric vector of two\cr
+#' \verb{   }v = vector of numeric values to rescale\cr
 
 #' @examples 
 #' if (interactive()) {  # comm.out: Fedora errors about some 'browser'
@@ -1900,16 +1956,29 @@ function(event) {
     },
     
     'rescale'= {
-      scale <- opts$s
-      if (!is.numeric(scale)) scale <- 1
+      scale <- opts$t
+      if (!is.numeric(scale)) scale <- c(0,10)
+      if (length(scale)!=2)
+        stop("ec.util: rescale 't' vector too long/short")
+      if (scale[1]==scale[2])
+        stop("ec.util: rescale 't' vector elements equal")
+      smin <- min(scale);  smax <- max(scale)-smin; 
       vect <- opts$v
       if (is.null(vect))
         stop("ec.util: rescale 'v' paramater missing")
       if (!is.numeric(vect))
         stop("ec.util: rescale 'v' is not a numeric vector")
-      out <- drop(scale(vect, center=min(vect)-min(vect)*0.05, scale=diff(range(vect)))) * scale
-      #out <- as.numeric(out)  # rem attr
+    #  out <- drop(scale(vect, center=min(vect)-min(vect)*0.05, scale=diff(range(vect)))) * smax
+      out <- drop(scale(vect, center=min(vect), scale=diff(range(vect)))) * smax
       out <- sapply(out, as.vector)
+      out <- out + smin
+    },
+    
+    'fullscreen'= {
+      out <- list(myecfs= list(show=TRUE,  title= 'fullscreen', 
+        icon= 'path://M5 5h5V3H3v7h2zm5 14H5v-5H3v7h7zm11-5h-2v5h-5v2h7zm-2-4h2V3h-7v2h5z',
+        onclick= htmlwidgets::JS('function(){ ecfun.fscreen(); }') #debugger; this.fscreen()')
+      ))
     },
     
     stop(paste("ec.util: invalid 'cmd' parameter",cmd), call. = FALSE)
