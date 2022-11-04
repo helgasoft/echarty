@@ -7,28 +7,29 @@ Hierarchical data in R can be built with:
 - data.frame with parent & child columns - read thru _ec.data(format='treePC')_
 - data.frame with a column for each level, like Titanic data - read thru  _ec.data(format='treeTK')_
 
-Many users find the latter representation most intuitive and straightforward. However note that it requires library *data.tree*.  
-Note also the difference in data setting for chart *tree* compared to *sunburst* and *treemap*.  *Tree*'s data is the top-level node, while *sunburst* and *treemap* use the first lower level.
-Here are examples for the three types.  
+Many users find the **third** representation most intuitive and straightforward.    
+Note the difference in data setting for chart *tree* compared to *sunburst* and *treemap*.  *Tree*'s data is the top-level node, while *sunburst* and *treemap* use the first lower level.
+Below are examples for all four types.  
 <br />
 
 ## List of lists
 
 ```r
 data <- list(
-	list(name='Grandpa',children=list(
-		list(name='Uncle Leo', value=15,
-		  children=list(list(name='Cousin Jack',value=2), 
-		  				  list(name='Cousin Mary',value=5,
-		  				  	  children=list(list(name='Jackson',value=2))), 
-		  				  list(name='Cousin Ben',value=4))),
+	list(name='Grandpa', 
+		children=list(
+			list(name='Uncle Leo', value=15,
+		 		children= list(list(name='Cousin Jack',value=2), 
+			  			list(name='Cousin Mary',value=5,
+			  				children=list(list(name='Jackson',value=2))), 
+		  						list(name='Cousin Ben',value=4))),
 		list(name='Father', value=10,
-		  children=list(list(name='Me',value=5),
-		  				list(name='Brother Peter',value=1))))),
+		  	children= list(list(name='Me',value=5),
+		  					list(name='Brother Peter',value=1))))),
 	list(name='Nancy',
-		  children=list(list(name='Uncle Nike',
-  						   children=list(list(name='Cousin Betty',value=1), 
-  						   				 list(name='Cousin Jenny',value=2)))))
+		  children= list(list(name='Uncle Nike',
+  						children=list(list(name='Cousin Betty',value=1), 
+  							list(name='Cousin Jenny',value=2)))))
 )
 # -------------------------------------------------
 

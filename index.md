@@ -11,8 +11,8 @@ Building complex charts as data structures is a powerful concept, also simple an
 
 ## Gallery
 Enjoy [the gallery](gallery.md) and grab some chart code!  
-Best place to get started with **echarty**  
-<a href='gallery.html'><img src='img/echarty.gallery.png'/></a>
+Best place to get started with **echarty** 
+[![](img/echarty.gallery.png)](gallery.md)
 <br /><br />
 
 ## Tutorials
@@ -34,7 +34,8 @@ More detailed step-by-step examples with tips and tricks.
 <br/> 
 
 ## Crosstalk 
-Social media for charts - [drive the action](xtalk.html)  &nbsp; &nbsp; <span style="color:magenta">*live demo*</span>
+Social media for charts - [drive the action](https://rpubs.com/echarty/crosstalk)  &nbsp; &nbsp; <span style="color:magenta">*live demo*</span>  
+More in the [gallery](gallery.md#crosstalk-2d).
 <br />
 <br/>
 

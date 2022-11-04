@@ -227,45 +227,14 @@ p
 ```
 </details>
 <br />
-<a id='3D'></a>
 
-### Crosstalk in 3D
-
-<img src='img/cb-3.png' alt='crosstalk 3D' />
-<details><summary>🔻 View code</summary>
-
-```r
-# echarty can highlight 3D points selected by external controls
-library(crosstalk); library(DT); library(d3scatter); 
-library(htmltools); library(dplyr); library(tibble)
-sdf <- mtcars |> rownames_to_column(var='name') |> relocate(mpg,wt,hp) 
-sdf <- SharedData$new(sdf)
-
-library(echarty)
-p3 <- sdf |> ec.init(load= '3D', 
-	title= list(text="3D brush listener"),
-	series= list(list(type='scatter3D', symbolSize=11,
-		itemStyle= list(color= htmlwidgets::JS("function(params){
-   	  		let cyl=params.value[4]; return (cyl==4 ? 'RoyalBlue' : cyl==6 ? 'OrangeRed':'green');}") ),
-		emphasis= list(focus='self', blurScope='series', itemStyle= list(color='red'))
-	))
-) |> ec.theme('dark-mushroom')
-
-bscols( list(
-    d3scatter(sdf, ~mpg, ~wt, ~factor(cyl), width="100%", height=300),br(),
-    datatable(sdf, extensions="Scroller", style="bootstrap", class="compact", width="100%",
-              options=list(deferRender=TRUE, scrollY=300, scroller=TRUE))
-  ),  p3
-)
-```
-</details>
-<br />
+<a id='crosstalk'></a>
 
 ### Crosstalk 2D
-play with the [<span style="color:magenta">Live Demo</span>](https://rpubs.com/echarty/crosstalk) with code 
+play with the [Live Demo](https://rpubs.com/echarty/crosstalk) with code 
 <br />
 
-### Crosstalk with leaflet
+### Crosstalk with leaflet map
 two-way selection between map and chart  
 <img src='img/xtalk.png' alt='crosstalk' />
 <details><summary>🔻 View code</summary>
@@ -287,16 +256,16 @@ p <- sdf |> ec.init(
 	xAxis= list(scale=TRUE, boundaryGap= c('5%', '5%'))
 ) |> 
 ec.upd({
-		series[[1]] <- append(series[[1]], list(
-			encode= list(x='mag', y='depth', tooltip=list(2,3)),
-			selectedMode= 'multiple',
-			emphasis= list(
-				itemStyle= list(borderColor='yellow', borderWidth=2),
-				focus= 'self', 
-				blurScope='series'
-			),
-			blur= list(itemStyle= list(opacity = 0.4))  # when focus set
-		))
+	series[[1]] <- append(series[[1]], list(
+		encode= list(x='mag', y='depth', tooltip=list(2,3)),
+		selectedMode= 'multiple',
+		emphasis= list(
+			itemStyle= list(borderColor='yellow', borderWidth=2),
+			focus= 'self', 
+			blurScope='series'
+		),
+		blur= list(itemStyle= list(opacity = 0.4))  # when focus set
+	))
 }) |> ec.theme('dark-mushroom')
 
 library(htmltools)
@@ -304,6 +273,42 @@ browsable(tagList(
 	div(style="float:left;width:50%;", map), 
 	div(style="float:right;width:50%;",p) 
 ))
+```
+</details>
+
+Check out also the [World Map demo](https://rpubs.com/echarty/crossmap), using ECharts map.
+<br />
+
+<a id='3D'></a>
+
+### Crosstalk in 3D
+
+<img src='img/cb-3.png' alt='crosstalk 3D' />
+<details><summary>🔻 View code</summary>
+
+```r
+# echarty can filter and highlight 3D points selected by external controls
+library(crosstalk); library(DT); library(d3scatter); 
+library(htmltools); library(dplyr); library(tibble)
+sdf <- mtcars |> rownames_to_column(var='name') |> relocate(mpg,wt,hp) 
+sdf <- SharedData$new(sdf)
+
+library(echarty)    # v.1.4.7.05+
+p3 <- sdf |> ec.init(load= '3D', 
+	title= list(text="crosstalk 3D listener (filter & selection)"),
+	series= list(list(type='scatter3D', symbolSize=11,
+		itemStyle= list(color= htmlwidgets::JS("function(params){
+   	  		let cyl=params.value[4]; return (cyl==4 ? 'RoyalBlue' : cyl==6 ? 'OrangeRed':'green');}") ),
+		emphasis= list(focus='self', blurScope='series', itemStyle= list(color='red'))
+	))
+) |> ec.theme('dark-mushroom')
+
+bscols( list(
+    d3scatter(sdf, ~mpg, ~wt, ~factor(cyl), width="100%", height=300),br(),
+    datatable(sdf, extensions="Scroller", style="bootstrap", class="compact", width="100%",
+              options=list(deferRender=TRUE, scrollY=300, scroller=TRUE))
+  ),  list( p3, br(), filter_slider("fs1", "mpg", sdf, column=~mpg))
+)
 ```
 </details>
 <br />
@@ -752,19 +757,19 @@ library(echarty); library(dplyr)
 les <- jsonlite::fromJSON('https://echarts.apache.org/examples/data/asset/data/les-miserables.json')
 les$categories$name <- as.character(1:9)
 ec.init(preset=FALSE, 
-		title=list(text='Les Miserables',top='bottom',left='right'),
-		series= list(list(
-				type= 'graph', layout= 'circular',
-				circular= list(rotateLabel=TRUE),
-				nodes= ec.data(les$nodes, 'names'), 
-				links= ec.data(les$links, 'names'), 
-				categories= ec.data(les$categories, 'names'),
-				roam= TRUE, label= list(position='right', formatter='{b}'),
-				lineStyle= list(color='source', curveness=0.3)
-		)),
-		legend= list(data=c(les$categories$name), textStyle=list(color='#ccc')),
-		tooltip= list(show=TRUE),
-		backgroundColor= '#191919'
+	title=list(text='Les Miserables',top='bottom',left='right'),
+	series= list(list(
+		type= 'graph', layout= 'circular',
+		circular= list(rotateLabel=TRUE),
+		nodes= ec.data(les$nodes, 'names'), 
+		links= ec.data(les$links, 'names'), 
+		categories= ec.data(les$categories, 'names'),
+		roam= TRUE, label= list(position='right', formatter='{b}'),
+		lineStyle= list(color='source', curveness=0.3)
+	)),
+	legend= list(data=c(les$categories$name), textStyle=list(color='#ccc')),
+	tooltip= list(show=TRUE),
+	backgroundColor= '#191919'
 ) |> ec.upd({    # labels only for most important
 	series[[1]]$nodes <- lapply(series[[1]]$nodes, function(n) {
 		n$label <- list(show= n$symbolSize > 30)
@@ -1105,9 +1110,10 @@ json <- 'https://helgasoft.github.io/echarty/js/spooky-ghost.json'
 cont <- jsonlite::fromJSON(json, simplifyDataFrame=FALSE)
 
 # remotes::install_github('helgasoft/echarty')
-library(echarty)     # v.1.4.6.04+ 
-iris |> group_by(Species) |> ec.init(
-  load= 'https://helgasoft.github.io/echarty/js/lottie-parser.js',
+library(echarty)     # v.1.4.7.06+ 
+iris |> dplyr::group_by(Species) |> 
+ec.init(
+  load= 'lottie',
   graphic= list(elements= list(
     list( type= "group", 
 		# lottie params: info + optional scale and loop 
