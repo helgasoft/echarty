@@ -10,9 +10,9 @@ Building complex charts as data structures is a powerful concept, also simple an
 -->
 
 ## Gallery
-Enjoy [the gallery](gallery.md) and grab some chart code!  
+Enjoy [the gallery](gallery.html) and grab some chart code!  
 Best place to get started with **echarty** 
-[![](img/echarty.gallery.png)](gallery.md)
+[![](img/echarty.gallery.png)](gallery.html)
 <br /><br />
 
 ## Tutorials

@@ -1,6 +1,6 @@
 ## Gallery
 
- Some interesting charts along with their **code**. Several have Live Demos hosted on [RPubs](https://rpubs.com/echarty). The *echarty* package has two dozen more examples - in RStudio type *?ec.examples* to see them in panel Help.
+ Some interesting charts along with their **source code**. Several have Live Demos hosted on [RPubs](https://rpubs.com/echarty). The *echarty* package has two dozen more code examples - in RStudio type *?ec.examples* to see them in Help panel.
 
 
 ### Simple bar  
@@ -963,6 +963,33 @@ ec.init(load= c('leaflet', 'custom'),  # load custom for polygons
 </details>
 <br />
 
+### Leaflet with heatmap
+With fullscreen option in toolbox<br />
+<img src='img/quake.heat.jpg' alt='heat leaflet' />
+<details><summary>🔻 View code</summary>
+
+```r
+df <- quakes |> dplyr::relocate('long')  # set order to lon,lat
+tbox <- list(left='center', feature= ec.util(cmd='fullscreen'))
+
+library(echarty)    # v.1.4.7.06+
+ec.init(load='leaflet', 
+	toolbox= tbox,
+	leaflet= list(center= c(179.462, -20), zoom= 4, roam= TRUE),
+	series= list(list( 
+	  type='heatmap', 
+	  data= ec.data(df),
+	  pointSize= 2, blurSize= 4
+	)),
+	visualMap= list(
+	  show= FALSE, top= 'top', min= 0, max= 15,
+	  calculable= TRUE, inRange= list(color= rainbow(11))
+	)
+)
+```
+</details>
+<br />
+
 ### World map
 with live data, color coding filter, pan/zoom  &nbsp; &nbsp; &nbsp; 
 [<span style="color:magenta">Live Demo</span>](https://rpubs.com/echarty/inet)  
@@ -1063,7 +1090,7 @@ jscode <- "window.toggleOpt= function () {
 hc <- hclust(dist(USArrests), "ave")
 subt <- paste(as.character(hc$call)[2:3], collapse=' ')
 
-library(echarty)   # v.1.4.4+
+library(echarty) 
 p <- ec.init(preset= FALSE, js= jscode) |> ec.theme('dark-mushroom')
 option1 <- list(
   title= list(text= 'Radial Dendrogram', subtext= subt),
@@ -1165,6 +1192,6 @@ Position pies on a map, supported by ECharts 5.4.0+<br />
 🗺️ The <a href='https://europa.eu/eurobarometer'>Eurobarometer</a> public opinion survey Summer 2022<br>
 180 questions with multiple answers mapped by country<br>
 An interactive R/Shiny/echarty app.  <a href='https://twitter.com/echarty_R/status/1578263627622031360?s=20&t=coA2-hzGDjtprmHat_9wSQ'>🔗 Tweet with clip</a> 
-<a href='https://helgalabs.shinyapps.io/eurobarometer'>🔗 Live Demo</a>
+<a href='https://helgalabs.shinyapps.io/eurobarometer'><span style="color:magenta"><span style="color:magenta">🔗 Live Demo</span></a>
 </details>
 <br />
