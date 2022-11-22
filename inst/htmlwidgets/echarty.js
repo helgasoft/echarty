@@ -33,13 +33,6 @@ HTMLWidgets.widget({
               { svg: x.registerMap[map].svg });
         }
       }
-      
-      ecfun.hwid = el.id;
-      if (window.onresize==undefined)
-        window.onresize = function() {
-        	chart.resize();
-        	ecfun.fs = ecfun.IsFullScreen();  // handle ESC key
-        }
         
       let eva2 = eva3 = null;
       if (x.hasOwnProperty('jcode')) {
@@ -60,7 +53,15 @@ HTMLWidgets.widget({
       chart = echarts.init(document.getElementById(el.id), x.theme, 
       	{renderer: x.renderer, locale: x.locale, useDirtyRect: x.useDirtyRect});
       
+      if (window.onresize==undefined)
+        window.onresize = function() {
+        	chart.resize();
+        	ecfun.fs = ecfun.IsFullScreen();  // handle ESC key
+        }
+
       opts = x.opts;
+      opts.hwid = el.id;    // fullscreen support, multiple charts
+      window.hwid = el.id;  // save for single charts
       
       if (eva2) {	// #2 to change opts
         try {
@@ -77,7 +78,7 @@ HTMLWidgets.widget({
         } catch(err) { console.log('eva3: ' + err.message) }
       }
       
-      if (opts.graphic && lottieParser) {
+      if (opts.graphic && typeof lottieParser!=undefined) {
           tmp = ecfun.lottieGraphic(opts.graphic);
           chart.setOption({graphic: tmp}, { replaceMerge: 'graphic'});
       }
@@ -303,7 +304,7 @@ ecfun = {
   },
   
   fs: false,   // fullscreen flag Y/N
-  fscreen: function() {
+  fscreen: function(hwid) {
     // see also window.onresize
     function GoInFullscreen(element) {
        if (element.requestFullscreen)
@@ -331,7 +332,7 @@ ecfun = {
         GoOutFullscreen();
     }
     else {
-      tmp = document.getElementById(ecfun.hwid);
+      tmp = document.getElementById(hwid);
       GoInFullscreen(tmp)
     }
     this.fs = !this.fs;

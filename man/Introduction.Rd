@@ -62,8 +62,8 @@ by echarty. There are code samples for most of them in
 \item renderer = ‘canvas’(default) or \code{svg}, set from \code{renderer} in
 \link{ec.init}, see it in
 \href{https://echarts.apache.org/en/api.html#echarts.init}{ECharts}.
-\item jcode = custom JavaScript code to execute, set from \code{js} parameter
-of \link{ec.init}
+\item jcode = custom JavaScript code to execute, set from \code{js} parameter of
+\link{ec.init}
 }
 }
 

@@ -76,7 +76,7 @@ test_that("ec.clmn tabset", {
 
 test_that("ec.clmn morph", {
   setd <- function(type) {
-    mtcars |> group_by(cyl) |> ec.init(ctype=type) |> ec.upd({
+    mtcars |> group_by(cyl) |> ec.init(ctype= type) |> ec.upd({
     title <- list(subtext='mouseover points to morph')
     xAxis <- list(scale=TRUE)
     series <- lapply(series, function(ss) {

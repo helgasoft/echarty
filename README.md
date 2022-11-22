@@ -18,7 +18,8 @@ downloads](https://cranlogs.r-pkg.org/badges/last-day/echarty)](https://cranlogs
 <a href='https://helgasoft.github.io/echarty'><img src="man/figs/echarty.gallery.png" alt="echarty.gallery" /></a>
 
 This package is a thin R wrapper around Javascript library
-[ECharts](https://echarts.apache.org/en/index.html). A few commands use R lists to enclose the entire [ECharts API](https://echarts.apache.org/en/option.html). 
+[ECharts](https://echarts.apache.org/en/index.html).  
+Two major commands use R lists to enclose the entire [ECharts API](https://echarts.apache.org/en/option.html). 
 Users can benefit from ECharts **full functionality** to build
 interactive charts in R and Shiny with minimal overhead.  
 
@@ -28,8 +29,8 @@ support](https://helgasoft.github.io/echarty/xtalk.html).
 
 ## Installation
 
-<!-- [![Github version](https://img.shields.io/github/v/release/helgasoft/echarty?label=github)](https://github.com/helgasoft/echarty/releases) -->
-Latest development build <strong>1.4.7<sup>.06</sup></strong>
+<!-- [![Github version](https://img.shields.io/github/v/release/helgasoft/echarty?label=github)](https://github.com/helgasoft/echarty/releases)  <sup>.07</sup> -->
+Latest development build <strong>1.5.0</strong>
 
 ``` r
 if (!requireNamespace('remotes')) install.packages('remotes')

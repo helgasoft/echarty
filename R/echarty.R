@@ -211,18 +211,24 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter',
       grnm <- dplyr::group_vars(df)[[1]]   # name of 1st grouping column 
       x$opts$dataset <- list(list(source = ec.data(df, header=TRUE)))
       grvals <- unname(unlist(dplyr::group_data(df)[grnm]))
-      txfm <- list(); k <- 0
+      txfm <- sers <- list()
       legd = list(data= list())
+      k <- 0
       for(nm in grvals) { 
         k <- k+1
         txfm <- append(txfm, list(list(transform = list(
           type='filter', config=list(dimension=grnm, '='=nm)))))
-        x$opts$series[[k]] <- list(
-          type=ctype, datasetIndex=k, name=as.character(nm))
+        sers <- append(sers, list(list(
+          type= ctype, datasetIndex= k, name= as.character(nm))))
         # if (colnames(df)[1]==grnm)  # grouping by 1st column - breaks prll,map,etc.
         legd$data <- append(legd$data, list(list(name=as.character(nm))))
       }
-      if (is.null(x$opts$legend)) x$opts$legend <- legd
+      if (preset) {
+      #if (is.null(x$opts$series) && is.null(x$opts$options)) 
+        x$opts$series <- sers
+      #if (is.null(x$opts$legend)) 
+        x$opts$legend <- legd
+      }
       x$opts$dataset <- append(x$opts$dataset, txfm)
     } 
     else 
@@ -290,9 +296,14 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter',
         ss$encode$y <- ss$encode$y -1
       if (!is.null(ss$encode$tooltip) && is.numeric(unlist(ss$encode$tooltip)))
         ss$encode$tooltip <- unlist(ss$encode$tooltip) -1
+      if (!is.null(ss$xAxisIndex)) ss$xAxisIndex <- ss$xAxisIndex -1
+      if (!is.null(ss$yAxisIndex)) ss$yAxisIndex <- ss$yAxisIndex -1
+      #if (!is.null(ss$datasetIndex)) ss$datasetIndex <- ss$datasetIndex -1
       ss
     }
-    opa$series <- lapply(opa$series, r2jsEncode)
+    
+    if (!is.null(opa$series))
+      opa$series <- lapply(opa$series, r2jsEncode)
     
     tmp <- opa$visualMap
     if (!is.null(tmp)) {
@@ -982,6 +993,545 @@ ecs.exec <- function(proxy, cmd='p_merge') {
 # ----------- Utilities ----------------------
 
 
+
+#' Utility functions
+#' 
+#' tabset, table layout, support for GIS shapefiles through library sf
+#'  
+#' @param cmd utility command, see Details\cr
+#' @param js optional JavaScript function, default is NULL.\cr
+#' @param ... Optional parameters for the command \cr
+#'      for \emph{sf.series} - see \href{https://echarts.apache.org/en/option.html#series-scatter.type}{points}, \href{https://echarts.apache.org/en/option.html#series-lines.type}{polylines}, polygons(itemStyle).\cr
+#'      for \emph{tabset} parameters should be in format \emph{name1=chart1, name2=chart2}, see example\cr
+#' @details 
+#' **cmd = 'sf.series'**\cr
+#' \verb{   }Build \emph{leaflet} or \href{https://echarts.apache.org/en/option.html#geo.map}{geo} map series from shapefiles.\cr
+#' \verb{   }Supported types: POINT, MULTIPOINT, LINESTRING, MULTILINESTRING, POLYGON, MULTIPOLYGON \cr
+#' \verb{   }Coordinate system is \emph{leaflet}(default) or \emph{geo}\cr
+#' \verb{   }Limitations:\cr 
+#' \verb{     }polygons can have only their name in tooltip,  \cr
+#' \verb{     }assumes Geodetic CRS is WGS 84, use \link[sf]{st_transform} with \emph{crs=4326} to convert.\cr
+#' \verb{   }parameter \emph{df} - value from \link[sf]{st_read}\cr
+#' \verb{   }optional parameters: \cr
+#' \verb{     }nid - column name for name-id used in tooltips\cr
+#' \verb{     }verbose - print shapefile item names in console\cr
+#' \verb{   }returns a list of chart series\cr
+#' **cmd = 'sf.bbox'**\cr
+#' \verb{   }returns JavaScript code to position a map inside a bounding box from \link[sf]{st_bbox}, for leaflet only.\cr
+#' **cmd = 'sf.unzip'**\cr
+#' \verb{   }unzips a remote file and returns local file name of the unzipped .shp file\cr
+#' \verb{   }url - URL of remote zipped shapefile\cr
+#' \verb{   }optional \emph{shp} - name of .shp file inside ZIP file if multiple exist. Do not add file extension. \cr
+#' **cmd = 'layout'** \cr
+#' \verb{   }multiple charts in table-like rows/columns format\cr
+#' \verb{   }... - List of charts\cr
+#' \verb{   }optional parameters: \cr
+#' \verb{     }title - Title for the set, rows= Number of rows, cols= Number of columns,\cr
+#' \verb{     }width - Width of columns (one of xs, md, lg)\cr
+#' \verb{   }returns a container \link[htmltools]{div} in rmarkdown, otherwise \link[htmltools]{browsable}.\cr
+#' \verb{   }For 3-4 charts one would use multiple series within a \href{https://echarts.apache.org/en/option.html#grid}{grid}. \cr
+#' \verb{   }For greater number of charts _ec.util(cmd='layout')_ comes in handy\cr
+#' **cmd = 'tabset'** \cr
+#' \verb{   }... - a list tab-name/chart pairs like \emph{n1=chart1, n2=chart2}\cr
+#' \verb{   }optional parameters are: \cr
+#' \verb{     }width - Width of tabs in pixels, height= Height of tabs in pixels\cr
+#' \verb{     }tabStyle - tab style string, see default \emph{tabStyle} variable in the code\cr
+#' \verb{   }returns a \link[htmltools]{tagList} of tabs, each tab may contain a chart.\cr
+#' **cmd = 'morph'** \cr
+#' \verb{   }... - a list of charts or chart options\cr
+#' \verb{   }optional parameter: \cr
+#' \verb{     }js - JS function for switching charts. Default function is on \emph{mouseover}.\cr
+#' \verb{   }returns a chart with ability to morph into other charts\cr
+#' **cmd = 'fullscreen'** \cr
+#' \verb{   }a toolbox feature to toggle fullscreen on/off. Works in a browser, not in RStudio.\cr
+#' **cmd = 'rescale'** \cr
+#' \verb{   }t - target range c(min,max), numeric vector of two\cr
+#' \verb{   }v - vector of numeric values to rescale\cr
+#' **cmd = 'level'** \cr
+#' \verb{   }calculate vertical levels for timeline \emph{line} charts, returns a numeric vector\cr
+#' \verb{   }df - data.frame with from & to columns\cr
+#' \verb{   }from - name of 'from' column\cr
+#' \verb{   }to - name of 'to' column\cr
+#' **cmd = 'labelsInside'** \cr
+#' \verb{   }labelLayout function to keep overflowing endLabels inside chart\cr
+#' \verb{   }optional parameters: \cr
+#' \verb{     }cid - elementId of the chart when multiple charts\cr
+#' \verb{     }dy - vertical offset in pixels, negative up, positive down\cr
+#'
+#' @examples 
+#' if (interactive()) {  # comm.out: Fedora errors about some 'browser'
+#'   library(sf)
+#'   fname <- system.file("shape/nc.shp", package="sf")
+#'   nc <- as.data.frame(st_read(fname))
+#'   ec.init(load= c('leaflet', 'custom'),  # load custom for polygons
+#'      js= ec.util(cmd= 'sf.bbox', bbox= st_bbox(nc$geometry)),
+#'      series= ec.util(df= nc, nid= 'NAME', itemStyle= list(opacity= 0.3)),
+#'      tooltip= list(formatter= '{a}')
+#'   )
+#' 
+#'   htmltools::browsable(
+#'     lapply(iris |> dplyr::group_by(Species) |> dplyr::group_split(), 
+#'            function(x) {
+#'      x |> ec.init(ctype= 'scatter', title= list(text= unique(x$Species)))
+#'            }) |> 
+#'     ec.util(cmd= 'tabset')
+#'   )
+#' 
+#'   p1 <- cars |> ec.init(grid= list(top= 20))
+#'   p2 <- mtcars |> ec.init()
+#'   htmltools::browsable(
+#'     ec.util(cmd= 'tabset', cars= p1, mtcars= p2, width= 200, height= 200)
+#'   )
+#' 
+#'   lapply(list('dark','macarons','gray','jazz','dark-mushroom'),
+#'                 function(x) cars |> ec.init() |> ec.theme(x) ) |>
+#'   ec.util(cmd='layout', cols= 2, title= 'my layout')
+#'   
+#'   setd <- function(type) {
+#'     mtcars |> group_by(cyl) |> ec.init(ctype=type) |> ec.upd({
+#'     title <- list(subtext='mouseover points to morph')
+#'     xAxis <- list(scale=TRUE)
+#'     series <- lapply(series, function(ss) {
+#'       ss$groupId <- ss$name
+#'       ss$universalTransition <- list(enabled=TRUE)
+#'       ss })
+#'     })
+#'   }
+#'   oscatter <- setd('scatter')
+#'   obar <- setd('bar')
+#'   ec.util(cmd='morph', oscatter, obar)
+#' }
+#' @importFrom utils unzip
+#' @export
+ec.util <- function( ..., cmd='sf.series', js=NULL) {
+  
+  opts <- list(...)
+  
+  do.opties <- function(names, dflts=NULL) {
+    # set default optional parameters
+    j <- 0
+    for(n in names) {
+      j <- j + 1
+      val <- NULL
+      if (!is.null(dflts)) val <- dflts[[j]]
+      tmp <- unname(unlist(opts[n]))
+      if (!is.null(tmp)) {
+        val <- tmp
+        opts[n] <<- NULL
+      }
+      assign(n, val, envir= parent.frame())
+    }
+  }
+  
+  switch( cmd,
+    'sf.series'= {
+      do.series <- function() {
+        polig <- function(geom) {
+          for(k in 1:length(geom)) {
+            if ('matrix' %in% class(geom[[k]])) {
+              gm <- as.data.frame(geom[[k]])
+              coords <- list()
+              for(j in 1:nrow(gm))
+                coords <- append(coords, list(c(gm[j,1], gm[j,2])))
+              s1 <- list(
+                type= 'custom',
+                renderItem= htmlwidgets::JS('riPolygon'),
+                name= dname, 
+                data= coords, ...
+              )
+              if (is.null(s1$coordinateSystem)) s1$coordinateSystem <- 'leaflet'
+              s1$df <- NULL
+              sers <<- append(sers, list(s1))
+            } else polig(geom[[k]])  # recursive
+          }
+        }
+        #geometry <- cmd <- 
+        L1 <- NULL     # avoid code checking NOTES
+        sers <- list()
+        dff <- opts$df
+        opts$df <<- NULL
+        if (is.null(opts$coordinateSystem)) opts$coordinateSystem <<- 'leaflet'
+        
+        switch( class(dff$geometry)[1],
+                'sfc_POINT' =,
+                'sfc_MULTIPOINT'= {
+                  #            dff <- dff |> rename(value= geometry)
+                  #dff$value <- lapply(dff$value, function(x) x[1:2])  # XY, remove Z if any
+                  tt <- NULL
+                  flds <- colnames(dff)[! colnames(dff) %in% c("geometry")]
+                  if (length(flds)>0) {
+                    if (length(flds)>10) flds <- flds[1:10]
+                    tt <- c(paste(rep('%@', length(flds)), collapse='<br>'), flds)
+                  }
+                  #            pnts <- ec.data(dff, 'names')
+                  pnts <- ec.data(do.call(rbind, dff$geometry) |> as.data.frame())
+                  s1 <- list(data= pnts, ...)
+                  if (is.null(s1$type)) s1$type <- 'scatter'
+                  if (!is.null(tt)) 
+                    s1$tooltip= list(formatter= do.call("ec.clmn", as.list(tt)))
+                  s1$df <- NULL
+                  sers <- list(s1)
+                  # opts$type <<- NULL   # cleanup
+                  # opts$coordinateSystem <<- NULL
+                  # sers <- list(append(list(sers), opts))
+                  # sers[[1]]$df <- NULL  #ok
+                  #opts$df <<- NULL
+                  # sers <- list(
+                  #   # list(type= 'scatter', coordinateSystem= cs,
+                  #   list(type= ?, data= pnts, ...))
+                  # if (!is.null(tt)) 
+                  #   sers[[1]]$tooltip= list(formatter= do.call("ec.clmn", as.list(tt)))
+                },
+                'sfc_POLYGON' =,
+                'sfc_MULTIPOLYGON' = {
+                  for(i in 1:nrow(dff)) {
+                    dname <- i
+                    if (!is.null(nid) && (nid %in% colnames(dff))) 
+                      dname <- dff[i, nid][[1]]
+                    if (verbose) cat(dname,',', sep='')
+                    geom <- dff$geometry[[i]]
+                    polig(geom)
+                  }
+                },
+                'sfc_LINESTRING' = {
+                  tmp <- dff$geometry
+                  tmp <- as.data.frame(cbind(do.call(rbind, tmp), 
+                                             L1= rep(seq_along(tmp), times= vapply(tmp, nrow, 0L))))
+                  for(i in 1:nrow(dff)) {
+                    dname <- ifelse(is.null(nid), i, dff[i, nid][[1]])
+                    if (verbose) cat(dname,',', sep='')
+                    coords <- list()
+                    geom <- tmp |> filter(L1==i)
+                    for(k in 1:nrow(geom))
+                      coords <- append(coords, list(c(geom[k,1], geom[k,2])))
+                    s1 <- list(
+                      type='lines', polyline= TRUE,
+                      name= dname, 
+                      tooltip= list(formatter= '{a}'),
+                      data= list(coords), ... )
+                    
+                    if (is.null(s1$coordinateSystem)) s1$coordinateSystem <- 'leaflet'
+                    s1$df <- NULL
+                    sers <- append(sers, list(s1))
+                  }
+                },
+                'sfc_MULTILINESTRING' = {
+                  for(i in 1:nrow(dff)) {
+                    dname <- ifelse(is.null(nid), i, dff[i,nid][[1]])
+                    if (verbose) cat(dname,',', sep='')
+                    corda <- list()
+                    geom <- dff$geometry[[i]]
+                    for(k in 1:length(geom)) {
+                      gm <- as.data.frame(geom[[k]])
+                      coords <- list()
+                      for(j in 1:nrow(gm))
+                        coords <- append(coords, list(c(gm[j,1], gm[j,2])))
+                      corda <- append(corda, list(coords))
+                    }
+                    s1 <- list(
+                      type='lines', polyline= TRUE, 
+                      name= dname, 
+                      tooltip= list(formatter= '{a}'),
+                      data= corda, ... )
+                    if (is.null(s1$coordinateSystem)) s1$coordinateSystem <- 'leaflet'
+                    s1$df <- NULL
+                    sers <- append(sers, list(s1))
+                  }
+                },
+                stop(paste('ec.util:',class(dff$geometry)[1],'geometry not supported'), call.= FALSE)
+        )
+        cnt <- length(sers)
+        recs <- sum(unlist(lapply(sers, function(x) {
+          len <- length(x$data)
+          if (len==1) len <- length(x$data[[1]])  #multiline
+          len
+        })))
+        cat('\n series:',cnt,'coords:',recs,'\n')
+        sers
+      }
+      
+      if (is.null(opts$df))
+        stop('ec.util: expecting parameter df', call. = FALSE)
+      if (is.null(opts$df$geometry))
+        stop('ec.util: expecting df$geometry', call. = FALSE)
+      nid <- verbose <- NULL   # fix for CRAN check
+      do.opties(c('nid','verbose'), list(NULL, FALSE))
+      out <- do.series()
+    },
+    
+    'sf.bbox'= {
+      if (is.null(opts$bbox))
+        stop('ec.util: expecting parameter bbox', call. = FALSE)
+      if (is.null(opts$bbox$ymin))
+        stop('ec.util: expecting bbox in sf format', call. = FALSE)
+      tmp <- opts$bbox
+      rng <- paste0('[[',tmp$ymin,',',tmp$xmin,'],[',tmp$ymax,',',tmp$xmax,']]')
+      out <- c('','', 
+               paste("var map= chart.getModel().getComponent('leaflet').__map;", 
+                     "map.fitBounds(",rng,");"))
+    },
+    'sf.unzip'= {
+      if (is.null(opts$url))
+        stop('ec.util: expecting url of zipped shapefile', call. = FALSE)
+      destfile <- tempfile('shapefile')
+      download.file(opts$url, destfile, mode='wb') #, method='curl')
+      # get name only, use as folder name to unzip to
+      fldr <- sub(pattern = "(.*)\\..*$", replacement = "\\1", basename(opts$url))
+      unzip(destfile, exdir=fldr)  # new folder under getwd()
+      # find name
+      pat <- ifelse (is.null(opts$shp), '*.shp', paste0(opts$shp,'.shp'))
+      tmp <- list.files(path= fldr, pattern= pat)
+      if (length(tmp)==0) stop(paste('ec.util:',pat,'file not found in folder',fldr), call. = FALSE)
+      out <- paste0(getwd(),'/',fldr,'/',tmp[1])
+    },
+    
+    'tabset'= {
+      width <- height <- tabStyle <- NULL   # CRAN check fix
+      do.opties(c('width','height','tabStyle'), 
+                list(300, 300, "<style>
+/*	CSS for the main interaction */
+.tabset > input[type='radio'] {
+position: absolute;
+left: -200vw;
+}
+.tabset .tab-panel {	display: none; }
+.tabset > input:first-child:checked ~ .tab-panels > .tab-panel:first-child,
+.tabset > input:nth-child(3):checked ~ .tab-panels > .tab-panel:nth-child(2),
+.tabset > input:nth-child(5):checked ~ .tab-panels > .tab-panel:nth-child(3),
+.tabset > input:nth-child(7):checked ~ .tab-panels > .tab-panel:nth-child(4),
+.tabset > input:nth-child(9):checked ~ .tab-panels > .tab-panel:nth-child(5),
+.tabset > input:nth-child(11):checked ~ .tab-panels > .tab-panel:nth-child(6) {
+display: block;
+}
+/*	Styling */
+body {
+font: 16px/1.5em 'Overpass', 'Open Sans', Helvetica, sans-serif;
+color: #333; font-weight: 300;
+}
+.tabset > label {
+position: relative;
+display: inline-block;
+padding: 15px 15px 25px;
+border: 1px solid transparent;
+border-bottom: 0;
+cursor: pointer;
+font-weight: 600;
+}
+.tabset > label::after {
+content: '';
+position: absolute;
+left: 15px;
+bottom: 10px;
+width: 22px;
+height: 4px;
+background: #8d8d8d;
+}
+.tabset > label:hover,
+.tabset > input:focus + label { color: #06c; }
+.tabset > label:hover::after,
+.tabset > input:focus + label::after,
+.tabset > input:checked + label::after { background: #06c;}
+.tabset > input:checked + label {
+border-color: #ccc;
+border-bottom: 1px solid #fff;
+margin-bottom: -1px;
+}
+.tab-panel {
+padding: 10px 0;
+border-top: 1px solid #ccc;
+}
+body { padding: 10px; }
+.tabset { max-width: 65em; }
+</style>")
+      )
+      
+      tnames <- names(opts)
+      if ((is.null(tnames) || length(tnames)==1) && 
+          ('echarty' %in% class(opts[[1]][[1]]))) {  # pipe
+        opts <- opts[[1]]
+        tnames <- names(opts) <- paste0('chart', 1:length(opts))
+      }
+      
+      tpans <- htmltools::tags$div(class='tab-panels')
+      tset <- htmltools::tags$div(class='tabset')
+      cnt <- 1
+      for(n in tnames) {
+        tid <- paste0('tab', cnt)
+        tinp <- htmltools::tags$input(type='radio', name='tabso', id=tid, `aria-controls`=n)
+        if (cnt==1) tinp <- htmltools::tagAppendAttributes(tinp, checked=1)
+        tset <- htmltools::tagAppendChildren(tset, 
+                                             tinp, htmltools::tags$label(`for`=tid, n))
+        cont <- unname(opts[n]) 
+        cont[[1]]$width <- width
+        cont[[1]]$height <- height
+        tpans <- htmltools::tagAppendChild(tpans, 
+                                           htmltools::tags$section(id=n, class='tab-panel', cont))
+        tout <- htmltools::tagAppendChild(tset, tpans)
+        cnt <- cnt + 1
+      }
+      out <- htmltools::tagList(htmltools::HTML(tabStyle), tout)
+    },
+
+    'layout'= {
+      
+      title <- NULL   # CRAN check fix
+      do.opties(c('rows','cols','width','title'))
+      lplots <- length(opts[[1]])
+      if (is.null(rows) & !is.null(cols)) rows <- ceiling(lplots/cols)
+      if (!is.null(rows) & is.null(cols)) cols <- ceiling(lplots/rows)
+      if (is.null(rows) & is.null(cols)) { rows <- lplots; cols <- 1 }
+      w <- "-xs"
+      if (!is.null(width)) w <- paste0('-',width)
+      if (!isTRUE(getOption("knitr.in.progress"))) w <- ""
+      x <- 0
+      tg <- htmltools::tagList()
+      for (i in 1:rows) {
+        r <- htmltools::div(class = "row")
+        for (j in 1:cols) {
+          x <- x + 1
+          cl <- paste0("col", w, "-", 12/cols)
+          if (x <= lplots)
+            c <- htmltools::div(class = cl, opts[[1]][[x]])
+          else 
+            c <- htmltools::div(class = cl)
+          r <- htmltools::tagAppendChild(r, c)
+        }
+        tg <- htmltools::tagAppendChild(tg, r)
+      }
+      if (isTRUE(getOption("knitr.in.progress"))) {
+        if (!is.null(title))
+          out <- htmltools::div(title, tg)
+        else
+          out <- tg
+      }
+      else
+        out <- htmltools::browsable(
+          htmltools::div(
+            class = "container-fluid", 
+            htmltools::tags$head(
+              htmltools::tags$link(
+                rel = "stylesheet", 
+                href = "https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css"
+              )),
+            htmltools::div(class= 'row justify-content-center text-center', 
+                           htmltools::h3(title) ),
+            tg
+          ))
+    },
+    
+    'morph'= {
+      
+      opts <- lapply(opts, function(oo) {
+        if ('echarty' %in% class(oo)) oo$x$opts
+        else oo
+      })
+      # series types should be different for morph options
+      defaultHandler <- htmlwidgets::JS("
+    function(event) {
+        opt= this.getOption();
+        keep= opt.morph;
+        for(i=0; i<keep.length; i++) {
+    	    if (opt.series[0].type==keep[i].series[0].type) {
+    	      next= (i+1) % keep.length;
+       		optcurr= Object.assign({}, keep[next]);
+       		break;
+    	    }
+    	 };
+    	 if (!optcurr) return;
+    	 optcurr.morph= keep;
+    	 this.setOption(optcurr, true);
+    }")
+      out <- ec.init(preset=FALSE, js=js)
+      out$x$opts <- opts[[1]]
+      out$x$opts$morph <- opts
+      if (is.null(js))
+        out$x$on <- list(list(
+          event= 'mouseover', handler= defaultHandler
+        ))
+      out    
+    },
+    
+    'rescale'= {
+      scale <- opts$t
+      if (!is.numeric(scale)) scale <- c(0,10)
+      if (length(scale)!=2)
+        stop("ec.util: rescale 't' vector too long/short")
+      if (scale[1]==scale[2])
+        stop("ec.util: rescale 't' vector elements equal")
+      smin <- min(scale);  smax <- max(scale)-smin; 
+      vect <- opts$v
+      if (is.null(vect))
+        stop("ec.util: rescale 'v' paramater missing")
+      if (!is.numeric(vect))
+        stop("ec.util: rescale 'v' is not a numeric vector")
+      #  out <- drop(scale(vect, center=min(vect)-min(vect)*0.05, scale=diff(range(vect)))) * smax
+      out <- drop(scale(vect, center=min(vect), scale=diff(range(vect)))) * smax
+      out <- sapply(out, as.vector)
+      out <- out + smin
+    },
+    
+    'fullscreen'= {
+      out <- list(myecfs= list(show=TRUE,  title= 'fullscreen', 
+                               icon= 'path://M5 5h5V3H3v7h2zm5 14H5v-5H3v7h7zm11-5h-2v5h-5v2h7zm-2-4h2V3h-7v2h5z',
+                               onclick= htmlwidgets::JS('function(){
+                tmp = this.ecModel.getOption();
+                ecfun.fscreen(tmp.hwid); 
+            }')
+      ))
+    },
+    
+    'level'= {
+      from <- to <- NULL
+      do.opties(c('from','to'), list('from','to'))
+      if (is.null(opts$df) || !is.data.frame(opts$df))
+        stop("ec.util-level: 'df' paramater missing or invalid", call. = FALSE)
+      if (!all(c(from,to) %in% colnames(opts$df)))
+        stop(paste('ec.util-level: df has no "',from,' ',to,'" columns'), call. = FALSE)
+      # build levels
+      df <- opts$df
+      level <- rep(1, nrow(df))  # bottom start
+      rr <- rep(0, nrow(df))
+      for(i in 1:nrow(df)){
+        ifrom <- df[,from][i]
+        ito <- df[,to][i]
+        for(j in 1:min(which(rr==0))) {
+          if (ifrom > rr[j]) {
+            rr[j] <- ito
+            level[i] <- j
+            break
+          }
+        }
+      }
+      out <- level
+    },
+    
+    'labelsInside'= {
+      # labelLayout, thanks to @plainheart, https://github.com/apache/echarts/issues/17828
+      dy <- ifelse(is.null(opts$dy), -3, opts$dy)
+      cid <- ifelse(is.null(opts$cid), '', opts$cid)
+      out <- htmlwidgets::JS(paste0("params => {
+            cid = '",cid,"'; if (cid=='' && typeof hwid!='undefined') cid = hwid;
+            if (cid=='') return null;
+            dchart = get_e_charts(cid);
+            const chartWidth = dchart.getWidth();
+            const labelRect = params.labelRect;
+            const labelX = labelRect.x;
+            const labelWidth = labelRect.width;
+            const overflow = labelWidth + labelX > chartWidth;
+            return {
+              x: overflow ? chartWidth - labelWidth : labelX,
+              verticalAlign: overflow ? 'top' : 'middle',
+              dy: overflow ? ",dy," : 0
+            }
+          }"))
+    },
+
+    stop(paste("ec.util: invalid 'cmd' parameter",cmd), call. = FALSE)
+  )
+  out
+}
+
+
 #' Data helper
 #' 
 #' Make data lists from a data.frame
@@ -1510,483 +2060,6 @@ ec.fromJson <- function(txt, ...) {
   e$x$opts <- json
   e
 }
-
-
-#' Utility functions
-#' 
-#' tabset, table layout, support for GIS shapefiles thru library sf
-#'  
-#' @param cmd Utility command\cr
-#' * \emph{sf.series} returns a list of chart series\cr
-#'      required parameter \emph{df} - value from \link[sf]{st_read}\cr
-#'      optional \emph{nid} - column name for name-id used in tooltips\cr
-#'      optional \emph{verbose} - print shapefile item names in console\cr
-#' * \emph{sf.bbox} returns JavaScript code to position a map inside a bounding box from \link[sf]{st_bbox}, for leaflet only.\cr
-#' * \emph{sf.unzip} unzips a remote file and returns local file name of the unzipped .shp file\cr
-#'      required parameter \emph{url} - URL of remote zipped shapefile\cr
-#'      optional \emph{shp} - name of .shp file inside ZIP file if multiple exist. Do not add file extension. \cr
-#' * \emph{tabset} returns a \link[htmltools]{tagList} of tabs, each tab may contain a chart.\cr
-#' * \emph{layout} returns a container \link[htmltools]{div} in rmarkdown, otherwise \link[htmltools]{browsable}.\cr
-#' * \emph{morph} returns a chart with ability to morph into other charts\cr
-#' @param js optional JavaScript function, default is NULL.\cr
-#' @param ... Optional parameters for the command \cr
-#'      for \emph{sf.series} - see \href{https://echarts.apache.org/en/option.html#series-scatter.type}{points}, \href{https://echarts.apache.org/en/option.html#series-lines.type}{polylines}, polygons(itemStyle).\cr
-#'      for \emph{tabset} parameters should be in format \emph{name1=chart1, name2=chart2}, see example\cr
-#' @details 
-#' **cmd = 'sf.series'**\cr
-#' \verb{   }Goal is to build \emph{leaflet} or \href{https://echarts.apache.org/en/option.html#geo.map}{geo} map series from shapefiles.\cr
-#' \verb{   }Supported types: POINT, MULTIPOINT, LINESTRING, MULTILINESTRING, POLYGON, MULTIPOLYGON \cr
-#' \verb{   }Coordinate system is \emph{leaflet}(default) or \emph{geo}\cr
-#' \verb{   }Limitations:\cr 
-#' \verb{     }polygons can have only their name in tooltip,  \cr
-#' \verb{     }assumes Geodetic CRS is WGS 84, use \link[sf]{st_transform} with \emph{crs=4326} to convert.\cr
-#' **cmd = 'layout'** \cr
-#' \verb{   }multiple charts in table-like rows/columns format\cr
-#' \verb{   }...= List of charts\cr
-#' \verb{   }optional parameters are: \cr
-#' \verb{     }title= Title for the set, rows= Number of rows, cols= Number of columns,\cr
-#' \verb{     }width= Width of columns (one of xs, md, lg)\cr
-#' \verb{   }For 3-4 charts one would use multiple series within a \href{https://echarts.apache.org/en/option.html#grid}{grid}. \cr
-#' \verb{   }For greater number of charts _ec.util(cmd='layout')_ comes in handy\cr
-#' **cmd = 'tabset'** \cr
-#' \verb{   }...= a list tab-name/chart pairs like \emph{n1=chart1, n2=chart2}\cr
-#' \verb{   }optional parameters are: \cr
-#' \verb{     }width= Width of tabs in pixels, height= Height of tabs in pixels\cr
-#' \verb{     }tabStyle= tab style string, see default \emph{tabStyle} variable in the code\cr
-#' **cmd = 'morph'** \cr
-#' \verb{   }...= a list of charts or chart options\cr
-#' \verb{   }optional parameter: \cr
-#' \verb{     }js= JS function for switching charts. Default function is on \emph{mouseover}.\cr
-#' **cmd = 'fullscreen'** \cr
-#' \verb{   }a toolbox feature to toggle fullscreen on/off. Works in a browser, not in RStudio.\cr
-#' **cmd = 'rescale'** \cr
-#' \verb{   }t = target range c(min,max), numeric vector of two\cr
-#' \verb{   }v = vector of numeric values to rescale\cr
-
-#' @examples 
-#' if (interactive()) {  # comm.out: Fedora errors about some 'browser'
-#'   library(sf)
-#'   fname <- system.file("shape/nc.shp", package="sf")
-#'   nc <- as.data.frame(st_read(fname))
-#'   ec.init(load= c('leaflet', 'custom'),  # load custom for polygons
-#'      js= ec.util(cmd= 'sf.bbox', bbox= st_bbox(nc$geometry)),
-#'      series= ec.util(df= nc, nid= 'NAME', itemStyle= list(opacity= 0.3)),
-#'      tooltip= list(formatter= '{a}')
-#'   )
-#' 
-#'   htmltools::browsable(
-#'     lapply(iris |> dplyr::group_by(Species) |> dplyr::group_split(), 
-#'            function(x) {
-#'      x |> ec.init(ctype= 'scatter', title= list(text= unique(x$Species)))
-#'            }) |> 
-#'     ec.util(cmd= 'tabset')
-#'   )
-#' 
-#'   p1 <- cars |> ec.init(grid= list(top= 20))
-#'   p2 <- mtcars |> ec.init()
-#'   htmltools::browsable(
-#'     ec.util(cmd= 'tabset', cars= p1, mtcars= p2, width= 200, height= 200)
-#'   )
-#' 
-#'   lapply(list('dark','macarons','gray','jazz','dark-mushroom'),
-#'                 function(x) cars |> ec.init() |> ec.theme(x) ) |>
-#'   ec.util(cmd='layout', cols= 2, title= 'my layout')
-#'   
-#'   setd <- function(type) {
-#'     mtcars |> group_by(cyl) |> ec.init(ctype=type) |> ec.upd({
-#'     title <- list(subtext='mouseover points to morph')
-#'     xAxis <- list(scale=TRUE)
-#'     series <- lapply(series, function(ss) {
-#'       ss$groupId <- ss$name
-#'       ss$universalTransition <- list(enabled=TRUE)
-#'       ss })
-#'     })
-#'   }
-#'   oscatter <- setd('scatter')
-#'   obar <- setd('bar')
-#'   ec.util(cmd='morph', oscatter, obar)
-#' }
-#' @importFrom utils unzip
-#' @export
-ec.util <- function( ..., cmd='sf.series', js=NULL) {
-  
-  opts <- list(...)
-  
-  do.opties <- function(names, dflts=NULL) {
-    # set default optional parameters
-    j <- 0
-    for(n in names) {
-      j <- j + 1
-      val <- NULL
-      if (!is.null(dflts)) val <- dflts[[j]]
-      tmp <- unname(unlist(opts[n]))
-      if (!is.null(tmp)) {
-        val <- tmp
-        opts[n] <<- NULL
-      }
-      assign(n, val, envir= parent.frame())
-    }
-  }
-  
-  switch( cmd,
-    'sf.series'= {
-      do.series <- function() {
-        polig <- function(geom) {
-          for(k in 1:length(geom)) {
-            if ('matrix' %in% class(geom[[k]])) {
-              gm <- as.data.frame(geom[[k]])
-              coords <- list()
-              for(j in 1:nrow(gm))
-                coords <- append(coords, list(c(gm[j,1], gm[j,2])))
-              s1 <- list(
-                type= 'custom',
-                renderItem= htmlwidgets::JS('riPolygon'),
-                name= dname, 
-                data= coords, ...
-              )
-              if (is.null(s1$coordinateSystem)) s1$coordinateSystem <- 'leaflet'
-              s1$df <- NULL
-              sers <<- append(sers, list(s1))
-            } else polig(geom[[k]])  # recursive
-          }
-        }
-        #geometry <- cmd <- 
-        L1 <- NULL     # avoid code checking NOTES
-        sers <- list()
-        dff <- opts$df
-        opts$df <<- NULL
-        if (is.null(opts$coordinateSystem)) opts$coordinateSystem <<- 'leaflet'
-        
-        switch( class(dff$geometry)[1],
-                'sfc_POINT' =,
-                'sfc_MULTIPOINT'= {
-                  #            dff <- dff |> rename(value= geometry)
-                  #dff$value <- lapply(dff$value, function(x) x[1:2])  # XY, remove Z if any
-                  tt <- NULL
-                  flds <- colnames(dff)[! colnames(dff) %in% c("geometry")]
-                  if (length(flds)>0) {
-                    if (length(flds)>10) flds <- flds[1:10]
-                    tt <- c(paste(rep('%@', length(flds)), collapse='<br>'), flds)
-                  }
-                  #            pnts <- ec.data(dff, 'names')
-                  pnts <- ec.data(do.call(rbind, dff$geometry) |> as.data.frame())
-                  s1 <- list(data= pnts, ...)
-                  if (is.null(s1$type)) s1$type <- 'scatter'
-                  if (!is.null(tt)) 
-                    s1$tooltip= list(formatter= do.call("ec.clmn", as.list(tt)))
-                  s1$df <- NULL
-                  sers <- list(s1)
-                  # opts$type <<- NULL   # cleanup
-                  # opts$coordinateSystem <<- NULL
-                  # sers <- list(append(list(sers), opts))
-                  # sers[[1]]$df <- NULL  #ok
-                  #opts$df <<- NULL
-                  # sers <- list(
-                  #   # list(type= 'scatter', coordinateSystem= cs,
-                  #   list(type= ?, data= pnts, ...))
-                  # if (!is.null(tt)) 
-                  #   sers[[1]]$tooltip= list(formatter= do.call("ec.clmn", as.list(tt)))
-                },
-                'sfc_POLYGON' =,
-                'sfc_MULTIPOLYGON' = {
-                  for(i in 1:nrow(dff)) {
-                    dname <- i
-                    if (!is.null(nid) && (nid %in% colnames(dff))) 
-                      dname <- dff[i, nid][[1]]
-                    if (verbose) cat(dname,',', sep='')
-                    geom <- dff$geometry[[i]]
-                    polig(geom)
-                  }
-                },
-                'sfc_LINESTRING' = {
-                  tmp <- dff$geometry
-                  tmp <- as.data.frame(cbind(do.call(rbind, tmp), 
-                                             L1= rep(seq_along(tmp), times= vapply(tmp, nrow, 0L))))
-                  for(i in 1:nrow(dff)) {
-                    dname <- ifelse(is.null(nid), i, dff[i, nid][[1]])
-                    if (verbose) cat(dname,',', sep='')
-                    coords <- list()
-                    geom <- tmp |> filter(L1==i)
-                    for(k in 1:nrow(geom))
-                      coords <- append(coords, list(c(geom[k,1], geom[k,2])))
-                    s1 <- list(
-                      type='lines', polyline= TRUE,
-                      name= dname, 
-                      tooltip= list(formatter= '{a}'),
-                      data= list(coords), ... )
-                    
-                    if (is.null(s1$coordinateSystem)) s1$coordinateSystem <- 'leaflet'
-                    s1$df <- NULL
-                    sers <- append(sers, list(s1))
-                  }
-                },
-                'sfc_MULTILINESTRING' = {
-                  for(i in 1:nrow(dff)) {
-                    dname <- ifelse(is.null(nid), i, dff[i,nid][[1]])
-                    if (verbose) cat(dname,',', sep='')
-                    corda <- list()
-                    geom <- dff$geometry[[i]]
-                    for(k in 1:length(geom)) {
-                      gm <- as.data.frame(geom[[k]])
-                      coords <- list()
-                      for(j in 1:nrow(gm))
-                        coords <- append(coords, list(c(gm[j,1], gm[j,2])))
-                      corda <- append(corda, list(coords))
-                    }
-                    s1 <- list(
-                      type='lines', polyline= TRUE, 
-                      name= dname, 
-                      tooltip= list(formatter= '{a}'),
-                      data= corda, ... )
-                    if (is.null(s1$coordinateSystem)) s1$coordinateSystem <- 'leaflet'
-                    s1$df <- NULL
-                    sers <- append(sers, list(s1))
-                  }
-                },
-                stop(paste('ec.util:',class(dff$geometry)[1],'geometry not supported'), call.= FALSE)
-        )
-        cnt <- length(sers)
-        recs <- sum(unlist(lapply(sers, function(x) {
-          len <- length(x$data)
-          if (len==1) len <- length(x$data[[1]])  #multiline
-          len
-        })))
-        cat('\n series:',cnt,'coords:',recs,'\n')
-        sers
-      }
-      
-      if (is.null(opts$df))
-        stop('ec.util: expecting parameter df', call. = FALSE)
-      if (is.null(opts$df$geometry))
-        stop('ec.util: expecting df$geometry', call. = FALSE)
-      nid <- verbose <- NULL   # fix for CRAN check
-      do.opties(c('nid','verbose'), list(NULL, FALSE))
-      out <- do.series()
-    },
-    
-    'sf.bbox'= {
-      if (is.null(opts$bbox))
-        stop('ec.util: expecting parameter bbox', call. = FALSE)
-      if (is.null(opts$bbox$ymin))
-        stop('ec.util: expecting bbox in sf format', call. = FALSE)
-      tmp <- opts$bbox
-      rng <- paste0('[[',tmp$ymin,',',tmp$xmin,'],[',tmp$ymax,',',tmp$xmax,']]')
-      out <- c('','', 
-               paste("var map= chart.getModel().getComponent('leaflet').__map;", 
-                     "map.fitBounds(",rng,");"))
-    },
-    'sf.unzip'= {
-      if (is.null(opts$url))
-        stop('ec.util: expecting url of zipped shapefile', call. = FALSE)
-      destfile <- tempfile('shapefile')
-      download.file(opts$url, destfile, mode='wb') #, method='curl')
-      # get name only, use as folder name to unzip to
-      fldr <- sub(pattern = "(.*)\\..*$", replacement = "\\1", basename(opts$url))
-      unzip(destfile, exdir=fldr)  # new folder under getwd()
-      # find name
-      pat <- ifelse (is.null(opts$shp), '*.shp', paste0(opts$shp,'.shp'))
-      tmp <- list.files(path= fldr, pattern= pat)
-      if (length(tmp)==0) stop(paste('ec.util:',pat,'file not found in folder',fldr), call. = FALSE)
-      out <- paste0(getwd(),'/',fldr,'/',tmp[1])
-    },
-    
-    'tabset'= {
-      width <- height <- tabStyle <- NULL   # CRAN check fix
-      do.opties(c('width','height','tabStyle'), list(300, 300, 
-                                                     "<style>
-/*	CSS for the main interaction */
-.tabset > input[type='radio'] {
-position: absolute;
-left: -200vw;
-}
-.tabset .tab-panel {	display: none; }
-.tabset > input:first-child:checked ~ .tab-panels > .tab-panel:first-child,
-.tabset > input:nth-child(3):checked ~ .tab-panels > .tab-panel:nth-child(2),
-.tabset > input:nth-child(5):checked ~ .tab-panels > .tab-panel:nth-child(3),
-.tabset > input:nth-child(7):checked ~ .tab-panels > .tab-panel:nth-child(4),
-.tabset > input:nth-child(9):checked ~ .tab-panels > .tab-panel:nth-child(5),
-.tabset > input:nth-child(11):checked ~ .tab-panels > .tab-panel:nth-child(6) {
-display: block;
-}
-/*	Styling */
-body {
-font: 16px/1.5em 'Overpass', 'Open Sans', Helvetica, sans-serif;
-color: #333; font-weight: 300;
-}
-.tabset > label {
-position: relative;
-display: inline-block;
-padding: 15px 15px 25px;
-border: 1px solid transparent;
-border-bottom: 0;
-cursor: pointer;
-font-weight: 600;
-}
-.tabset > label::after {
-content: '';
-position: absolute;
-left: 15px;
-bottom: 10px;
-width: 22px;
-height: 4px;
-background: #8d8d8d;
-}
-.tabset > label:hover,
-.tabset > input:focus + label { color: #06c; }
-.tabset > label:hover::after,
-.tabset > input:focus + label::after,
-.tabset > input:checked + label::after { background: #06c;}
-.tabset > input:checked + label {
-border-color: #ccc;
-border-bottom: 1px solid #fff;
-margin-bottom: -1px;
-}
-.tab-panel {
-padding: 10px 0;
-border-top: 1px solid #ccc;
-}
-body { padding: 10px; }
-.tabset { max-width: 65em; }
-</style>" ))
-      
-      tnames <- names(opts)
-      if ((is.null(tnames) || length(tnames)==1) && 
-          ('echarty' %in% class(opts[[1]][[1]]))) {  # pipe
-        opts <- opts[[1]]
-        tnames <- names(opts) <- paste0('chart', 1:length(opts))
-      }
-      
-      tpans <- htmltools::tags$div(class='tab-panels')
-      tset <- htmltools::tags$div(class='tabset')
-      cnt <- 1
-      for(n in tnames) {
-        tid <- paste0('tab', cnt)
-        tinp <- htmltools::tags$input(type='radio', name='tabso', id=tid, `aria-controls`=n)
-        if (cnt==1) tinp <- htmltools::tagAppendAttributes(tinp, checked=1)
-        tset <- htmltools::tagAppendChildren(tset, 
-                    tinp, htmltools::tags$label(`for`=tid, n))
-        cont <- unname(opts[n]) 
-        cont[[1]]$width <- width
-        cont[[1]]$height <- height
-        tpans <- htmltools::tagAppendChild(tpans, 
-                    htmltools::tags$section(id=n, class='tab-panel', cont))
-        tout <- htmltools::tagAppendChild(tset, tpans)
-        cnt <- cnt + 1
-      }
-      out <- htmltools::tagList(htmltools::HTML(tabStyle), tout)
-    },
-
-    'layout'= {
-      
-      title <- NULL   # CRAN check fix
-      do.opties(c('rows','cols','width','title'))
-      lplots <- length(opts[[1]])
-      if (is.null(rows) & !is.null(cols)) rows <- ceiling(lplots/cols)
-      if (!is.null(rows) & is.null(cols)) cols <- ceiling(lplots/rows)
-      if (is.null(rows) & is.null(cols)) { rows <- lplots; cols <- 1 }
-      w <- "-xs"
-      if (!is.null(width)) w <- paste0('-',width)
-      if (!isTRUE(getOption("knitr.in.progress"))) w <- ""
-      x <- 0
-      tg <- htmltools::tagList()
-      for (i in 1:rows) {
-        r <- htmltools::div(class = "row")
-        for (j in 1:cols) {
-          x <- x + 1
-          cl <- paste0("col", w, "-", 12/cols)
-          if (x <= lplots)
-            c <- htmltools::div(class = cl, opts[[1]][[x]])
-          else 
-            c <- htmltools::div(class = cl)
-          r <- htmltools::tagAppendChild(r, c)
-        }
-        tg <- htmltools::tagAppendChild(tg, r)
-      }
-      if (isTRUE(getOption("knitr.in.progress"))) {
-        if (!is.null(title))
-          out <- htmltools::div(title, tg)
-        else
-          out <- tg
-      }
-      else
-        out <- htmltools::browsable(
-          htmltools::div(
-            class = "container-fluid", 
-            htmltools::tags$head(
-              htmltools::tags$link(
-                rel = "stylesheet", 
-                href = "https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css"
-              )),
-            htmltools::div(class= 'row justify-content-center text-center', 
-                           htmltools::h3(title) ),
-            tg
-          ))
-    },
-    
-    'morph'= {
-
-      opts <- lapply(opts, function(oo) {
-        if ('echarty' %in% class(oo)) oo$x$opts
-        else oo
-      })
-      # series types should be different for morph options
-      defaultHandler <- htmlwidgets::JS("
-function(event) {
-    opt= this.getOption();
-    keep= opt.morph;
-    for(i=0; i<keep.length; i++) {
-	    if (opt.series[0].type==keep[i].series[0].type) {
-	      next= (i+1) % keep.length;
-   		optcurr= Object.assign({}, keep[next]);
-   		break;
-	    }
-	 };
-	 if (!optcurr) return;
-	 optcurr.morph= keep;
-	 this.setOption(optcurr, true);
-}")
-      out <- ec.init(preset=FALSE, js=js)
-      out$x$opts <- opts[[1]]
-      out$x$opts$morph <- opts
-      if (is.null(js))
-        out$x$on <- list(list(
-          event= 'mouseover', handler= defaultHandler
-        ))
-      out    
-    },
-    
-    'rescale'= {
-      scale <- opts$t
-      if (!is.numeric(scale)) scale <- c(0,10)
-      if (length(scale)!=2)
-        stop("ec.util: rescale 't' vector too long/short")
-      if (scale[1]==scale[2])
-        stop("ec.util: rescale 't' vector elements equal")
-      smin <- min(scale);  smax <- max(scale)-smin; 
-      vect <- opts$v
-      if (is.null(vect))
-        stop("ec.util: rescale 'v' paramater missing")
-      if (!is.numeric(vect))
-        stop("ec.util: rescale 'v' is not a numeric vector")
-    #  out <- drop(scale(vect, center=min(vect)-min(vect)*0.05, scale=diff(range(vect)))) * smax
-      out <- drop(scale(vect, center=min(vect), scale=diff(range(vect)))) * smax
-      out <- sapply(out, as.vector)
-      out <- out + smin
-    },
-    
-    'fullscreen'= {
-      out <- list(myecfs= list(show=TRUE,  title= 'fullscreen', 
-        icon= 'path://M5 5h5V3H3v7h2zm5 14H5v-5H3v7h7zm11-5h-2v5h-5v2h7zm-2-4h2V3h-7v2h5z',
-        onclick= htmlwidgets::JS('function(){ ecfun.fscreen(); }') #debugger; this.fscreen()')
-      ))
-    },
-    
-    stop(paste("ec.util: invalid 'cmd' parameter",cmd), call. = FALSE)
-  )
-  out
-  
-}
-
 
 # ----------- Internal --------------
 

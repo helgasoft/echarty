@@ -1,17 +1,18 @@
 # history of package _echarty_
 
-## v.1.4.7.06 in development
+## v.1.5.0 in development
 
 - upgrade ECharts to v.5.4.0
+- built with R v.4.2.2
 - added vignette with introduction
 - _ecr.ebars_ fix bug, enhance tooltips
 - _ec.util_ improvements in sf.series
-- _ec.util_ new commands _fullscreen_, _morph_, _rescale_
+- _ec.util_ new commands _fullscreen_(multi-charts), _morph_, _rescale_, _level_
 - _ec.clmn_ new options 'json' and 'log'
-- _ec.init_ added visualMap$dimension counting in R
+- _ec.init_ set R-counting for series$encode/xAxisIndex, visualMap$dimension
 - fixes to global options theme & font, group legend
 - fixed _load='world'_ with series set
-- new _load='lottie'_, lotties's support now built-in 
+- new _load='lottie'_, lotties support now built-in 
 - reorganize crosstalk code
 
 ## v.1.4.7 on CRAN
