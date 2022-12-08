@@ -109,9 +109,9 @@ server <- function(input, output, session) {
   }
   adds1 <- 0   # prevent 'add series' to get out of hand
   output$tzoom <- renderText('^^ move slider ^^')
-  data <- tibble::rownames_to_column(mtcars, var='name') |> 
-      relocate(mpg, disp)
-
+  #data <- tibble::rownames_to_column(mtcars, var='name') |> relocate(mpg, disp)
+  data <- mtcars |> mutate(name= rownames(mtcars)) |> relocate(mpg, disp)
+  rownames(data) <- NULL
   
   # --------- scatter plot ---------
   output$plot <- ecs.render({

@@ -90,8 +90,8 @@ or install your own third-party plugins.\cr
 }
 
 Crosstalk:\cr
-Parameter \emph{df} should be of type \link[crosstalk]{SharedData}, see \href{https://helgasoft.github.io/echarty/xtalk.html}{more info}.\cr
-It should NOT have string row names. Use \link[tibble]{rownames} to remove or convert to column.\cr
+Parameter \emph{df} should be of type \link[crosstalk]{SharedData}, see \href{https://helgasoft.github.io/echarty/gallery.html#crosstalk-2d}{more info}.\cr
+It should NOT have string row names. Use \emph{tibble::rownames} to remove or convert to column.\cr
 Enabling \emph{crosstalk} will generate an additional dataset called \emph{Xtalk} and bind the first serie to it if \emph{datasetId} not set.\cr
 }
 \examples{

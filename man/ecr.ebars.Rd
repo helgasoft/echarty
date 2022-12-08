@@ -10,7 +10,7 @@ ecr.ebars(wt, df = NULL, hwidth = 6, ...)
 \item{wt}{A widget to add error bars to, see \link[htmlwidgets]{createWidget}}
 
 \item{df}{NULL(default) or data.frame with four or more columns ordered exactly x,y,low,high,(category),...\cr
-When NULL, data is taken from wt's dataset where order should be the same x,y,low,high,(category),...}
+When NULL, data is taken from wt's dataset where order should be the same}
 
 \item{hwidth}{Half-width of error bar in pixels, default is 6.}
 
@@ -24,11 +24,14 @@ Custom series to display error-bars for scatter,bar or line series
 }
 \details{
 \emph{ecr.ebars} are custom series, so \emph{ec.init(load='custom')} is required. \cr
-Grouped series are supported, but \emph{df} is required with group column included. \cr
-Will add its own tooltip if none is provided.\cr
-Adding a name parameter will show error bars separate in the legend. \cr
-Command should be called after all other series are already set.\cr
-Simple non-grouped series could be displayed with formatter \emph{riErrBarSimple} instead of \emph{ecr.ebars}. See example below.
+Command should be called after \emph{ec.init} where all other series are set.\cr
+Have their own default tooltip format showing \emph{value & high/low}.\cr
+Non-grouped series:\cr
+\verb{     }Adding a name parameter will show error bars separate in the legend.\cr
+\verb{     }Could be displayed with formatter \emph{riErrBarSimple} instead of \emph{ecr.ebars}. See example below.\cr
+Grouped series are supported:\cr
+\verb{     }param \emph{df} is required with group column included. \cr
+\verb{     }chart's \emph{xAxis} needs to be type 'category'\cr
 }
 \examples{
 library(dplyr)

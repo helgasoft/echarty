@@ -14,7 +14,7 @@ HTMLWidgets.widget({
     renderValue: function(x) {
       
       chart = echarts.init(document.getElementById(el.id));
-      chart.dispose();
+      chart.dispose();    // remove previous if any
       if (!initialized) {
         initialized = true;
         if(x.themeCode){
@@ -51,7 +51,9 @@ HTMLWidgets.widget({
       }
       
       chart = echarts.init(document.getElementById(el.id), x.theme, 
-      	{renderer: x.renderer, locale: x.locale, useDirtyRect: x.useDirtyRect});
+      	{ renderer: x.renderer, width: width, height: height, 
+      	  locale: x.locale, useDirtyRect: x.useDirtyRect }
+      );
       
       if (window.onresize==undefined)
         window.onresize = function() {
@@ -101,6 +103,13 @@ HTMLWidgets.widget({
         
         chart.on("mouseover", function(e){
           Shiny.onInputChange(el.id + '_mouseover' + ecp, 
+            { name: e.name, data: e.data, dataIndex: e.dataIndex,
+              seriesName: e.seriesName, value: e.value
+            },  {priority:'event'});
+        });
+        
+        chart.on("mouseout", function(e){
+          Shiny.onInputChange(el.id + '_mouseout' + ecp, 
             { name: e.name, data: e.data, dataIndex: e.dataIndex,
               seriesName: e.seriesName, value: e.value
             },  {priority:'event'});

@@ -35,8 +35,8 @@ Echarty uses the following options:
 \section{Events}{
 Event handling is usually necessary only in Shiny. See code in
 \link{ec.examples} and \code{eshiny.R}, run as \code{demo(eshiny)}.\if{html}{\out{<br>}}
-echarty has two built-in event callbacks - \code{click} and \code{mouseover}. \if{html}{\out{<br>}}
-All other ECharts
+echarty has three built-in event callbacks - \emph{click}, \emph{mouseover},
+\emph{mouseout}. \if{html}{\out{<br>}} All other ECharts
 \href{https://echarts.apache.org/en/api.html#events}{events} should be
 initialized through \code{p$x$capture}. Another option is to use \code{p$x$on}
 with JavaScript handlers, see code in \link{ec.examples}.

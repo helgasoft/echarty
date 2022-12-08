@@ -35,7 +35,6 @@ test_that("ec.init presets for non-grouped data.frame", {
   expect_equal(p$x$opts$series[[1]]$type, 'scatter')
 })
 
-
 test_that("ec.init presets for grouped data.frame", {
   p <- df |> dplyr::group_by(symbol) |> ec.init(yAxis= list(scale=TRUE))
   expect_equal(p$x$opts$xAxis$type, 'category')
@@ -46,7 +45,6 @@ test_that("ec.init presets for grouped data.frame", {
   expect_equal(p$x$opts$series[[1]]$datasetIndex, 1)
   expect_equal(p$x$opts$series[[1]]$name, 'circle')
 })
-#> Test passed 🥇
 
 test_that("ec.init presets for timeline", {
   dftl <- data.frame(
@@ -65,7 +63,6 @@ test_that("ec.init presets for timeline", {
   expect_equal(length(p$x$opts$options), 4)
   expect_equal(p$x$opts$options[[4]]$title$text, '2021')
 })
-
 
 test_that("ec.init presets for timeline groupBy", {
   set.seed(2022)
@@ -134,5 +131,14 @@ lng,lat,name,date,place
   expect_equal(p$x$opts$series[[1]]$encode$tooltip, c(2,3,4))
 })
 
+test_that("presets and series.param", {
+  p <- df |> ec.init(ctype='line', 
+          series.param= list(areaStyle= list(show= T), stack= 'stk'))
+  expect_equal(p$x$opts$series[[1]]$stack, 'stk')
+})
 
-
+test_that("presets for visualMap", {
+  p <- df |> ec.init(visualMap= list(dimension= 2, inRange= list(color= c("blue", "red"))) )
+  expect_equal(p$x$opts$visualMap$dimension, 1)
+  expect_equal(round(p$x$opts$visualMap$min,2), 8.66)
+})

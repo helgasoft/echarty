@@ -1,6 +1,6 @@
 library(dplyr)
 
-test_that("custom renderers - ecr.ebars", {
+test_that("custom renderers - ecr.ebars grouped", {
   df <- mtcars |> group_by(cyl,gear) |> summarise(yy= round(mean(mpg),2)) |>
     mutate(low= round(yy-cyl*runif(1),2), high= round(yy+cyl*runif(1),2)) |>
     relocate(cyl, .after = last_col())   # move group column behind first four cols
@@ -14,6 +14,16 @@ test_that("custom renderers - ecr.ebars", {
   expect_s3_class(p$x$opts$series[[4]]$renderItem, 'JS_EVAL')
   expect_equal(p$x$opts$xAxis$type, 'category')
   expect_equal(as.character(p$x$opts$series[[6]][['name']]), '8')
+})
+
+test_that("custom renderers - ecr.ebars non-grouped", {
+  df <- iris |> distinct(Sepal.Length, .keep_all= TRUE) |> 
+    mutate(lo= Sepal.Width-Petal.Length/2, hi= Sepal.Width+Petal.Width) |>
+    select(Sepal.Length, Sepal.Width, lo, hi, Species)
+  p <- df |> ec.init(load='custom', legend=list(show=TRUE), xAxis=list(scale=TRUE)) |> 
+    ecr.ebars(name= 'err')
+  expect_equal(p$x$opts$series[[2]]$z, 3)
+  expect_match(p$x$opts$series[[2]]$tooltip$formatter, 'range', fixed=TRUE)
 })
 
 test_that("custom renderers - riErrBarSimple", {

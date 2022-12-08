@@ -22,12 +22,13 @@ tabset, table layout, support for GIS shapefiles through library sf
 \strong{cmd = 'sf.series'}\cr
 \verb{   }Build \emph{leaflet} or \href{https://echarts.apache.org/en/option.html#geo.map}{geo} map series from shapefiles.\cr
 \verb{   }Supported types: POINT, MULTIPOINT, LINESTRING, MULTILINESTRING, POLYGON, MULTIPOLYGON \cr
-\verb{   }Coordinate system is \emph{leaflet}(default) or \emph{geo}\cr
+\verb{   }Coordinate system is \emph{leaflet}(default), \emph{geo} or \emph{cartesian3D} (for POINT(xyz))\cr
 \verb{   }Limitations:\cr
 \verb{     }polygons can have only their name in tooltip,  \cr
 \verb{     }assumes Geodetic CRS is WGS 84, use \link[sf]{st_transform} with \emph{crs=4326} to convert.\cr
 \verb{   }parameter \emph{df} - value from \link[sf]{st_read}\cr
 \verb{   }optional parameters: \cr
+\verb{     }cs - \emph{coordinateSystem} value\cr
 \verb{     }nid - column name for name-id used in tooltips\cr
 \verb{     }verbose - print shapefile item names in console\cr
 \verb{   }returns a list of chart series\cr
@@ -47,11 +48,12 @@ tabset, table layout, support for GIS shapefiles through library sf
 \verb{   }For 3-4 charts one would use multiple series within a \href{https://echarts.apache.org/en/option.html#grid}{grid}. \cr
 \verb{   }For greater number of charts \emph{ec.util(cmd='layout')} comes in handy\cr
 \strong{cmd = 'tabset'} \cr
-\verb{   }... - a list tab-name/chart pairs like \emph{n1=chart1, n2=chart2}\cr
+\verb{   }... - a list name/chart pairs like \emph{n1=chart1, n2=chart2}, each tab may contain a chart.\cr
 \verb{   }optional parameters are: \cr
 \verb{     }width - Width of tabs in pixels, height= Height of tabs in pixels\cr
 \verb{     }tabStyle - tab style string, see default \emph{tabStyle} variable in the code\cr
-\verb{   }returns a \link[htmltools]{tagList} of tabs, each tab may contain a chart.\cr
+\verb{   }returns A) \link[htmltools]{tagList} of tabs when in a pipe without '...' params, see example\cr
+\verb{   }returns B) \link[htmltools]{browsable} when '...' params are provided
 \strong{cmd = 'morph'} \cr
 \verb{   }... - a list of charts or chart options\cr
 \verb{   }optional parameter: \cr
@@ -92,11 +94,9 @@ if (interactive()) {  # comm.out: Fedora errors about some 'browser'
     ec.util(cmd= 'tabset')
   )
 
-  p1 <- cars |> ec.init(grid= list(top= 20))
+  p1 <- cars |> ec.init(grid= list(top= 20))  # move chart up
   p2 <- mtcars |> ec.init()
-  htmltools::browsable(
-    ec.util(cmd= 'tabset', cars= p1, mtcars= p2, width= 200, height= 200)
-  )
+  ec.util(cmd= 'tabset', cars= p1, mtcars= p2, width= 333, height= 333)
 
   lapply(list('dark','macarons','gray','jazz','dark-mushroom'),
                 function(x) cars |> ec.init() |> ec.theme(x) ) |>

@@ -43,11 +43,8 @@
 #'   })
 #' 
 #' #------ Area chart
-#' mtcars |> relocate(wt,mpg) |> arrange(wt) |> group_by(cyl) |> 
-#'   ec.init(ctype= 'line') |>
-#'   ec.upd({ series <- lapply(series, append, list(areaStyle= list(show=TRUE)) )
-#'   })
-#' 
+#' mtcars |> relocate(wt,mpg) |> arrange(wt) |> group_by(cyl) |>
+#'   ec.init(ctype= 'line', series.param= list(areaStyle= list(show=TRUE)) )
 #' 
 #' #------ Plugin leaflet
 #' tmp <- quakes |> dplyr::relocate('long') |>  # set order to long,lat
@@ -139,10 +136,10 @@
 #' #------ Liquidfill plugin
 #' if (interactive()) {
 #'   ec.init(load= 'liquid', preset=FALSE,
-#'           series= list(
-#'             type='liquidFill', data=c(0.6, 0.5, 0.4, 0.3),
-#'             waveAnimation= FALSE, animationDuration=0, animationDurationUpdate=0
-#'   ))
+#'     series= list(list(
+#'     type='liquidFill', data=c(0.66, 0.5, 0.4, 0.3),
+#'     waveAnimation= FALSE, animationDuration=0, animationDurationUpdate=0))
+#'   )
 #' }
 #' 
 #' 
@@ -370,9 +367,10 @@
 #' df <- mtcars |> group_by(cyl,gear) |> summarise(yy= round(mean(mpg),2)) |>
 #'   mutate(low= round(yy-cyl*runif(1),2), high= round(yy+cyl*runif(1),2)) |>
 #'   relocate(cyl, .after= last_col())   # move group column as last
-#' df |> ec.init(ctype='bar', load='custom', tooltip= list(show=TRUE)) |>
-#'   ecr.ebars(df, name = 'eb'
-#'      ,tooltip = list(formatter=ec.clmn('high <b>%@</b><br>low <b>%@</b>', 4,3)))
+#' df |> ec.init(ctype='bar', load='custom',
+#'               xAxis= list(type='category'), tooltip= list(show=TRUE)) |>
+#'   ecr.ebars(df, name = 'eb',
+#'     tooltip = list(formatter=ec.clmn('high <b>%@</b><br>low <b>%@</b>', 4,3)))
 #' }
 #' 
 #' #------ Gauge
@@ -460,26 +458,28 @@
 #' if (interactive()) {
 #'   library(shiny); library(dplyr); library(echarty)
 #' 
-#' ui <- fluidPage( ecs.output('plot') )
+#' ui <- fluidPage(ecs.output('plot'), textOutput('out1') )
 #' server <- function(input, output, session) {
 #'   output$plot <- ecs.render({
-#'     p <- mtcars |> group_by(cyl) |> 
-#'       ec.init(dataZoom= list(type= 'inside'))
-#'     p$x$on <- list(         # event(s) with Javascript handler
+#'     p <- mtcars |> group_by(cyl) |> ec.init(dataZoom= list(type= 'inside'))
+#'     p$x$on <- list(                     # event(s) with Javascript handler
 #'       list(event= 'legendselectchanged',
-#'            handler= htmlwidgets::JS("(event) => alert('selected: '+event.name);"))
+#'            handler= htmlwidgets::JS("(evt) => Shiny.setInputValue('result1',evt.name);"))
 #'     )
 #'     p$x$capture <- 'datazoom'
 #'     p
 #'   })
 #'   observeEvent(input$plot_datazoom, {   # captured event
-#'     cat('\nZoom.start:',input$plot_datazoom$batch$start)
+#'     output$out1 <- renderText({ paste('Zoom.start:',input$plot_datazoom$batch$start,'%') })
 #'   })
 #'   observeEvent(input$plot_mouseover, {  # built-in event
-#'     cat('\n',toString(input$plot_mouseover))
+#'     output$out1 <- renderText({ toString(input$plot_mouseover) })
+#'   })
+#'   observeEvent(input$result1, {
+#'     output$out1 <- renderText({ paste('legend:',input$result1) }) 
 #'   })
 #' }
-#' shinyApp(ui = ui, server = server)
+#' shinyApp(ui, server)
 #' }
 #' 
 #' #------------- Shiny interactive charts demo ---------------

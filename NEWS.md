@@ -1,6 +1,14 @@
 # history of package _echarty_
 
-## v.1.5.0 in development
+## v.1.5.0.01 in development
+
+- new _series.param_ in _ec.init_ for additional parameters for preset series
+- make _ec.util_ tabset responsive by resizing tabs onclick
+- fix _visualMap_ piecewise dimension R-counts
+- set _visualMap_ default min/max values from df
+- _echarty.js_: add built-in 'mouseout' event
+
+## v.1.5.0 on CRAN
 
 - upgrade ECharts to v.5.4.0
 - built with R v.4.2.2
@@ -15,7 +23,7 @@
 - new _load='lottie'_, lotties support now built-in 
 - reorganize crosstalk code
 
-## v.1.4.7 on CRAN
+## v.1.4.7
 
 - _ec.util_: add POLYGON/MULTIPOINT, rename param 'type' to 'cmd', new _sf.unzip_
 - _ec.util_: new cmd='tabset' to show multiple charts in tabs

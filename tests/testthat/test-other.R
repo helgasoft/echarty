@@ -22,7 +22,7 @@ test_that("registerMap", {
 
 test_that("tl.series and timeline options", {
   p <- Orange |> dplyr::group_by(age) |> ec.init(
-    tl.series=list(type='bar', encode=list(x='Tree', y='circumference'))
+    tl.series= list(type='bar', encode=list(x='Tree', y='circumference'))
   ) |> ec.upd({
     timeline <- append(timeline, list(autoPlay=TRUE))
     options <- lapply(options, 
@@ -34,6 +34,7 @@ test_that("tl.series and timeline options", {
   expect_equal(p$x$opts$timeline$data[[5]], "1231")
   expect_true(p$x$opts$dataset[[5]]$transform$config['='] == 1004)
 })
+
 test_that("tl.series type 'map'", {
 #  if (interactive()) {
     cns <- data.frame(
@@ -160,5 +161,10 @@ test_that("load 3D surface", {
   #else expect_equal(1,1)
 })
 
+test_that("ec.inspect", {
+  p <- mtcars |> dplyr::group_by(gear) |> ec.init() |> ec.inspect('data')
+  expect_match(p[1], "rows= 33", fixed=TRUE)
+  expect_match(p[2], "filter", fixed=TRUE)
+})
 
 

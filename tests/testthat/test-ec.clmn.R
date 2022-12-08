@@ -5,16 +5,15 @@ test_that("ec.clmn works with sprintf, column indexes and names", {
   tmp <- data.frame(Species= as.vector(unique(iris$Species)), 
                     color= c("#387e78","#eeb422","#d9534f"))
   p <- iris |> dplyr::inner_join(tmp) |> ec.init(
-    tooltip= list(formatter= ec.clmn('Petal Length %@, Width %@', 3,4))
-  ) |> ec.upd({
-    series[[1]]$itemStyle <- list(color= ec.clmn(6))
-    series[[1]]$symbolSize <- ec.clmn(3, scale=3)
-  })
+    tooltip= list(formatter= ec.clmn('Petal Length %@, Width %@', 3,4)),
+    series.param= list(itemStyle= list(color= ec.clmn(6)),
+                       symbolSize= ec.clmn(3, scale=3))
+  )
   expect_true(p$x$opts$series[[1]]$itemStyle$color == "function(x) {let c = String(x.value!=null ? x.value[5] : x.data!=null ? x.data[5] : x[5] ); return c;}")
   expect_s3_class( p$x$opts$series[[1]]$itemStyle$color, 'JS_EVAL')
-  expect_true(p$x$opts$series[[1]]$symbolSize == "function(x) {let c = String(x.value!=null ? x.value[2] : x.data!=null ? x.data[2] : x[2] ); return (parseFloat(c)*3);}")
+  expect_true(startsWith(p$x$opts$series[[1]]$symbolSize, "function(x) {let c = String(x.value!=null ?"))
   expect_s3_class( p$x$opts$series[[1]]$symbolSize, 'JS_EVAL')
-  expect_true(startsWith(p$x$opts$tooltip$formatter, "function(x) {var sprintf= (template, values) => { "))
+  expect_match(p$x$opts$tooltip$formatter, "sprintf(` Petal Length %@, Width %@ `, vv)", fixed=TRUE)
   expect_s3_class( p$x$opts$tooltip$formatter, 'JS_EVAL')
   
   
@@ -56,39 +55,5 @@ test_that("ec.clmn works with sprintf, column indexes and names", {
   expect_equal("function(x) {let c=String(typeof x=='object' ? x.value : x); return c;}",
                as.character(p$x$opts$tooltip$formatter) )
   expect_equal(p$x$opts$series$data[[1]]$name, 'Celebes')
-})
-
-test_that("ec.clmn layout", {
-  p <- lapply(list('dark','macarons','gray','jazz','dark-mushroom'),
-                function(x) cars |> ec.init() |> ec.theme(x) ) |>
-    ec.util(cmd='layout', cols= 2, title= 'my layout')
-  expect_equal(p$children[[3]]$children[[1]]$children[[2]]$children[[1]]$x$theme, 'macarons')
-})
-
-test_that("ec.clmn tabset", {
-  p1 <- cars |> ec.init(grid= list(top= 20))
-  p2 <- mtcars |> ec.init()
-  p <- htmltools::browsable(
-    ec.util(cmd= 'tabset', cars= p1, mtcars= p2, width= 200, height= 200)
-  )
-  expect_s3_class(p[[2]]$children[[5]]$children[[2]]$children[[1]][[1]], 'echarty')
-})
-
-test_that("ec.clmn morph", {
-  setd <- function(type) {
-    mtcars |> group_by(cyl) |> ec.init(ctype= type) |> ec.upd({
-    title <- list(subtext='mouseover points to morph')
-    xAxis <- list(scale=TRUE)
-    series <- lapply(series, function(ss) {
-      ss$groupId <- ss$name
-      ss$universalTransition <- list(enabled=TRUE)
-      ss })
-    })
-  }
-  oscatter <- setd('scatter')
-  obar <- setd('bar')
-  p <- ec.util(cmd='morph', oscatter, obar)
-  expect_equal(p$x$opts$morph[[2]]$series[[3]]$type, 'bar')
-  expect_true (p$x$opts$morph[[2]]$series[[3]]$universalTransition$enabled)
 })
 
