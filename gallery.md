@@ -202,34 +202,34 @@ ec.upd({
 <details><summary>🔻 View code</summary>
 
 ```r
- library(echarty); library(dplyr)
- df <- mtcars
- df$mpg_z <- round((df$mpg -mean(df$mpg))/sd(df$mpg), 1)   # deviation
- df |> tibble::rownames_to_column("model") |>
- 	relocate(model,mpg_z) |> arrange(desc(mpg_z)) |> group_by(cyl) |> filter(row_number()<4) |>
- 	ec.init(ctype='bar', title= list(text='lollypop chart')
-		,grid= list(containLabel=TRUE)
-		,xAxis= list(axisLabel= list(rotate= 66), scale=TRUE,
-						axisTick= list(alignWithLabel= TRUE))
-		,yAxis= list(name='mpg_z', nameLocation='center', nameRotate=90, nameGap=20)
- 	) |> 
- 	ec.upd({
- 		scat <- list()
- 		series <- lapply(series, function(bar) { 
- 			ss <- bar		# set matching scatter serie
- 			ss <- within(ss, {
- 				type <- 'scatter'
- 				encode <- list(x='model', y='mpg_z')
- 				label <- list(show=TRUE, formatter= '{@mpg_z}')
- 				symbolSize <- 25
- 				itemStyle <- list(opacity= 1, borderWidth=2, borderColor= 'cornsilk')
- 			})
- 			scat <<- append(scat, list(ss))
- 			bar$barWidth <- 3
- 			bar$barGap <- '-100%'    # center it
- 			bar })
- 		series <- append(series, scat)
- 	}) |> ec.theme('dark-mushroom')
+library(echarty); library(dplyr)
+df <- mtcars
+df$mpg_z <- round((df$mpg -mean(df$mpg))/sd(df$mpg), 1)   # deviation
+df |> tibble::rownames_to_column("model") |>
+relocate(model,mpg_z) |> arrange(desc(mpg_z)) |> group_by(cyl) |> filter(row_number()<4) |>
+ec.init(ctype='bar', title= list(text='lollypop chart')
+    ,grid= list(containLabel=TRUE)
+    ,xAxis= list(axisLabel= list(rotate= 66), scale=TRUE,
+    			axisTick= list(alignWithLabel= TRUE))
+    ,yAxis= list(name='mpg_z', nameLocation='center', nameRotate=90, nameGap=20)
+) |> 
+ec.upd({
+	scat <- list()
+	series <- lapply(series, function(bar) { 
+		ss <- bar		# set matching scatter serie
+		ss <- within(ss, {
+			type <- 'scatter'
+			encode <- list(x='model', y='mpg_z')
+			label <- list(show=TRUE, formatter= '{@mpg_z}')
+			symbolSize <- 25
+			itemStyle <- list(opacity= 1, borderWidth=2, borderColor= 'cornsilk')
+		})
+		scat <<- append(scat, list(ss))
+		bar$barWidth <- 3
+		bar$barGap <- '-100%'    # center it
+		bar })
+	series <- append(series, scat)
+}) |> ec.theme('dark-mushroom')
 
 ```
 </details>
@@ -538,14 +538,39 @@ data |> ec.init(preset= FALSE,
 <a id='boxplot'></a>
 
 ### Simple or grouped boxplots
-boxplot calculations in R or ECharts
+varied methods of boxplot computation and display
 <img src='img/cb-9.png' alt='boxplot' />
 <details><summary>🔻 View code</summary>
 
 ```r
 library(echarty); library(dplyr)
 
-# 1) boxplot calculation in R ---------------------
+# simple boxplots through ec.data ---------------------
+ds <- iris |> dplyr::relocate(Species) |>
+	ec.data(format= 'boxplot', jitter= 0.1, layout= 'v', symbolSize= 6 
+)
+ec.init(
+  dataset= ds$dataset, series= ds$series,xAxis= ds$xAxis, yAxis= ds$yAxis,
+  legend= list(show= T), tooltip= list(show= T)
+) |>
+ec.upd({   # update boxplot serie
+  series[[1]] <- c(series[[1]], 
+	  list(color= 'LightGrey', itemStyle= list(color='DimGray', borderWidth=2)))
+}) |> 
+ec.theme('dark-mushroom')
+
+# grouped boxplots through ec.data ---------------------
+# remotes::install_github("helgasoft/echarty")   # needs new v.1.5.1+
+# below - mutate to create less Y-axis items with more, sufficient data.
+
+ds <- airquality |> mutate(Day=round(Day/10)) |> relocate(Day,Wind,Month) |> group_by(Month) |> 
+	ec.data(format='boxplot', jitter=0.1, layout= 'h')
+ec.init(
+	dataset= ds$dataset, series= ds$series,xAxis= ds$xAxis, yAxis= ds$yAxis,
+	legend= list(show= TRUE), tooltip= list(show=TRUE)
+)
+
+# boxplot calculation in R ---------------------
 ec.init(series= list(
 	list(type='boxplot', name='mpg', data=list(boxplot.stats(mtcars$mpg)$stats)), 
 	list(type='boxplot', name='hp',  data=list(boxplot.stats(mtcars$hp)$stats)), 
@@ -555,7 +580,7 @@ ec.init(series= list(
 	legend= list(show=TRUE)
 )
 
-# 2) boxplot calculation in ECharts ---------------------
+# boxplot calculation in ECharts, with outliers ---------------------
 df <- mtcars[,c(1,3,4)] |> mutate(mpg= mpg*10)
 ec.init(
 	dataset= list(
@@ -568,17 +593,6 @@ ec.init(
 	),
 	yAxis= list(type= 'category', boundaryGap=TRUE),
 	legend= list(show=TRUE)
-)
-
-# 3) grouped boxplots with ec.data ---------------------
-# remotes::install_github("helgasoft/echarty")   # needs new v.1.5.1+
-# below: we mutate to create less Y-axis items with more, sufficient data.
-
-ds <- airquality |> mutate(Day=round(Day/10)) |> relocate(Day,Wind,Month) |> group_by(Month) |> 
-	ec.data(format='boxplot', jitter=0.1, layout= 'h')
-ec.init(
-	dataset= ds$dataset, series= ds$series,xAxis= ds$xAxis, yAxis= ds$yAxis,
-	legend= list(show= TRUE), tooltip= list(show=TRUE)
 )
 
 
