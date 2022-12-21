@@ -1730,6 +1730,7 @@ ec.data <- function(df, format='dataset', header=FALSE, jitter=0, layout='h', ..
       group_vars(df)[1] else NULL
     yaxis <- list(list(type= 'category', name=colas))   # default horiz layout
     xaxis <- list(list(scale= TRUE, name=colb5))
+    ttcol <- 1
     # category axis labels
     if (is.factor(df[[colas]]))
         axe <- paste(levels(df[[colas]]), collapse="','")
@@ -1777,7 +1778,7 @@ ec.data <- function(df, format='dataset', header=FALSE, jitter=0, layout='h', ..
 	 if (is.factor(df[[colas]]) || is.character(df[[colas]]))
 	    yaxis[[1]] <- c(yaxis[[1]], list(axisLabel= list(formatter= htmlwidgets::JS(axe))))
  	 if (layout=='v') {
-      swap <- xaxis; xaxis <- yaxis; yaxis <- swap
+      swap <- xaxis; xaxis <- yaxis; yaxis <- swap; ttcol <- 2
  	 }
     
     if (jitter>0) {
@@ -1792,7 +1793,7 @@ ec.data <- function(df, format='dataset', header=FALSE, jitter=0, layout='h', ..
   			args <- list(...)
   			if (!'name' %in% names(args)) out$name <- nn
   			if (!'large' %in% names(args)) out$large <- TRUE
-  			if (!'tooltip' %in% names(args)) out$tooltip <- list(formatter= ec.clmn(1))
+  			if (!'tooltip' %in% names(args)) out$tooltip <- list(formatter= ec.clmn(ttcol))
   			if (!'z' %in% names(args)) out$z <- 10
   			if (layout=='v') {
   				out$data <- do.call(Map, c(f = c, list(xx, yy)))

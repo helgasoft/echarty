@@ -97,7 +97,7 @@ test_that("ec.data boxlpot", {
   expect_equal(p$xAxis[[1]]$name, 'mpg')
   
   ds <- mtcars |> dplyr::select(cyl, drat) |>
-	ec.data(format='boxplot', jitter=0.1, #layout= 'h',
+	ec.data(format='boxplot', jitter=0.1, layout= 'v',
   			symbolSize=5, itemStyle=list(opacity=0.9), 
   			emphasis= list(itemStyle= list(color= 'chartreuse', borderWidth=4, opacity=1))
 	)
@@ -112,8 +112,9 @@ test_that("ec.data boxlpot", {
   }) |> ec.theme('dark-mushroom')
   expect_equal(p$x$opts$series[[1]]$name, 'boxplot')
   expect_equal(p$x$opts$series[[4]]$name, '8')
-  expect_equal(p$x$opts$xAxis[[1]]$name, 'drat')
-  expect_equal(p$x$opts$yAxis[[2]]$max, 3)
+  expect_match(p$x$opts$series[[4]]$tooltip$formatter, "x[1] ); return c;}", fixed=TRUE)
+  expect_equal(p$x$opts$yAxis[[1]]$name, 'drat')
+  expect_equal(p$x$opts$xAxis[[2]]$max, 3)
 
   # with grouping
   ds <- airquality |> dplyr::mutate(Day=round(Day/10)) |> 
