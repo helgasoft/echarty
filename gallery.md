@@ -163,23 +163,24 @@ myfun_binom <- function(n,all){
 }
 
 #  --- 1. data prep
-stackbar <- data.table(
+sbar <- data.table(
   Year= c(2010, 2010, 2010, 2011, 2011, 2011, 2012, 2012, 2012, 2013,2013, 2013),
   Category= c("A", "B", "C", "A", "B", "C", "A", "B", "C", "A", "B", "C"),
   n= c(10, 20, 30, 30, 20, 10, 11,12,13, 15, 15, 15)
 )
 # calculate percent and 95% CI
-stackbar <- stackbar[,`:=`(all=sum(n)), by= c("Year")][,c("perc","low","up") := myfun_binom(n,all)]
-stackbar <- stackbar |> mutate(xlbl= paste0(Year,' (N=',all,')')) |>
+sbar <- sbar[,`:=`(all=sum(n)), by= c("Year")][,c("perc","low","up") := myfun_binom(n,all)]
+sbar <- sbar |> mutate(xlbl= paste0(Year,' (N=',all,')')) |>
   relocate(xlbl,perc) |>  # move in front as default X & Y columns
   group_by(Category)      # both ec.init & ecr.ebars need grouped data
 groupColors <- c("#387e78","#eeb422","#d9534f")
 
 #  --- 2. plot
-stackbar |> ec.init(ctype='bar', load='custom') |>
+sbar |> ec.init(ctype='bar', load='custom', tooltip= list(show=TRUE)) |>
     # only columns x,y,low,high,category for ebars
-ecr.ebars(stackbar[, c('xlbl','perc','low','up','Category')],
-          hwidth= 4) |>   # (optional) half-width of err.bar in pixels
+ecr.ebars(sbar[, c('xlbl','perc','low','up','Category')],
+	tooltip= list(formatter=ec.clmn('high <b>%@</b><br>low <b>%@</b>', 4,3)),
+	hwidth= 4) |>   # (optional) half-width of err.bar in pixels
 #  --- 3. color customization
 ec.theme('dark-mushroom') |>
 ec.upd({
@@ -192,6 +193,44 @@ ec.upd({
     s
   })
 })
+```
+</details>
+<br />
+
+### Lollypop chart
+<img src='img/lollypop.png' alt='lollypop' />
+<details><summary>🔻 View code</summary>
+
+```r
+ library(echarty); library(dplyr)
+ df <- mtcars
+ df$mpg_z <- round((df$mpg -mean(df$mpg))/sd(df$mpg), 1)   # deviation
+ df |> tibble::rownames_to_column("model") |>
+ 	relocate(model,mpg_z) |> arrange(desc(mpg_z)) |> group_by(cyl) |> filter(row_number()<4) |>
+ 	ec.init(ctype='bar', title= list(text='lollypop chart')
+		,grid= list(containLabel=TRUE)
+		,xAxis= list(axisLabel= list(rotate= 66), scale=TRUE,
+						axisTick= list(alignWithLabel= TRUE))
+		,yAxis= list(name='mpg_z', nameLocation='center', nameRotate=90, nameGap=20)
+ 	) |> 
+ 	ec.upd({
+ 		scat <- list()
+ 		series <- lapply(series, function(bar) { 
+ 			ss <- bar		# set matching scatter serie
+ 			ss <- within(ss, {
+ 				type <- 'scatter'
+ 				encode <- list(x='model', y='mpg_z')
+ 				label <- list(show=TRUE, formatter= '{@mpg_z}')
+ 				symbolSize <- 25
+ 				itemStyle <- list(opacity= 1, borderWidth=2, borderColor= 'cornsilk')
+ 			})
+ 			scat <<- append(scat, list(ss))
+ 			bar$barWidth <- 3
+ 			bar$barGap <- '-100%'    # center it
+ 			bar })
+ 		series <- append(series, scat)
+ 	}) |> ec.theme('dark-mushroom')
+
 ```
 </details>
 <br />
@@ -507,7 +546,6 @@ boxplot calculations in R or ECharts
 library(echarty); library(dplyr)
 
 # 1) boxplot calculation in R ---------------------
-
 ec.init(series= list(
 	list(type='boxplot', name='mpg', data=list(boxplot.stats(mtcars$mpg)$stats)), 
 	list(type='boxplot', name='hp',  data=list(boxplot.stats(mtcars$hp)$stats)), 
@@ -526,25 +564,23 @@ ec.init(
 		list(fromDatasetIndex=1, fromTransformResult= 1)),
 	series= list(
 		list(name= 'boxplot', type= 'boxplot', datasetIndex= 1),
-		list(name= 'outlier', type= 'scatter', encode= list(x=1, y=0), datasetIndex= 2)
+		list(name= 'outlier', type= 'scatter', encode= list(x=2, y=1), datasetIndex= 2)
 	),
 	yAxis= list(type= 'category', boundaryGap=TRUE),
 	legend= list(show=TRUE)
 )
 
-# 3) grouped boxplots ---------------------
-# remotes::install_github("helgasoft/echarty")   # needs new v.1.4.4+
+# 3) grouped boxplots with ec.data ---------------------
+# remotes::install_github("helgasoft/echarty")   # needs new v.1.5.1+
+# below: we mutate to create less Y-axis items with more, sufficient data.
 
-ds <- mtcars |> relocate(am,mpg) |> group_by(cyl) |> ec.data(format='boxplot')
-# Below we mutate to create less Y-axis items with more, sufficient data. Otherwise ECharts exits with errors.
-# ds <- airquality |> mutate(Day=round(Day/10)) |> relocate(Day,Wind) |> ec.data(format='boxplot')
+ds <- airquality |> mutate(Day=round(Day/10)) |> relocate(Day,Wind,Month) |> group_by(Month) |> 
+	ec.data(format='boxplot', jitter=0.1, layout= 'h')
 ec.init(
-	dataset= ds$dataset, 
-	series= ds$series, 
-	yAxis= list(type= 'category'), 
-	xAxis= list(show= TRUE),
-	legend= list(show= TRUE)
+	dataset= ds$dataset, series= ds$series,xAxis= ds$xAxis, yAxis= ds$yAxis,
+	legend= list(show= TRUE), tooltip= list(show=TRUE)
 )
+
 
 ```
 </details>
@@ -557,12 +593,9 @@ a horizontal chart with zoom and tooltips
 
 Inspired by [Julia Silge's article](https://juliasilge.com/blog/giant-pumpkins/).
 ECharts advantage over ggplot is interactivity - zoom brush and tooltips.  
-A vertical layout version is also [published](https://gist.github.com/helgasoft/bd057b64e9b89cc133de2a4c407b53ad).
+<!-- A vertical layout version is also [published](https://gist.github.com/helgasoft/bd057b64e9b89cc133de2a4c407b53ad).-->
 
 ```r
-#' inspired by https://juliasilge.com/blog/giant-pumpkins/
-#' advantage over ggplot is interactivity - zoom brush and tooltips
-#' TODO:  totals by country, add year in tooltip
 library(tidyverse)
 pumpkins_raw <- readr::read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2021/2021-10-19/pumpkins.csv")
 pumpkins <-
@@ -573,18 +606,14 @@ pumpkins <-
 	select(country, weight_lbs, year) |> 
 	mutate(country= fct_lump(country, n= 10))
 
-# set columns to: country, 2013, 2014, etc. (country by years)
-tmp <- tidyr::pivot_wider(pumpkins, names_from= year, values_from= weight_lbs )
-
-# merge each country's data into one list
-rng <- lapply(tmp$country, function(x) unname(unlist(tmp[tmp$country==x, c(-1)])) )
-asc.ord <- order(unlist(lapply(rng, median)))   # sort order
-rnames <- as.character(tmp$country[asc.ord])
-tt <- rng[asc.ord]
-yax <- paste(rnames, collapse="','")   # for Y axis labels
-yax <- paste0("function (params) { return ['",yax,"'][params.value]; }")
-
 library(echarty)
+ds <- ec.data(pumpkins, format='boxplot', jitter=0.1, 
+	symbolSize= 4, itemStyle=list(opacity= 0.5), name= 'data',
+	tooltip= list(
+		backgroundColor= 'rgba(30,30,30,0.5)', 
+		textStyle= list(color='#eee'),
+		formatter=ec.clmn('%@ lbs', 1, scale=0))
+)
 ec.init(
 	title= list(
 		list(text="Giant Pumpkins", subtext='inspiration',
@@ -592,42 +621,17 @@ ec.init(
 		,list(text=paste(nrow(pumpkins),'records for 2013-2021'), 
 			textStyle= list(fontSize= 12), left= '50%', top= '90%' )
 	),
-	xAxis= list(name='weigth (lbs)', min=0, 
-				nameLocation='center', nameGap=20),
-	yAxis= list(
-		list(type= 'category'), 
-		list(type= 'value', max=11, show=FALSE)),
-	dataset= list(
-		list(source= tt),
-		list(transform= list(type='boxplot',
-			config=list(itemNameFormatter= htmlwidgets::JS(yax))
-		)),
-		list(fromDatasetIndex= 1, fromTransformResult= 1)
-	),
-	series= list(      # use ECharts built-in boxplot
-		list(name= 'boxplot', type= 'boxplot', datasetIndex= 1
-			,color='LightGrey', itemStyle= list(color='DimGray'), 
-			boxWidth=c(13,50) )
-	),
 	legend= list(show=TRUE),
-	tooltip= list(show=TRUE, 
-			backgroundColor= 'rgba(30,30,30,0.5)', 
-			textStyle= list(color='#eee'),
-			formatter=ec.clmn('%@ lbs', 1, scale=0)),
-	toolbox= list(left='right', feature=list(dataZoom=list(show=TRUE)))
-) |> ec.upd({
-	i <- 0.5
-	sers <- lapply(dataset[[1]]$source, function(xx) {
-		yy <- jitter(rep(i, length(xx)), amount=0.2); i <<- i + 1
-		xx <- jitter(xx, amount=0.2)
-		data <- list()
-		for(j in 1:length(xx)) data <- append(data, list(list(xx[j], yy[j])))
-		list(name='data', type= 'scatter', data=data, yAxisIndex=1, 
-			symbolSize=3, itemStyle=list(opacity=0.3), color=heat.colors(11)[i-0.5],
-			emphasis= list(itemStyle= list(color= 'chartreuse', borderWidth=4, opacity=1)) )
-	})
-	series <- append(series, sers)
-}) |> ec.theme('dark-mushroom')
+	tooltip= list(show=TRUE),
+	toolbox= list(left='right', feature=list(dataZoom=list(show= TRUE))),
+    dataset= ds$dataset, series= ds$series, xAxis= ds$xAxis, yAxis= ds$yAxis
+) |> ec.theme('dark-mushroom') |>
+ec.upd({
+	xAxis[[1]] <- c(xAxis[[1]], list(min=0, nameLocation='center', nameGap=20))
+	yAxis[[1]] <- c(yAxis[[1]], list(nameGap= 3))
+	series[[1]] <- c(series[[1]], list(color= 'LightGrey', itemStyle= list(color='DimGray')))
+	for(i in 2:length(series)) series[[i]]$color <- heat.colors(11)[i-1]
+})
 
 ```
 
@@ -679,13 +683,13 @@ do.histogram(rnorm(44)) |> ec.init(ctype='bar') |> ec.theme('dark')
 # with normal distribution line added
 hh <- do.histogram(rnorm(44))
 nrm <- dnorm(hh$x, mean=mean(hh$x), sd=sd(hh$x))  # normal distribution
-hh |> ec.init(ctype= 'bar',
-		xAxis= list(list(show= TRUE), list(data= c(1:length(nrm)))),
-		yAxis= list(list(show= TRUE), list(show= TRUE))
+ec.init(hh, ctype= 'bar',
+	xAxis= list(list(show= TRUE), list(data= c(1:length(nrm)))),
+	yAxis= list(list(show= TRUE), list(show= TRUE))
 ) |> ec.upd({
-	series <- append(series, 
-		list(list(type= 'line', data= nrm, 
-				xAxisIndex= 1, yAxisIndex= 1, color= 'yellow')))
+	series <- append(series, list(
+		list(type= 'line', data= nrm, 
+			xAxisIndex= 1, yAxisIndex= 1, color= 'yellow')))
 }) |> ec.theme('dark')
 
 # same with timeline
@@ -1165,7 +1169,7 @@ Multiple charts in their own tabs<br />
 
 ```r
 # remotes::install_github('helgasoft/echarty')
-library(echarty)     # v.1.4.7+ 
+library(echarty)     # v.1.5.1+ 
 library(dplyr) 
 htmltools::browsable(
   lapply(iris |> group_by(Species) |> group_split(), function(x) { 
@@ -1178,9 +1182,8 @@ htmltools::browsable(
 
 p1 <- cars |> ec.init(grid= list(top= 20))
 p2 <- mtcars |> ec.init()
-htmltools::browsable(
-  ec.util(cmd= 'tabset', cars= p1, mtcars= p2, width= 200, height= 200)
-)
+ec.util(cmd= 'tabset', cars= p1, mtcars= p2)
+
 ```
 </details>
 <br />
