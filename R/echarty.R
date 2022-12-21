@@ -54,7 +54,7 @@ NULL
 #'
 #' @details  Command _ec.init_ creates a widget with \link[htmlwidgets]{createWidget}, then adds some ECharts features to it.\cr
 #'  When _ec.init_ is chained after a data.frame, a \href{https://echarts.apache.org/en/option.html#dataset}{dataset} is preset. \cr
-#'  When data.frame is grouped and _ctype_ is not null, more datasets with legend and series are also preset. Grouped series are preset as type _scatter_. \cr
+#'  When data.frame is grouped and _ctype_ is not null, more datasets with legend and series are also preset. \cr
 #'  Plugin '3D' presets will not work for 'scatterGL'. Instead, use _preset=FALSE_ and set explicitly _xAxis,yAxis_. \cr
 #'  Plugins 'leaflet' and 'world' preset zoom=6 and center to the mean of all coordinates. \cr
 #'  Users can delete or overwrite any presets as needed. \cr
@@ -83,16 +83,15 @@ NULL
 #'  # basic scatter chart from a data.frame, using presets
 #' cars |> ec.init()
 #'  
-#'  # a timeline with two series and autoPlay
-#' p <- iris |> dplyr::group_by(Species) |> ec.init(
-#'   legend= list(show=TRUE),
-#'   tl.series= list(
-#'     encode=list(x=NULL, y=c('Sepal.Width', 'Petal.Length')),
-#'     markPoint = list(data=list(list(type='max'), list(type='min')))
+#'  # grouping, tooltips, formatting
+#' iris |> dplyr::group_by(Species) |> 
+#' ec.init(        # init with presets
+#'   tooltip= list(show= TRUE),
+#'   series.param= list( 
+#'     symbolSize= ec.clmn(4, scale=7),
+#'     tooltip= list(formatter= ec.clmn('Petal.Width: %@', 4))
 #'   )
-#' ) # |> ec.upd({...})
-#' p$x$opts$timeline <- append(p$x$opts$timeline, list(autoPlay=TRUE))
-#' p
+#' )
 #' 
 #' @importFrom htmlwidgets createWidget sizingPolicy getDependency JS shinyWidgetOutput shinyRenderWidget
 #' @import dplyr
@@ -342,8 +341,8 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter',
     tmp <- opa$visualMap
     if (!is.null(tmp)) {
       doVmap <- function(x) {
-        if (!is.null(x$dimension))
-          x$dimension <- x$dimension -1
+        if (!is.null(x$dimension)) x$dimension <- x$dimension -1
+        if (!is.null(x$seriesIndex)) x$seriesIndex <- x$seriesIndex -1
         x
       }
       if (all(sapply(tmp, is.list)))
@@ -591,7 +590,8 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter',
         s
       })
       
-      tmp <- list(title= list(text= as.character(unique(gp[gvar]))),  
+      #tmp <- list(title= list(text= as.character(unique(gp[gvar]))),  
+      tmp <- list(title= list(text= unique(unlist(lapply(gp[gvar], as.character)))),
                   series= unname(series))
       tmp <- renumber(tmp)
     })
@@ -685,27 +685,32 @@ ec.upd <- function(wt, ...) {
 #' @param lower The column name(string) of band's lower boundary.
 #' @param upper The column name(string) of band's upper boundary.
 #' @param type Type of rendering  \cr \itemize{
-#'  \item 'stack' - by two \href{https://echarts.apache.org/en/option.html#series-line.stack}{stacked lines} 
-#'  \item 'polygon' - by drawing a polygon as polyline (default). Warning: cannot be zoomed!
+#'  \item 'stack' - by two \href{https://echarts.apache.org/en/option.html#series-line.stack}{stacked lines} (default)
+#'  \item 'polygon' - by drawing a polygon as polyline from upper/lower points. 
 #' }
 #' @param ... More parameters for \href{https://echarts.apache.org/en/option.html#series-line.type}{serie}
 #' @return A list of one serie when type='polygon', or two series when type='stack'
 #'
-#' @details When type='polygon', coordinates of the two boundaries are chained into a polygon and displayed as one.\cr
-#'      When type='stack', two _stacked_ lines are drawn, one with customizable areaStyle. The upper boundary coordinates should be values added on top of the lower boundary coordinates.\cr
-#'      Type 'stack' needs _xAxis_ to be of type 'category'.
+#' @details \cr \itemize{
+#'  \item type='stack': two _stacked_ lines are drawn, one with customizable areaStyle. The upper boundary coordinates should be values added on top of the lower boundary coordinates.\cr
+#'      _xAxis_ is required to be of type 'category'.\cr
+#'  \item type='polygon': coordinates of the two boundaries are chained into a polygon and displayed as one. Tooltips do not show upper band values. Some minor problems with zooming.
+#' }
 #' 
 #' @examples 
-#' if (interactive()) {
-#' df <- airquality |> mutate(lwr= round(Temp-Wind*2),
-#'                            upr= round(Temp+Wind*2),
-#'                            x= paste0(Month,'-',Day) ) |>
-#'                     relocate(x,Temp)
-#' bands <- ecr.band(df, 'lwr', 'upr', type='stack',
-#'                   name='stak', areaStyle= list(opacity=0.4))
-#' df |> ec.init(load='custom',
+#' # if (interactive()) {
+#' df <- airquality |> dplyr::mutate(
+#'     lwr= round(Temp-Wind*2),
+#'     upr= round(Temp+Wind*2),
+#'       x= paste0(Month,'-',Day) ) |>
+#'   dplyr::relocate(x, Temp)
+#' bands <- ecr.band(df, 'lwr', 'upr',
+#'                   name= 'stak', areaStyle= list(opacity=0.4))
+#' df |> ec.init( load= 'custom',
 #'    legend= list(show= TRUE),
-#'    xAxis= list(type='category', boundaryGap=FALSE),
+#'    dataZoom= list(type= 'slider'),
+#'    toolbox= list(feature= list(dataZoom= list(show= TRUE))),
+#'    xAxis= list(type= 'category', boundaryGap= FALSE),
 #'    series= list(
 #'      list(type='line', color='blue', name='line'),
 #'      bands[[1]], bands[[2]]
@@ -714,13 +719,13 @@ ec.upd <- function(wt, ...) {
 #'      formatter= ec.clmn(
 #'         'high <b>%@</b><br>line <b>%@</b><br>low <b>%@</b>',
 #'                   3.3, 1.2, 2.2)
-#'      )  # 3.3= upper_serie_index +.+ index_of_column_inside
+#'    )  # 3.3= upper_serie_index +.+ index_of_column_inside
 #' )
-#' }
+#' # }
 #' 
 #' @importFrom stats na.omit
 #' @export
-ecr.band <- function(df=NULL, lower=NULL, upper=NULL, type='polygon', ...) {
+ecr.band <- function(df=NULL, lower=NULL, upper=NULL, type='stack', ...) {
   if (is.null(df) || is.null(lower) || is.null(upper)) 
     stop("ecr.band: df, lower and upper are all required", call. = FALSE)
   if (!"data.frame" %in% class(df)) 
@@ -1559,54 +1564,40 @@ body { padding: 10px; }
 #' Make data lists from a data.frame
 #' 
 #' @param df Chart data in data.frame format, required. \cr
-#' Except when format is 'dendrogram', then df is a list, result of \link[stats]{hclust} function.
+#'     Except when format is 'dendrogram', then df is a list, result of \link[stats]{hclust} function.\cr
 #' @param format A key on how to format the output list \cr \itemize{
 #'  \item 'dataset' = list to be used in \href{https://echarts.apache.org/en/option.html#dataset.source}{dataset} (default), or in \href{https://echarts.apache.org/en/option.html#series-scatter.data}{series.data} (without header). \cr
 #'  \item 'values' = list for customized \href{https://echarts.apache.org/en/option.html#series-scatter.data}{series.data} \cr
 #'  \item 'names' = named lists useful for named data like \href{https://echarts.apache.org/en/option.html#series-sankey.links}{sankey links}.
-#'  \item 'boxplot' = build dataset and source lists, see Details
 #'  \item 'dendrogram' = build series data for Hierarchical Clustering dendrogram
 #'  \item 'treePC' = build series data for sunburst,tree,treemap from parent/children data.frame
 #'  \item 'treeTK' = build series data for sunburst,tree,treemap from data.frame like Titanic. Supports column \emph{itemStyle}.
-#'  }
-#' @param header Boolean to include the column names in dataset, default TRUE.\cr
-#'    Set this to FALSE when used in \href{https://echarts.apache.org/en/option.html#series-scatter.data}{series.data}.
-#' @return A list for \emph{dataset.source}, \emph{series.data} or a list of named lists.\cr
+#'  \item 'boxplot' = build dataset and source lists, see Details
+#' }
+#' @param header for dataset, to include the column names or not, default TRUE. Set it to FALSE for \href{https://echarts.apache.org/en/option.html#series-scatter.data}{series.data}.\cr
+#' @param layout for boxplot, 'h' for horizontal(default) or 'v' for vertical layout\cr
+#' @param jitter for boxplot, value for \link[base]{jitter} of numerical values in second column, default 0 (no scatter). Adds scatter series on top of boxplot.\cr
+#' @param ... for boxplot scatter, additional parameters for the _scatter_ (jitter) serie\cr
+#' @return A list for _dataset.source_, _series.data_ or other lists:\cr
 #'   For boxplot - a named list, see Details and Examples \cr
 #'   For dendrogram & treePC - a tree structure, see format in \href{https://echarts.apache.org/en/option.html#series-tree.data}{tree data}
-#' @details `format='boxplot'` requires the first two \emph{df} columns as: \itemize{
-#'   \item column for the non-computational categorical axis
-#'   \item column with (numeric) data to compute the five boxplot values
-#'  }
-#'  Grouped \emph{df} is supported. Groups will show in the legend, if enabled.\cr
-#'  Returns a `list(dataset, series, axlbl)` to set the chart. \emph{axlbl} is the category axis label list when data grouped.\cr
-#'  Make sure there is enough data for computation, like >4 values per boxplot. Otherwise ECharts may exit with a \emph{Object.transform} error.
+#' @details `format='boxplot'` requires the first two _df_ columns as: \cr
+#'   * column for the non-computational categorical axis\cr
+#'   * column with (numeric) data to compute the five boxplot values\cr
+#'   
+#'  Additional grouping is supported on a column after the second. Groups will show in the legend, if enabled.\cr
+#'  Returns a `list(dataset, series, xAxis, yAxis)` to set params in [ec.init].\cr
+#'  Make sure there is enough data for computation, 4+ values per boxplot.
 #' @seealso some live \href{https://rpubs.com/echarty/data-models}{code samples}
 #' 
 #' @examples
 #' library(dplyr)
-#' variety <- rep(LETTERS[1:7], each=40)
-#' treatment <- rep(c("high","low"), each=20)
-#' note <- seq(1:280)+sample(1:150, 280, replace=TRUE)
-#' ds <- data.frame(variety, note, treatment) |> group_by(treatment) |> 
-#'         ec.data(format='boxplot')
+#' ds <- iris |> relocate(Species) |>
+#' 	 ec.data(format= 'boxplot', jitter= 0.1, layout= 'v')
 #' ec.init(
-#'   dataset= ds$dataset,
-#'   series=  ds$series,
-#'   yAxis= list(type= 'category',  # categorical yAxis = horizontal boxplots
-#'               axisLabel= ds$axlbl),
-#'   xAxis= list(show= TRUE),       # categorical xAxis = vertical boxplots
-#'   legend= list(show= TRUE)
+#'   dataset= ds$dataset, series= ds$series,xAxis= ds$xAxis, yAxis= ds$yAxis,
+#'   legend= list(show= TRUE), tooltip= list(show= TRUE)
 #' )
-#' 
-#' ds <- airquality |> mutate(Day=round(Day/10)) |> relocate(Day,Wind) |> ec.data(format='boxplot')
-#' ec.init(
-#'   dataset= ds$dataset, 
-#'   series= ds$series, 
-#'   yAxis= list(type= 'category'), 
-#'   xAxis= list(show= TRUE),
-#'   legend= list(show= TRUE) #, tooltip= list(show=TRUE)
-#' )  
 #' 
 #' hc <- hclust(dist(USArrests), "complete")
 #' ec.init(preset= FALSE,
@@ -1624,7 +1615,7 @@ body { padding: 10px; }
 #' @importFrom grDevices boxplot.stats
 #' @importFrom data.tree Aggregate
 #' @export
-ec.data <- function(df, format='dataset', header=FALSE) {
+ec.data <- function(df, format='dataset', header=FALSE, jitter=0, layout='h', ...) {
   if (missing(df))
     stop('ec.data: expecting parameter df', call. = FALSE)
   if (format=='dendrogram') { 
@@ -1734,42 +1725,92 @@ ec.data <- function(df, format='dataset', header=FALSE) {
     if (length(cn)<2) stop('boxplot: df should have 2+ columns', call.=FALSE)
     colas <- cn[1]; colb5 <- cn[2]
     if (!is.numeric(df[[colb5]])) stop('boxplot: 2nd column must be numeric', call.=FALSE)
-    # will group by colas column anyway
-    colgrp <- if (is.grouped_df(df) && group_vars(df)[1]!=colas) 
+    # is there another group beside colas ?
+    grpcol <- if (is.grouped_df(df) && group_vars(df)[1]!=colas) 
       group_vars(df)[1] else NULL
+    yaxis <- list(list(type= 'category', name=colas))   # default horiz layout
+    xaxis <- list(list(scale= TRUE, name=colb5))
+    # category axis labels
+    if (is.factor(df[[colas]]))
+        axe <- paste(levels(df[[colas]]), collapse="','")
+    else
+		    axe <- paste(sort(as.character(unique(df[[colas]]))), collapse="','")
+    tbox <- ec.clmn('%@ %@ %@ %@ %@',2,3,4,5,6)
     
-    if (!is.null(colgrp)) {   # grouped
-      series <- list()
+    if (!is.null(grpcol)) {   # grouped
       tmp <- df |> group_split()
       dataset <- lapply(tmp, function(dd) { 
-        dv <- dd |> dplyr::group_by(.data[[colas]]) |> group_split()
-        src <- lapply(dv, function(vv) vv[[colb5]])
+        dv <- dd |> arrange(.data[[colas]]) |> dplyr::group_by(.data[[colas]]) |> group_split()
+        src <- lapply(dv, function(vv) {
+      	 if (nrow(vv)<5) stop(paste0('ec.data: not sufficient data in group "',grpcol,'"'), call.= FALSE)
+      	 vv[[colb5]]
+        })
         list(source= if (length(src[[1]])==1) list(src) else src)
       })
+      series <- list()
       for (i in 1:length(tmp)) { 
-        dataset <- append(dataset, list(list(
-          fromDatasetIndex= i-1, transform= list(type= 'boxplot')))) 
+        dataset <- append(dataset, 
+        	 list(list( fromDatasetIndex= i-1, transform= list(type= 'boxplot')))) 
         series <- append(series, list(list(
-          name= tmp[[i]][[colgrp]][1], 
-          type= 'boxplot', datasetIndex= i+length(tmp)-1)) )
+          name= tmp[[i]][[grpcol]][1], tooltip= list(formatter=tbox), 
+          type= 'boxplot', datasetIndex= i+length(tmp)-1) ))
       }
-      # default is horizontal, for vertical switch xAxis/yAxis category type
-      
-    } else {  # non-grouped
-      bdf <- ungroup(df) |> dplyr::group_by(across({colas})) |> group_split()
+	    axe <- paste0("function(v) { return ['",axe,"'][v]; }")
+    } 
+    else {  # non-grouped
+    	
+      bdf <- ungroup(df) |> arrange(.data[[colas]]) |> dplyr::group_by(across({colas})) |> group_split()
       dats <- lapply(bdf, function(x) {
         c(unique(pull(x,colas)), round(boxplot.stats( pull(x,colb5) )$stats, 4))
       })
       dataset <- list(source= ec.data( as.data.frame(do.call(rbind, dats)), header=TRUE ))
-      series <- list(list(type='boxplot', encode= list(y='V1', x=c('V2','V3','V4','V5','V6'))))
-    }
-    # category axis labels
-    axe <- paste(sort(unique(df[[colas]])), collapse="','")
-    axe <- paste0("function(v) { return ['",axe,"'][v]; }")			
+      series <- list(list(type='boxplot', 
+                    name= 'boxplot', tooltip= list(formatter=tbox),
+      						  encode= list(y='V1', x=c('V2','V3','V4','V5','V6'))))
+      # default is horizontal, for vertical swap xAxis/yAxis category type
+      if (layout=='v') {
+        e <- series[[1]]$encode
+        series[[1]]$encode <- list(x=e$y, y=e$x) # swap x & y
+      }
+		  axe <- paste0("function(v) { return ['",axe,"'][v-1]; }")
+   }
+	 if (is.factor(df[[colas]]) || is.character(df[[colas]]))
+	    yaxis[[1]] <- c(yaxis[[1]], list(axisLabel= list(formatter= htmlwidgets::JS(axe))))
+ 	 if (layout=='v') {
+      swap <- xaxis; xaxis <- yaxis; yaxis <- swap
+ 	 }
     
-    return(list(dataset= dataset, series= series, 
-                axlbl= list(formatter= htmlwidgets::JS(axe))
-    ))
+    if (jitter>0) {
+  		tmp <- df |> arrange(.data[[colas]]) |> dplyr::group_by(.data[[colas]]) |> group_split()
+  		mcyl <- lapply(tmp, function(x) unname(unlist(x[[colb5]])))
+  		names(mcyl) <- sort(unique(df[[colas]]))
+  		i <- 0.5
+  		serj <- lapply(names(mcyl), function(nn) {  
+  			yy <- unname(unlist(mcyl[nn]))
+  			xx <- jitter(rep(i, length(yy)), amount= jitter)
+  			out <- list(type= 'scatter', ...)
+  			args <- list(...)
+  			if (!'name' %in% names(args)) out$name <- nn
+  			if (!'large' %in% names(args)) out$large <- TRUE
+  			if (!'tooltip' %in% names(args)) out$tooltip <- list(formatter= ec.clmn(1))
+  			if (!'z' %in% names(args)) out$z <- 10
+  			if (layout=='v') {
+  				out$data <- do.call(Map, c(f = c, list(xx, yy)))
+  				out$xAxisIndex <- 2
+  				if (i==0.5) xaxis <<- append(xaxis, 
+  									list(list(max= length(mcyl), show=F)))
+  			} else {
+  				out$data <- do.call(Map, c(f = c, list(yy, xx)))
+  				out$yAxisIndex <- 2
+  				if (i==0.5) yaxis <<- append(yaxis, 
+  									list(list(max= length(mcyl), show=F)))
+  			}
+  			i <<- i + 1
+  			out
+  		})
+  		series <- append(series, serj)
+    }
+    return(list(dataset= dataset, series= series, xAxis=xaxis, yAxis=yaxis))
   } 
   else {
     datset <- tmp

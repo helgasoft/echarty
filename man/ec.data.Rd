@@ -4,27 +4,32 @@
 \alias{ec.data}
 \title{Data helper}
 \usage{
-ec.data(df, format = "dataset", header = FALSE)
+ec.data(df, format = "dataset", header = FALSE, jitter = 0, layout = "h", ...)
 }
 \arguments{
 \item{df}{Chart data in data.frame format, required. \cr
-Except when format is 'dendrogram', then df is a list, result of \link[stats]{hclust} function.}
+Except when format is 'dendrogram', then df is a list, result of \link[stats]{hclust} function.\cr}
 
 \item{format}{A key on how to format the output list \cr \itemize{
 \item 'dataset' = list to be used in \href{https://echarts.apache.org/en/option.html#dataset.source}{dataset} (default), or in \href{https://echarts.apache.org/en/option.html#series-scatter.data}{series.data} (without header). \cr
 \item 'values' = list for customized \href{https://echarts.apache.org/en/option.html#series-scatter.data}{series.data} \cr
 \item 'names' = named lists useful for named data like \href{https://echarts.apache.org/en/option.html#series-sankey.links}{sankey links}.
-\item 'boxplot' = build dataset and source lists, see Details
 \item 'dendrogram' = build series data for Hierarchical Clustering dendrogram
 \item 'treePC' = build series data for sunburst,tree,treemap from parent/children data.frame
 \item 'treeTK' = build series data for sunburst,tree,treemap from data.frame like Titanic. Supports column \emph{itemStyle}.
+\item 'boxplot' = build dataset and source lists, see Details
 }}
 
-\item{header}{Boolean to include the column names in dataset, default TRUE.\cr
-Set this to FALSE when used in \href{https://echarts.apache.org/en/option.html#series-scatter.data}{series.data}.}
+\item{header}{for dataset, to include the column names or not, default TRUE. Set it to FALSE for \href{https://echarts.apache.org/en/option.html#series-scatter.data}{series.data}.\cr}
+
+\item{jitter}{for boxplot, value for \link[base]{jitter} of numerical values in second column, default 0 (no scatter). Adds scatter series on top of boxplot.\cr}
+
+\item{layout}{for boxplot, 'h' for horizontal(default) or 'v' for vertical layout\cr}
+
+\item{...}{for boxplot scatter, additional parameters for the \emph{scatter} (jitter) serie\cr}
 }
 \value{
-A list for \emph{dataset.source}, \emph{series.data} or a list of named lists.\cr
+A list for \emph{dataset.source}, \emph{series.data} or other lists:\cr
 For boxplot - a named list, see Details and Examples \cr
 For dendrogram & treePC - a tree structure, see format in \href{https://echarts.apache.org/en/option.html#series-tree.data}{tree data}
 }
@@ -32,38 +37,24 @@ For dendrogram & treePC - a tree structure, see format in \href{https://echarts.
 Make data lists from a data.frame
 }
 \details{
-\code{format='boxplot'} requires the first two \emph{df} columns as: \itemize{
-\item column for the non-computational categorical axis
-\item column with (numeric) data to compute the five boxplot values
+\code{format='boxplot'} requires the first two \emph{df} columns as: \cr
+\itemize{
+\item column for the non-computational categorical axis\cr
+\item column with (numeric) data to compute the five boxplot values\cr
 }
-Grouped \emph{df} is supported. Groups will show in the legend, if enabled.\cr
-Returns a \code{list(dataset, series, axlbl)} to set the chart. \emph{axlbl} is the category axis label list when data grouped.\cr
-Make sure there is enough data for computation, like >4 values per boxplot. Otherwise ECharts may exit with a \emph{Object.transform} error.
+
+Additional grouping is supported on a column after the second. Groups will show in the legend, if enabled.\cr
+Returns a \code{list(dataset, series, xAxis, yAxis)} to set params in \link{ec.init}.\cr
+Make sure there is enough data for computation, 4+ values per boxplot.
 }
 \examples{
 library(dplyr)
-variety <- rep(LETTERS[1:7], each=40)
-treatment <- rep(c("high","low"), each=20)
-note <- seq(1:280)+sample(1:150, 280, replace=TRUE)
-ds <- data.frame(variety, note, treatment) |> group_by(treatment) |> 
-        ec.data(format='boxplot')
+ds <- iris |> relocate(Species) |>
+	 ec.data(format= 'boxplot', jitter= 0.1, layout= 'v')
 ec.init(
-  dataset= ds$dataset,
-  series=  ds$series,
-  yAxis= list(type= 'category',  # categorical yAxis = horizontal boxplots
-              axisLabel= ds$axlbl),
-  xAxis= list(show= TRUE),       # categorical xAxis = vertical boxplots
-  legend= list(show= TRUE)
+  dataset= ds$dataset, series= ds$series,xAxis= ds$xAxis, yAxis= ds$yAxis,
+  legend= list(show= TRUE), tooltip= list(show= TRUE)
 )
-
-ds <- airquality |> mutate(Day=round(Day/10)) |> relocate(Day,Wind) |> ec.data(format='boxplot')
-ec.init(
-  dataset= ds$dataset, 
-  series= ds$series, 
-  yAxis= list(type= 'category'), 
-  xAxis= list(show= TRUE),
-  legend= list(show= TRUE) #, tooltip= list(show=TRUE)
-)  
 
 hc <- hclust(dist(USArrests), "complete")
 ec.init(preset= FALSE,

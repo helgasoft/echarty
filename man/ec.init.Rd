@@ -70,7 +70,7 @@ Required to build a chart. In most cases this will be the only command necessary
 \details{
 Command \emph{ec.init} creates a widget with \link[htmlwidgets]{createWidget}, then adds some ECharts features to it.\cr
 When \emph{ec.init} is chained after a data.frame, a \href{https://echarts.apache.org/en/option.html#dataset}{dataset} is preset. \cr
-When data.frame is grouped and \emph{ctype} is not null, more datasets with legend and series are also preset. Grouped series are preset as type \emph{scatter}. \cr
+When data.frame is grouped and \emph{ctype} is not null, more datasets with legend and series are also preset. \cr
 Plugin '3D' presets will not work for 'scatterGL'. Instead, use \emph{preset=FALSE} and set explicitly \emph{xAxis,yAxis}. \cr
 Plugins 'leaflet' and 'world' preset zoom=6 and center to the mean of all coordinates. \cr
 Users can delete or overwrite any presets as needed. \cr
@@ -98,15 +98,14 @@ Enabling \emph{crosstalk} will generate an additional dataset called \emph{Xtalk
  # basic scatter chart from a data.frame, using presets
 cars |> ec.init()
  
- # a timeline with two series and autoPlay
-p <- iris |> dplyr::group_by(Species) |> ec.init(
-  legend= list(show=TRUE),
-  tl.series= list(
-    encode=list(x=NULL, y=c('Sepal.Width', 'Petal.Length')),
-    markPoint = list(data=list(list(type='max'), list(type='min')))
+ # grouping, tooltips, formatting
+iris |> dplyr::group_by(Species) |> 
+ec.init(        # init with presets
+  tooltip= list(show= TRUE),
+  series.param= list( 
+    symbolSize= ec.clmn(4, scale=7),
+    tooltip= list(formatter= ec.clmn('Petal.Width: \%@', 4))
   )
-) # |> ec.upd({...})
-p$x$opts$timeline <- append(p$x$opts$timeline, list(autoPlay=TRUE))
-p
+)
 
 }

@@ -1,7 +1,11 @@
 # history of package _echarty_
 
-## v.1.5.0.01 in development
+## v.1.5.1 latest 
 
+- upgrade ECharts to v.5.4.1
+- remove redundant dependencies, only 3 used now
+- _ecr.band_ default type changed from 'polygon' to 'stack'
+- _ec.data_ type 'boxplot' remodeled and jitter-scatter added
 - new _series.param_ in _ec.init_ for additional parameters for preset series
 - make _ec.util_ tabset responsive by resizing tabs onclick
 - fix _visualMap_ piecewise dimension R-counts

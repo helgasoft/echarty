@@ -78,7 +78,7 @@ test_that("leaflet with ec.clmn", {
 #  else expect_equal(1,1)
 })
 
-test_that("ec.data format dendrogram", {
+test_that("ec.data dendrogram", {
   hc <- hclust(dist(USArrests), "average")
   p <- ec.init(preset= FALSE,
                series= list(list(
@@ -90,14 +90,48 @@ test_that("ec.data format dendrogram", {
   expect_equal(length(p$x$opts$series[[1]]$data[[1]]$children[[1]]$children), 2)
 })
 
-test_that("ec.data format boxlpot", {
-  p <- mtcars |> dplyr::relocate(am,mpg) |> ec.data(format='boxplot')
+test_that("ec.data boxlpot", {
+  p <- mtcars |> dplyr::relocate(cyl,mpg) |> ec.data(format='boxplot')
   expect_equal(p$series[[1]]$type, 'boxplot')
   expect_equal(p$dataset$source[[1]], c("V1","V2","V3","V4","V5","V6"))
-  expect_type(p$axlbl, 'list')  # was 'JS_EVAL'
+  expect_equal(p$xAxis[[1]]$name, 'mpg')
+  
+  ds <- mtcars |> dplyr::select(cyl, drat) |>
+	ec.data(format='boxplot', jitter=0.1, #layout= 'h',
+  			symbolSize=5, itemStyle=list(opacity=0.9), 
+  			emphasis= list(itemStyle= list(color= 'chartreuse', borderWidth=4, opacity=1))
+	)
+  p <- ec.init(
+    #colors= heat.colors(length(mcyl)),
+    legend= list(show= TRUE), tooltip= list(show=TRUE),
+    dataset= ds$dataset, series= ds$series, xAxis= ds$xAxis, yAxis= ds$yAxis
+  ) |> 
+  ec.upd({ 
+  	series[[1]] <- c(series[[1]], 
+  	                 list(color= 'LightGrey', itemStyle= list(color='DimGray')))
+  }) |> ec.theme('dark-mushroom')
+  expect_equal(p$x$opts$series[[1]]$name, 'boxplot')
+  expect_equal(p$x$opts$series[[4]]$name, '8')
+  expect_equal(p$x$opts$xAxis[[1]]$name, 'drat')
+  expect_equal(p$x$opts$yAxis[[2]]$max, 3)
+
+  # with grouping
+  ds <- airquality |> dplyr::mutate(Day=round(Day/10)) |> 
+    dplyr::relocate(Day,Wind,Month) |> dplyr::group_by(Month) |> 
+  	ec.data(format='boxplot', jitter=0.1)
+  p <- ec.init(
+    dataset= ds$dataset, series= ds$series,xAxis= ds$xAxis, yAxis= ds$yAxis,
+    legend= list(show= TRUE), tooltip= list(show=TRUE)
+  )
+  expect_equal(length(p$x$opts$dataset), 10)
+  expect_equal(p$x$opts$series[[5]]$type, 'boxplot')
+  expect_equal(p$x$opts$series[[5]]$datasetIndex, 9)
+  expect_equal(p$x$opts$series[[6]]$type, 'scatter')
+  expect_equal(p$x$opts$series[[6]]$name, '0')
+  expect_equal(p$x$opts$yAxis[[1]]$type, 'category')
 })
 
-test_that("ec.data for treePC", {
+test_that("ec.data treePC", {
   df <- as.data.frame(Titanic) |> group_by(Survived,Class) |> 
     summarise(value=sum(Freq), .groups='drop') |>
     mutate(parents= as.character(Survived), 
@@ -120,7 +154,7 @@ test_that("ec.data for treePC", {
   expect_equal(length(p$x$opts$series[[1]]$data[[1]]$children), 4)
 })
 
-test_that("ec.data format treeTK", {
+test_that("ec.data treeTK", {
 
   df <- as.data.frame(Titanic) |> 
     group_by(Survived,Age,Sex,Class) |> 

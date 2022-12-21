@@ -61,13 +61,16 @@ test_that("custom renderers - ecr.band", {
   p$x$opts$legend <- list(ii='')
   p$x$opts$series <- c(
     ecr.band(df |> filter(Tree==4) |> inner_join(df |> filter(Tree=='1'), by='age'),
-             'circumference.y', 'circumference.x', name='poly1'),
+             'circumference.y', 
+             'circumference.x', 
+             type= 'polygon', name= 'poly1'),
     list(list(type='line', datasetIndex=3, color='orange', name='line1'))
   )
   p$x$opts$tooltip <- list(trigger='axis')
   
   expect_equal(length(p$x$opts$series), 2)
   expect_equal(p$x$opts$series[[1]]$type, 'custom')
+  expect_equal(p$x$opts$series[[1]]$name, 'poly1')
   expect_true( p$x$opts$series[[1]]$renderItem == "riPolygon")
   expect_s3_class(p$x$opts$series[[1]]$renderItem, 'JS_EVAL')
 })

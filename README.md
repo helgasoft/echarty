@@ -29,8 +29,8 @@ support](https://helgasoft.github.io/echarty/xtalk.html).
 
 ## Installation
 
-<!-- [![Github version](https://img.shields.io/github/v/release/helgasoft/echarty?label=github)](https://github.com/helgasoft/echarty/releases)   -->
-Latest development build <strong>1.5.0<sup>.01</sup></strong>
+<!-- [![Github version](https://img.shields.io/github/v/release/helgasoft/echarty?label=github)](https://github.com/helgasoft/echarty/releases)  <sup>.02</sup>  -->
+Latest development build <strong>1.5.1</strong>
 
 ``` r
 if (!requireNamespace('remotes')) install.packages('remotes')
@@ -48,23 +48,29 @@ install.packages('echarty')
 ## Examples
 
 ``` r
-library(echarty)
+library(echarty); library(dplyr)
 
-#  2D chart
+#  scatter chart (default)
 cars |> ec.init()
 
-#  3D chart with GL plugin
-iris |> group_by(Species) |> ec.init(load='3D')
+#  parallel chart
+ToothGrowth |> ec.init(ctype= 'parallel')
 
-# grouping, tooltips, formatting
+#  3D chart with GL plugin
+iris |> group_by(Species) |> ec.init(load= '3D')
+
+#  timeline of two series with grouping, formatting, autoPlay
 iris |> group_by(Species) |> 
-ec.init(tooltip= list(show= TRUE)) |>   # init with presets
-ec.upd({                                # update some
-  series <- lapply(series, function(s) { 
-    s$symbolSize <- ec.clmn(4, scale=7)
-    s$tooltip <- list(formatter= ec.clmn('Petal.Width: %@', 4))
-    s })
+ec.init(
+  tl.series= list(
+    symbolSize= ec.clmn(4, scale=4),
+    encode= list(x= NULL, y= c('Sepal.Width', 'Petal.Length')),
+    markPoint= list(data= list(list(type='max'), list(type='min')))
+  )
+) |> ec.upd({
+  timeline <- c(timeline, list(autoPlay= TRUE))
 })
+
 ```
 
 ## Get started
