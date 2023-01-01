@@ -637,7 +637,7 @@ ec.init(
 	),
 	legend= list(show=TRUE),
 	tooltip= list(show=TRUE),
-	toolbox= list(left='right', feature=list(dataZoom=list(show= TRUE))),
+	toolbox= list(left='right', feature=list(dataZoom=list(show= TRUE, filterMode='none'))),
     dataset= ds$dataset, series= ds$series, xAxis= ds$xAxis, yAxis= ds$yAxis
 ) |> ec.theme('dark-mushroom') |>
 ec.upd({
