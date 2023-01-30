@@ -51,13 +51,16 @@ HTMLWidgets.widget({
       }
       
       chart = echarts.init(document.getElementById(el.id), x.theme, 
-      	{ renderer: x.renderer, width: width, height: height, 
-      	  locale: x.locale, useDirtyRect: x.useDirtyRect }
+      	{ renderer: x.renderer, locale: x.locale, useDirtyRect: x.useDirtyRect }
       );
+      /*
+      window.addEventListener('resize', function(event) {
+       	chart.resize();
+      }, true); */
       
-      if (window.onresize==undefined)
+      if (window.onresize==undefined)   // single chart only, TODO: many
         window.onresize = function() {
-        	chart.resize();
+        	//chart.resize();
         	ecfun.fs = ecfun.IsFullScreen();  // handle ESC key
         }
 
@@ -372,8 +375,24 @@ ecfun = {
       elem = loty; 
     });
     return vv;
-  }
+  },
 
+  labelsInside: function(params) {
+    // labelLayout= htmlwidgets::JS("(params) => ecfun.labelsInside(params)")) 
+    // https://github.com/apache/echarts/issues/17828   thanks to @plainheart
+    if (hwid=='') return null;   // single chart only (TODO: many)
+    dchart = get_e_charts(hwid);
+    const chartWidth = dchart.getWidth();
+    const labelRect = params.labelRect;
+    const labelX = labelRect.x;
+    const labelWidth = labelRect.width;
+    const overflow = labelWidth + labelX > chartWidth;
+    return {
+      x: overflow ? chartWidth - labelWidth : labelX,
+      verticalAlign: overflow ? 'top' : 'middle',
+      dy: overflow ? -3 : 0
+    }
+  }
 };
 
 if (HTMLWidgets.shinyMode) {

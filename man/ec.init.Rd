@@ -74,6 +74,7 @@ When data.frame is grouped and \emph{ctype} is not null, more datasets with lege
 Plugin '3D' presets will not work for 'scatterGL'. Instead, use \emph{preset=FALSE} and set explicitly \emph{xAxis,yAxis}. \cr
 Plugins 'leaflet' and 'world' preset zoom=6 and center to the mean of all coordinates. \cr
 Users can delete or overwrite any presets as needed. \cr
+Numerical indexes for series,visualMap,etc. are R-counted (1,2...)\cr
 
 Built-in plugins: \cr
 \itemize{

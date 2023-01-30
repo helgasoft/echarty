@@ -1,6 +1,13 @@
 # history of package _echarty_
 
-## v.1.5.1 latest 
+## v.1.5.2 latest, in development
+
+- _ec.init_ to set default xAxis/yAxis names from _df_
+- _ec.clmn_ accepts JS functions in parameter _col_
+- _ec.util_ new command 'button' to run JS function
+- fix _tabset_ bug introduced in v.1.5.1
+
+## v.1.5.1 
 
 - upgrade ECharts to v.5.4.1
 - remove redundant dependencies, only 3 used now

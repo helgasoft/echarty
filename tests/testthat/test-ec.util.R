@@ -1,3 +1,4 @@
+#' tests for ec.util()
 
 test_that("serie from ec.util with cartesian3D", {
   # usage for LIDAR data
@@ -13,7 +14,7 @@ test_that("serie from ec.util with cartesian3D", {
   expect_type( p$x$opts$xAxis3D[[1]],'list')
 })
 
-test_that("shapefiles with multi-polygons", {
+test_that("shapefiles with multi-POLYGONS", {
   library(sf)
   fname <- system.file("shape/nc.shp", package="sf")
   nc <- as.data.frame(st_read(fname))
@@ -95,7 +96,7 @@ test_that("tabset with pipe", {
     }) |> ec.util(cmd='tabset')
   )
   expect_equal(r[[2]]$children[[7]]$children[[2]]$children[[1]][[1]]$width, "100%")
-  expect_equal(r[[2]]$children[[6]]$children[[1]], "chart3")
+  expect_equal(as.character(r[[2]]$children[[6]]$children[[1]]), "virginica")
 })
 
 test_that("morph", {
@@ -170,9 +171,7 @@ test_that("fullscreen", {
     cars |> ec.init(toolbox= tbox),
     mtcars |> ec.init(toolbox= tbox) |>
       htmlwidgets::prependContent(
-        htmltools::tags$style(
-          ".echarty:fullscreen { background-color: beige; }"
-        )
+        htmltools::tags$style(".echarty:fullscreen { background-color: beige; }")
       )
   )
   expect_match(p$children[[1]]$children[[1]][[1]]$children[[1]]$x$opts$toolbox$feature$myecfs$onclick, 'ecfun.fscreen(tmp.hwid)', fixed=TRUE)
@@ -195,20 +194,41 @@ test_that("level", {
   expect_equal(p, c(1,2,1))
 })
 
-test_that("labelsInside and doType", {
+test_that("labelsInside and doType(xAxis)", {
   p <- ec.init(
     xAxis= list(data= list(1,2,3,4,5,6,7)),
     series= list(
       list(name= 'long text, 20 chars', type='line',
            data= c(110, 132, 101, 134, 90, 230, 210),
            endLabel= list( show=TRUE, formatter='{a}'),
-           labelLayout= ec.util(cmd='labelsInside')),
+           labelLayout= htmlwidgets::JS("(params) => ecfun.labelsInside(params)")),
       list(name='longer text, this is 35 characters',type='line', 
            data= c(210, 232, 201,234, 290, 240, 230),
            endLabel=list(show=TRUE, formatter='{a}'),
-           labelLayout= ec.util(cmd='labelsInside'))
+           labelLayout= htmlwidgets::JS("(params) => ecfun.labelsInside(params)"))
+          # labelLayout= ec.util(cmd='labelsInside'))
     )
-  )
-  expect_match(p$x$opts$series[[2]]$labelLayout, "get_e_charts(cid)", fixed=TRUE)
+  )	
+  #expect_match(p$x$opts$series[[2]]$labelLayout, "get_e_charts(cid)", fixed=TRUE)
+  expect_s3_class(p$x$opts$series[[2]]$labelLayout, 'JS_EVAL')
   expect_equal(p$x$opts$xAxis$type, 'category')
+})
+
+test_that("lottie", {
+  json <- 'https://helgasoft.github.io/echarty/js/spooky-ghost.json'
+  cont <- jsonlite::fromJSON(json, simplifyDataFrame=FALSE)
+  
+  p <- iris |> dplyr::group_by(Species) |> 
+    ec.init(
+      load= 'lottie',
+      graphic= list(elements= list(
+        list( type= "group", 
+    		# lottie params: info + optional scale and loop 
+    		info= cont, scale= 250, # loop= FALSE,
+            left= 'center', top= 'middle' # ,rotation= -20
+        )
+      ))
+    )
+  expect_match(p$x$opts$graphic$elements[[1]]$info$nm, "Spookey", fixed=TRUE)
+  expect_equal(length(p$x$opts$graphic$elements[[1]]$info$layers), 13)
 })

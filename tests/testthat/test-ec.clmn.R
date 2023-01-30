@@ -1,10 +1,10 @@
 
 
-test_that("ec.clmn works with sprintf, column indexes and names", {
-  
+test_that("ec.clmn with sprintf, column indexes and names", {
+  library(dplyr)
   tmp <- data.frame(Species= as.vector(unique(iris$Species)), 
                     color= c("#387e78","#eeb422","#d9534f"))
-  p <- iris |> dplyr::inner_join(tmp) |> ec.init(
+  p <- iris |> inner_join(tmp) |> ec.init(
     tooltip= list(formatter= ec.clmn('Petal Length %@, Width %@', 3,4)),
     series.param= list(itemStyle= list(color= ec.clmn(6)),
                        symbolSize= ec.clmn(3, scale=3))
@@ -18,7 +18,7 @@ test_that("ec.clmn works with sprintf, column indexes and names", {
   
   
   tmp <- data.frame(name=names(islands), value=islands) |> 
-    dplyr::filter(value>100) |> dplyr::arrange(value)
+    filter(value>100) |> arrange(value)
   p <- ec.init(
     tooltip = list(formatter= ec.clmn("%@ <br> %L@", 'name','value')),
     series = list(list(type= 'pie', data= ec.data(tmp, 'names'), 
@@ -31,8 +31,8 @@ test_that("ec.clmn works with sprintf, column indexes and names", {
   expect_is(p$x$opts$series[[1]]$label$formatter, 'JS_EVAL')
   
   
-  tmp <- quakes |> dplyr::relocate('long') |>     # set order to lon,lat
-    dplyr::mutate(size= exp(mag)/20) |> head(100)  # add accented size
+  tmp <- quakes |> relocate('long') |>     # set order to lon,lat
+    mutate(size= exp(mag)/20) |> head(100)  # add accented size
   p <- tmp |> ec.init(load='leaflet',
     tooltip= list(formatter=ec.clmn('magnitude %@', 'mag')) # 'mag' or 4
   ) |> ec.upd({ 

@@ -16,7 +16,8 @@ And improve readability by chaining commands after ec.init
 }
 \details{
 ec.upd makes changes to chart elements already set by ec.init.\cr
-It should be always piped after ec.init.
+It should be always piped after ec.init.\cr
+Numerical indexes for series,visualMap,etc. are JS-counted (0,1...)\cr
 Replaces syntax\cr
 \verb{   }p <- ec.init(...)\cr
 \verb{   }p$x$opts$series <- ...\cr
@@ -26,8 +27,9 @@ with\cr
 }
 \examples{
 Orange |> dplyr::group_by(Tree) |> ec.init() |>
-ec.upd({ 
-  series <- lapply(series, function(x) {
-    x$symbolSize= 10; x$encode= list(x='age', y='circumference'); x } )
+ec.upd({ series <- lapply(series, function(x) {
+    x$symbolSize= 15;
+    x$markPoint= list(data= list(list(type='max')))
+    x })
 })
 }
