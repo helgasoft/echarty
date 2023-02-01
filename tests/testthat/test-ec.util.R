@@ -232,3 +232,11 @@ test_that("lottie", {
   expect_match(p$x$opts$graphic$elements[[1]]$info$nm, "Spookey", fixed=TRUE)
   expect_equal(length(p$x$opts$graphic$elements[[1]]$info$layers), 13)
 })
+
+test_that("button", {
+  p <- ec.util(cmd='button', text='btn', js="(a) => return a.txt;")
+  expect_equal(p$style$fill, 'lightgray')
+  expect_equal(p$textContent$style$text, 'btn')
+  expect_s3_class(p$onclick, 'JS_EVAL')
+})
+

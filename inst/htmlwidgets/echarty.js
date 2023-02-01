@@ -183,9 +183,9 @@ HTMLWidgets.widget({
           console.log('no series found preset for crosstalk')
       	console.log(' echarty crosstalk on');
         chart.sext = tmp;
-      	chart.akeys = chart.filk = x.settings.crosstalk_key.map(x=>Number(x));
+        // chart.akeys = chart.filk = x.settings.crosstalk_key.map(x=>Number(x));
+      	chart.akeys = chart.filk = x.settings.crosstalk_key;  // save all keys
         chart.sele = [];
-      	// chart.isMap = opts.geo != undefined;
       	
       	var sel_handle = new crosstalk.SelectionHandle();
       	sel_handle.setGroup(x.settings.crosstalk_group);
@@ -209,7 +209,7 @@ HTMLWidgets.widget({
         		if (keys.selected.length>0)
         		    items = keys.selected[0].dataIndex;
         		if (keys.isFromClick) {
-        		  //if (items.length==0) items = this.akeys; // send all keys: bad 4 map
+        		  //if (items.length==0) items = this.akeys; // send all keys: bad for map
         	    tmp = items.map(i=> chart.filk[i])
         		  //console.log('s=',items,' > ',tmp);
         		  sel_handle.set(tmp.map(String));
@@ -220,13 +220,13 @@ HTMLWidgets.widget({
     	  sel_handle.on("change", function(e) {  // external keys to our select
         	if (e.sender == sel_handle) return;
           if (e.oldValue && e.oldValue.length>0) {   // clear previous
-      	    tmp = e.oldValue.map(x=>Number(x))  //.map(v => v-1);
-      	    tmp = tmp.map(r=> chart.filk.indexOf(r))
+      	    tmp = e.oldValue;  //.map(x=>Number(x));
+      	    tmp = tmp.map(r=> chart.filk.indexOf(r));
             chart.dispatchAction({type: 'downplay', 
                   seriesIndex: chart.sext, dataIndex: tmp });
           }
-          if (e.value.length>0) {
-    	      tmp = e.value.map(x=>Number(x))
+          if (e.value.length > 0) {
+    	      tmp = e.value;  //.map(x=>Number(x))
       	    tmp = tmp.map(r=> chart.filk.indexOf(r))
     	      chart.dispatchAction({type: 'highlight', 
     	            seriesIndex: chart.sext, dataIndex: tmp });
@@ -236,19 +236,15 @@ HTMLWidgets.widget({
       	ct_filter.on('change', function(e) {    // external keys to filter
       		if (e.sender == ct_filter) return;
       		if (e.value == undefined) e.value = [];  // sent by filter_checkbox ?!
-        //  if (chart.sele.length>0) {    // clear selection(s) before new filter
-        //    chart.dispatchAction({type: 'unselect',   // works for self only
-        //          seriesIndex: chart.sext, dataIndex: chart.sele });
-        //    chart.sele = [];
-      	//  }
           
-          rexp = (e.value.length == chart.akeys.length ||
-                  e.value.length == 0) ? '^' : '^('+ e.value.join('|') +')$';
+          rexp = (e.value.length == chart.akeys.length) //|| e.value.length == 0) 
+                  ? '^' : '^('+ e.value.join('|') +')$';
           opt = chart.getOption();
           dtf = opt.dataset.find(x => x.id === 'Xtalk');
           dtf.transform = {type: 'filter', config:
               {dimension: 'XkeyX', reg: rexp } }
-          chart.filk = e.value.map(x=>Number(x)).sort((a, b) => a - b);
+          // chart.filk = e.value.map(x=>Number(x)).sort((a, b) => a - b);
+          chart.filk = e.value.sort((a, b) => a - b);
           chart.setOption(opt, false);
       	});
   	

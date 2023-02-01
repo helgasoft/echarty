@@ -113,17 +113,29 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter',
   opts$ask <- opts$js <- opts$renderer <- opts$locale <- opts$useDirtyRect <- opts$elementId <- NULL
   noAxis <- c('radar','parallel','map','gauge','pie','funnel','graph', 'sunburst','tree','treemap','sankey')
   
-  doType <- function(how) {
-    .ty <- switch(how,
-    #   'character' = 'category',
-    #   'factor' = 'category',
-    #   'list' = 'category',
-        'Date' = 'time',
-        'numeric' = 'value',
-        'integer' = 'value',
-        'category'
-    )
-    return(.ty)
+  doType <- function(idx, xx) {
+    clss <- unname(sapply(df, class))
+    how <- clss[idx]
+    .ty <- .nm <- NULL
+    if (!is.null(xx) && !is.null(attributes(xx))) {
+      if (is.null(xx$type)) {
+        if (!is.null(xx$data))
+          how <- class(xx$data)
+        .ty <- switch(how,
+          #  'character' = 'category',
+          #  'factor' = 'category',
+          #  'list' = 'category',
+            'Date' = 'time',
+            'numeric' = 'value',
+            'integer' = 'value',
+            'category'
+        )
+      }
+      if (is.null(xx$name)) {
+        .nm <- colnames(df)[idx]
+      }
+    }
+    return(list(t=.ty, n=.nm))
   }
   xyNamesCS <- function(ser) {
     # no coordinateSystem = pie,funnel,gauge,graph, sunburst/tree/treemap/sankey
@@ -174,10 +186,11 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter',
       group <- df$groupName()
       deps <- crosstalk::crosstalkLibs()
       tmp <- df$key()
-      if (suppressWarnings( all(is.na(as.numeric(tmp)))))
-        stop('ec.init crosstalk: df has non-numeric row names', call. = FALSE)
+      # if (suppressWarnings( any(is.na(as.numeric(tmp)))))
+      #   stop('ec.init crosstalk: df has non-numeric row keys', call. = FALSE)
       df <- df$origData()
-      df$XkeyX <- as.numeric(tmp)   # add for Xtalk filtering
+      #df$XkeyX <- as.numeric(tmp)   # add new column for Xtalk filtering
+      df$XkeyX <- tmp   # add new column for Xtalk filtering
     }
   }
   
@@ -195,6 +208,8 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter',
       crosstalk_group = group
     )
   )
+  colX <- 1     # by default 1st column is X, 2nd is Y, 3rd is Z
+  colY <- 2
   
   # ------------- data.frame -------------------
   if (!is.null(df)) {
@@ -235,8 +250,6 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter',
       x$opts$dataset <- list(list(source = ec.data(df, header=TRUE)))
     
     if (preset) {
-      colX <- 1     # by default 1st column is X, 2nd is Y, 3rd is Z
-      colY <- 2
       # grouping by any column, group columns do not become X or Y
       if (!is.null(grnm)) {  # find pos of grp column
         pos <- which(colnames(df)==grnm)
@@ -266,22 +279,27 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter',
           ss
         })
       }
-      
-      # update xAxis/yAxis type depending on column type , TODO: 'log' type
-      # cannot depend on default type of being NEITHER category, NOR value
-      # axis source is data, dataset (or series.data = not applicable under df)
-      clss <- unname(sapply(df, class))
-      xx <- x$opts$xAxis
-      # check if exists, is not list-of-lists and has no type
-      if (!is.null(xx) && !is.null(attributes(xx))) {
-        if (is.null(xx$type)) x$opts$xAxis$type <- doType(clss[colX])
-        if (is.null(xx$name)) x$opts$xAxis$name <- colnames(df)[colX]
+    }  # end preset
+    
+    # visualMap assist (min/max not needed with series[[x]].data)
+    vm <- x$opts$visualMap
+    if (!is.null(vm) && (is.null(vm$min) || is.null(vm$max))) {
+      if (is.null(vm$type) || (vm$type == 'continuous')) {
+        xx <- length(colnames(df))   # last column by default in ECharts
+        if (!is.null(vm$dimension)) xx <- vm$dimension
+        x$opts$visualMap$min <- min(df[,xx])
+        x$opts$visualMap$max <- max(df[,xx])
       }
-      yy <- x$opts$yAxis
-      if (!is.null(yy) && !is.null(attributes(yy))) {
-        if (is.null(yy$type)) x$opts$yAxis$type <- doType(clss[colY])
-        if (is.null(yy$name)) x$opts$yAxis$name <- colnames(df)[colY]
-      }
+    }
+  } 
+
+  if (preset) {    
+      tmp <- doType(colX, x$opts$xAxis)
+      if (!is.null(tmp$t)) x$opts$xAxis$type <- tmp$t
+      if (!is.null(tmp$n)) x$opts$xAxis$name <- tmp$n
+      tmp <- doType(colY, x$opts$yAxis)
+      if (!is.null(tmp$t)) x$opts$yAxis$type <- tmp$t
+      if (!is.null(tmp$n)) x$opts$yAxis$name <- tmp$n
       if (!is.null(x$opts$series) && !is.null(x$opts$series[[1]]$type)) {
         if (x$opts$series[[1]]$type == 'parallel') {
           if (is.null(x$opts$parallelAxis))
@@ -296,25 +314,6 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter',
           })
         }
       }
-    }  # end preset
-    
-    # visualMap assist (min/max not needed with series[[x]].data)
-    vm <- x$opts$visualMap
-    if (!is.null(vm) && (is.null(vm$min) || is.null(vm$max))) {
-      xx <- length(colnames(df))   # last column by default in ECharts
-      if (!is.null(vm$dimension)) xx <- vm$dimension
-      x$opts$visualMap$min <- min(df[,xx])
-      x$opts$visualMap$max <- max(df[,xx])
-    }
-    
-  } 
-  else if (preset) {    # without df
-    xx <- x$opts$xAxis
-    if (!is.null(xx) && !is.null(attributes(xx)) && is.null(xx$type) && !is.null(xx$data))
-      x$opts$xAxis$type <- doType(class(xx$data))
-    yy <- x$opts$yAxis
-    if (!is.null(yy) && !is.null(attributes(yy)) && is.null(yy$type) && !is.null(yy$data))
-      x$opts$yAxis$type <- doType(class(yy$data))
   }
   if (!is.null(x$opts$series.param)) x$opts$series.param <- NULL
     
@@ -1298,7 +1297,7 @@ ec.plugjs <- function(wt=NULL, source=NULL, ask=FALSE) {
   tmp <- opa$visualMap
   if (!is.null(tmp)) {
     doVmap <- function(x) {
-      if (!is.null(x$dimension)) x$dimension <- x$dimension -1
+      if (!is.null(x$dimension) && is.numeric(x$dimension)) x$dimension <- x$dimension -1
       if (!is.null(x$seriesIndex)) x$seriesIndex <- x$seriesIndex -1
       x
     }

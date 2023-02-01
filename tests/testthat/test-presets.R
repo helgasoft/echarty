@@ -131,10 +131,15 @@ lng,lat,name,date,place
   expect_equal(p$x$opts$series[[1]]$encode$tooltip, c(2,3,4))
 })
 
-test_that("presets and series.param", {
+test_that("presets with series.param", {
   p <- df |> ec.init(ctype='line', 
           series.param= list(areaStyle= list(show= T), stack= 'stk'))
   expect_equal(p$x$opts$series[[1]]$stack, 'stk')
+  p <- ec.init(ctype='line', 
+     series.param= list(areaStyle= list(show= T), stack= 'stk', 
+                        data=list(c(0,0), c(2,2)))
+  )
+  expect_equal(p$x$opts$series[[1]]$data[[2]], c(2,2))
 })
 
 test_that("presets for visualMap", {

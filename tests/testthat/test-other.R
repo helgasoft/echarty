@@ -42,7 +42,7 @@ test_that("tl.series type 'map'", {
       value = runif(3, 1, 100)
     )
     p <- cns |> group_by(country) |> ec.init(load='world',
-        tl.series= list(type='map',  encode=list(value='value', name='country')),
+        tl.series= list(type='map', encode=list(value='value', name='country')),
         visualMap= list(calculable=TRUE, max=100)
     )
     expect_equal(p$x$opts$options[[1]]$series[[1]]$data[[1]]$name, "China")
