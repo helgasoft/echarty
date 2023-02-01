@@ -18,7 +18,8 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - {os: macOS-latest,   r: 'release'}
+#         - {os: macOS-latest,   r: 'release'}  # macOS Failed to get R 4.2.2
+          - {os: macOS-latest,   r: '4.1'}
           - {os: windows-latest, r: 'release'}
           - {os: ubuntu-latest,   r: 'devel', http-user-agent: 'release'}
           - {os: ubuntu-latest,   r: 'release'}
