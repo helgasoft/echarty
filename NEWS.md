@@ -1,6 +1,10 @@
 # history of package _echarty_
 
-## v.1.5.2 latest, in development
+## v.1.5.3 latest, in development
+
+- _ec.init_ new parameter _xtKey_ for crosstalk (ID-column name)
+
+## v.1.5.2
 
 - _ec.init_ to set default xAxis/yAxis names from _df_
 - _ec.clmn_ accepts JS functions in parameter _col_

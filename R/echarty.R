@@ -74,8 +74,8 @@ NULL
 #'  
 #'  Crosstalk:\cr
 #'  Parameter _df_ should be of type \link[crosstalk]{SharedData}, see \href{https://helgasoft.github.io/echarty/gallery.html#crosstalk-2d}{more info}.\cr
-#'  It should NOT have string row names. Use _tibble::rownames_ to remove or convert to column.\cr
-#'  Enabling _crosstalk_ will generate an additional dataset called _Xtalk_ and bind the first serie to it if _datasetId_ not set.\cr
+#'  Optional parameter _xtKey_: unique ID column name of data frame _df_. Must be same as _key_ parameter used in _SharedData$new()_. If missing, a new column _XkeyX_ will be appended to df.\cr
+#'  Enabling _crosstalk_ will also generate an additional dataset called _Xtalk_ and bind the **first series** to it.\cr
 #'  
 #' 
 #' @return A widget to plot, or to save and expand with more features.
@@ -109,8 +109,9 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter',
   renderer <- if (is.null(opts$renderer)) 'canvas' else tolower(opts$renderer)
   locale <- if (is.null(opts$locale)) 'EN' else toupper(opts$locale)
   useDirtyRect <- if (is.null(opts$useDirtyRect)) FALSE else opts$useDirtyRect
+  xtKey <- if (is.null(opts$xtKey)) 'XkeyX' else opts$xtKey
   # remove the above arguments since they are not valid ECharts options
-  opts$ask <- opts$js <- opts$renderer <- opts$locale <- opts$useDirtyRect <- opts$elementId <- NULL
+  opts$ask <- opts$js <- opts$renderer <- opts$locale <- opts$useDirtyRect <- opts$elementId <- opts$xtKey <- NULL
   noAxis <- c('radar','parallel','map','gauge','pie','funnel','graph', 'sunburst','tree','treemap','sankey')
   
   doType <- function(idx, xx) {
@@ -186,11 +187,9 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter',
       group <- df$groupName()
       deps <- crosstalk::crosstalkLibs()
       tmp <- df$key()
-      # if (suppressWarnings( any(is.na(as.numeric(tmp)))))
-      #   stop('ec.init crosstalk: df has non-numeric row keys', call. = FALSE)
       df <- df$origData()
-      #df$XkeyX <- as.numeric(tmp)   # add new column for Xtalk filtering
-      df$XkeyX <- tmp   # add new column for Xtalk filtering
+      if (xtKey=='XkeyX')
+	      df$XkeyX <- tmp   # add new column for Xtalk filtering, if needed
     }
   }
   
@@ -367,8 +366,14 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter',
           tiles = list( list(urlTemplate = urltls))
         )
       } 
-      else if (is.null(wt$x$opts$leaflet$tiles))
+      if (!'tiles' %in% names(wt$x$opts$leaflet))
         wt$x$opts$leaflet$tiles <- list( list(urlTemplate = urltls))
+      if (!'zoom' %in% names(wt$x$opts$leaflet))
+        wt$x$opts$leaflet$zoom <- 6
+      if (!'center' %in% names(wt$x$opts$leaflet)) {
+        if (!is.null(df)) 
+          wt$x$opts$leaflet$center= c(mean(unlist(df[,1])), mean(unlist(df[,2])))
+      }
       
       if ('series' %in% names(wt$x$opts)) {
         wt$x$opts$series <- lapply(wt$x$opts$series,
@@ -378,10 +383,10 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter',
             ss })
       }
       
-      if (!is.null(df)) {
-	      wt$x$opts$leaflet$center= c(mean(unlist(df[,1])), mean(unlist(df[,2])))
-	      wt$x$opts$leaflet$zoom <- 6
-      }
+#       if (!is.null(df)) {
+# 	      wt$x$opts$leaflet$center= c(mean(unlist(df[,1])), mean(unlist(df[,2])))
+# 	      wt$x$opts$leaflet$zoom <- 6
+#       }
     }
     
     dep <- htmltools::htmlDependency(
@@ -469,11 +474,11 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter',
     tmp <- list(list( 
       id= 'Xtalk',
       transform = list(type= 'filter', 
-                       config= list(dimension= 'XkeyX', reg='^')
+                       config= list(dimension= xtKey, reg='^')
                        #"^(50|56|62|68|74|152|158)$")
     )))
     wt$x$opts$dataset <- append(wt$x$opts$dataset, tmp)
-    if (!is.null(wt$x$opts$series) && is.null(wt$x$opts$series[[1]]$datasetId))
+    if (!is.null(wt$x$opts$series)) # && is.null(wt$x$opts$series[[1]]$datasetId))
       wt$x$opts$series[[1]]$datasetId= 'Xtalk'
   }
   

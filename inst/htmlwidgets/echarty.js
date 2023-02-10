@@ -241,8 +241,8 @@ HTMLWidgets.widget({
                   ? '^' : '^('+ e.value.join('|') +')$';
           opt = chart.getOption();
           dtf = opt.dataset.find(x => x.id === 'Xtalk');
-          dtf.transform = {type: 'filter', config:
-              {dimension: 'XkeyX', reg: rexp } }
+          //dtf.transform = {type:'filter', config: {dimension: 'XkeyX', reg: rexp } }
+          dtf.transform.config.reg = rexp;
           // chart.filk = e.value.map(x=>Number(x)).sort((a, b) => a - b);
           chart.filk = e.value.sort((a, b) => a - b);
           chart.setOption(opt, false);

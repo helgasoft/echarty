@@ -110,6 +110,13 @@ test_that("presets for crosstalk", {
   expect_equal(p$x$opts$dataset[[2]]$id, 'Xtalk')
   expect_equal(p$x$opts$series[[1]]$datasetId, 'Xtalk')
   expect_equal(p$x$opts$dataset[[1]]$source[[1]][3], 'XkeyX')
+  
+  tmp <- SharedData$new(longley, key=~Year)  # without XkeyX
+  p <- tmp |> ec.init( xtKey='Year',
+    parallelAxis= ec.paxis(longley, cols=c('Year','GNP')),
+    series= list(list(type='parallel'))
+  )
+  expect_equal(p$x$opts$dataset[[2]]$transform$config$dimension, 'Year')
 })
 
 test_that("presets for leaflet", {
