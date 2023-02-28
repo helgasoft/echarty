@@ -18,23 +18,23 @@ Best place to get started with **echarty**
 ## Tutorials
 More detailed step-by-step examples with tips and tricks.
 
-[Use Case 1](uc1.md) - Building an interactive map with regional data
+[Example 1](uc1.md) - Building an interactive map with regional data
 
-[Use Case 2](uc2.md) - Like Clockwork
+[Example 2](uc2.md) - Like Clockwork
 
-[Use Case 3](uc3.md) - Hierarchical data
+[Example 3](uc3.md) - Hierarchical data
 
-[Use Case 4](uc4.md) - Sankey with timeline
+[Example 4](uc4.md) - Sankey with timeline
 
-[Use Case 5](uc5.html) - Bubbles without troubles with JavaScript - <span style="color:magenta">*live demo*</span>
+[Example 5](uc5.html) - Bubbles without troubles with JavaScript - <span style="color:magenta">*live*</span>
 
-[Use Case 6](uc6.md) - Grouped, stacked and timelined
+[Example 6](uc6.md) - Grouped, stacked and timelined
 <br />
 
 <br/> 
 
 ## Crosstalk 
-Social media for charts - [drive the action](https://rpubs.com/echarty/crosstalk)  &nbsp; &nbsp; <span style="color:magenta">*live demo*</span>  
+Social media for charts!  Examples - [basic](https://rpubs.com/echarty/crosstalk) and [advanced](https://rpubs.com/echarty/crossmap) &nbsp; <span style="color:magenta">*live*</span>  
 More in the [gallery](gallery.md#crosstalk-2d).
 <br />
 <br/>
@@ -54,6 +54,10 @@ Or browse some interesting <a href='https://gist.github.com/helgasoft'>code gist
 <br/>
 <br/>
 
+## Extras
+Specific utilities and applications [💲 code for sale](extras.html).
+<br/>
+<br/>
 ## Open Source Acknowledgements
  **echarty** was inspired by and benefits some code from [echarts4R](https://github.com/JohnCoene/echarts4r),  
  hat tip also to the pioneers - [recharts](https://github.com/yihui/recharts) and [ECharts2Shiny](https://github.com/XD-DENG/ECharts2Shiny),  

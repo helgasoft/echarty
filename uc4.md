@@ -26,7 +26,7 @@ ec.init(preset= FALSE,
 Sankey chart data consists of nodes connected by edges having a value. If the data is defined as *data.frame*, we need to transform it into a list with command *ec.data()*. Once in that format, we can access the columns by index - *node* is value[1], ..., *value* is value[4]. The [edges](https://echarts.apache.org/en/option.html#series-sankey.edges) definition requires three parameters - source, target and value.  
 
 Now let's add [timeline](https://echarts.apache.org/en/option.html#timeline). Timeline is just a collection of data states targeted to some chart. An animated display shows the chart transition from one state to the next.  
-We will **not** try to change nodes or edges on each step, just **edge values**. Let's have three states(steps) and build three edge lists with slightly different values - edges1, edges2, edges3. That wraps up the data preparation.  
+We will **not** try to change nodes or edges on each step, just **edge values**. Let's have three states(steps) and build three edge lists with slightly different values. That wraps up the data preparation.  
 
 The GUI part starts with chart initialization with *ec.init()*, then setting chart parameters which here are series, timeline and options.  
 Parameter *timeline* defines labels for the timeline legend.  
@@ -37,41 +37,39 @@ The complete code is below. We've added also series *levels* to fine-tune visual
 <br />
 
 ```r
-sankey <- data.frame(
-  node = c("a","b", "c", "d", "e"),
-  source = c("a", "b", "c", "d", "c"),
-  target = c("b", "c", "d", "e", "e"),
-  value = c(5, 3, 2, 8, 13)
+df <- data.frame(
+    node = c("a","b", "c", "d", "e"),
+    source = c("a", "b", "c", "d", "c"),
+    target = c("b", "c", "d", "e", "e")
 )
+val <- list(c(5, 3, 2, 8, 13), 
+			c(4, 5, 4, 7, 8), 
+			c(2, 7, 6, 5, 4))
+
 # prepare timeline state data
-st <- function() ec.data(sankey, 'values')  # data.frame to list
-nodes <- lapply(st(), function(x) list(name = x$value[1]))
-edo <- function(x) list(source=as.character(x$value[2]),  
-                        target=as.character(x$value[3]), value=x$value[4])
-edges <- list()
-edges[[1]] <- lapply(st(), edo)
-sankey$value <- c(4, 5, 4, 7, 8)
-edges[[2]] <- lapply(st(), edo)
-sankey$value <- c(2, 7, 6, 5, 4)
-edges[[3]] <- lapply(st(), edo)
+st <- \(i) {		# data.frame to list
+	df$value <- unlist(val[i])
+	ec.data(df, 'values')
+}  
+nodes <- lapply(st(1), \(x) list(name = x$value[1]))
+edo <- \(x) list(source= as.character(x$value[2]),
+				 target= as.character(x$value[3]), value= x$value[4])
+options <- lapply(1:3, \(i) {
+	edges <- lapply(st(i), edo)
+	list(title= list(text= paste('step',i)), 
+		 series= list(list(type='sankey', data= nodes, edges= edges)))
+})
+# optional levels to keep colors persistent
+levcol = lapply(1:5, \(i) {
+	list(depth=i, itemStyle=list(color= c('blue','red','green','brown','yellow')[i]))
+})
 
-options <- list()
-for(i in 1:3) {
-  options <- append(options,
-    list(list(title = list(text=paste0('step',i)), 
-              series= list(list(type='sankey', data=nodes, edges=edges[[i]]))))
-  )
-}
-# optional serie levels to keep colors persistent
-i <- -1
-levcol = lapply(list('blue','red','green','brown','yellow'),
-		 function(clr) { i<<-i+1; list(depth=i, itemStyle=list(color=clr)) })
-
-ec.init(preset= FALSE,
-	series = list(list(type='sankey', data = nodes, edges = edges[[1]], levels = levcol	)),
-	timeline = list(axisType='category', data=list('s1','s2','s3')),
+ec.init(
+	series = list(list(type='sankey', data= nodes, edges= edges[[1]], levels= levcol)),
+	timeline = list(axisType='category', data= list('s1','s2','s3')),
 	options = options
 )
+
 ```
 
 <img src="img/uc4-1.png" alt="sankey" />
