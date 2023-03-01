@@ -1211,6 +1211,16 @@ Position pies on a map, supported by ECharts 5.4.0+<br />
 🗺️ The <a href='https://europa.eu/eurobarometer'>Eurobarometer</a> public opinion survey Summer 2022<br>
 180 questions with multiple answers mapped by country<br>
 An interactive R/Shiny/echarty app.  <a href='img/eubaro.mp4'>🔗 Video clip</a> (&lt;1min) &nbsp; 
-<a href='https://helgalabs.shinyapps.io/eurobarometer'><span style="color:magenta"><span style="color:magenta">🔗 Live Demo</span></a>
+<a href='https://helgalabs.shinyapps.io/eurobarometer'><span style="color:magenta"><span style="color:magenta">🔗 Live Demo</span></a><br>
+Part of the <a href='https://helgasoft.github.io/echarty/extras.html' target=_blank>extras collection</a>.
 </details>
 <br />
+
+## Violin chart
+Rich customization including jittered data points and mean<br />
+<img src='img/violin.png' alt='violin' />
+<details><summary>🔻 Details</summary>
+Part of the <a href='https://helgasoft.github.io/echarty/extras.html' target=_blank>extras collection</a>.
+</details>
+<br />
+<a id="bottom">

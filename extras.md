@@ -18,21 +18,20 @@ A knowledgable soft eng could..   singular
 ## Violin chart  
 <br />  
 Violin charts are similar to boxplot, but show the full distribution of the data. Supports single or grouped datasets.   
-<details><summary> Parameters</summary>  
+<details><summary>🔻 Parameters</summary>  
 
 - <strong>df</strong> data.frame with X,Y values (required)
 - <strong>cvalue</strong> name of values column (required)
 - <strong>cname</strong> optional name of names(categories) column
-- <strong>jitter</strong> value (>=0) of parameter _amount_ in jitter, default NULL(no jittered points)
 - <strong>vertical</strong> boolean for vertical(default) or horizontal layout
 - <strong>lineWidth</strong> width of the contour line, default 3
-- <strong>d.*</strong> additional density parameters, like d.adjust,d.cut,etc. d.n default is 64
-- <strong>j.size</strong> jitter points size, default 3
-- <strong>j.color</strong> jitter points color, default 'black'
 - <strong>wcoeff</strong> width coefficient for each violin, default is 0.45
-- <strong>meanColor</strong> color of mean point, default NULL(no mean added)
-- <strong>...</strong> additional attributes for the violin series
-- <strong>returns</strong> a named list of xAxis, yAxis and series. Series are: custom for violin, optional scatter for jitter and mean.
+- <strong>jitter</strong> value (>=0) of parameter _amount_ in jitter, default NULL(no jittered points)
+- <strong>j.*</strong> optional jitter points parameters like j.symbolSize
+- <strong>d.*</strong> optional density parameters like d.adjust,d.cut,etc. d.n default is 64
+- <strong>m.*</strong> optional mean point parameters like m.symbol,m.symbolSize,etc. If missing, mean is not shown.
+- <strong>...</strong> optional attributes for the violin contour series
+- <strong>returns</strong> a named list of xAxis, yAxis and series. Series are: _custom_ for violin, optional _scatter_ for jitter and mean.
 </details>  
 <br />
 
