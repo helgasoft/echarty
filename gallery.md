@@ -1223,4 +1223,17 @@ Rich customization including jittered data points and mean<br />
 Part of the <a href='https://helgasoft.github.io/echarty/extras.html' target=_blank>extras collection</a>.
 </details>
 <br />
+
+## 3D regression planes
+
+Plot fitted regression planes on groups of scatter points
+<video id="3Dreg" preload="auto" 
+   src="img/iris3d.mp4" type="video/mp4" muted="muted" controls>
+   Your browser does not support the video tag.
+</video>
+<details><summary>🔻 Details</summary>
+Part of the <a href='https://helgasoft.github.io/echarty/extras.html' target=_blank>extras collection</a>.
+</details>
+<br />
+
 <a id="bottom">

@@ -3,7 +3,7 @@
 Utilities and small applications built on top of open-source library _echarty_. They accomplish very specific and uncommon tasks.
 Considerable amount of time was spent in design, development and testing of these modules.  
 <br>
-They are fairly priced at **$40 each** and payable through [**Paypal**](https://www.paypal.com/paypalme/helgasoft).  
+They are fairly priced at **$30 each** and payable through [**Paypal**](https://www.paypal.com/paypalme/helgasoft).  
 Please include module description when ordering under "_What is this payment for ?_". Delivery and support by email.  
 Future versions will be sent on demand (not automatically).  
 
@@ -41,17 +41,34 @@ Violin charts are similar to boxplot, but show the full distribution of the data
 </video>
 
 <br />
-  
-## 3D regression surface
+
+## Keyboard Input Support
+<br />
+
+Enter keyboard mode with _click_, exit with _Tab_  
+Keys with functions implemented, more possible:  
+- arrowLeft, arrowRight = highlight data points to left and right
+- pageUp, pageDown = switch series
+- +, - =  zoom chart in and out
+
+<video id="keys" preload="auto" 
+   src="img/keys.mp4" type="video/mp4" muted="muted" controls>
+   Your browser does not support the video tag.
+</video>
+<br />
+<br />
+
+## 3D regression planes
 <br />
 
 The familiar _quakes_ R dataset is visualized in 3D environment (lat,long,depth) over an area map with tectonic plate boundaries. 
-User can show/hide 3D regression surface(s) built from selected 3D points.  
+User can show/hide 3D regression planes(s) built from selected 3D points.  
 <br />
 <video id="3dreg" preload="auto" 
    src="img/quake.mp4" type="video/mp4" muted="muted" controls>
    Your browser does not support the video tag.
 </video>
+See also 3D regression planes in [iris dataset](img/iris3d.mp4).
 <br />
 <br />
 ## Morphing drilldown
@@ -63,7 +80,7 @@ The _mtcars_ R dataset presented with morphing drilldown. There are two levels o
 
 Morphing is achieved between two top levels, and between top and lower levels.  
 <br />
-<video id="3dreg" preload="auto" 
+<video id="morph" preload="auto" 
    src="img/morph.cars.mp4" type="video/mp4" muted="muted" controls>
    Your browser does not support the video tag.
 </video>
