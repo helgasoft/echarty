@@ -93,7 +93,7 @@ test_that("ec.data dendrogram", {
 test_that("ec.data boxlpot", {
   p <- mtcars |> dplyr::relocate(cyl,mpg) |> ec.data(format='boxplot')
   expect_equal(p$series[[1]]$type, 'boxplot')
-  expect_equal(p$dataset$source[[1]], c("V1","V2","V3","V4","V5","V6"))
+  expect_equal(p$dataset$source[[1]][[3]], 22.8)
   expect_equal(p$xAxis[[1]]$name, 'mpg')
   
   ds <- mtcars |> dplyr::select(cyl, drat) |>

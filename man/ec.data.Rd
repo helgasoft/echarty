@@ -52,7 +52,7 @@ library(dplyr)
 ds <- iris |> relocate(Species) |>
 	 ec.data(format= 'boxplot', jitter= 0.1, layout= 'v')
 ec.init(
-  dataset= ds$dataset, series= ds$series,xAxis= ds$xAxis, yAxis= ds$yAxis,
+  dataset= ds$dataset, series= ds$series, xAxis= ds$xAxis, yAxis= ds$yAxis,
   legend= list(show= TRUE), tooltip= list(show= TRUE)
 )
 

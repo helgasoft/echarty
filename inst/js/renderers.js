@@ -1,4 +1,4 @@
-//  JS renderers for error bars, bands, etc.
+//  JS renderers for error bars, bands, geoJson
 //  Prefix 'ri' stands for 'renderItem' - the calling origin.
 	
 /*
@@ -123,7 +123,7 @@ function riPolygon(params, api) {
 
 /*
   error bar function for simple data without grouping
-  usage: renderItem = htmlwidgets::JS("riErrBarSimple")
+  usage: renderItem= htmlwidgets::JS("riErrBarSimple")
 */
 function riErrBarSimple(params, api) {
     var xValue = api.value(0);
@@ -160,4 +160,108 @@ function riErrBarSimple(params, api) {
             style: style
         }]
     };
+}
+
+/*
+  renderItem function for geoJSON objects
+  supports Point, MultiPoint, LineString, MultiLineString, Polygon, MultiPolygon
+  see test-renderers.R for code example
+  usage: 
+    myGeojson <- gsub('\n', '', '{...}')
+    ec.init(load= c('leaflet','custom'), 
+      js= paste('ecfun.geojson=',myGeojson),
+      series= list(list(
+        type= 'custom',
+        coordinateSystem= 'leaflet',  # or 'gmap',etc.
+        renderItem= htmlwidgets::JS("riGeoJson") ...
+*/
+function riGeoJson(params, api) {
+  gj = ecfun.geojson.features[params.dataIndex];
+	type = gj.geometry.type.toLowerCase();
+  switch(type) {
+		case 'linestring':
+			type = 'polyline';
+			break;
+		case 'point':
+			type = 'circle';
+         rad = gj.properties.radius;
+      	if (rad==undefined) rad = 5;
+			break;
+	}
+	ccc = gj.geometry.coordinates;
+	colr = gj.properties.color;
+	if (colr==undefined) colr = api.visual('color');
+	fill = ecfun.geofill;
+	if (fill==0) {
+    fill = gj.properties.ppfill;
+    if (fill==undefined) fill = colr;
+	}
+	lwi = gj.properties.lwidth;
+	if (lwi==undefined) lwi = 3;
+	if (type == 'circle') ccc = [ccc];
+	points = [];
+  return {
+   type: 'group',
+   children:
+      ccc.map(coords => {
+
+      switch(type) {
+      case 'multipoint':
+			  points = [];
+      case 'circle':
+        points.push(api.coord(coords));
+        out = {
+  				type: 'circle',
+  				shape: {cx: points[0][0], cy: points[0][1], r:rad },
+  				style: api.style({
+  					lineWidth: lwi,
+            stroke: colr,
+  					fill: fill })
+  			}
+        break;
+		  case 'polyline':
+        points.push(api.coord(coords));
+        out = {
+				type: type,
+          shape: { points: points },
+				  style: api.style({
+  					stroke: colr,
+  					lineWidth: lwi,
+  					fill: null
+          })
+  			}
+        break;
+      case 'multilinestring':
+      case 'multipolygon':        
+		  case 'polygon':
+  			points = [];
+        if (coords.length === 1) coords = coords[0];
+        for (var i = 0; i < coords.length; i++) {
+          // why are nested polygon defs allowed in geoJson? how deep?
+          if (coords[i].length>2) {
+            for (var j = 0; j < coords[i].length; j++) 
+              points.push(api.coord(coords[i][j]));
+          } else
+          points.push(api.coord(coords[i]));
+        }
+        out = {
+          type: type,
+          shape: { points: points },
+          style: api.style({
+             stroke: colr,
+             lineWidth: lwi,
+             fill: fill
+          })
+        }
+        if (type=='multipolygon') 
+          out.type= 'polygon'; 
+    		if (type=='multilinestring') {
+    			out.type= 'polyline';  
+            out.style.fill = null;
+    		}
+        break;
+      }
+		  return out;
+      })
+  }
 }

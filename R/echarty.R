@@ -114,26 +114,32 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter',
   opts$ask <- opts$js <- opts$renderer <- opts$locale <- opts$useDirtyRect <- opts$elementId <- opts$xtKey <- NULL
   noAxis <- c('radar','parallel','map','gauge','pie','funnel','graph', 'sunburst','tree','treemap','sankey')
   
-  doType <- function(idx, xx) {
-    clss <- unname(sapply(df, class))
-    how <- clss[idx]
+  doType <- function(idx, axx) {
     .ty <- .nm <- NULL
-    if (!is.null(xx) && !is.null(attributes(xx))) {
-      if (is.null(xx$type)) {
-        if (!is.null(xx$data))
-          how <- class(xx$data)
-        .ty <- switch(how,
-          #  'character' = 'category',
-          #  'factor' = 'category',
-          #  'list' = 'category',
-            'Date' = 'time',
-            'numeric' = 'value',
-            'integer' = 'value',
-            'category'
-        )
-      }
-      if (is.null(xx$name)) {
-        .nm <- colnames(df)[idx]
+    if (!is.null(names(lengths(axx)))) {  # otherwise multiple axes exist
+      if (!is.null(axx) && !is.null(attributes(axx))) {
+        .ty <- axx$type
+        .nm <- axx$name
+        if (is.null(axx$type)) {
+          if (!is.null(axx$data)) 
+            .ty <- 'category'  # always
+          else {
+            clss <- unname(sapply(df, class))
+            how <- clss[idx]   # type from dataset.source
+            .ty <- switch(how,
+              #  'character' = 'category',
+              #  'factor' = 'category',
+              #  'list' = 'category',
+                'Date' = 'time',
+                'numeric' = 'value',
+                'integer' = 'value',
+                'category'
+            )
+          }
+        }
+        if (is.null(axx$name)) {
+          .nm <- colnames(df)[idx]
+        }
       }
     }
     return(list(t=.ty, n=.nm))
@@ -155,7 +161,7 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter',
       xtem <- 'lng'; ytem <- 'lat' }
     if (ser$type == 'map') {
       xtem <- 'name'; ytem <- 'value' }
-    return(c(xtem, ytem, ser$coordinateSystem))
+    return(list(x=xtem, y=ytem, c=ser$coordinateSystem))
   }
   
   # presets are default settings, user can ignore or replace them
@@ -249,7 +255,7 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter',
       x$opts$dataset <- list(list(source = ec.data(df, header=TRUE)))
     
     if (preset) {
-      # grouping by any column, group columns do not become X or Y
+      # grouping by any column, group columns do not become X or Y axis
       if (!is.null(grnm)) {  # find pos of grp column
         pos <- which(colnames(df)==grnm)
         if (!is.null(tl.series) && !is.null(tl.series$groupBy))
@@ -261,15 +267,15 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter',
         if (is.na(colY))
           stop('ec.init: df must have at least 3 columns when grouping by one', call.= FALSE)
       }
-      # add encode(if missing) to series when grouping
+      # add encode if missing to series when grouping
       if (!(colX==1 && colY==2)) {
         x$opts$series <- lapply(x$opts$series, function(ss) {
           tmp <- xyNamesCS(ss)
-          if (tmp[3] != 'unknown') {
-            if (is.null(ss$coordinateSystem)) ss$coordinateSystem <- tmp[3]
+          if (tmp$c != 'unknown') {
+            if (is.null(ss$coordinateSystem)) ss$coordinateSystem <- tmp$c
           }
           if (is.null(ss$encode)) {
-              xtem <- tmp[1]; ytem <- tmp[2]
+              xtem <- tmp$x; ytem <- tmp$y
               ss$encode <- list()
               ss$encode[xtem] <- colX   # R count
               ss$encode[ytem] <- colY 
@@ -279,43 +285,56 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter',
         })
       }
     }  # end preset
-    
-    # visualMap assist (min/max not needed with series[[x]].data)
-    vm <- x$opts$visualMap
-    if (!is.null(vm) && (is.null(vm$min) || is.null(vm$max))) {
-      if (is.null(vm$type) || (vm$type == 'continuous')) {
-        xx <- length(colnames(df))   # last column by default in ECharts
-        if (!is.null(vm$dimension)) xx <- vm$dimension
-        x$opts$visualMap$min <- min(df[,xx])
-        x$opts$visualMap$max <- max(df[,xx])
-      }
-    }
-  } 
-
-  if (preset) {    
-      tmp <- doType(colX, x$opts$xAxis)
-      if (!is.null(tmp$t)) x$opts$xAxis$type <- tmp$t
-      if (!is.null(tmp$n)) x$opts$xAxis$name <- tmp$n
-      tmp <- doType(colY, x$opts$yAxis)
-      if (!is.null(tmp$t)) x$opts$yAxis$type <- tmp$t
-      if (!is.null(tmp$n)) x$opts$yAxis$name <- tmp$n
-      if (!is.null(x$opts$series) && !is.null(x$opts$series[[1]]$type)) {
+  }
+  
+  if (preset) {
+      
+    # set XY axes type & name
+    tmp <- doType(colX, x$opts$xAxis)
+    if (!is.null(tmp$t)) x$opts$xAxis$type <- tmp$t
+    if (!is.null(tmp$n)) x$opts$xAxis$name <- tmp$n
+    tmp <- doType(colY, x$opts$yAxis)
+    if (!is.null(tmp$t)) x$opts$yAxis$type <- tmp$t
+    if (!is.null(tmp$n)) x$opts$yAxis$name <- tmp$n
+      
+    if (!is.null(x$opts$series)) {
+      if (!is.null(x$opts$series[[1]]$type)) {
         if (x$opts$series[[1]]$type == 'parallel') {
           if (is.null(x$opts$parallelAxis))
             x$opts$parallelAxis <- ec.paxis(df)
+      }}
+      # set axes names from encode
+      tmp <- list(x=NULL, y=NULL)
+      lapply(x$opts$series, \(ss) {
+        if (!is.null(ss$encode)) {
+          if (is.character(ss$encode$x)) tmp$x <<- c(tmp$x, ss$encode$x[1])
+          if (is.character(ss$encode$y)) tmp$y <<- c(tmp$y, ss$encode$y[1])
         }
-        if (!is.null(x$opts$series.param)) {
-          # merge custom params to auto-generated series
-          # this is a shortcut to avoid using ec.upd later
-          x$opts$series <- lapply(x$opts$series, function(ss) {
-            ss <- .merlis(ss, x$opts$series.param)
-            ss
-          })
-        }
-      }
+      })
+      if (!is.null(tmp$x)) x$opts$xAxis$name <- trimws(paste(unique(tmp$x), collapse=','))
+      if (!is.null(tmp$y)) x$opts$yAxis$name <- trimws(paste(unique(tmp$y), collapse=','))
+    }
+    if (!is.null(x$opts$series.param)) {
+      # merge custom params to auto-generated series
+      # this is a shortcut to avoid using ec.upd later
+      x$opts$series <- lapply(x$opts$series, function(ss) {
+        ss <- .merlis(ss, x$opts$series.param)
+        ss
+      })
+    }
   }
   if (!is.null(x$opts$series.param)) x$opts$series.param <- NULL
-    
+  
+  # visualMap assist (min/max not needed with series[[x]].data)
+  vm <- x$opts$visualMap
+  if (!is.null(vm) && (is.null(vm$min) || is.null(vm$max))) {
+    if (is.null(vm$type) || (vm$type == 'continuous')) {
+      xx <- length(colnames(df))   # last column by default in ECharts
+      if (!is.null(vm$dimension)) xx <- vm$dimension
+      x$opts$visualMap$min <- min(df[,xx])
+      x$opts$visualMap$max <- max(df[,xx])
+    }
+  }
   x$opts <- .renumber(x$opts)
   
   # ------------- create widget ----------------
@@ -497,8 +516,8 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter',
   if (is.null(tl.series$type)) tl.series$type <- 'scatter'
   
   tmp <- xyNamesCS(tl.series)
-  xtem <- tmp[1]; ytem <- tmp[2]
-  if (is.null(tl.series$coordinateSystem)) tl.series$coordinateSystem <- tmp[3]
+  xtem <- tmp$x; ytem <- tmp$y
+  if (is.null(tl.series$coordinateSystem)) tl.series$coordinateSystem <- tmp$c
   
   if (tl.series$coordinateSystem %in% c('geo','leaflet')) {
       xtem <- 'lng'; ytem <- 'lat'
@@ -654,8 +673,8 @@ ec.upd <- function(wt, ...) {
 #' A 'custom' serie with lower and upper boundaries
 #' 
 #' @param df A data.frame with lower and upper numerical columns and first column with X coordinates.
-#' @param lower The column name(string) of band's lower boundary.
-#' @param upper The column name(string) of band's upper boundary.
+#' @param lower The column name of band's lower boundary (string).
+#' @param upper The column name of band's upper boundary (string).
 #' @param type Type of rendering  \cr \itemize{
 #'  \item 'stack' - by two \href{https://echarts.apache.org/en/option.html#series-line.stack}{stacked lines} (default)
 #'  \item 'polygon' - by drawing a polygon as polyline from upper/lower points. 
@@ -664,10 +683,11 @@ ec.upd <- function(wt, ...) {
 #' @return A list of one serie when type='polygon', or two series when type='stack'
 #'
 #' @details \cr \itemize{
-#'  \item type='stack': two _stacked_ lines are drawn, one with customizable areaStyle. The upper boundary coordinates should be values added on top of the lower boundary coordinates.\cr
+#'  \item type='stack': two _stacked_ lines are drawn, one with customizable areaStyle. The upper boundary coordinates are values added on top of the lower boundary coordinates.\cr
 #'      _xAxis_ is required to be of type 'category'.\cr
-#'  \item type='polygon': coordinates of the two boundaries are chained into a polygon and displayed as one. Tooltips do not show upper band values. Some minor problems with zooming.
-#' }
+#'  \item type='polygon': coordinates of the two boundaries are chained into a polygon and displayed as one. Tooltips do not show upper band values.
+#' }\cr
+#' Optional parameter _name_, if given, will show up in legend. Legend will merge all series with the same name into one item.
 #' 
 #' @examples 
 #' # if (interactive()) {
@@ -676,7 +696,7 @@ ec.upd <- function(wt, ...) {
 #'     upr= round(Temp+Wind*2),
 #'       x= paste0(Month,'-',Day) ) |>
 #'   dplyr::relocate(x, Temp)
-#' bands <- ecr.band(df, 'lwr', 'upr',
+#' bands <- ecr.band(df, 'lwr', 'upr', # type='stack',
 #'                   name= 'stak', areaStyle= list(opacity=0.4))
 #' df |> ec.init( load= 'custom',
 #'    legend= list(show= TRUE),
@@ -711,18 +731,18 @@ ecr.band <- function(df=NULL, lower=NULL, upper=NULL, type='stack', ...) {
     colr <- paste("new echarts.graphic.LinearGradient(0, 0, 0, 1, [", 
                   "{offset: 0, color: 'rgba(255, 0, 135)'},", 
                   "{offset: 1, color: 'rgba(135, 0, 157)'}])")
-    astyle <- list(opacity = 0.8, color = htmlwidgets::JS(colr))
+    defStyle <- list(opacity = 0.8, color = htmlwidgets::JS(colr))
     
     slow <- list(type='line', ...)
-    if (is.null(slow$stack)) slow$stack <- 'band'
     if (is.null(slow$name)) slow$name <- 'band'
+    if (is.null(slow$stack))
+      slow$stack <- ifelse(is.null(slow$name), 'band', slow$name)
     if (is.null(slow$showSymbol)) slow$showSymbol <- FALSE
-    #if (is.null(slow$smooth)) slow$smooth <- TRUE
-    if (is.null(slow$lineStyle)) slow$lineStyle <- list(width=0)
+    if (is.null(slow$lineStyle)) slow$lineStyle <- list(width= 0)
     supr <- slow
     if (!is.null(slow$areaStyle)) slow$areaStyle <- NULL
-    else supr$areaStyle <- astyle
-    # save upper data for tooltip, 'hi' is just difference
+    if (is.null(supr$areaStyle))  supr$areaStyle <- defStyle
+    # save upper data for tooltip, 'hi' values are just differences
     tmp <- data.frame(x = df[fstc][[1]], lo=df[lower][[1]], 
                       hi = df[upper][[1]] - df[lower][[1]], 
                       ttip = df[upper][[1]] )
@@ -732,12 +752,13 @@ ecr.band <- function(df=NULL, lower=NULL, upper=NULL, type='stack', ...) {
   }
   else {   # polygon
     ld <- nrow(df[upper])
-    l2 <- unname(unlist(df[upper])[order(ld:1)])
-    tmp <- data.frame(x = unname(unlist(c(df[1:ld, fstc], df[ld:1, fstc]))), 
-                      y = c(df[lower][[1]],  l2))
+    nc <- c('c1','c2')
+    t1 <- df[1:ld, c(1, which(colnames(df)==lower))]; colnames(t1)<- nc
+    t2 <- df[ld:1, c(1, which(colnames(df)==upper))]; colnames(t2)<- nc
+    tmp <- rbind(t2, t1)
     serios <- list(type = "custom", 
                    renderItem = htmlwidgets::JS("riPolygon"), 
-                   data = ec.data(tmp, "values"), ...)
+                   data = ec.data(tmp), ...) 
     if (is.null(serios$itemStyle)) serios$itemStyle <- list(borderWidth = 0.5)
     if (is.null(serios$boundaryGap)) serios$boundaryGap <- FALSE
     serios <- list(serios)  # keep consistent with stack type

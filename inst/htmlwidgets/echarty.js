@@ -84,8 +84,8 @@ HTMLWidgets.widget({
       }
       
       if (opts.graphic && typeof lottieParser!=undefined) {
-          tmp = ecfun.lottieGraphic(opts.graphic);
-          chart.setOption({graphic: tmp}, { replaceMerge: 'graphic'});
+        tmp = ecfun.lottieGraphic(opts.graphic);
+        chart.setOption({graphic: tmp}, { replaceMerge: 'graphic'});
       }
       
       // TODO: timeline to include graphic, etc.   (ECUnitOption, OptionManager ?)
@@ -311,7 +311,10 @@ ecfun = {
     	  return true;
   },
   
-  fs: false,   // fullscreen flag Y/N
+  geojson: null,
+  geofill: 0,
+  zoom: {s: 0, e: 100 },  // dataZoom values
+  fs: false,              // fullscreen flag Y/N
   fscreen: function(hwid) {
     // see also window.onresize
     function GoInFullscreen(element) {

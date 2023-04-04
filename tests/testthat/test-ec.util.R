@@ -161,6 +161,7 @@ test_that("ec.util morph", {
   p <- ec.util(cmd='morph', oscatter, obar)
   expect_equal(p$x$opts$morph[[2]]$series[[3]]$type, 'bar')
   expect_true (p$x$opts$morph[[2]]$series[[3]]$universalTransition$enabled)
+  expect_equal(p$x$opts$yAxis, list(show=T, type= "value", name= "disp"))
 })
 
 test_that("fullscreen", {
@@ -211,7 +212,7 @@ test_that("labelsInside and doType(xAxis)", {
   )	
   #expect_match(p$x$opts$series[[2]]$labelLayout, "get_e_charts(cid)", fixed=TRUE)
   expect_s3_class(p$x$opts$series[[2]]$labelLayout, 'JS_EVAL')
-  expect_equal(p$x$opts$xAxis$type, 'category')
+  expect_equal(p$x$opts$xAxis$type, 'category')  # default for .data
 })
 
 test_that("lottie", {

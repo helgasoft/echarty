@@ -45,8 +45,7 @@ tmp <- data.frame(Species = as.vector(unique(iris$Species)),
                   emoji = c('\U0001F33B','\U0001F335','\U0001F33A'))
 df <- iris |> dplyr::inner_join(tmp)      # add 6th column emoji
 df |> dplyr::group_by(Species) |> ec.init() |> ec.upd({
-  series <- lapply(series,
-    function(s) append(s,
+  series <- lapply(series, \(s) append(s,
       list(label= list(show= TRUE, formatter= ec.clmn('emoji')))) )
   tooltip <- list(formatter=
     # ec.clmn with sprintf + multiple column indexes

@@ -28,6 +28,14 @@
 #' \verb{   }unzips a remote file and returns local file name of the unzipped .shp file\cr
 #' \verb{   }url - URL of remote zipped shapefile\cr
 #' \verb{   }optional \emph{shp} - name of .shp file inside ZIP file if multiple exist. Do not add file extension. \cr
+#' **cmd = 'geojson'** \cr
+#' \verb{   }custom series list with geoJson objects\cr
+#' \verb{   }geojson - object from \link[jsonlite]{fromJSON}\cr
+#' \verb{   }... - optional custom series attributes like _itemStyle_\cr
+#' \verb{   }optional parameters: \cr
+#' \verb{     }ppfill - fill color like '#F00', OR NULL for no-fill, for all Points and Polygons\cr
+#' \verb{     }nid - property name for name-id used in tooltips\cr
+#' \verb{   }optional geoJSON _feature properties_ are: color, ppfill, lwidth(for lines), radius(for points)
 #' **cmd = 'layout'** \cr
 #' \verb{   }multiple charts in table-like rows/columns format\cr
 #' \verb{   }... - List of charts\cr
@@ -87,14 +95,14 @@
 #'   ec.util(cmd= 'tabset', cars= p1, mtcars= p2, width= 333, height= 333)
 #' 
 #'   lapply(list('dark','macarons','gray','jazz','dark-mushroom'),
-#'                 function(x) cars |> ec.init() |> ec.theme(x) ) |>
+#'                 \(x) cars |> ec.init() |> ec.theme(x) ) |>
 #'   ec.util(cmd='layout', cols= 2, title= 'my layout')
 #'   
-#'   setd <- function(type) {
+#'   setd <- \(type) {
 #'     mtcars |> group_by(cyl) |> ec.init(ctype=type) |> ec.upd({
 #'     title <- list(subtext='mouseover points to morph')
 #'     xAxis <- list(scale=TRUE)
-#'     series <- lapply(series, function(ss) {
+#'     series <- lapply(series, \(ss) {
 #'       ss$groupId <- ss$name
 #'       ss$universalTransition <- list(enabled=TRUE)
 #'       ss })
@@ -110,7 +118,7 @@ ec.util <- function( ..., cmd='sf.series', js=NULL) {
   
   opts <- list(...)
   
-  do.opties <- function(names, dflts=NULL) {
+  do.opties <- \(names, dflts=NULL) {
     # set default optional parameters
     j <- 0
     for(n in names) {
@@ -128,8 +136,8 @@ ec.util <- function( ..., cmd='sf.series', js=NULL) {
   
   switch( cmd,
     'sf.series'= {
-      do.series <- function(dff) {
-        polig <- function(geom) {
+      do.series <- \(dff) {
+        polig <- \(geom) {
           for(k in 1:length(geom)) {
             if ('matrix' %in% class(geom[[k]])) {
               gm <- as.data.frame(geom[[k]])
@@ -218,7 +226,7 @@ ec.util <- function( ..., cmd='sf.series', js=NULL) {
           stop(paste('ec.util:',class(dff$geometry)[1],'geometry not supported'), call.= FALSE)
         )
         cnt <- length(sers)
-        recs <- sum(unlist(lapply(sers, function(x) {
+        recs <- sum(unlist(lapply(sers, \(x) {
           len <- length(x$data)
           if (len==1) len <- length(x$data[[1]])  #multiline
           len
@@ -262,6 +270,27 @@ ec.util <- function( ..., cmd='sf.series', js=NULL) {
       tmp <- list.files(path= fldr, pattern= pat)
       if (length(tmp)==0) stop(paste('ec.util:',pat,'file not found in folder',fldr), call. = FALSE)
       out <- paste0(getwd(),'/',fldr,'/',tmp[1])
+    },
+    
+    'geojson'= {
+      geojson <- opts$geojson
+      opts$geojson <- NULL
+      cat('\ngeoJSON has',nrow(geojson$features),'features')
+      myGeojson <- toString(jsonlite::toJSON(geojson))
+      dfill <- ''
+      if ('ppfill' %in% names(opts)) {
+        dfill <- ifelse(is.null(opts$ppfill), 'null', paste0('"',opts$ppfill,'"'))
+        dfill <- paste0('ecfun.geofill=',dfill,';')
+      }
+      out <- c( list(type= 'custom',
+        coordinateSystem= 'leaflet',
+        # set JS variables for riGeoJson() to work with
+        renderItem= htmlwidgets::JS(paste("(params, api) => {",dfill,
+          " ecfun.geojson=",myGeojson,"; return riGeoJson(params, api); }")),
+        data= if (is.null(opts$nid)) lapply(1:nrow(geojson$features), list)
+              else lapply(unlist(tmp$features$properties[opts$nid],
+                                 use.names=FALSE), \(n) { list(name=n)})
+      ), opts)
     },
     
     'tabset'= {
@@ -330,7 +359,7 @@ body { padding: 10px; }
           ('echarty' %in% class(opts[[1]][[1]]))) {  # pipe
         opts <- opts[[1]]
         cnt <- 1
-        tnames <- names(opts) <- lapply(opts, function(oo) {
+        tnames <- names(opts) <- lapply(opts, \(oo) {
       		tit <- oo$x$opts$title$text
       		if (is.null(tit) || grepl(' ',tit)) {
       			tit <- paste('chart', cnt); cnt <<- cnt + 1 }
@@ -418,7 +447,7 @@ body { padding: 10px; }
     
     'morph'= {
       
-      opts <- lapply(opts, function(oo) {
+      opts <- lapply(opts, \(oo) {
         if ('echarty' %in% class(oo)) oo$x$opts
         else oo
       })
@@ -516,7 +545,7 @@ body { padding: 10px; }
           style= list(fill= 'lightgray'),
           textContent= list(style= list(text= text, fill= 'black')),
           textConfig= list(position= 'inside'),
-      		onclick= ec.clmn(js)
+      		onclick= htmlwidgets::JS(js)
       )
       tt <- list(...)   # user values overwrite defaults
       #out <- c(tmp, tt)[!duplicated(c(names(tmp), names(tt)), fromLast=T)]
@@ -564,7 +593,7 @@ body { padding: 10px; }
 #' ds <- iris |> relocate(Species) |>
 #' 	 ec.data(format= 'boxplot', jitter= 0.1, layout= 'v')
 #' ec.init(
-#'   dataset= ds$dataset, series= ds$series,xAxis= ds$xAxis, yAxis= ds$yAxis,
+#'   dataset= ds$dataset, series= ds$series, xAxis= ds$xAxis, yAxis= ds$yAxis,
 #'   legend= list(show= TRUE), tooltip= list(show= TRUE)
 #' )
 #' 
@@ -594,7 +623,7 @@ ec.data <- function(df, format='dataset', header=FALSE, jitter=0, layout='h', ..
     # decode hc$merge with hc$labels
     inew <- list()
     i <- 0
-    tmp <- apply(hc$merge, 1, function(x) {
+    tmp <- apply(hc$merge, 1, \(x) {
       fst <- if (x[1]<0) { if (is.null(hc$labels)) -x[1] else hc$labels[-x[1]] } else inew[[x[1]]]$p[1]
       snd <- if (x[2]<0) { if (is.null(hc$labels)) -x[2] else hc$labels[-x[2]] } else inew[[x[2]]]$p[1]
       i <<- i+1
@@ -636,7 +665,7 @@ ec.data <- function(df, format='dataset', header=FALSE, jitter=0, layout='h', ..
     tryCatch({
       tmp <- data.tree::FromDataFrameNetwork(df)
     },
-    error=function(e) { stop(e) })
+    error= function(e) { stop(e) })
     json <- data.tree::ToListExplicit(tmp, unname=TRUE)
     return(json$children)
   }
@@ -654,7 +683,7 @@ ec.data <- function(df, format='dataset', header=FALSE, jitter=0, layout='h', ..
       #cat('\nnames:',nm,' ',tot)
       cldrn <- unname(cldrn)
       cnt <- 0
-      lest$children <- lapply(cldrn, function(x) {
+      lest$children <- lapply(cldrn, \(x) {
         cnt <<- cnt+1; x$name <- nm[cnt]
         if (!is.null(tot)) x$pct <- round(x$value / tot * 100, 2)
         if (!is.null(x$itemStyle)) x$itemStyle <- eval(parse(text=paste0('list(',x$itemStyle,')')))
@@ -677,7 +706,7 @@ ec.data <- function(df, format='dataset', header=FALSE, jitter=0, layout='h', ..
   
   rownames(df) <- NULL
   n <- seq_along(df[[1]])       # assuming all lists in df have the same length
-  tmp <- lapply(n, function(i) lapply(df, "[[", i))  # preserve column types
+  tmp <- lapply(n, \(i) lapply(df, "[[", i))  # preserve column types
   
   if (format=='dataset') {
     datset <- lapply(tmp, unname)
@@ -686,13 +715,14 @@ ec.data <- function(df, format='dataset', header=FALSE, jitter=0, layout='h', ..
     
   } 
   else if (format=='values' || isTRUE(format)) {
-    datset <- lapply(tmp, function(x) list(value=unlist(unname(x))))
+    datset <- lapply(tmp, \(x) list(value=unlist(unname(x))))
     
   } 
   else if (format=='boxplot') {
     cn <- colnames(df)
     if (length(cn)<2) stop('boxplot: df should have 2+ columns', call.=FALSE)
-    colas <- cn[1]; colb5 <- cn[2]
+    colas <- cn[1]
+    colb5 <- cn[2]
     if (!is.numeric(df[[colb5]])) stop('boxplot: 2nd column must be numeric', call.=FALSE)
     # is there another group beside colas ?
     grpcol <- if (is.grouped_df(df) && group_vars(df)[1]!=colas) 
@@ -705,14 +735,14 @@ ec.data <- function(df, format='dataset', header=FALSE, jitter=0, layout='h', ..
         axe <- paste(levels(df[[colas]]), collapse="','")
     else
 		    axe <- paste(sort(as.character(unique(df[[colas]]))), collapse="','")
-    tbox <- ec.clmn('%@ %@ %@ %@ %@',2,3,4,5,6)
+    tbox <- ec.clmn('min %@<br>Q1 %@<br>median %@<br>Q3 %@<br>max %@',2,3,4,5,6) 
     
     if (!is.null(grpcol)) {   # grouped
       tmp <- df |> group_split()
-      dataset <- lapply(tmp, function(dd) { 
+      dataset <- lapply(tmp, \(dd) { 
         dv <- dd |> arrange(.data[[colas]]) |> dplyr::group_by(.data[[colas]]) |> group_split()
-        src <- lapply(dv, function(vv) {
-      	 if (nrow(vv)<5) stop(paste0('ec.data: not sufficient data in group "',grpcol,'"'), call.= FALSE)
+        src <- lapply(dv, \(vv) {
+      	 if (nrow(vv)<5) stop(paste0('ec.data: insufficient data in group "',grpcol,'"'), call.= FALSE)
       	 vv[[colb5]]
         })
         list(source= if (length(src[[1]])==1) list(src) else src)
@@ -730,13 +760,13 @@ ec.data <- function(df, format='dataset', header=FALSE, jitter=0, layout='h', ..
     else {  # non-grouped
     	
       bdf <- ungroup(df) |> arrange(.data[[colas]]) |> dplyr::group_by(across({colas})) |> group_split()
-      dats <- lapply(bdf, function(x) {
+      dats <- lapply(bdf, \(x) {
         c(unique(pull(x,colas)), round(boxplot.stats( pull(x,colb5) )$stats, 4))
       })
-      dataset <- list(source= ec.data( as.data.frame(do.call(rbind, dats)), header=TRUE ))
+      dataset <- list(source= ec.data( as.data.frame(do.call(rbind, dats)) ))
       series <- list(list(type='boxplot', 
                     name= 'boxplot', tooltip= list(formatter=tbox),
-      						  encode= list(y='V1', x=c('V2','V3','V4','V5','V6'))))
+      						  encode= list(y=1, x=c(2,3,4,5,6))))
       # default is horizontal, for vertical swap xAxis/yAxis category type
       if (layout=='v') {
         e <- series[[1]]$encode
@@ -752,10 +782,10 @@ ec.data <- function(df, format='dataset', header=FALSE, jitter=0, layout='h', ..
     
     if (jitter>0) {
   		tmp <- df |> arrange(.data[[colas]]) |> dplyr::group_by(.data[[colas]]) |> group_split()
-  		mcyl <- lapply(tmp, function(x) unname(unlist(x[[colb5]])))
+  		mcyl <- lapply(tmp, \(x) unname(unlist(x[[colb5]])))
   		names(mcyl) <- sort(unique(df[[colas]]))
   		i <- 0.5
-  		serj <- lapply(names(mcyl), function(nn) {  
+  		serj <- lapply(names(mcyl), \(nn) {  
   			yy <- unname(unlist(mcyl[nn]))
   			xx <- jitter(rep(i, length(yy)), amount= jitter)
   			out <- list(type= 'scatter', ...)
@@ -822,8 +852,7 @@ ec.data <- function(df, format='dataset', header=FALSE, jitter=0, layout='h', ..
 #'                   emoji = c('\U0001F33B','\U0001F335','\U0001F33A'))
 #' df <- iris |> dplyr::inner_join(tmp)      # add 6th column emoji
 #' df |> dplyr::group_by(Species) |> ec.init() |> ec.upd({
-#'   series <- lapply(series,
-#'     function(s) append(s,
+#'   series <- lapply(series, \(s) append(s,
 #'       list(label= list(show= TRUE, formatter= ec.clmn('emoji')))) )
 #'   tooltip <- list(formatter=
 #'     # ec.clmn with sprintf + multiple column indexes
@@ -840,6 +869,7 @@ ec.clmn <- function(col=NULL, ..., scale=1) {
   }
   args <- list(...)
   ret <- paste("let c=String(typeof x=='object' ? x.value : x);", scl)
+  remnl <- isTRUE(args$remnl)
   
   if (is.null(col)) {}   # for pie,sunburst
   else if (col=='log')
@@ -866,7 +896,7 @@ return template.replace(/%@|%L@|%LR@|%R@|%M@/g, (m) => {
     tmp <- suppressWarnings(as.numeric(args) -1)
     if (all(is.na(tmp))) {   
       # multiple non-numeric strings = column names
-      t0 <- sapply(args, function(s) toString(paste0("x.data['", s,"']")) )
+      t0 <- sapply(args, \(s) toString(paste0("x.data['", s,"']")) )
       t0 <- paste(t0, collapse=',')
       t1 <- paste(args, collapse='`,`')
       # x.data = 1) object 2) array with x.dimensionNames 3) array only when dataset
@@ -907,7 +937,8 @@ if (vv.length > 0)
     if (col >= 0)
       ret <- paste0('let c = String(x.value!=null ? x.value[',col,'] : x.data!=null ? x.data[',col,'] : x[',col,'] ); ',scl)
   }
-  # ret <-  gsub('\n', ' ', ret, fixed=T)
+  if (remnl)
+    ret <- gsub('\n', ' ', ret, fixed=T)
   htmlwidgets::JS(paste0('function(x) {', ret, '}'))
 }
 

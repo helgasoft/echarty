@@ -2,7 +2,11 @@
 
 ## v.1.5.3 latest, in development
 
+- upgrade ECharts to v.5.4.2
+- _ec.util_ support for map GeoJSON objects, see test-renderers.R
 - _ec.init_ new parameter _xtKey_ for crosstalk (ID-column name)
+- code cleanup in _ecr.band_
+- expand auto-generated axes names to multiple
 
 ## v.1.5.2
 

@@ -9,9 +9,9 @@ ecr.band(df = NULL, lower = NULL, upper = NULL, type = "stack", ...)
 \arguments{
 \item{df}{A data.frame with lower and upper numerical columns and first column with X coordinates.}
 
-\item{lower}{The column name(string) of band's lower boundary.}
+\item{lower}{The column name of band's lower boundary (string).}
 
-\item{upper}{The column name(string) of band's upper boundary.}
+\item{upper}{The column name of band's upper boundary (string).}
 
 \item{type}{Type of rendering  \cr \itemize{
 \item 'stack' - by two \href{https://echarts.apache.org/en/option.html#series-line.stack}{stacked lines} (default)
@@ -28,10 +28,11 @@ A 'custom' serie with lower and upper boundaries
 }
 \details{
 \cr \itemize{
-\item type='stack': two \emph{stacked} lines are drawn, one with customizable areaStyle. The upper boundary coordinates should be values added on top of the lower boundary coordinates.\cr
+\item type='stack': two \emph{stacked} lines are drawn, one with customizable areaStyle. The upper boundary coordinates are values added on top of the lower boundary coordinates.\cr
 \emph{xAxis} is required to be of type 'category'.\cr
-\item type='polygon': coordinates of the two boundaries are chained into a polygon and displayed as one. Tooltips do not show upper band values. Some minor problems with zooming.
-}
+\item type='polygon': coordinates of the two boundaries are chained into a polygon and displayed as one. Tooltips do not show upper band values.
+}\cr
+Optional parameter \emph{name}, if given, will show up in legend. Legend will merge all series with the same name into one item.
 }
 \examples{
 # if (interactive()) {
@@ -40,7 +41,7 @@ df <- airquality |> dplyr::mutate(
     upr= round(Temp+Wind*2),
       x= paste0(Month,'-',Day) ) |>
   dplyr::relocate(x, Temp)
-bands <- ecr.band(df, 'lwr', 'upr',
+bands <- ecr.band(df, 'lwr', 'upr', # type='stack',
                   name= 'stak', areaStyle= list(opacity=0.4))
 df |> ec.init( load= 'custom',
    legend= list(show= TRUE),

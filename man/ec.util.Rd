@@ -38,6 +38,14 @@ tabset, table layout, support for GIS shapefiles through library sf
 \verb{   }unzips a remote file and returns local file name of the unzipped .shp file\cr
 \verb{   }url - URL of remote zipped shapefile\cr
 \verb{   }optional \emph{shp} - name of .shp file inside ZIP file if multiple exist. Do not add file extension. \cr
+\strong{cmd = 'geojson'} \cr
+\verb{   }custom series list with geoJson objects\cr
+\verb{   }geojson - object from \link[jsonlite]{fromJSON}\cr
+\verb{   }... - optional custom series attributes like \emph{itemStyle}\cr
+\verb{   }optional parameters: \cr
+\verb{     }ppfill - fill color like '#F00', OR NULL for no-fill, for all Points and Polygons\cr
+\verb{     }nid - property name for name-id used in tooltips\cr
+\verb{   }optional geoJSON \emph{feature properties} are: color, ppfill, lwidth(for lines), radius(for points)
 \strong{cmd = 'layout'} \cr
 \verb{   }multiple charts in table-like rows/columns format\cr
 \verb{   }... - List of charts\cr
@@ -97,14 +105,14 @@ if (interactive()) {  # comm.out: Fedora errors about some 'browser'
   ec.util(cmd= 'tabset', cars= p1, mtcars= p2, width= 333, height= 333)
 
   lapply(list('dark','macarons','gray','jazz','dark-mushroom'),
-                function(x) cars |> ec.init() |> ec.theme(x) ) |>
+                \(x) cars |> ec.init() |> ec.theme(x) ) |>
   ec.util(cmd='layout', cols= 2, title= 'my layout')
   
-  setd <- function(type) {
+  setd <- \(type) {
     mtcars |> group_by(cyl) |> ec.init(ctype=type) |> ec.upd({
     title <- list(subtext='mouseover points to morph')
     xAxis <- list(scale=TRUE)
-    series <- lapply(series, function(ss) {
+    series <- lapply(series, \(ss) {
       ss$groupId <- ss$name
       ss$universalTransition <- list(enabled=TRUE)
       ss })
