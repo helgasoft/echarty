@@ -1204,6 +1204,71 @@ ec.util(cmd= 'tabset', cars= p1, mtcars= p2)
 </details>
 <br />
 
+<a id='history'></a>
+
+## Time based charts
+use for history, schedules, Gantt, etc.  See also [<span style="color:magenta">live calendar</span>](https://rpubs.com/echarty/paris-art)<br />
+<img src='img/cb-time.png' alt='time' />
+<details><summary>🔻 View code</summary>
+
+```r
+library(dplyr)   
+df <- data.frame(   # data from vistime library
+  position = rep(c("President", "Vice"), each = 3),
+  name = c("Washington", rep(c("Adams", "Jefferson"), 2), "Burr"),
+  start = c("1789-03-29", "1797-02-03", "1801-02-03"),
+  end = c("1797-02-03", "1801-02-03", "1809-02-03")) |>
+mutate(start= as.Date(start), end= as.Date(end)) |> arrange(start)
+ss <- lapply(1:nrow(df), \(i) {
+  list(type= 'line', 
+      name= df$position[i],
+      symbolSize= 0,  # allow label
+      lineStyle= list(opacity=0.8, width= 55),
+      data= list(
+      list(df$start[i], df$name[i]),
+      list(df$end[i],   df$name[i]) ),
+      triggerLineEvent= T
+  )
+})
+
+dd <- read.csv(text ="date,name,event
+1826-07-04,Adams,died
+1826-07-04,Jefferson,died
+1799-12-14,Washington,died
+1804-07-11,Burr,killed A.Hamilton in duel
+") |> mutate(date= as.Date(date))
+s2 <- list(list( 
+	  type='scatter', encode= list(x=1, y=2), z= 22, name= 'Events',
+	  tooltip= list(formatter= ec.clmn('%@ %@',1,3)), symbolSize= 15) )
+
+library(echarty)
+p <- dd |> ec.init(
+   color= list('LightGreen', 'Khaki', 'red'), 
+   grid= list(containLabel= T),
+   xAxis= list(type= 'time', scale= F, name= 'Year',
+      axisLabel= list(showMinLabel= T, showMaxLabel=T,
+                        formatter= '{yyyy}')
+   ),
+   yAxis= list(type= 'category', name='', axisLabel= list(fontSize= 16),
+      splitLine= list(show= T)
+   ), 
+   series= append(ss, s2),
+   legend= list(show= T), 
+   tooltip= list(show= T, enterable=F, confine=T, formatter='{c} becomes {a}')
+) |> ec.theme('dark-mushroom')
+p$x$on <- list(list(
+   event='mousemove', query='series.line',
+   handler=htmlwidgets::JS("function (event) { 
+      this.dispatchAction({ type: 'showTip', 
+         seriesIndex: event.seriesIndex, dataIndex:0 });
+   }")        
+))
+p
+```
+
+</details>
+<br />
+
 ## Pies on map
 Position pies on a map, supported by ECharts 5.4.0+<br />
 <img src='img/cb-eubaro.png' alt='pies demo' />
