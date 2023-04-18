@@ -313,6 +313,7 @@ ecfun = {
   
   geojson: null,
   geofill: 0,
+  geoz2: 0,
   zoom: {s: 0, e: 100 },  // dataZoom values
   fs: false,              // fullscreen flag Y/N
   fscreen: function(hwid) {

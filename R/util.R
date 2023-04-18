@@ -34,8 +34,8 @@
 #' \verb{   }... - optional custom series attributes like _itemStyle_\cr
 #' \verb{   }optional parameters: \cr
 #' \verb{     }ppfill - fill color like '#F00', OR NULL for no-fill, for all Points and Polygons\cr
-#' \verb{     }nid - property name for name-id used in tooltips\cr
-#' \verb{   }optional geoJSON _feature properties_ are: color, ppfill, lwidth(for lines), radius(for points)
+#' \verb{     }nid - feature property for item name used in tooltips\cr
+#' \verb{   }optional geoJSON _feature properties_: color, ppfill, lwidth, ldash, radius(for points)
 #' **cmd = 'layout'** \cr
 #' \verb{   }multiple charts in table-like rows/columns format\cr
 #' \verb{   }... - List of charts\cr
@@ -287,9 +287,11 @@ ec.util <- function( ..., cmd='sf.series', js=NULL) {
         # set JS variables for riGeoJson() to work with
         renderItem= htmlwidgets::JS(paste("(params, api) => {",dfill,
           " ecfun.geojson=",myGeojson,"; return riGeoJson(params, api); }")),
-        data= if (is.null(opts$nid)) lapply(1:nrow(geojson$features), list)
-              else lapply(unlist(tmp$features$properties[opts$nid],
-                                 use.names=FALSE), \(n) { list(name=n)})
+        data= if (is.null(opts$nid)) 
+                lapply(1:nrow(geojson$features), list)
+              else 
+                lapply(unlist(tmp$features$properties[opts$nid],
+                              use.names=FALSE), \(n) { list(name=n)})
       ), opts)
     },
     

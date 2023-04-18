@@ -44,8 +44,8 @@ tabset, table layout, support for GIS shapefiles through library sf
 \verb{   }... - optional custom series attributes like \emph{itemStyle}\cr
 \verb{   }optional parameters: \cr
 \verb{     }ppfill - fill color like '#F00', OR NULL for no-fill, for all Points and Polygons\cr
-\verb{     }nid - property name for name-id used in tooltips\cr
-\verb{   }optional geoJSON \emph{feature properties} are: color, ppfill, lwidth(for lines), radius(for points)
+\verb{     }nid - feature property for item name used in tooltips\cr
+\verb{   }optional geoJSON \emph{feature properties}: color, ppfill, lwidth, ldash, radius(for points)
 \strong{cmd = 'layout'} \cr
 \verb{   }multiple charts in table-like rows/columns format\cr
 \verb{   }... - List of charts\cr

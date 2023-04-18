@@ -177,29 +177,36 @@ function riErrBarSimple(params, api) {
 */
 function riGeoJson(params, api) {
   gj = ecfun.geojson.features[params.dataIndex];
-	type = gj.geometry.type.toLowerCase();
+  type = gj.geometry.type.toLowerCase();
+  ccc = gj.geometry.coordinates;
+  colr = gj.properties.color;
+  if (colr==undefined) colr = api.visual('color');
+  fill = gj.properties.ppfill;
+  if (fill==undefined) {
+	  fill = ecfun.geofill;
+	  if (fill==0) fill = colr;
+  }
+  lwi = gj.properties.lwidth;
+  if (lwi==undefined) lwi = 3;
+	ldash = gj.properties.ldash;
+	if (ldash)
+		if (Array.isArray(ldash.match(/\[.*?\]/g))) eval('ldash = '+ldash);
+	if (!isNaN(ldash)) ldash = Number(ldash);
+	if (ldash==undefined) ldash = null;
+  points = [];
+  //z2 = 1;
+  
   switch(type) {
-		case 'linestring':
-			type = 'polyline';
-			break;
-		case 'point':
-			type = 'circle';
-         rad = gj.properties.radius;
-      	if (rad==undefined) rad = 5;
-			break;
+	case 'linestring':
+		type = 'polyline';
+		break;
+	case 'point':
+		type = 'circle';
+		rad = gj.properties.radius;
+      		if (rad==undefined) rad = 5;
+		break;
 	}
-	ccc = gj.geometry.coordinates;
-	colr = gj.properties.color;
-	if (colr==undefined) colr = api.visual('color');
-	fill = ecfun.geofill;
-	if (fill==0) {
-    fill = gj.properties.ppfill;
-    if (fill==undefined) fill = colr;
-	}
-	lwi = gj.properties.lwidth;
-	if (lwi==undefined) lwi = 3;
-	if (type == 'circle') ccc = [ccc];
-	points = [];
+  if (type == 'circle') ccc = [ccc];
   return {
    type: 'group',
    children:
@@ -207,34 +214,29 @@ function riGeoJson(params, api) {
 
       switch(type) {
       case 'multipoint':
-			  points = [];
+	points = [];
       case 'circle':
-        points.push(api.coord(coords));
-        out = {
-  				type: 'circle',
-  				shape: {cx: points[0][0], cy: points[0][1], r:rad },
-  				style: api.style({
-  					lineWidth: lwi,
-            stroke: colr,
-  					fill: fill })
-  			}
-        break;
-		  case 'polyline':
-        points.push(api.coord(coords));
-        out = {
-				type: type,
-          shape: { points: points },
-				  style: api.style({
-  					stroke: colr,
-  					lineWidth: lwi,
-  					fill: null
-          })
-  			}
-        break;
+	points.push(api.coord(coords));
+	out = {
+		type: 'circle',
+		shape: {cx: points[0][0], cy: points[0][1], r:rad },
+		style: api.style({
+			lineWidth: lwi, stroke: colr, fill: fill })
+	}
+	break;
+      case 'polyline':
+	points.push(api.coord(coords));
+	out = {
+		type: type,
+        	shape: { points: points },
+		style: api.style({
+  			stroke: colr, lineWidth: lwi, fill: null, lineDash: ldash })
+	}
+	break;
       case 'multilinestring':
       case 'multipolygon':        
-		  case 'polygon':
-  			points = [];
+      case 'polygon':
+  	points = [];
         if (coords.length === 1) coords = coords[0];
         for (var i = 0; i < coords.length; i++) {
           // why are nested polygon defs allowed in geoJson? how deep?
@@ -250,18 +252,20 @@ function riGeoJson(params, api) {
           style: api.style({
              stroke: colr,
              lineWidth: lwi,
-             fill: fill
+             fill: fill, lineDash: ldash
           })
         }
         if (type=='multipolygon') 
           out.type= 'polygon'; 
-    		if (type=='multilinestring') {
-    			out.type= 'polyline';  
-            out.style.fill = null;
-    		}
+    	if (type=='multilinestring') {
+    		out.type= 'polyline';  
+		    out.style.fill = null;
+    	}
         break;
       }
-		  return out;
+      ecfun.geoz2++; //z2++;
+      out.z2 = ecfun.geoz2;
+      return out;
       })
   }
 }
