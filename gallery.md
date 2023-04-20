@@ -911,14 +911,14 @@ a proof-of-concept
 [<span style="color:magenta">Live Demo</span>](https://rpubs.com/echarty/bmap) (no code)  
 <br />  -->
 <a id='leaflet'></a>
-
+<!--
 ## Leaflet maps
 and switching chart selection **without Shiny**  
 [<span style="color:magenta">Live Demo</span>](https://rpubs.com/echarty/mapjs) with code
-<br /><br />
+<br /><br /> -->
 
 ## Leaflet maps with shape files
-demo for GIS polylines, points and polygons
+demo for GIS points, polylines and polygons
 <video id="vidshp" preload="auto" 
    src="img/shpfiles.mp4" type="video/mp4" muted="muted" controls>
    Your browser does not support the video tag.
@@ -980,6 +980,67 @@ ec.init(load= c('leaflet', 'custom'),  # load custom for polygons
     js= ec.util(cmd= 'sf.bbox', bbox= st_bbox(nc$geometry)),
     series= ec.util(df= nc, nid= 'Name', itemStyle= list(opacity= 0.3)),
     tooltip= list(formatter= '{a}'), animation= FALSE
+)
+
+```
+</details>
+<br />
+
+## Leaflet maps with geoJson
+support for points, polylines and polygons
+<video id="geojson" preload="auto" 
+   src="img/bycic.mp4" type="video/mp4" muted="muted" controls>
+   Your browser does not support the video tag.
+</video>
+<details><summary>🔻 View code</summary>
+
+```r
+#' data from https://apidocs.geoapify.com/docs/isolines/#about
+#' shows tooltip, opacity, color, fill, etc. for each feature
+
+anim <- "
+loc= [[2.32968,48.85948,0],[2.32959,48.85967,0],[2.33026,48.86059,0],[2.33005,48.86097,0],[2.33358,48.86583,0],[2.33421,48.8664,0],[2.33293,48.86935,0],[2.33245,48.87093,0]];
+ii= 0; inc= 1;
+setInterval( (p) => {
+  ii = ii + inc;
+  if (ii> 7) { inc= -1; ii--; }
+  if (ii< 0) { inc= +1; ii++; }
+  loca = loc[ii];
+  opt = {series: {id: 'bycicle', data: [loca]} };
+  chart.setOption(opt);
+}, 633)"
+tmp <- jsonlite::fromJSON('https://cdn.jsdelivr.net/gh/helgasoft/echarty@main/demo/bycic.geojson')
+cntr <- c(2.329466, 48.859475); nid <- 'id'; zm <- 14
+
+library(echarty)
+ec.init(
+  load= c('leaflet', 'custom'), js=c('','',anim),
+  leaflet= list(center= cntr, zoom= zm, roam= T),
+  tooltip= list(show=T, formatter='{b}'),
+  color= c('green','blue','red'),
+  series= append(
+    list(
+      ec.util(cmd= 'geojson', geojson= tmp,
+          colorBy= 'data', ppfill= NULL, nid= nid 
+    )),
+    list(list(   # animated bycicle serie
+      type= 'custom', 
+      coordinateSystem= 'leaflet', id= 'bycicle', zlevel= 11,
+      renderItem= htmlwidgets::JS("(params, api) => {
+        cc = api.coord([api.value(0), api.value(1)]);
+        return {
+          type: 'path',
+          shape: {
+            pathData: 'M4 4.5a.5.5 0 0 1 .5-.5H6a.5.5 0 0 1 0 1v.5h4.14l.386-1.158A.5.5 0 0 1 11 4h1a.5.5 0 0 1 0 1h-.64l-.311.935.807 1.29a3 3 0 1 1-.848.53l-.508-.812-2.076 3.322A.5.5 0 0 1 8 10.5H5.959a3 3 0 1 1-1.815-3.274L5 5.856V5h-.5a.5.5 0 0 1-.5-.5zm1.5 2.443-.508.814c.5.444.85 1.054.967 1.743h1.139L5.5 6.943zM8 9.057 9.598 6.5H6.402L8 9.057zM4.937 9.5a1.997 1.997 0 0 0-.487-.877l-.548.877h1.035zM3.603 8.092A2 2 0 1 0 4.937 10.5H3a.5.5 0 0 1-.424-.765l1.027-1.643zm7.947.53a2 2 0 1 0 .848-.53l1.026 1.643a.5.5 0 1 1-.848.53L11.55 8.623z',
+          },
+          x: cc[0], y: cc[1],
+          originX: 17, originY: 17,
+          scaleX: 2, scaleY : 2  // 3 = orig.XY 12
+        }
+      }"),
+      data= list(cntr)
+    ))
+  )
 )
 
 ```
@@ -1213,57 +1274,77 @@ use for history, schedules, Gantt, etc.  See also [<span style="color:magenta">l
 
 ```r
 library(dplyr)   
-df <- data.frame(   # data from vistime library
-  position = rep(c("President", "Vice"), each = 3),
-  name = c("Washington", rep(c("Adams", "Jefferson"), 2), "Burr"),
-  start = c("1789-03-29", "1797-02-03", "1801-02-03"),
-  end = c("1797-02-03", "1801-02-03", "1809-02-03")) |>
-mutate(start= as.Date(start), end= as.Date(end)) |> arrange(start)
+# data from vistime library
+df <- read.csv(text ="start,end,name,position
+1789-03-29,1797-02-03,Washington,President
+1789-03-29,1797-02-03,Adams,Vice
+1797-02-03,1801-02-03,Adams,President
+1797-02-03,1801-02-03,Jefferson,Vice
+1801-02-03,1809-02-03,Jefferson,President
+1801-02-03,1809-02-03,Burr,Vice
+1785-05-17,1789-09-26,Jefferson,Minister to France
+1789-09-11,1795-01-31,Hamilton,Treasury Secretary
+1799-12-14,1800-06-15,Hamilton,Army Chief
+") |>
+mutate(start= as.Date(start), end= as.Date(end)) 
 ss <- lapply(1:nrow(df), \(i) {
   list(type= 'line', 
-      name= df$position[i],
-      symbolSize= 0,  # allow label
-      lineStyle= list(opacity=0.8, width= 55),
-      data= list(
-      list(df$start[i], df$name[i]),
-      list(df$end[i],   df$name[i]) ),
-      triggerLineEvent= T
+       name= df$position[i],
+       symbolSize= 0,  # to show label
+       lineStyle= list(opacity=0.8, width= 44),
+       data= list(
+         list(df$start[i], df$name[i]),
+         list(df$end[i],   df$name[i]) ),
+       triggerLineEvent= T,
+       tooltip= list(enterable=F, confine=T, formatter='{c} becomes {a}')
   )
 })
-
 dd <- read.csv(text ="date,name,event
 1826-07-04,Adams,died
 1826-07-04,Jefferson,died
 1799-12-14,Washington,died
 1804-07-11,Burr,killed A.Hamilton in duel
+1804-07-11,Hamilton,died
+1793-01-21,Jefferson,Louis XVI at the guillotine
+1789-07-14,Jefferson,Storming of the Bastille
+1804-12-02,Jefferson,Napoleon Emperor
 ") |> mutate(date= as.Date(date))
-s2 <- list(list( 
-	  type='scatter', encode= list(x=1, y=2), z= 22, name= 'Events',
-	  tooltip= list(formatter= ec.clmn('%@ %@',1,3)), symbolSize= 15) )
+s2 <- list(type='scatter', symbolSize=15, 
+           encode= list(x=1, y=2), z= 22, name= 'Events',
+           tooltip= list(formatter=ec.clmn('%@ %@',1,3))
+)
+s3 <- lapply(list(4,6), \(i) {
+  list(type='line',
+    lineStyle= list(color= 'red'),
+    data= list(
+         list(dd$date[i],   dd$name[i]),
+         list(dd$date[i+1], dd$name[i+1])) )
+})
 
 library(echarty)
 p <- dd |> ec.init(
-   color= list('LightGreen', 'Khaki', 'red'), 
-   grid= list(containLabel= T),
-   xAxis= list(type= 'time', scale= F, name= 'Year',
+  color= list('lightgreen', 'khaki', 'violet', 'lightcoral', 'lightcoral', 'red', 'goldenrod'),
+  grid= list(containLabel= T),
+  xAxis= list(type= 'time', scale= F, name= 'Year',
       axisLabel= list(showMinLabel= T, showMaxLabel=T,
-                        formatter= '{yyyy}')
-   ),
-   yAxis= list(type= 'category', name='', axisLabel= list(fontSize= 16),
-      splitLine= list(show= T)
-   ), 
-   series= append(ss, s2),
-   legend= list(show= T), 
-   tooltip= list(show= T, enterable=F, confine=T, formatter='{c} becomes {a}')
+                      formatter= '{yyyy}')
+  ),
+	yAxis= list(type= 'category', name='', axisLabel= list(fontSize= 16),
+	    splitLine= list( show= T, lineStyle= list(color= '#ccc', width= 1))
+	), 
+	series= append(ss, list(s2)) |> append(s3),
+  legend= list(show= T, data=c('President','Vice','Events')),
+  tooltip= list(show= T),
+  dataZoom= list(start=0, end=60, filterMode= 'none')
 ) |> ec.theme('dark-mushroom')
 p$x$on <- list(list(
-   event='mousemove', query='series.line',
-   handler=htmlwidgets::JS("function (event) { 
-      this.dispatchAction({ type: 'showTip', 
-         seriesIndex: event.seriesIndex, dataIndex:0 });
-   }")        
+  event='mousemove', query='series.line',
+  handler=htmlwidgets::JS("function (event) { 
+    this.dispatchAction({ type: 'showTip', 
+       seriesIndex: event.seriesIndex, dataIndex:0 });
+  }")        
 ))
-p
+p 
 ```
 
 </details>

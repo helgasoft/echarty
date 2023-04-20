@@ -68,6 +68,7 @@ User can show/hide 3D regression planes(s) built from selected 3D points.
    src="img/quake.mp4" type="video/mp4" muted="muted" controls>
    Your browser does not support the video tag.
 </video>
+
 See also 3D regression planes in [iris dataset](img/iris3d.mp4).
 <br />
 <br />
