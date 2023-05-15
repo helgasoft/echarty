@@ -1348,38 +1348,25 @@ p
 ```
 
 </details>
-<br />
+<br /><br /><br />
 
-## Pies on map
-Position pies on a map, supported by ECharts 5.4.0+<br />
-<img src='img/cb-eubaro.png' alt='pies demo' />
-<details><summary>🔻 Details</summary>
-🗺️ The <a href='https://europa.eu/eurobarometer'>Eurobarometer</a> public opinion survey Summer 2022<br>
-180 questions with multiple answers mapped by country<br>
-An interactive R/Shiny/echarty app.  <a href='img/eubaro.mp4'>🔗 Video clip</a> (&lt;1min) &nbsp; 
-<a href='https://helgalabs.shinyapps.io/eurobarometer'><span style="color:magenta"><span style="color:magenta">🔗 Live Demo</span></a><br>
-Part of the <a href='https://helgasoft.github.io/echarty/extras.html' target=_blank>extras collection</a>.
-</details>
+<a id='extras'></a>
+
+# Visit also the [extras collection](extras.md)</a>
+## Survey mapping
+Eurobarometer public opinion survey<br />
+<img src='img/cb-eubaro.png' alt='pies demo' width=300 />
 <br />
 
 ## Violin chart
 Rich customization including jittered data points and mean<br />
-<img src='img/violin.png' alt='violin' />
-<details><summary>🔻 Details</summary>
-Part of the <a href='https://helgasoft.github.io/echarty/extras.html' target=_blank>extras collection</a>.
-</details>
+<img src='img/violin.png' alt='violin' width=300 />
 <br />
 
 ## 3D regression planes
-
 Plot fitted regression planes on groups of scatter points
-<video id="3Dreg" preload="auto" 
-   src="img/iris3d.mp4" type="video/mp4" muted="muted" controls>
-   Your browser does not support the video tag.
-</video>
-<details><summary>🔻 Details</summary>
-Part of the <a href='https://helgasoft.github.io/echarty/extras.html' target=_blank>extras collection</a>.
-</details>
+<img src='img/reg.planes.png' alt='planes' width=300 />
 <br />
 
+## ... and more
 <a id="bottom">

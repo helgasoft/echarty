@@ -1,11 +1,10 @@
 # echarty extras 💲
 
-Utilities and small applications built on top of open-source library _echarty_. They accomplish very specific and uncommon tasks.
+Utilities and small applications built with open-source library _echarty_. They accomplish very specific and uncommon tasks.
 Considerable amount of time was spent in design, development and testing of these modules.  
 <br>
 They are fairly priced at **$30 each** and payable through [**Paypal**](https://www.paypal.com/paypalme/helgasoft).  
-Please include module description when ordering under "_What is this payment for ?_". Delivery and support by email.  
-Future versions will be sent on demand (not automatically).  
+Please include module description when ordering under "_What is this payment for ?_". Delivery and support by email. Future versions could be sent on demand.  
 
 <div style="display:none;">  The entire (all as a) bundle for $200.  
 (not?) included in the price and code will be sent on demand.  
@@ -17,7 +16,7 @@ A knowledgable soft eng could..   singular
 
 ## Violin chart  
 <br />  
-Violin charts are similar to boxplot, but show the full distribution of the data. Supports single or grouped datasets.   
+Violin charts are similar to boxplot, but show the full distribution of the data. Supports single or grouped datasets. Rich customization including jittered data points and mean.  
 <details><summary>🔻 Parameters</summary>  
 
 - <strong>df</strong> data.frame with X,Y values (required)
@@ -46,7 +45,7 @@ Violin charts are similar to boxplot, but show the full distribution of the data
 <br />
 
 Enter keyboard mode with _click_, exit with _Tab_  
-Keys with functions implemented, more possible:  
+Keys with functions implemented, many more possible:  
 - arrowLeft, arrowRight = highlight data points to left and right
 - pageUp, pageDown = switch series
 - +, - =  zoom chart in and out
@@ -88,19 +87,36 @@ Morphing is achieved between two top levels, and between top and lower levels.
 <br />
 <br />
 
-
 ## Eurobarometer Survey
 <br />
 
-Eurobarometer public opinion [survey Summer 2022](https://europa.eu/eurobarometer/surveys/detail/2693).  
+🗺️ Eurobarometer public opinion [survey Summer 2022](https://europa.eu/eurobarometer/surveys/detail/2693).  
 180 questions with multiple answers mapped by country, 26K participants from 27 countries.
 An interactive R/Shiny/echarty app.  
 [**Live Demo**](https://helgalabs.shinyapps.io/eurobarometer)
-
-
+<a href='https://helgalabs.shinyapps.io/eurobarometer' target=_blank> <img src='img/cb-eubaro.png' alt='data models' /></a>
 <br><br>
-<!--
 
+<a id='ternary'></a>
+## Ternary Plots
+<br />
+
+Interactive - data groups with show/hide, zoom, click, customizable tooltips.  
+<details><summary>🔻 3D rotation allows checking for data consistency</summary>  
+
+The plot depicts the ratios of the three variables as positions in an equilateral triangle. In the example, the three values are sector percentages of a country's GDP. Their sum should be 100%, but some data may be inaccurate. So by rotating the chart in 3D we could easily find those incomplete data points, for example Belize: 9.7% +13.8% +62.2% = 85.7%
+</details>  
+
+Demo [example data](https://gist.githubusercontent.com/toja/811f0ddc765c59c26de544fd0e0ba46f/raw/eef11e930f6c05700faca47711b173f795a84181/sectors.csv) is for world countries GDP by economic sectors.
+<br />
+<video id="ternary" preload="auto" 
+   src="img/ternary.mp4" type="video/mp4" muted="muted" controls>
+   Your browser does not support the video tag.
+</video>
+<br><br>
+
+
+<!--
 ## Panoramas and maps  
 
 Leaflet map with POI markers. Clicking on a marker switches to an interactive custom 360° panorama of the location. Each pano could also have POI as clickable hyperlinks inside.  

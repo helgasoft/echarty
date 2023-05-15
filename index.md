@@ -55,7 +55,7 @@ Or browse some interesting <a href='https://gist.github.com/helgasoft'>code gist
 <br/>
 
 ## Extras
-Specific utilities and applications [💲 code for sale](extras.html).
+Specific utilities and applications [💲 code for sale](extras.md).
 <br/>
 <br/>
 ## Open Source Acknowledgements
@@ -64,7 +64,5 @@ Specific utilities and applications [💲 code for sale](extras.html).
  and cheers for [htmlwidgets](https://github.com/ramnathv/htmlwidgets/) and [ECharts](https://echarts.apache.org/en/) to make it all possible.  
  <br/>
 <br/>
-<!--
-<img src='https://www.r-pkg.org/badges/version/echarty' alt='CRAN' />  <img src='https://cranlogs.r-pkg.org/badges/last-day/echarty' alt='counter'/>
--->
+
 
