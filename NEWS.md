@@ -1,6 +1,10 @@
 # history of package _echarty_
 
-## v.1.5.3 latest, in development
+## v.1.5.3.1  latest, in development
+
+- _ec.util_ command 'layout' updated 
+
+## v.1.5.3
 
 - upgrade ECharts to v.5.4.2
 - _ec.util_ support for map GeoJSON objects, see test-renderers.R
@@ -27,7 +31,7 @@
 - set _visualMap_ default min/max values from df
 - _echarty.js_: add built-in 'mouseout' event
 
-## v.1.5.0 on CRAN
+## v.1.5.0  on CRAN
 
 - upgrade ECharts to v.5.4.0
 - built with R v.4.2.2

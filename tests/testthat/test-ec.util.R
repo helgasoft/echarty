@@ -74,8 +74,10 @@ test_that("shapefile POINTS from ZIP", {
 test_that("ec.util layout", {
   p <- lapply(list('dark','macarons','gray','jazz','dark-mushroom'),
               function(x) cars |> ec.init() |> ec.theme(x) ) |>
-    ec.util(cmd='layout', cols= 2, title= 'my layout')
-  expect_equal(p$children[[3]]$children[[1]]$children[[2]]$children[[1]]$x$theme, 'macarons')
+    ec.util(cmd='layout', cols= 4, title= 'my layout')
+  expect_equal(p$children[[2]]$children[[2]]$children[[2]]$children[[1]]$x$theme, 'macarons')
+  # test for 2nd row
+  expect_equal(p$children[[2]]$children[[4]]$children[[1]]$children[[1]]$x$theme, 'dark-mushroom')
 })
 
 test_that("tabset with pairs", {

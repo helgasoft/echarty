@@ -45,13 +45,12 @@ tabset, table layout, support for GIS shapefiles through library sf
 \verb{   }optional parameters: \cr
 \verb{     }ppfill - fill color like '#F00', OR NULL for no-fill, for all Points and Polygons\cr
 \verb{     }nid - feature property for item name used in tooltips\cr
-\verb{   }optional geoJSON \emph{feature properties}: color, ppfill, lwidth, ldash, radius(for points)
+\verb{   }optional geoJSON \emph{feature properties}: color, ppfill, lwidth, ldash, radius(for points)\cr
 \strong{cmd = 'layout'} \cr
 \verb{   }multiple charts in table-like rows/columns format\cr
 \verb{   }... - List of charts\cr
 \verb{   }optional parameters: \cr
-\verb{     }title - Title for the set, rows= Number of rows, cols= Number of columns,\cr
-\verb{     }width - Width of columns (one of xs, md, lg)\cr
+\verb{     }title - Title for the set, rows= Number of rows, cols= Number of columns\cr
 \verb{   }returns a container \link[htmltools]{div} in rmarkdown, otherwise \link[htmltools]{browsable}.\cr
 \verb{   }For 3-4 charts one would use multiple series within a \href{https://echarts.apache.org/en/option.html#grid}{grid}. \cr
 \verb{   }For greater number of charts \emph{ec.util(cmd='layout')} comes in handy\cr

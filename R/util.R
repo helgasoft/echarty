@@ -35,13 +35,12 @@
 #' \verb{   }optional parameters: \cr
 #' \verb{     }ppfill - fill color like '#F00', OR NULL for no-fill, for all Points and Polygons\cr
 #' \verb{     }nid - feature property for item name used in tooltips\cr
-#' \verb{   }optional geoJSON _feature properties_: color, ppfill, lwidth, ldash, radius(for points)
+#' \verb{   }optional geoJSON _feature properties_: color, ppfill, lwidth, ldash, radius(for points)\cr
 #' **cmd = 'layout'** \cr
 #' \verb{   }multiple charts in table-like rows/columns format\cr
 #' \verb{   }... - List of charts\cr
 #' \verb{   }optional parameters: \cr
-#' \verb{     }title - Title for the set, rows= Number of rows, cols= Number of columns,\cr
-#' \verb{     }width - Width of columns (one of xs, md, lg)\cr
+#' \verb{     }title - Title for the set, rows= Number of rows, cols= Number of columns\cr
 #' \verb{   }returns a container \link[htmltools]{div} in rmarkdown, otherwise \link[htmltools]{browsable}.\cr
 #' \verb{   }For 3-4 charts one would use multiple series within a \href{https://echarts.apache.org/en/option.html#grid}{grid}. \cr
 #' \verb{   }For greater number of charts _ec.util(cmd='layout')_ comes in handy\cr
@@ -403,48 +402,32 @@ body { padding: 10px; }
     'layout'= {
       
       title <- NULL   # CRAN check fix
-      do.opties(c('rows','cols','width','title'))
+      do.opties(c('rows','cols','title'))
       lplots <- length(opts[[1]])
       if (is.null(rows) & !is.null(cols)) rows <- ceiling(lplots/cols)
       if (!is.null(rows) & is.null(cols)) cols <- ceiling(lplots/rows)
       if (is.null(rows) & is.null(cols)) { rows <- lplots; cols <- 1 }
-      w <- "-xs"
-      if (!is.null(width)) w <- paste0('-',width)
-      if (!isTRUE(getOption("knitr.in.progress"))) w <- ""
       x <- 0
       tg <- htmltools::tagList()
       for (i in 1:rows) {
-        r <- htmltools::div(class = "row")
+        r <- htmltools::div(style='display:flex;')
         for (j in 1:cols) {
           x <- x + 1
-          cl <- paste0("col", w, "-", 12/cols)
+          sty <- paste0('width:', round(100/cols),'vw')
+          c <- htmltools::div(style= sty)
           if (x <= lplots)
-            c <- htmltools::div(class = cl, opts[[1]][[x]])
-          else 
-            c <- htmltools::div(class = cl)
+            c <- htmltools::div(style= sty, opts[[1]][[x]])
           r <- htmltools::tagAppendChild(r, c)
         }
-        tg <- htmltools::tagAppendChild(tg, r)
+        tg <- htmltools::tagAppendChildren(tg, htmltools::br(), r)
       }
-      if (isTRUE(getOption("knitr.in.progress"))) {
-        if (!is.null(title))
-          out <- htmltools::div(title, tg)
-        else
-          out <- tg
-      }
-      else
-        out <- htmltools::browsable(
-          htmltools::div(
-            class = "container-fluid", 
-            htmltools::tags$head(
-              htmltools::tags$link(
-                rel = "stylesheet", 
-                href = "https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css"
-              )),
-            htmltools::div(class= 'row justify-content-center text-center', 
-                           htmltools::h3(title) ),
-            tg
-          ))
+  		out <- htmltools::browsable(
+  		  htmltools::div(
+  		 	  style= "width:100%",
+  		    htmltools::div(style= 'justify-content:center!important; text-align:center!important',
+    		                 htmltools::h3(title) ),
+  		  tg )
+  		)
     },
     
     'morph'= {
