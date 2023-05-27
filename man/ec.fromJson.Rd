@@ -9,7 +9,7 @@ ec.fromJson(txt, ...)
 \arguments{
 \item{txt}{JSON character string, url, or file, see \link[jsonlite]{fromJSON}}
 
-\item{...}{Any arguments to pass to internal \link{ec.init}}
+\item{...}{Any attributes to pass to internal \link{ec.init}}
 }
 \value{
 An \code{echarty} widget.

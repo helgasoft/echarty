@@ -393,6 +393,7 @@ ecfun = {
       dy: overflow ? -3 : 0
     }
   }
+  
 };
 
 if (HTMLWidgets.shinyMode) {

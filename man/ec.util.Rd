@@ -25,7 +25,7 @@ tabset, table layout, support for GIS shapefiles through library sf
 \verb{   }Coordinate system is \emph{leaflet}(default), \emph{geo} or \emph{cartesian3D} (for POINT(xyz))\cr
 \verb{   }Limitations:\cr
 \verb{     }polygons can have only their name in tooltip,  \cr
-\verb{     }assumes Geodetic CRS is WGS 84, use \link[sf]{st_transform} with \emph{crs=4326} to convert.\cr
+\verb{     }assumes Geodetic CRS is WGS 84, for conversion use \link[sf]{st_transform} with \emph{crs=4326}.\cr
 \verb{   }parameter \emph{df} - value from \link[sf]{st_read}\cr
 \verb{   }optional parameters: \cr
 \verb{     }cs - \emph{coordinateSystem} value\cr

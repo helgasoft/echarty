@@ -35,12 +35,12 @@ NULL
 #'  * set _value_ and _name_ for _map_ chart
 #'  
 #'   Attribute _coordinateSystem_ is not set by default and depends on chart _type_.\cr
-#'   Custom attribute _groupBy_, a _df_ column name, can create series groups inside each timeline step.
+#'   Custom attribute _groupBy_, a _df_ column name, can create series groups inside each timeline step.\cr
 #'   A grouped _df_ must be present, with group column providing the \href{https://echarts.apache.org/en/option.html#timeline.data}{timeline data}.
 #'   Auto-generated _timeline_ and _options_ will be preset for the chart.\cr
 #'   _tl.series_ cannot be used for hierarchical charts like graph,tree,treemap,sankey. Chart options/timeline have to be built directly, see \href{https://helgasoft.github.io/echarty/uc4.html}{example}.
-#' @param ... other arguments to pass to the widget. \cr
-#'   Custom echarty widget arguments include: \cr
+#' @param ... **...** are other attributes to pass to the widget. \cr
+#'   Custom echarty widget attributes include: \cr
 #'  * elementId - Id of the widget, default is NULL(auto-generated)
 #'  * load - name(s) of plugin(s) to load. A character vector or comma-delimited string. default NULL.
 #'  * ask - prompt user before downloading plugins when _load_ is present, FALSE by default
@@ -51,6 +51,8 @@ NULL
 #'  * renderer - 'canvas'(default) or 'svg'
 #'  * locale - 'EN'(default) or 'ZH'. Use predefined or custom \href{https://gist.github.com/helgasoft/0618c6537c45bfd9e86d3f9e1da497b8}{like so}.
 #'  * useDirtyRect - enable dirty rectangle rendering or not, FALSE by default, see \href{https://echarts.apache.org/en/api.html#echarts.init}{here}
+#'  * series.param - additional parameters for the preset series, one can also define the complete series with _series= list(list(...),...)_.
+
 #'
 #' @details  Command _ec.init_ creates a widget with \link[htmlwidgets]{createWidget}, then adds some ECharts features to it.\cr
 #'  When _ec.init_ is chained after a data.frame, a \href{https://echarts.apache.org/en/option.html#dataset}{dataset} is preset. \cr
@@ -60,7 +62,7 @@ NULL
 #'  Users can delete or overwrite any presets as needed. \cr
 #'  Numerical indexes for series,visualMap,etc. are R-counted (1,2...)\cr
 #'  
-#'  Built-in plugins: \cr 
+#'  **Built-in plugins**: \cr 
 #'  * leaflet - Leaflet maps with customizable tiles, see \href{https://github.com/gnijuohz/echarts-leaflet#readme}{source}\cr
 #'  * world - world map with country boundaries, see \href{https://github.com/apache/echarts/tree/master/test/data/map/js}{source} \cr
 #'  * lottie - support for \href{https://lottiefiles.com}{lotties} \cr
@@ -72,7 +74,7 @@ NULL
 #'  * wordcloud - cloud of words, see \href{https://github.com/ecomfe/echarts-wordcloud}{source} \cr
 #'  or install your own third-party plugins.\cr
 #'  
-#'  Crosstalk:\cr
+#'  **Crosstalk**:\cr
 #'  Parameter _df_ should be of type \link[crosstalk]{SharedData}, see \href{https://helgasoft.github.io/echarty/gallery.html#crosstalk-2d}{more info}.\cr
 #'  Optional parameter _xtKey_: unique ID column name of data frame _df_. Must be same as _key_ parameter used in _SharedData$new()_. If missing, a new column _XkeyX_ will be appended to df.\cr
 #'  Enabling _crosstalk_ will also generate an additional dataset called _Xtalk_ and bind the **first series** to it.\cr
@@ -110,11 +112,13 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter',
   locale <- if (is.null(opts$locale)) 'EN' else toupper(opts$locale)
   useDirtyRect <- if (is.null(opts$useDirtyRect)) FALSE else opts$useDirtyRect
   xtKey <- if (is.null(opts$xtKey)) 'XkeyX' else opts$xtKey
-  # remove the above arguments since they are not valid ECharts options
+  # remove the above attributes since they are not valid ECharts options
   opts$ask <- opts$js <- opts$renderer <- opts$locale <- opts$useDirtyRect <- opts$elementId <- opts$xtKey <- NULL
   noAxis <- c('radar','parallel','map','gauge','pie','funnel','graph', 'sunburst','tree','treemap','sankey')
   
   doType <- function(idx, axx) {
+    # get one axis type & name
+    # idx= column index, axx= axis
     .ty <- .nm <- NULL
     if (!is.null(names(lengths(axx)))) {  # otherwise multiple axes exist
       if (!is.null(axx) && !is.null(attributes(axx))) {
@@ -142,7 +146,21 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter',
         }
       }
     }
-    return(list(t=.ty, n=.nm))
+    if (!is.null(.ty)) axx$type <- .ty
+    if (!is.null(.nm)) axx$name <- .nm
+    return(axx)
+  }
+  axNamesEnc <- function(series) {
+    # set axes names from encode
+    tmp <- list(x=NULL, y=NULL)
+    lapply(series, \(ss) {
+      if (!is.null(ss$encode)) {
+        if (is.character(ss$encode$x)) tmp$x <<- c(tmp$x, ss$encode$x[1])
+        if (is.character(ss$encode$y)) tmp$y <<- c(tmp$y, ss$encode$y[1])
+      }
+    })
+    if (!is.null(tmp$x)) x$opts$xAxis$name <<- trimws(paste(unique(tmp$x), collapse=','))
+    if (!is.null(tmp$y)) x$opts$yAxis$name <<- trimws(paste(unique(tmp$y), collapse=','))
   }
   xyNamesCS <- function(ser) {
     # no coordinateSystem = pie,funnel,gauge,graph, sunburst/tree/treemap/sankey
@@ -262,7 +280,7 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter',
           pos <- c(pos, which(colnames(df)==tl.series$groupBy))
         allp <- rep(TRUE, length(colnames(df)))
         allp <- replace(allp, pos, FALSE)
-        colX <- which(allp==TRUE)[1]   # first two=TRUE are X,Y
+        colX <- which(allp==TRUE)[1]   # first two==TRUE are X,Y
         colY <- which(allp==TRUE)[2]
         if (is.na(colY))
           stop('ec.init: df must have at least 3 columns when grouping by one', call.= FALSE)
@@ -280,7 +298,7 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter',
               ss$encode[xtem] <- colX   # R count
               ss$encode[ytem] <- colY 
           }
-          # else dont overwrite user's encode
+          # else don't overwrite user's encode
           ss
         })
       }
@@ -289,31 +307,12 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter',
   
   if (preset) {
       
-    # set XY axes type & name
-    tmp <- doType(colX, x$opts$xAxis)
-    if (!is.null(tmp$t)) x$opts$xAxis$type <- tmp$t
-    if (!is.null(tmp$n)) x$opts$xAxis$name <- tmp$n
-    tmp <- doType(colY, x$opts$yAxis)
-    if (!is.null(tmp$t)) x$opts$yAxis$type <- tmp$t
-    if (!is.null(tmp$n)) x$opts$yAxis$name <- tmp$n
+    # set X,Y axes type & name
+    x$opts$xAxis <- doType(colX, x$opts$xAxis)
+    x$opts$yAxis <- doType(colY, x$opts$yAxis)
+    axNamesEnc(x$opts$series)
+    axNamesEnc(list(tl.series))
       
-    if (!is.null(x$opts$series)) {
-      if (!is.null(x$opts$series[[1]]$type)) {
-        if (x$opts$series[[1]]$type == 'parallel') {
-          if (is.null(x$opts$parallelAxis))
-            x$opts$parallelAxis <- ec.paxis(df)
-      }}
-      # set axes names from encode
-      tmp <- list(x=NULL, y=NULL)
-      lapply(x$opts$series, \(ss) {
-        if (!is.null(ss$encode)) {
-          if (is.character(ss$encode$x)) tmp$x <<- c(tmp$x, ss$encode$x[1])
-          if (is.character(ss$encode$y)) tmp$y <<- c(tmp$y, ss$encode$y[1])
-        }
-      })
-      if (!is.null(tmp$x)) x$opts$xAxis$name <- trimws(paste(unique(tmp$x), collapse=','))
-      if (!is.null(tmp$y)) x$opts$yAxis$name <- trimws(paste(unique(tmp$y), collapse=','))
-    }
     if (!is.null(x$opts$series.param)) {
       # merge custom params to auto-generated series
       # this is a shortcut to avoid using ec.upd later
@@ -321,6 +320,14 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter',
         ss <- .merlis(ss, x$opts$series.param)
         ss
       })
+    }
+    if (!is.null(x$opts$series)) {
+      if (!is.null(x$opts$series[[1]]$type)) {
+        if (x$opts$series[[1]]$type == 'parallel') {
+          if (is.null(x$opts$parallelAxis))
+            x$opts$parallelAxis <- ec.paxis(df)
+        }
+      }
     }
   }
   if (!is.null(x$opts$series.param)) x$opts$series.param <- NULL
@@ -1034,7 +1041,7 @@ ecs.exec <- function(proxy, cmd='p_merge') {
 #' @param df A data.frame, regular or grouped
 #' @param minmax Boolean to add max/min limits or not, default TRUE
 #' @param cols A string vector with columns names in desired order
-#' @param ... Additional arguments for \href{https://echarts.apache.org/en/option.html#parallelAxis}{parallelAxis}.
+#' @param ... Additional attributes for \href{https://echarts.apache.org/en/option.html#parallelAxis}{parallelAxis}.
 #' @return A list, see format in \href{https://echarts.apache.org/en/option.html#parallelAxis}{parallelAxis}.
 #' @examples
 #' iris |> dplyr::group_by(Species) |> ec.init(ctype='parallel')
@@ -1126,7 +1133,7 @@ ec.theme <- function (wt, name, code= NULL)
 #' @param wt An \code{echarty} widget as returned by [ec.init]
 #' @param target NULL(default) or 'data' to show info about chart's embedded data.
 #' @param json Boolean whether to return a JSON, or a \code{list}, default TRUE
-#' @param ... Additional arguments to pass to \link[jsonlite]{toJSON}
+#' @param ... Additional attributes to pass to \link[jsonlite]{toJSON}
 #' @return A JSON string if \code{json} is \code{TRUE} and
 #'  a \code{list} otherwise.
 #'
@@ -1190,7 +1197,7 @@ ec.inspect <- function(wt, target=NULL, json=TRUE, ...) {
 #' Convert JSON string to chart
 #' 
 #' @param txt JSON character string, url, or file, see \link[jsonlite]{fromJSON}
-#' @param ... Any arguments to pass to internal [ec.init]
+#' @param ... Any attributes to pass to internal [ec.init]
 #' @return An \code{echarty} widget.
 #' 
 #' @details \code{txt} should contain the full list of options required to build a chart.

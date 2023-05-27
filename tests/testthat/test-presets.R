@@ -57,21 +57,23 @@ test_that("ec.init presets for timeline", {
       ec.init(tl.series = list(type='bar', encode=list(x=x_var, y=bar_var)))
     bt
   }
-  p <- barTL(dftl, timeline_var= "year", x_var= "quarter", bar_var= "value")
-  expect_equal(length(p$x$opts$dataset[[1]]$source), 17)
-  expect_equal(length(p$x$opts$dataset), 5)
-  expect_equal(length(p$x$opts$options), 4)
-  expect_equal(p$x$opts$options[[4]]$title$text, '2021')
+  p <- barTL(dftl, timeline_var= "year", bar_var= "quarter", x_var= "value")
+  o <- p$x$opts
+  expect_equal(length(o$dataset[[1]]$source), 17)
+  expect_equal(length(o$dataset), 5)
+  expect_equal(length(o$options), 4)
+  expect_equal(o$options[[4]]$title$text, '2021')
+  expect_equal(o$yAxis$name, 'quarter')
 })
 
 test_that("ec.init presets for timeline groupBy", {
   set.seed(2022)
   dat <- data.frame(
+    x1 = rep(2020:2023, each = 4),
+    x2 = rep(c("A", "A", "B", "B"), 4),
     x3 = runif(16),
     x4 = runif(16),
-    x5 = abs(runif(16)),
-    x1 = rep(2020:2023, each = 4),
-    x2 = rep(c("A", "A", "B", "B"), 4)
+    x5 = abs(runif(16))
   ) 
   p <- dat |> group_by(x1) |> ec.init(
     tl.series= list(encode= list(x= 'x3', y= 'x5'), 
@@ -81,6 +83,7 @@ test_that("ec.init presets for timeline groupBy", {
   p$x$opts$legend <- list(show=TRUE)
   expect_equal(p$x$opts$options[[4]]$series[[1]]$type, 'scatter')
   expect_equal(p$x$opts$options[[4]]$series[[1]]$encode$y, 'x5')
+  expect_equal(p$x$opts$yAxis$name, 'x5')
 })
 
 test_that("presets for parallel chart", {
@@ -154,3 +157,11 @@ test_that("presets for visualMap", {
   expect_equal(p$x$opts$visualMap$dimension, 1)
   expect_equal(round(p$x$opts$visualMap$min,2), 8.66)
 })
+
+test_that('axis names from preset encode', {
+  p <- cars |> mutate(group = sample( c(1,2), 50, replace = TRUE)) |> 
+    relocate(group) |> group_by(group) |> ec.init()
+  expect_equal(p$x$opts$xAxis$name, 'speed')
+  expect_equal(p$x$opts$yAxis$name, 'dist')
+})
+

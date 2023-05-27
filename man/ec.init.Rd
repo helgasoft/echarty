@@ -37,7 +37,7 @@ The only required attribute is \href{https://echarts.apache.org/en/option.html#s
 }
 
 Attribute \emph{coordinateSystem} is not set by default and depends on chart \emph{type}.\cr
-Custom attribute \emph{groupBy}, a \emph{df} column name, can create series groups inside each timeline step.
+Custom attribute \emph{groupBy}, a \emph{df} column name, can create series groups inside each timeline step.\cr
 A grouped \emph{df} must be present, with group column providing the \href{https://echarts.apache.org/en/option.html#timeline.data}{timeline data}.
 Auto-generated \emph{timeline} and \emph{options} will be preset for the chart.\cr
 \emph{tl.series} cannot be used for hierarchical charts like graph,tree,treemap,sankey. Chart options/timeline have to be built directly, see \href{https://helgasoft.github.io/echarty/uc4.html}{example}.}
@@ -46,8 +46,8 @@ Auto-generated \emph{timeline} and \emph{options} will be preset for the chart.\
 \code{'500px'}, \code{'auto'}) or a number, which will be coerced to a
 string and have \code{'px'} appended.}
 
-\item{...}{other arguments to pass to the widget. \cr
-Custom echarty widget arguments include: \cr
+\item{...}{\strong{...} are other attributes to pass to the widget. \cr
+Custom echarty widget attributes include: \cr
 \itemize{
 \item elementId - Id of the widget, default is NULL(auto-generated)
 \item load - name(s) of plugin(s) to load. A character vector or comma-delimited string. default NULL.
@@ -59,6 +59,7 @@ Third is evaluated with exposed \emph{chart} object after \emph{opts} have been 
 \item renderer - 'canvas'(default) or 'svg'
 \item locale - 'EN'(default) or 'ZH'. Use predefined or custom \href{https://gist.github.com/helgasoft/0618c6537c45bfd9e86d3f9e1da497b8}{like so}.
 \item useDirtyRect - enable dirty rectangle rendering or not, FALSE by default, see \href{https://echarts.apache.org/en/api.html#echarts.init}{here}
+\item series.param - additional parameters for the preset series, one can also define the complete series with \emph{series= list(list(...),...)}.
 }}
 }
 \value{
@@ -76,7 +77,7 @@ Plugins 'leaflet' and 'world' preset zoom=6 and center to the mean of all coordi
 Users can delete or overwrite any presets as needed. \cr
 Numerical indexes for series,visualMap,etc. are R-counted (1,2...)\cr
 
-Built-in plugins: \cr
+\strong{Built-in plugins}: \cr
 \itemize{
 \item leaflet - Leaflet maps with customizable tiles, see \href{https://github.com/gnijuohz/echarts-leaflet#readme}{source}\cr
 \item world - world map with country boundaries, see \href{https://github.com/apache/echarts/tree/master/test/data/map/js}{source} \cr
@@ -90,7 +91,7 @@ Plugins with one-time installation: \cr
 or install your own third-party plugins.\cr
 }
 
-Crosstalk:\cr
+\strong{Crosstalk}:\cr
 Parameter \emph{df} should be of type \link[crosstalk]{SharedData}, see \href{https://helgasoft.github.io/echarty/gallery.html#crosstalk-2d}{more info}.\cr
 Optional parameter \emph{xtKey}: unique ID column name of data frame \emph{df}. Must be same as \emph{key} parameter used in \emph{SharedData$new()}. If missing, a new column \emph{XkeyX} will be appended to df.\cr
 Enabling \emph{crosstalk} will also generate an additional dataset called \emph{Xtalk} and bind the \strong{first series} to it.\cr

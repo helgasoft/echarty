@@ -13,7 +13,7 @@ ec.inspect(wt, target = NULL, json = TRUE, ...)
 
 \item{json}{Boolean whether to return a JSON, or a \code{list}, default TRUE}
 
-\item{...}{Additional arguments to pass to \link[jsonlite]{toJSON}}
+\item{...}{Additional attributes to pass to \link[jsonlite]{toJSON}}
 }
 \value{
 A JSON string if \code{json} is \code{TRUE} and

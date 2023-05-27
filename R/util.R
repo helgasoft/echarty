@@ -15,7 +15,7 @@
 #' \verb{   }Coordinate system is _leaflet_(default), _geo_ or _cartesian3D_ (for POINT(xyz))\cr
 #' \verb{   }Limitations:\cr 
 #' \verb{     }polygons can have only their name in tooltip,  \cr
-#' \verb{     }assumes Geodetic CRS is WGS 84, use \link[sf]{st_transform} with _crs=4326_ to convert.\cr
+#' \verb{     }assumes Geodetic CRS is WGS 84, for conversion use \link[sf]{st_transform} with _crs=4326_.\cr
 #' \verb{   }parameter _df_ - value from \link[sf]{st_read}\cr
 #' \verb{   }optional parameters: \cr
 #' \verb{     }cs - _coordinateSystem_ value\cr
@@ -911,8 +911,8 @@ if (vv.length > 0)
   }); ")  # multi-series 1.2, 3.1
     }  # col.indexes
     
-    if (scale >0) ret <- paste(ret,"vv= vv.map(e => isNaN(e) ? e : e*",scale,");")
-    if (scale==0) ret <- paste(ret,"vv= vv.map(e => isNaN(e) ? e : Math.round(e));")
+    if (scale >0) ret <- paste(ret,"vv= vv.map(e => isNaN(e) | !e ? e : e*",scale,");")
+    if (scale==0) ret <- paste(ret,"vv= vv.map(e => isNaN(e) | !e ? e : Math.round(e));")
     ret <- paste(ret, "let c = sprintf(`",col,"`, vv); return c; ")
   } # col is string
   else {      # col is solitary numeric

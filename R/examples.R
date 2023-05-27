@@ -122,21 +122,22 @@
 #' 
 #' #------ registerMap JSON
 #' # registerMap supports also maps in SVG format, see website gallery
+#' if (interactive()) {
 #' json <- jsonlite::read_json("https://echarts.apache.org/examples/data/asset/geo/USA.json")
 #' dusa <- USArrests
 #' dusa$states <- row.names(dusa)
 #' p <- ec.init(preset= FALSE,
 #'    series= list(list(type= 'map', map= 'USA', roam= TRUE, zoom= 3, left= -100, top= -30,
-#'                      data= lapply(ec.data(dusa, 'names'), 
-#'                        function(x) list(name=x$states, value=x$UrbanPop))
+#'        data= lapply(ec.data(dusa, 'names'), 
+#'            function(x) list(name=x$states, value=x$UrbanPop))
 #'    )),
 #'    visualMap= list(type='continuous', calculable=TRUE, 
-#'                    inRange= list(color = rainbow(8)), seriesIndex= 0,
-#'                    min= min(dusa$UrbanPop), max= max(dusa$UrbanPop))
+#'        inRange= list(color = rainbow(8)),
+#'        min= min(dusa$UrbanPop), max= max(dusa$UrbanPop))
 #' )
 #' p$x$registerMap <- list(list(mapName= 'USA', geoJSON= json))
 #' p
-#'
+#' }
 #'
 #' #------ locale
 #' mo <- seq.Date(Sys.Date() - 444, Sys.Date(), by= "month")

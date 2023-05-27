@@ -1,8 +1,9 @@
 # history of package _echarty_
 
-## v.1.5.3.1  latest, in development
+## v.1.5.4  latest, in development
 
 - _ec.util_ command 'layout' updated 
+- changes in axis names preset, _ec.clmn_ for empty values
 
 ## v.1.5.3
 

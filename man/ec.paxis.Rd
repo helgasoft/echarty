@@ -13,7 +13,7 @@ ec.paxis(df = NULL, minmax = TRUE, cols = NULL, ...)
 
 \item{cols}{A string vector with columns names in desired order}
 
-\item{...}{Additional arguments for \href{https://echarts.apache.org/en/option.html#parallelAxis}{parallelAxis}.}
+\item{...}{Additional attributes for \href{https://echarts.apache.org/en/option.html#parallelAxis}{parallelAxis}.}
 }
 \value{
 A list, see format in \href{https://echarts.apache.org/en/option.html#parallelAxis}{parallelAxis}.
