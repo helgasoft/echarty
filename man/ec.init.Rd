@@ -46,7 +46,7 @@ Auto-generated \emph{timeline} and \emph{options} will be preset for the chart.\
 \code{'500px'}, \code{'auto'}) or a number, which will be coerced to a
 string and have \code{'px'} appended.}
 
-\item{...}{\strong{...} are other attributes to pass to the widget. \cr
+\item{...}{List contains other attributes to pass to the widget. \cr
 Custom echarty widget attributes include: \cr
 \itemize{
 \item elementId - Id of the widget, default is NULL(auto-generated)

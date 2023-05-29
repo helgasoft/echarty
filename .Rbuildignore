@@ -22,3 +22,4 @@ README.md
 ^tic\.R$
 ^codecov\.yml$
 ^CRAN-SUBMISSION$
+^\.\.Rcheck$

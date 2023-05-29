@@ -644,7 +644,8 @@ ec.data <- function(df, format='dataset', header=FALSE, jitter=0, layout='h', ..
   if (format=='treePC') {
     # for sunburst,tree,treemap
     if (!all(colnames(df) == c('parents', 'children', 'value')) ||
-        !all(unlist(unname(lapply(as.list(df[,1:3]), class))) == c('character','character','numeric')) )
+        !all(unlist(unname(lapply(as.list(df[,1:3]), class))) == 
+             c('character','character','numeric')) )
       stop('ec.data: tree df columns need to be (parents, children, value) with value as numeric', call. = FALSE)
     
     tryCatch({
@@ -671,7 +672,8 @@ ec.data <- function(df, format='dataset', header=FALSE, jitter=0, layout='h', ..
       lest$children <- lapply(cldrn, \(x) {
         cnt <<- cnt+1; x$name <- nm[cnt]
         if (!is.null(tot)) x$pct <- round(x$value / tot * 100, 2)
-        if (!is.null(x$itemStyle)) x$itemStyle <- eval(parse(text=paste0('list(',x$itemStyle,')')))
+        if (!is.null(x$itemStyle)) 
+          x$itemStyle <- eval(parse(text=paste0('list(',x$itemStyle,')')))
         if (!is.null(x$children)) x <- chNames(x)
         x })
       if (!is.null(lest$children[[1]]$itemStyle))
@@ -725,9 +727,11 @@ ec.data <- function(df, format='dataset', header=FALSE, jitter=0, layout='h', ..
     if (!is.null(grpcol)) {   # grouped
       tmp <- df |> group_split()
       dataset <- lapply(tmp, \(dd) { 
-        dv <- dd |> arrange(.data[[colas]]) |> dplyr::group_by(.data[[colas]]) |> group_split()
+        dv <- dd |> arrange(.data[[colas]]) |> 
+              dplyr::group_by(.data[[colas]]) |> group_split()
         src <- lapply(dv, \(vv) {
-      	 if (nrow(vv)<5) stop(paste0('ec.data: insufficient data in group "',grpcol,'"'), call.= FALSE)
+      	 if (nrow(vv)<5) stop(paste0('ec.data: insufficient data in group "'
+      	                             ,grpcol,'"'), call.= FALSE)
       	 vv[[colb5]]
         })
         list(source= if (length(src[[1]])==1) list(src) else src)
@@ -744,7 +748,8 @@ ec.data <- function(df, format='dataset', header=FALSE, jitter=0, layout='h', ..
     } 
     else {  # non-grouped
     	
-      bdf <- ungroup(df) |> arrange(.data[[colas]]) |> dplyr::group_by(across({colas})) |> group_split()
+      bdf <- ungroup(df) |> arrange(.data[[colas]]) |> 
+             dplyr::group_by(across({colas})) |> group_split()
       dats <- lapply(bdf, \(x) {
         c(unique(pull(x,colas)), round(boxplot.stats( pull(x,colb5) )$stats, 4))
       })
@@ -766,7 +771,8 @@ ec.data <- function(df, format='dataset', header=FALSE, jitter=0, layout='h', ..
  	 }
     
     if (jitter>0) {
-  		tmp <- df |> arrange(.data[[colas]]) |> dplyr::group_by(.data[[colas]]) |> group_split()
+  		tmp <- df |> arrange(.data[[colas]]) |> 
+  		        dplyr::group_by(.data[[colas]]) |> group_split()
   		mcyl <- lapply(tmp, \(x) unname(unlist(x[[colb5]])))
   		names(mcyl) <- sort(unique(df[[colas]]))
   		i <- 0.5
@@ -834,15 +840,14 @@ ec.data <- function(df, format='dataset', header=FALSE, jitter=0, layout='h', ..
 #' 
 #' @examples
 #' tmp <- data.frame(Species = as.vector(unique(iris$Species)),
-#'                   emoji = c('\U0001F33B','\U0001F335','\U0001F33A'))
+#'                   emoji = c('A','B','C'))
 #' df <- iris |> dplyr::inner_join(tmp)      # add 6th column emoji
-#' df |> dplyr::group_by(Species) |> ec.init() |> ec.upd({
-#'   series <- lapply(series, \(s) append(s,
-#'       list(label= list(show= TRUE, formatter= ec.clmn('emoji')))) )
-#'   tooltip <- list(formatter=
+#' df |> dplyr::group_by(Species) |> ec.init(
+#'   series.param= list(label= list(show= TRUE, formatter= ec.clmn('emoji'))),
+#'   tooltip= list(formatter=
 #'     # ec.clmn with sprintf + multiple column indexes
 #'     ec.clmn('%M@ species <b>%@</b><br>s.len <b>%@</b><br>s.wid <b>%@</b>', 5,1,2))
-#' })
+#' )
 #' 
 #' @export
 ec.clmn <- function(col=NULL, ..., scale=1) {
@@ -920,10 +925,28 @@ if (vv.length > 0)
       warning('col is numeric, others are ignored', call.=FALSE)
     col <- as.numeric(col) - 1   # from R to JS counting
     if (col >= 0)
-      ret <- paste0('let c = String(x.value!=null ? x.value[',col,'] : x.data!=null ? x.data[',col,'] : x[',col,'] ); ',scl)
+      ret <- paste0('let c = String(x.value!=null ? x.value[',col,
+                    '] : x.data!=null ? x.data[',col,'] : x[',col,'] ); ',scl)
   }
   if (remnl)
     ret <- gsub('\n', ' ', ret, fixed=T)
   htmlwidgets::JS(paste0('function(x) {', ret, '}'))
 }
 
+
+#  ------------- Licence -----------------
+#'
+#' Original work Copyright 2023 Larry Helgason
+#' 
+#' Licensed under the Apache License, Version 2.0 (the "License");
+#' you may not use this file except in compliance with the License.
+#' You may obtain a copy of the License at
+#' 
+#' http://www.apache.org/licenses/LICENSE-2.0
+#' 
+#' Unless required by applicable law or agreed to in writing, software
+#' distributed under the License is distributed on an "AS IS" BASIS,
+#' WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#' See the License for the specific language governing permissions and
+#' limitations under the License.
+#' ---------------------------------------

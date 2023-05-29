@@ -39,7 +39,7 @@ NULL
 #'   A grouped _df_ must be present, with group column providing the \href{https://echarts.apache.org/en/option.html#timeline.data}{timeline data}.
 #'   Auto-generated _timeline_ and _options_ will be preset for the chart.\cr
 #'   _tl.series_ cannot be used for hierarchical charts like graph,tree,treemap,sankey. Chart options/timeline have to be built directly, see \href{https://helgasoft.github.io/echarty/uc4.html}{example}.
-#' @param ... **...** are other attributes to pass to the widget. \cr
+#' @param ...  List contains other attributes to pass to the widget. \cr
 #'   Custom echarty widget attributes include: \cr
 #'  * elementId - Id of the widget, default is NULL(auto-generated)
 #'  * load - name(s) of plugin(s) to load. A character vector or comma-delimited string. default NULL.
@@ -113,8 +113,10 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter',
   useDirtyRect <- if (is.null(opts$useDirtyRect)) FALSE else opts$useDirtyRect
   xtKey <- if (is.null(opts$xtKey)) 'XkeyX' else opts$xtKey
   # remove the above attributes since they are not valid ECharts options
-  opts$ask <- opts$js <- opts$renderer <- opts$locale <- opts$useDirtyRect <- opts$elementId <- opts$xtKey <- NULL
-  noAxis <- c('radar','parallel','map','gauge','pie','funnel','graph', 'sunburst','tree','treemap','sankey')
+  opts$ask <- opts$js <- opts$renderer <- opts$locale <- NULL
+  opts$useDirtyRect <- opts$elementId <- opts$xtKey <- NULL
+  noAxis <- c('radar','parallel','map','gauge','pie','funnel','graph', 
+              'sunburst','tree','treemap','sankey')
   
   doType <- function(idx, axx) {
     # get one axis type & name
@@ -408,11 +410,6 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter',
               ss$coordinateSystem <- 'leaflet'
             ss })
       }
-      
-#       if (!is.null(df)) {
-# 	      wt$x$opts$leaflet$center= c(mean(unlist(df[,1])), mean(unlist(df[,2])))
-# 	      wt$x$opts$leaflet$zoom <- 6
-#       }
     }
     
     dep <- htmltools::htmlDependency(
@@ -435,7 +432,6 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter',
     wt$dependencies <- append(wt$dependencies, list(dep))
   }
   if ('world' %in% load) {
-    #wt <- ec.plugjs(wt, 'https://cdn.jsdelivr.net/npm/echarts@4.9.0/map/js/world.js', ask)
     dep <- htmltools::htmlDependency(
       name = 'world', version = '1.0.0', 
       src = c(file = path), script= 'world.js')
@@ -461,6 +457,7 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter',
   }
   
   # Plugins implemented as dynamic load on-demand
+  cdn <- 'https://cdn.jsdelivr.net/npm/'
   if ('3D' %in% load) {
     if (preset) {       # replace 2D presets with 3D
       if (ctype != 'scatterGL') {  # scatterGL is 2D
@@ -478,19 +475,24 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter',
           function(s) {s$type= if (s$type=='scatter') 'scatter3D' else s$type; s })
       }
     }
-    wt <- ec.plugjs(wt, 'https://cdn.jsdelivr.net/npm/echarts-gl@2.0.9/dist/echarts-gl.min.js', ask)
+    wt <- ec.plugjs(wt, 
+      paste0(cdn,'echarts-gl@2.0.9/dist/echarts-gl.min.js'), ask)
   }
   if ('liquid' %in% load) 
-    wt <- ec.plugjs(wt, 'https://cdn.jsdelivr.net/npm/echarts-liquidfill@latest/dist/echarts-liquidfill.min.js', ask)
+    wt <- ec.plugjs(wt, 
+      paste0(cdn,'echarts-liquidfill@latest/dist/echarts-liquidfill.min.js'), ask)
   
   if ('gmodular' %in% load) 
-    wt <- ec.plugjs(wt, 'https://cdn.jsdelivr.net/npm/echarts-graph-modularity@latest/dist/echarts-graph-modularity.min.js', ask)
+    wt <- ec.plugjs(wt, 
+      paste0(cdn,'echarts-graph-modularity@latest/dist/echarts-graph-modularity.min.js'), ask)
   
   if ('wordcloud' %in% load) 
-    wt <- ec.plugjs(wt, 'https://cdn.jsdelivr.net/npm/echarts-wordcloud@2.0.0/dist/echarts-wordcloud.min.js', ask)
+    wt <- ec.plugjs(wt, 
+      paste0(cdn,'echarts-wordcloud@2.0.0/dist/echarts-wordcloud.min.js'), ask)
   
   # load unknown plugins
-  unk <- load[! load %in% c('leaflet','custom','world','lottie','3D','liquid','gmodular','wordcloud')]
+  unk <- load[! load %in% c('leaflet','custom','world','lottie',
+                            '3D','liquid','gmodular','wordcloud')]
   if (length(unk)>0) {
     for(pg in unk)
       wt <- ec.plugjs(wt, pg, ask)
@@ -682,22 +684,23 @@ ec.upd <- function(wt, ...) {
 #' @param df A data.frame with lower and upper numerical columns and first column with X coordinates.
 #' @param lower The column name of band's lower boundary (string).
 #' @param upper The column name of band's upper boundary (string).
-#' @param type Type of rendering  \cr \itemize{
+#' @param type Type of rendering
+#' \itemize{
 #'  \item 'stack' - by two \href{https://echarts.apache.org/en/option.html#series-line.stack}{stacked lines} (default)
 #'  \item 'polygon' - by drawing a polygon as polyline from upper/lower points. 
 #' }
 #' @param ... More parameters for \href{https://echarts.apache.org/en/option.html#series-line.type}{serie}
 #' @return A list of one serie when type='polygon', or two series when type='stack'
 #'
-#' @details \cr \itemize{
+#' @details
+#' \itemize{
 #'  \item type='stack': two _stacked_ lines are drawn, one with customizable areaStyle. The upper boundary coordinates are values added on top of the lower boundary coordinates.\cr
-#'      _xAxis_ is required to be of type 'category'.\cr
+#'      _xAxis_ is required to be of type 'category'.
 #'  \item type='polygon': coordinates of the two boundaries are chained into a polygon and displayed as one. Tooltips do not show upper band values.
-#' }\cr
+#' }
 #' Optional parameter _name_, if given, will show up in legend. Legend will merge all series with the same name into one item.
 #' 
 #' @examples 
-#' # if (interactive()) {
 #' df <- airquality |> dplyr::mutate(
 #'     lwr= round(Temp-Wind*2),
 #'     upr= round(Temp+Wind*2),
@@ -720,7 +723,6 @@ ec.upd <- function(wt, ...) {
 #'                   3.3, 1.2, 2.2)
 #'    )  # 3.3= upper_serie_index +.+ index_of_column_inside
 #' )
-#' # }
 #' 
 #' @importFrom stats na.omit
 #' @export
@@ -779,8 +781,9 @@ ecr.band <- function(df=NULL, lower=NULL, upper=NULL, type='stack', ...) {
 #' Custom series to display error-bars for scatter,bar or line series
 #' 
 #' @param wt A widget to add error bars to, see \link[htmlwidgets]{createWidget}
-#' @param df NULL(default) or data.frame with four or more columns ordered exactly x,y,low,high,(category),...\cr
-#' When NULL, data is taken from wt's dataset where order should be the same
+#' @param df NULL(default) or data.frame with four or more columns 
+#' ordered exactly x,y,low,high,(category),etc. When NULL, data is taken from 
+#' the wt dataset where order should be the same.
 #' @param hwidth Half-width of error bar in pixels, default is 6.
 #' @param ... More parameters for \href{https://echarts.apache.org/en/option.html#series-custom.type}{custom serie}
 #' @return A widget with error bars added if successful, otherwise the input wt
@@ -813,15 +816,15 @@ ecr.band <- function(df=NULL, lower=NULL, upper=NULL, type='stack', ...) {
 #'   
 #' # ----- riErrBarSimple ------
 #' df |> ec.init(load= 'custom',
-#'               title= list(text= "riErrBarSimple"),
-#'               legend= list(show=TRUE),
+#'               title= list(text= 'riErrBarSimple'),
+#'               legend= list(show= TRUE),
 #'               xAxis= list(scale= TRUE)
 #' ) |> ec.upd({
 #'   series <- append(series, list(
-#'     list(type= "custom", name= "error",
+#'     list(type= 'custom', name= 'error',
 #'          itemStyle= list(color= 'brown'),
 #'          data= ec.data(df |> select(Sepal.Length,lo,hi)),
-#'          renderItem= htmlwidgets::JS("riErrBarSimple")) ))
+#'          renderItem= htmlwidgets::JS('riErrBarSimple')) ))
 #' })
 #' 
 #' @export
@@ -865,7 +868,7 @@ ecr.ebars <- function(wt, df=NULL, hwidth=6, ...) {
   info <- c(lbg, lcg, as.character(info), hwidth)
   
   info <- paste0("sessionStorage.setItem('ErrorBar.oss','"
-                 ,jsonlite::toJSON(info),"'); riErrorBar;") #renderErrorBar2;")
+                 ,jsonlite::toJSON(info),"'); riErrorBar;") #renderErrorBar2;
   
   oneSerie <- function(name, df=NULL) {
     if (is.null(df))
@@ -882,7 +885,8 @@ ecr.ebars <- function(wt, df=NULL, hwidth=6, ...) {
       c$itemStyle$color <- 'black'
     }
     if (is.null(c$tooltip))  # shows up on non-grouped data
-      c$tooltip <- list(formatter= ec.clmn('<br>value <b>%@</b> <br>range <b>%@ to %@</b>', 2,3,4))
+      c$tooltip <- list(formatter= ec.clmn(
+        '<br>value <b>%@</b> <br>range <b>%@ to %@</b>', 2,3,4))
     c
   }
   
@@ -1160,7 +1164,8 @@ ec.inspect <- function(wt, target=NULL, json=TRUE, ...) {
         if (!is.null(d$source[1])) 
           paste('dataset:',paste(unlist(d$source[1]), collapse=', '),
                 'rows=',length(d$source))
-        else if (!is.null(d$transform[1])) gsub('"', "'", paste(d$transform, collapse=', '))
+        else if (!is.null(d$transform[1])) 
+          gsub('"', "'", paste(d$transform, collapse=', '))
       })
     
     i <- 0
@@ -1268,7 +1273,8 @@ ec.plugjs <- function(wt=NULL, source=NULL, ask=FALSE) {
   ffull <- paste0(path,'/',fname)
   if (!file.exists(ffull)) {
     if (ask) {
-      prompt <- paste0('One-time installation of plugin\n',fname,'\n Would you like to proceed ?')
+      prompt <- paste0('One-time installation of plugin\n',fname,
+                       '\n Would you like to proceed ?')
       ans <- FALSE
       if (interactive())
         ans <- askYesNo(prompt)
@@ -1299,13 +1305,6 @@ ec.plugjs <- function(wt=NULL, source=NULL, ask=FALSE) {
 # }
 
 .r2jsEncode <- function(ss) {
-  #if (is.null(ss$encode)) return(ss)
-  # if (!is.null(ss$encode$x) && is.numeric(ss$encode$x))
-  #   ss$encode$x <- ss$encode$x -1
-  # if (!is.null(ss$encode$y) && is.numeric(ss$encode$y))
-  #   ss$encode$y <- ss$encode$y -1
-  # if (!is.null(ss$encode$tooltip) && is.numeric(unlist(ss$encode$tooltip)))
-  #   ss$encode$tooltip <- unlist(ss$encode$tooltip) -1
   if (!is.null(ss$encode)) {
     for(i in 1:length(ss$encode)) {
       if (!is.numeric(ss$encode[[i]])) next

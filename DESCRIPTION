@@ -11,12 +11,14 @@ Imports:
   dplyr (>= 0.7.0),
   data.tree (>= 1.0.0)
 Suggests:
-  htmltools (>= 0.5.0),
-  shiny (>= 1.7.0),
-  jsonlite,
-  crosstalk,
-  testthat (>= 3.0.0),
-  sf
+    htmltools (>= 0.5.0),
+    shiny (>= 1.7.0),
+    jsonlite,
+    crosstalk,
+    testthat (>= 3.0.0),
+    sf,
+    knitr,
+    rmarkdown
 RoxygenNote: 7.2.3
 Roxygen: list(markdown = TRUE)
 License: Apache License (>= 2.0)

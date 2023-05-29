@@ -525,6 +525,7 @@
 #' }  # donttest
 #' @export 
 ec.examples <- function(){
-  cat("copy/paste code from ?ec.examples Help\n Or run all examples at once with example('ec.examples') to see in the Viewer.")
+  cat("copy/paste code from ?ec.examples Help\n 
+      Or run all examples at once with example('ec.examples') to see in Viewer.")
 }
 

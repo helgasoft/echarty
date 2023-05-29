@@ -13,7 +13,8 @@ ecr.band(df = NULL, lower = NULL, upper = NULL, type = "stack", ...)
 
 \item{upper}{The column name of band's upper boundary (string).}
 
-\item{type}{Type of rendering  \cr \itemize{
+\item{type}{Type of rendering
+\itemize{
 \item 'stack' - by two \href{https://echarts.apache.org/en/option.html#series-line.stack}{stacked lines} (default)
 \item 'polygon' - by drawing a polygon as polyline from upper/lower points.
 }}
@@ -27,15 +28,14 @@ A list of one serie when type='polygon', or two series when type='stack'
 A 'custom' serie with lower and upper boundaries
 }
 \details{
-\cr \itemize{
+\itemize{
 \item type='stack': two \emph{stacked} lines are drawn, one with customizable areaStyle. The upper boundary coordinates are values added on top of the lower boundary coordinates.\cr
-\emph{xAxis} is required to be of type 'category'.\cr
+\emph{xAxis} is required to be of type 'category'.
 \item type='polygon': coordinates of the two boundaries are chained into a polygon and displayed as one. Tooltips do not show upper band values.
-}\cr
+}
 Optional parameter \emph{name}, if given, will show up in legend. Legend will merge all series with the same name into one item.
 }
 \examples{
-# if (interactive()) {
 df <- airquality |> dplyr::mutate(
     lwr= round(Temp-Wind*2),
     upr= round(Temp+Wind*2),
@@ -58,6 +58,5 @@ df |> ec.init( load= 'custom',
                   3.3, 1.2, 2.2)
    )  # 3.3= upper_serie_index +.+ index_of_column_inside
 )
-# }
 
 }

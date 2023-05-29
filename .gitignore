@@ -2,6 +2,7 @@
 .Rhistory
 .RData
 .Rbuildignore
+..Rcheck
 inst/doc
 *.vs/
 .V8history

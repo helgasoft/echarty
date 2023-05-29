@@ -9,8 +9,9 @@ ecr.ebars(wt, df = NULL, hwidth = 6, ...)
 \arguments{
 \item{wt}{A widget to add error bars to, see \link[htmlwidgets]{createWidget}}
 
-\item{df}{NULL(default) or data.frame with four or more columns ordered exactly x,y,low,high,(category),...\cr
-When NULL, data is taken from wt's dataset where order should be the same}
+\item{df}{NULL(default) or data.frame with four or more columns
+ordered exactly x,y,low,high,(category),etc. When NULL, data is taken from
+the wt dataset where order should be the same.}
 
 \item{hwidth}{Half-width of error bar in pixels, default is 6.}
 
@@ -50,15 +51,15 @@ dfg |>
   
 # ----- riErrBarSimple ------
 df |> ec.init(load= 'custom',
-              title= list(text= "riErrBarSimple"),
-              legend= list(show=TRUE),
+              title= list(text= 'riErrBarSimple'),
+              legend= list(show= TRUE),
               xAxis= list(scale= TRUE)
 ) |> ec.upd({
   series <- append(series, list(
-    list(type= "custom", name= "error",
+    list(type= 'custom', name= 'error',
          itemStyle= list(color= 'brown'),
          data= ec.data(df |> select(Sepal.Length,lo,hi)),
-         renderItem= htmlwidgets::JS("riErrBarSimple")) ))
+         renderItem= htmlwidgets::JS('riErrBarSimple')) ))
 })
 
 }
