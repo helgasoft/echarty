@@ -1009,7 +1009,7 @@ setInterval( (p) => {
   opt = {series: {id: 'bycicle', data: [loca]} };
   chart.setOption(opt);
 }, 633)"
-tmp <- jsonlite::fromJSON('https://cdn.jsdelivr.net/gh/helgasoft/echarty@main/demo/bycic.geojson')
+tmp <- jsonlite::fromJSON('https://helgasoft.github.io/echarty/test/bycic.geojson')
 cntr <- c(2.329466, 48.859475); nid <- 'id'; zm <- 14
 
 library(echarty)
