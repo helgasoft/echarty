@@ -1,6 +1,7 @@
 #'-----------  Interactive charts with echarty and Shiny ------------
 #' run with command demo(eshiny)  #, package ='echarty')
-#' 
+#'
+if (interactive()) {
 tryCatch ({
   library(shiny)
   library(dplyr)
@@ -514,6 +515,7 @@ shinyApp(ui = ui, server = server)
 error  = function(e) cat(e$message)
 #warning= function(w) cat(w$message)
 )
+}
   
 
 

@@ -1,9 +1,16 @@
 # history of package _echarty_
 
-## v.1.5.4  latest, in development
+## v.1.5.4.01  latest, in development
+
+- upgrade ECharts to v.5.4.3, built with R v.4.3.1
+- breaking change in _ec.init_ signature
+- fixed small bugs and added tests
+
+## v.1.5.4  CRAN
 
 - _ec.util_ command 'layout' updated 
 - changes in axis names preset, _ec.clmn_ for empty values
+- problem running Shiny in R console: _No handler registered for mouseover_
 
 ## v.1.5.3
 

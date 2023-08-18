@@ -212,3 +212,51 @@ test_that("ec.inspect", {
   expect_match(p[2], "filter", fixed=TRUE)
 })
 
+test_that("ec.plugjs", {
+  p <- ec.init() |> ec.plugjs(
+    'https://raw.githubusercontent.com/apache/echarts/master/test/data/map/js/china-contour.js')
+  expect_equal(p$dependencies[[1]]$name, "china-contour.js")
+})
+
+test_that("Shiny commands", {
+  # coveralls.io and codecov cannot run tests on Shiny code, here is a workaround
+  
+  # ui <- fluidPage(column(width= 12, ecs.output('sash')), actionButton('adds', 'Upd') )
+  # tmp <- ui[[4]][[1]]$children[[1]]$children[[1]][[1]]$attribs
+  # expect_equal(tmp$id, 'sash')
+  # expect_match(tmp$class, '^echarty ')
+  tmp <- attributes(ecs.output('sash'))
+  p <- sapply(tmp$html_dependencies, c)
+  expect_equal(unlist(p[1,]), c("htmlwidgets","echarty","echarty-binding"))
+  
+  tmp <- ecs.render({ p<-cars |> ec.init() })
+  expect_match(as.character(attributes(tmp)$cacheHint$origUserFunc$body[2]), "p <- ec\\.init\\(cars\\)")
+  
+  p <- ecs.proxy('sash')
+  expect_equal(p$id, 'sash')
+  expect_equal(attributes(p)$class, 'ecsProxy')
+  
+  sendCustomMessage <- \(name,plist) {}
+  p$session <- globalenv()
+  p$x$opts$test <- 'sankey'
+  tmp <- ecs.exec(p)
+  expect_equal(tmp$x$opts$test, 'sankey')
+})
+
+test_that(".merlis", {
+  aa = list(list("type"= "map", "geoIndex"= 0))
+  p <- echarty:::.merlis(aa, list(val= 13))
+  expect_equal(p[[1]]$val, 13)
+  p <- echarty:::.merlis(aa[[1]], list(val= 13))
+  expect_equal(p$val, 13)
+})
+
+test_that('autoset axis type', {
+  df <- data.frame(
+    time = seq(from = as.POSIXct("2021-01-01 08:00:00"), to = as.POSIXct("2021-01-01 09:10:00"), by = "1 min"),
+    y = rnorm(71, mean = 100)
+  )
+  p <- df |> ec.init(yAxis= list(scale=T))
+  expect_equal(p$x$opts$xAxis$type, 'time')
+  expect_equal(p$x$opts$yAxis$type, 'value')
+})

@@ -93,7 +93,7 @@ HTMLWidgets.widget({
       //  tmp = chart.getModel()._optionManager._timelineOptions;
       //  if (tmp) {  }
       
-      if (HTMLWidgets.shinyMode) {    // shiny callbacks
+      if (window.HTMLWidgets.shinyMode) {    // shiny callbacks
 
         ecp = ":echartyParse";
         

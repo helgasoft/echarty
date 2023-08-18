@@ -4,5 +4,7 @@
 #' demo(js2r, package ='echarty')
 
 devAskNewPage(ask = FALSE)
-library(shiny)
-shiny::runGist('https://gist.github.com/helgasoft/819035e853d9889ba02cb69ecc587f34', quiet=TRUE)
+if (interactive()) {
+  library(shiny)
+  shiny::runGist('https://gist.github.com/helgasoft/819035e853d9889ba02cb69ecc587f34', quiet=TRUE)
+}

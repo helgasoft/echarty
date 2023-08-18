@@ -8,10 +8,11 @@ ec.init(
   df = NULL,
   preset = TRUE,
   ctype = "scatter",
+  ...,
+  series.param = NULL,
   tl.series = NULL,
   width = NULL,
-  height = NULL,
-  ...
+  height = NULL
 )
 }
 \arguments{
@@ -24,6 +25,24 @@ If grouping is on multiple columns, only the first one is used to determine sett
 \item{preset}{Build preset xAxis,yAxis,serie for 2D, or grid3D,xAxis3D,yAxis3D,zAxis3D for 3D, default TRUE (enable).}
 
 \item{ctype}{Chart type of series. Default is 'scatter'. Set to NULL to disable series preset.}
+
+\item{...}{List contains other attributes to pass to the widget. \cr
+Custom echarty widget attributes include: \cr
+\itemize{
+\item elementId - Id of the widget, default is NULL(auto-generated)
+\item load - name(s) of plugin(s) to load. A character vector or comma-delimited string. default NULL.
+\item ask - prompt user before downloading plugins when \emph{load} is present, FALSE by default
+\item js - single string or a vector with JavaScript expressions to evaluate.\cr
+First expression is evaluated before chart initialization. \cr
+Second is evaluated with exposed object \emph{opts}. \cr
+Third is evaluated with exposed \emph{chart} object after \emph{opts} have been set.
+\item renderer - 'canvas'(default) or 'svg'
+\item locale - 'EN'(default) or 'ZH'. Use predefined or custom \href{https://gist.github.com/helgasoft/0618c6537c45bfd9e86d3f9e1da497b8}{like so}.
+\item useDirtyRect - enable dirty rectangle rendering or not, FALSE by default, see \href{https://echarts.apache.org/en/api.html#echarts.init}{here}
+}}
+
+\item{series.param}{Additional parameters for preset series, or NULL(default).\cr
+One can also define the complete series with \emph{series= list(list(...),...)}.}
 
 \item{tl.series}{A list to build a timeline or NULL(default). The list defines options \href{https://echarts.apache.org/en/option.html#series}{series} and their attributes. \cr
 The only required attribute is \href{https://echarts.apache.org/en/option.html#series-line.encode}{encode}.\cr
@@ -45,22 +64,6 @@ Auto-generated \emph{timeline} and \emph{options} will be preset for the chart.\
 \item{width, height}{A valid CSS unit (like \code{'100\%'},
 \code{'500px'}, \code{'auto'}) or a number, which will be coerced to a
 string and have \code{'px'} appended.}
-
-\item{...}{List contains other attributes to pass to the widget. \cr
-Custom echarty widget attributes include: \cr
-\itemize{
-\item elementId - Id of the widget, default is NULL(auto-generated)
-\item load - name(s) of plugin(s) to load. A character vector or comma-delimited string. default NULL.
-\item ask - prompt user before downloading plugins when \emph{load} is present, FALSE by default
-\item js - single string or a vector with JavaScript expressions to evaluate.\cr
-First expression is evaluated before chart initialization. \cr
-Second is evaluated with exposed object \emph{opts}. \cr
-Third is evaluated with exposed \emph{chart} object after \emph{opts} have been set.
-\item renderer - 'canvas'(default) or 'svg'
-\item locale - 'EN'(default) or 'ZH'. Use predefined or custom \href{https://gist.github.com/helgasoft/0618c6537c45bfd9e86d3f9e1da497b8}{like so}.
-\item useDirtyRect - enable dirty rectangle rendering or not, FALSE by default, see \href{https://echarts.apache.org/en/api.html#echarts.init}{here}
-\item series.param - additional parameters for the preset series, one can also define the complete series with \emph{series= list(list(...),...)}.
-}}
 }
 \value{
 A widget to plot, or to save and expand with more features.
