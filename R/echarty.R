@@ -117,7 +117,7 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
   # remove the above attributes since they are not valid ECharts options
   opts$ask <- opts$js <- opts$renderer <- opts$locale <- NULL
   opts$useDirtyRect <- opts$elementId <- opts$xtKey <- NULL
-  noAxis <- c('radar','parallel','map','gauge','pie','funnel', #'graph', 
+  noAxis <- c('radar','parallel','map','gauge','pie','funnel','polar', #'graph', 
               'sunburst','tree','treemap','sankey')
   
   doType <- function(idx, axx) {
@@ -130,20 +130,21 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
         .nm <- axx$name
         if (is.null(.ty)) {
           if (!is.null(axx$data)) 
-            .ty <- 'category'  # always
+            .ty <- 'category'  # always when data
           else {
             clss <- unname(sapply(df, class))
-            how <- unlist(clss[idx])   # type from dataset.source
-            if (any(c('POSIXt', 'Date') %in% how))
-              .ty <- 'time'
-            else if (any(c('numeric', 'integer') %in% how))
-              .ty <- 'value'
-            else 
-              .ty <- 'category'
-            #  'character' = 'category',
-            #  'factor' = 'category',
-            #  'list' = 'category',
-          }
+            if (length(clss)>0) {
+              how <- unlist(clss[idx])   # type from dataset.source
+              if (any(c('POSIXt', 'Date') %in% how))
+               .ty <- 'time'
+              else if (any(c('numeric', 'integer') %in% how))
+               .ty <- 'value'
+              else 
+               .ty <- 'category'
+              #  'character' = 'category',
+              #  'factor' = 'category',
+              #  'list' = 'category',
+            }          }
         }
         if (is.null(axx$name)) {
           .nm <- colnames(df)[idx]
@@ -205,6 +206,14 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
     }
     else if (!is.null(ctype) && ctype %in% noAxis)
         opts$xAxis <- opts$yAxis <- NULL
+    if ('polar' %in% names(opts)) {
+      opts$xAxis <- opts$yAxis <- NULL
+      if (is.null(opts$polar$radius)) opts$polar$radius = 111
+      if (is.null(opts$radiusAxis)) opts$radiusAxis= list(type= 'category')
+      if (is.null(opts$angleAxis)) opts$angleAxis= list(doit=T)
+      if (!is.null(series.param)) 
+        series.param = .merlis(series.param, list(coordinateSystem= "polar"))
+    }
   }
 
   key <- group <- deps <- NULL; isCrosstalk <- FALSE
@@ -389,7 +398,7 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
         tmp <- sapply(wt$x$opts$series, \(x) {x$type} )
         if (!'map' %in% tmp)
           wt$x$opts$series <- append(wt$x$opts$series,
-                                     list(list(type='map', geoIndex=0)))
+                                      list(list(type='map', geoIndex=0)))
       }
       # WARN: map will duplicate if series have map='world' too
       if (!'geo' %in% names(wt$x$opts))
@@ -582,12 +591,12 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
       # multiple series for each Y, like y=c('col1', 'col3')
       series <- lapply(unname(unlist(tl.series$encode[ytem])), 
         \(sname) {
-          append(list(datasetIndex= di, name= sname), tl.series)
+          append(list(datasetIndex= di), tl.series)  # , name= sname
       })
-      series <- lapply(series, \(s) {
-        s$encode[ytem] <- s$name   # replace multiple col.names with one
-        s
-      })
+      # series <- lapply(series, \(s) {
+      #   s$encode[ytem] <- s$name   # replace multiple col.names with one
+      #   s
+      # })
       
       #tmp <- list(title= list(text= as.character(unique(gp[gvar]))),  
       tmp <- list(title= list(text= unique(unlist(lapply(gp[gvar], as.character)))),
@@ -599,7 +608,7 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
   #wt$x$opts$xAxis <- list(type='category')  # geo,leaf do not like
   wt$x$opts$series <- NULL
   wt$x$opts$legend <- NULL
-  wt$x$opts$options <- optl
+  wt$x$opts$options <- .merlis(optl, wt$x$opts$options)
   
   if (preset && !is.null(tl.series$groupBy)) {
     if (!(tl.series$groupBy %in% colnames(df)))
@@ -608,7 +617,7 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
     tgrp <- tl.series$groupBy
     # define additional filter transformations and option series based on preset ones
     dsf <- list()  # new filters
-    opts <- list()  # new options
+    opts <- list() 
     filterIdx <- 0
     for (i in 1:length(unlist(unname(lapply(unique(df[gvar]), as.list))))) {
       snames <- c()
@@ -635,11 +644,11 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
     }
     wt$x$opts$dataset <- append(wt$x$opts$dataset[1], dsf)   # keep source-dataset [1]
     wt$x$opts$options <- opts
-    wt$x$opts$legend <- list(show=TRUE)  # needed for sub-group
+    wt$x$opts$legend <- .merlis(wt$x$opts$legend, list(show=TRUE))  # needed for sub-group
   }
   
   steps <- lapply(optl, \(x) { paste(x$title$text, collapse=' ') })
-  wt$x$opts$timeline <- list(data=steps, axisType='category')
+  wt$x$opts$timeline <- .merlis(wt$x$opts$timeline, list(data=steps, axisType='category'))
   
   return(wt)
 }
@@ -740,7 +749,7 @@ ecr.band <- function(df=NULL, lower=NULL, upper=NULL, type='stack', ...) {
   if (type=='stack') {
     colr <- paste("new echarts.graphic.LinearGradient(0, 0, 0, 1, [", 
                   "{offset: 0, color: 'rgba(255, 0, 135)'},", 
-                  "{offset: 1, color: 'rgba(135, 0, 157)'}])")
+                  "{offset: 1, color: 'rgba(135, 0, 157)'}]);")
     defStyle <- list(opacity = 0.8, color = htmlwidgets::JS(colr))
     
     slow <- list(type='line', ...)
@@ -830,6 +839,84 @@ ecr.band <- function(df=NULL, lower=NULL, upper=NULL, type='stack', ...) {
 #' 
 #' @export
 ecr.ebars <- function(wt, df=NULL, hwidth=6, ...) {
+  # alternating bars with custom series doesn't work, first bars then customs
+  if (missing(wt)) stop('ecr.ebars: expecting widget', call.=FALSE)
+  if (!is.null(df) && !inherits(df, "data.frame")) 
+    stop('ecr.ebars: df must be a data.frame', call.=FALSE)
+#  if (!'renderers' %in% unlist(lapply(wt$dependencies, \(d) d$name)))
+  if (!'renderers' %in% unlist(sapply(wt$dependencies, `[`, "name")))
+    stop("use ec.init(load='custom') before ecr.ebars", call.=FALSE)
+
+  ser <- wt$x$opts$series  # all series
+  if (is.null(ser)) stop('ecr.ebars: series are missing', call.=FALSE)
+  args <- list(...)
+  
+  cntr <- function(x, typ) { grep(typ, x) }
+  name <- args$name; 
+  tmp <- NULL   # count number of similar (grouped) series
+  if (!is.null(name)) 
+    tmp <- unlist(lapply(ser, function(x) { 
+      if (length(grep(name,x))>0) x$type else NULL }))[1]
+  if (!is.null(tmp))    # attached by name, count same-type series
+    info <- length(unlist(lapply(ser, \(x) grep(tmp, x))))
+  else {    # no name or not found - choose first of type bar/line/scatter, count how many
+    info <- length(unlist(lapply(ser, cntr, typ='bar')))
+    if (info==0) info <- length(unlist(lapply(ser, cntr, typ='scatter')))
+    if (info==0) info <- length(unlist(lapply(ser, cntr, typ='line')))
+  }
+  
+  if (info==0) return(wt)    # no bars/lines/scatter, nothing to attach to
+  info <- "riErrorBar"
+  if (is.null(wt$elementId)) wt$elementId <- 'id---99';
+
+  oneSerie <- function(name, df=NULL) {
+    c <- list(type='custom', name=name, 
+    			 renderItem= htmlwidgets::JS(info), ...)
+	 if (!is.null(df))
+      c$data= ec.data(df)
+    
+    if (is.null(c$z)) c$z <- 3
+    if (is.null(c$itemStyle$borderWidth)) c$itemStyle$borderWidth <- 1.5
+    if (is.null(c$color) && is.null(c$itemStyle$color)) {
+      # set own color, or it will blend with main bar
+      # impression that c$itemStyle$color is better than c$color
+      c$itemStyle$color <- 'black'
+    }
+    c$itemStyle$borderDashOffset <- hwidth  # => lineDashOffset
+    #c$itemStyle$borderCap <- wt$elementId   # => lineCap
+    
+    if (is.null(c$tooltip))  # shows up on non-grouped data
+      c$tooltip <- list(formatter= ec.clmn(
+        '<br>value <b>%@</b> <br>range <b>%@ to %@</b>', 2,3,4))
+    c
+  }
+  
+  # build the series
+  if (is.null(df)) {
+    if (length(wt$x$opts$dataset)==1) {
+      if (is.null(name)) name <- wt$x$opts$dataset[[1]]$source[[1]][2]
+      cser <- list(oneSerie(name))
+    } else 
+      stop('ecr.ebars: dataset is grouped, set df parameter', call. = FALSE)
+  }
+  else {
+    if (dplyr::is.grouped_df(df)) {    # groups
+      grnm <- dplyr::group_vars(df)[[1]]   # just 1st g.column matters
+      tmp <- df |> dplyr::group_split()
+      cser <- lapply(tmp, \(gp) {
+        name <- unlist(unique(unname(gp[,grnm])))
+        oneSerie(name, gp)
+      })
+    }
+    else
+      cser <- list(oneSerie(names(df)[2], df))
+  }
+  wt$x$opts$series <- append(wt$x$opts$series, cser)
+  #if (!"legend" %in% names(wt$x$opts)) wt$x$opts$legend <- list(show=TRUE)
+  wt
+}
+
+ecr.ebarsOLD <- function(wt, df=NULL, hwidth=6, ...) {
   # alternating bars with custom series doesn't work, first bars then customs
   if (missing(wt)) stop('ecr.ebars: expecting widget', call.=FALSE)
   if (!is.null(df) && !inherits(df, "data.frame")) 
@@ -1137,11 +1224,13 @@ ec.theme <- function (wt, name, code= NULL)
 #' Convert chart to JSON string
 #' 
 #' @param wt An \code{echarty} widget as returned by [ec.init]
-#' @param target NULL(default) or 'data' to show info about chart's embedded data.
-#' @param json Boolean whether to return a JSON, or a \code{list}, default TRUE
+#' @param target type of resulting string value: \cr
+#'    'opts' - the htmlwidget _options_ as JSON (default)\cr
+#'    'full' - the _entire_ htmlwidget as JSON\cr
+#'    'data' - info about chart's embedded data (char vector)
 #' @param ... Additional attributes to pass to \link[jsonlite]{toJSON}
-#' @return A JSON string if \code{json} is \code{TRUE} and
-#'  a \code{list} otherwise.
+#' @return A JSON string, except when \code{target} is 'data' then
+#'  a character vector.
 #'
 #' @details Must be invoked or chained as last command.\cr
 #'
@@ -1154,12 +1243,15 @@ ec.theme <- function (wt, name, code= NULL)
 #' ec.fromJson(json) |> ec.theme('macarons')
 #'
 #' @export
-ec.inspect <- function(wt, target=NULL, json=TRUE, ...) {
+ec.inspect <- function(wt, target='opts', ...) {
 
-  opts <- wt$x$opts
+  if (!target %in% c('opts','data','full')) stop("ec.inspect: target only 'opts', 'data' or 'full'", call. = FALSE)
+  if (target=='full')
+    opts <- wt
+  else
+    opts <- wt$x$opts
   
-  if (!is.null(target)) {
-    if (target!='data') stop("ec.inspect: only target='data' supported", call. = FALSE)
+  if (target=='data') {
     out <- list()
     if (!is.null(opts$dataset))
       out <- sapply(opts$dataset, \(d) {
@@ -1186,7 +1278,6 @@ ec.inspect <- function(wt, target=NULL, json=TRUE, ...) {
     return(unlist(out))
   }
   
-  if (!isTRUE(json)) return(opts)
   params <- list(...)
   if ('pretty' %in% names(params)) 
     opts <- jsonlite::toJSON(opts, force=TRUE, auto_unbox=TRUE, 
@@ -1205,28 +1296,56 @@ ec.inspect <- function(wt, target=NULL, json=TRUE, ...) {
 #' 
 #' @param txt JSON character string, url, or file, see \link[jsonlite]{fromJSON}
 #' @param ... Any attributes to pass to internal [ec.init]
-#' @return An \code{echarty} widget.
+#' @return An _echarty_ widget.
 #' 
-#' @details \code{txt} should contain the full list of options required to build a chart.
-#' It is subsequently passed to ECharts function \href{https://echarts.apache.org/en/api.html#echartsInstance.setOption}{setOption}.
+#' @details _txt_ could be either a list of options (x$opts) to pass to ECharts function \href{https://echarts.apache.org/en/api.html#echartsInstance.setOption}{setOption},\cr
+#'  or an entire _htmlwidget_ generated thru \code{ec.inspect(target='full')}.
 #' 
 #' @examples
 #' txt <- '{
-#'   "xAxis": { "type": "category",
-#'      "data": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-#'    },
-#'    "yAxis": { "type": "value" },
-#'    "series": { "type": "line",
-#'      "data": [150, 230, 224, 218, 135, 147, 260]
-#'    } }'
+#'    "xAxis": { "data": ["Mon", "Tue", "Wed"]},
+#'    "yAxis": { },
+#'    "series": { "type": "line", "data": [150, 230, 224] } }'
 #' ec.fromJson(txt)
 #'
 #' @export
 ec.fromJson <- function(txt, ...) {
   json <- jsonlite::fromJSON(txt, simplifyVector = FALSE)
   
-  e <- ec.init(...)
-  e$x$opts <- json
+  recur <- \(opts) {
+    names <- names(opts)
+    for(k in seq_along(opts)) {
+      nn <- opts[[k]]
+      if (inherits(nn, 'list'))
+        opts[[k]] <- recur(opts[[k]])  # recursive
+      else if (
+        (!is.null(names) && names[[k]]=='renderItem') || 
+        (is.character(nn) && (grepl(') =>', nn) || 
+                              startsWith(nn, 'function(') ||
+                              startsWith(nn, 'new echarts.')))) {
+        opts[[k]] <- htmlwidgets::JS(opts[[k]])
+      }
+    }
+    opts
+  }
+
+  if (!is.null(json$dependencies)) {  # full
+    json$x$opts <- recur(json$x$opts)
+    json$dependencies <- lapply(json$dependencies, \(d) {structure(d, class= 'html_dependency')})
+    e <- htmlwidgets::createWidget(
+      name = 'echarty',
+      package = 'echarty',
+      x = json$x,
+      width = json$width,
+      height = json$height,
+      elementId = json$elementId,
+      sizingPolicy = json$sizingPolicy,
+      dependencies = json$dependencies
+    )
+  } else {
+    e <- ec.init(...)
+    e$x$opts <- recur(json)
+  }
   e
 }
 
@@ -1345,7 +1464,13 @@ ec.plugjs <- function(wt=NULL, source=NULL, ask=FALSE) {
 
 # merge named lists
 .merlis <- function(l1, l2) {
-	if (inherits(l1[[1]], 'list'))     # list of lists
+	if (!inherits(l1, 'list')) l2
+  else if (length(l1)==0) l2
+	else if (!inherits(l2, 'list')) l1
+  else if (length(l2)==0) l1
+	#else if (inherits(l2[[1]], 'list'))
+	#  stop('.merlis: l2 is a list of lists', call. = FALSE)
+	else if (inherits(l1[[1]], 'list'))     # list of lists
 		lapply(l1, \(x) {
 			c(x, l2)[!duplicated(c(names(x), names(l2)), fromLast= TRUE)]
 		})

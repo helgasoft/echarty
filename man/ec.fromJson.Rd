@@ -12,24 +12,20 @@ ec.fromJson(txt, ...)
 \item{...}{Any attributes to pass to internal \link{ec.init}}
 }
 \value{
-An \code{echarty} widget.
+An \emph{echarty} widget.
 }
 \description{
 Convert JSON string to chart
 }
 \details{
-\code{txt} should contain the full list of options required to build a chart.
-It is subsequently passed to ECharts function \href{https://echarts.apache.org/en/api.html#echartsInstance.setOption}{setOption}.
+\emph{txt} could be either a list of options (x$opts) to pass to ECharts function \href{https://echarts.apache.org/en/api.html#echartsInstance.setOption}{setOption},\cr
+or an entire \emph{htmlwidget} generated thru \code{ec.inspect(target='full')}.
 }
 \examples{
 txt <- '{
-  "xAxis": { "type": "category",
-     "data": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-   },
-   "yAxis": { "type": "value" },
-   "series": { "type": "line",
-     "data": [150, 230, 224, 218, 135, 147, 260]
-   } }'
+   "xAxis": { "data": ["Mon", "Tue", "Wed"]},
+   "yAxis": { },
+   "series": { "type": "line", "data": [150, 230, 224] } }'
 ec.fromJson(txt)
 
 }

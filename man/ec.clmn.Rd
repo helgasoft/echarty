@@ -8,11 +8,11 @@ ec.clmn(col = NULL, ..., scale = 1)
 }
 \arguments{
 \item{col}{A single column index(number) or column name(quoted string), \cr
-or a \link[base]{sprintf} format string. Or 'log' for debugging.
-Default is NULL, for charts with single values like tree, pie.\cr
-'json' displays tooltip with all available values to choose from\cr
-'log' will write all values in the JS console (F12)\cr
-starts with \emph{'function('} or has \emph{') =>'} - gets result of JS function\cr}
+or a \link[base]{sprintf} format string for multiple indexes.\cr
+NULL(default) for charts with single values like tree, pie.\cr
+'json' to display tooltip with all available values to choose from\cr
+'log' to write all values in the JS console (F12) for debugging.\cr
+if starts with \emph{'function('} or has \emph{') =>'} - to get result of JS function\cr}
 
 \item{...}{A comma separated column indexes or names, only when \emph{col} is \emph{sprintf}. This allows formatting of multiple columns, as for a tooltip.\cr}
 

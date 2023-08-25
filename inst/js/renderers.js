@@ -9,7 +9,7 @@
   together when user clicks on a legend button.	
   Attaching is done automatically (by type), or by name.
   Error bars will inherit color from their host bar, blending with them.
-  Therefore it is preferable to use a different color, default is 'black'.
+  So it's preferable to use a custom color(itemStyle.color), default is 'black'.
   ecr.ebars will add a legend if none is found.
   ecr.ebars should be set at the end, after all other series.
   ecr.ebars are custom series, so ec.init(load='custom') is required.
@@ -17,53 +17,46 @@
 */
 function riErrorBar(params, api) {
 
-  // input oss contains 
-  //   [last.barGap, last.barCategoryGap, series.count, ends.half.width]
-  let oss = JSON.parse(sessionStorage.getItem('ErrorBar.oss'));
-  if (oss===null || !Object.keys(oss).length) return null;   // needs 4 input values
-
-  let totSeries = Number(oss[2]);
-
-  let xValue = api.value(0);  // data order is x,y,low,high
-  let highPoint = api.coord([xValue, api.value(3)]);
-  let lowPoint = api.coord([xValue, api.value(2)]);
-  let endsWidth = Number(oss[3]);  //api.size([1, 0])[0] * 0.1;
-	
-  let csil = api.currentSeriesIndices().length / 2;
-	// idx is index of related main bar
-  let idx = params.seriesIndex - (params.seriesIndex < totSeries ? 0 : totSeries);	
-
-  if (csil > 1 && totSeries > 1) {
-  	let bgm = oss[0];
-  	let bcgm = oss[1];
-  	let olay = { count: csil };
-  	olay.barGap = bgm!=='' ? bgm : '30%';		// '30%' is default for e_bar
-  	olay.barCategoryGap = bcgm!=='' ? bcgm : '20%';
-  	let barLayouts = api.barLayout(olay);		// will be csil # of barLayouts
-  	
-  	if (barLayouts) {
-	  	let mbar = 0;
-	  	api.currentSeriesIndices().some( (item, index) => {
-	  		if (item == idx) {
-	  			highPoint[0] += barLayouts[mbar].offsetCenter;
-	  			// endsWidth = barLayouts[mbar].width /2;
-	  			return true;
-	  		}
-	  		mbar++;
-	  		return mbar >= csil;  // false until true
-	  	});
-  	}
-  }
-  lowPoint[0] = highPoint[0];
+  // get all data from caller
+  xValue = api.value(0);  // data order is x,y,low,high
+  highPoint = api.coord([xValue, api.value(3)]);
+  lowPoint =  api.coord([xValue, api.value(2)]);
+	endsWidth = api.style().lineDashOffset;
+  offset = 0;
   
+  chart = get_e_charts(hwid);
+  sers = chart.getModel().getSeries().filter(o => o.subType!='custom');
+  if (sers.length > 0) {
+    tmp = sers.filter(o => o.subType=='bar')
+    if (tmp.length > 0) {
+      tmp = sers.find(o => o.name === params.seriesName);
+      if (tmp) {
+        // idx is index of the related main bar
+        idx = tmp.seriesIndex;
+      	bgm = bcgm = null;
+        tmp = sers.findLast(o => o.option && o.option.barCategoryGap != undefined);
+        if (tmp) {
+          bgm = tmp.option.barGap;
+          bcgm = tmp.option.barCategoryGap;
+        }
+      	olay = { count: sers.length };
+      	if (bgm) olay.barGap = bgm //!=='' ? bgm : '30%' is default for e_bar
+      	if (bcgm) olay.barCategoryGap = bcgm //!=='' ? bcgm : '20%';
+      	barLayouts = api.barLayout(olay);
+    	  offset = barLayouts[idx].offsetCenter;
+      }
+    }
+  }
+
   var style = api.style({
       stroke: api.visual('color'),
-      fill: null
+      Zfill: null, //lineWidth: 3
   });
   return {
       type: 'group',
       children: [{
           type: 'line',
+          x: offset,
           shape: {
               x1: highPoint[0] - endsWidth, y1: highPoint[1],
               x2: highPoint[0] + endsWidth, y2: highPoint[1]
@@ -71,6 +64,7 @@ function riErrorBar(params, api) {
           style: style
       }, {
           type: 'line',		// vertical
+          x: offset,
           shape: {
               x1: highPoint[0], y1: highPoint[1],
               x2: lowPoint[0], y2: lowPoint[1]
@@ -78,6 +72,7 @@ function riErrorBar(params, api) {
           style: style
       }, {
           type: 'line',
+          x: offset,
           shape: {
               x1: lowPoint[0] - endsWidth, y1: lowPoint[1],
               x2: lowPoint[0] + endsWidth, y2: lowPoint[1]

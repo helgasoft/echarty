@@ -30,11 +30,11 @@ test_that("registerMap", {
   expect_equal(p$x$opts$series[[1]]$data[[2]]$value, 1000)
 })
 
-test_that("tl.series and timeline options", {
+test_that("tl.series, timeline options, groupby", {
   p <- Orange |> dplyr::group_by(age) |> ec.init(
+    timeline= list(autoPlay=TRUE),
     tl.series= list(type='bar', encode=list(x='Tree', y='circumference'))
   ) |> ec.upd({
-    timeline <- append(timeline, list(autoPlay=TRUE))
     options <- lapply(options, 
       function(o) { o$title$text <- paste('age',o$title$text,'days'); o })
   })
@@ -43,6 +43,19 @@ test_that("tl.series and timeline options", {
   expect_equal(p$x$opts$options[[7]]$series[[1]]$encode$x, "Tree")
   expect_equal(p$x$opts$timeline$data[[5]], "1231")
   expect_true(p$x$opts$dataset[[5]]$transform$config['='] == 1004)
+  
+  set.seed(2022)
+  dat <- data.frame(
+    x1 = rep(2020:2023, each = 4),
+    x2 = rep(c("A", "A", "B", "B"), 4),
+    x3 = runif(16), x4 = runif(16), x5 = abs(runif(16))
+  )
+  p <- dat |> group_by(x1) |> ec.init(
+    tl.series= list(encode= list(x= 'x3', y= 'x5'), groupBy='x2',
+                    symbolSize= ec.clmn(4, scale=30)) 
+  )
+  expect_equal(p$x$opts$options[[4]]$title$text, '2023')
+  expect_true(p$x$opts$dataset[[9]]$transform$config$and[[2]]$dimension=='x2')
 })
 
 test_that("tl.series type 'map'", {
@@ -59,6 +72,56 @@ test_that("tl.series type 'map'", {
 #  }
 #  else expect_equal(1,1)
 })
+
+test_that("leaflet with ec.clmn and timeline", {
+
+  tmp <- quakes |> dplyr::relocate('long') |>  # set order to lon,lat
+      dplyr::mutate(size= exp(mag)/20) |> head(100)  # add accented size
+  p <- tmp |> ec.init(load= 'leaflet',
+                      tooltip = list(formatter=ec.clmn('magnitude %@', 'mag')),
+    series.param= list(
+      symbolSize = ec.clmn(6, scale=2)
+      )
+  #	timeline= list(autoPlay=TRUE, controlStyle= list(borderColor='brown')),
+  )
+  expect_equal(p$x$opts$leaflet$zoom, 6)
+  expect_s3_class(p$x$opts$tooltip$formatter, 'JS_EVAL')
+
+  tmp <- quakes |> dplyr::relocate('long') |>  # set order to lon,lat
+  	dplyr::mutate(size= exp(mag)/20) |> head(100)  # add accented size
+  p <- tmp |> group_by(stations) |> ec.init(load='leaflet', 
+    tooltip = list(formatter=ec.clmn('magnitude %@', 'mag')),
+  	leaflet= list(center= c(179.462,-20), zoom= 2,
+  	              tiles= list(
+        list(
+          label= 'Stamen',
+          urlTemplate= 'https://stamen-tiles-{s}.a.ssl.fastly.net/terrain/{z}/{x}/{y}{r}.{ext}',
+          options= list(attribution= 'Map tiles by <a href="http://stamen.com">Stamen Design</a>, <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>',
+                        subdomains= 'abcd',	maxZoom= 18, ext= 'png')
+        )
+     					    )
+    ),
+  	timeline= list(autoPlay=TRUE, controlStyle= list(borderColor='brown')),
+  	options= list(legend= list(show=T)), 
+    tl.series= list( 
+        type='scatter', coordinateSystem='leaflet', name='quake',
+        symbolSize = ec.clmn(6, scale=2),
+        encode= list(lng='long', lat='lat', tooltip=c(4,5))
+    ),
+    visualMap= list(
+        show= FALSE, top= 'top', dimension=4,
+        calculable= TRUE, inRange= list(color= c('blue','red'))
+    )
+  )
+  expect_equal(p$x$opts$leaflet$zoom, 2)
+  expect_s3_class(p$x$opts$tooltip$formatter, 'JS_EVAL')
+  #expect_equal(p$dependencies[[9]]$name, 'echarts-leaflet')
+  expect_equal(p$x$opts$options[[10]]$title$text, '19')
+  expect_equal(p$x$opts$options[[10]]$series[[1]]$name, 'quake')
+  expect_true (p$x$opts$options[[10]]$legend$show)
+  expect_equal(p$x$opts$timeline$data[[10]], '19')
+  expect_equal(p$x$opts$dataset[[2]]$transform$config$`=`, 10)
+})
   
 test_that("ec.upd(), echarts.registerTransform and ecStat", {
   dset <- data.frame(x=1:10, y=sample(1:100,10))
@@ -70,22 +133,6 @@ test_that("ec.upd(), echarts.registerTransform and ecStat", {
   })
   expect_equal(p$x$jcode, 'echarts.registerTransform(ecStat.transform.regression)')
   expect_equal(p$x$opts$dataset[[2]]$transform$type, "ecStat:regression")
-})
-
-test_that("leaflet with ec.clmn", {
-#  if (interactive()) {
-    tmp <- quakes |> dplyr::relocate('long') |>  # set order to lon,lat
-      dplyr::mutate(size= exp(mag)/20) |> head(100)  # add accented size
-    p <- tmp |> ec.init(load= 'leaflet',
-                  tooltip = list(formatter=ec.clmn('magnitude %@', 'mag'))
-    ) |> ec.upd({
-      series[[1]]$symbolSize = ec.clmn(6, scale=2)   # size column
-    })
-    
-    expect_equal(p$x$opts$leaflet$zoom, 6)
-    expect_s3_class(p$x$opts$tooltip$formatter, 'JS_EVAL')
-#  }
-#  else expect_equal(1,1)
 })
 
 test_that("ec.data dendrogram", {
@@ -206,10 +253,52 @@ test_that("load 3D surface", {
   #else expect_equal(1,1)
 })
 
-test_that("ec.inspect", {
+test_that("ec.inspect and ec.fromJson", {
   p <- mtcars |> dplyr::group_by(gear) |> ec.init() |> ec.inspect('data')
   expect_match(p[1], "rows= 33", fixed=TRUE)
   expect_match(p[2], "filter", fixed=TRUE)
+
+  txt <- '{
+     "xAxis": { "data": ["Mon", "Tue", "Wed"]},
+     "yAxis": { },
+     "series": { "type": "line", "data": [150, 230, 224] } }'
+  p <- ec.fromJson(txt)
+  expect_equal(p$x$opts$xAxis$data[[2]], "Tue")
+  
+  # test renderItem and functions JS_EVAL setting
+  set.seed(222)
+  df <- data.frame( x = 1:10, y = round(runif(10, 5, 10),2)) |>
+    dplyr::mutate(lwr = y-round(runif(10, 1, 3),2), 
+                  upr = y+round(runif(10, 2, 4),2))
+  p <- df |> ec.init(load='custom',
+    legend= list(show= TRUE),
+    xAxis= list(type='category', boundaryGap=FALSE),
+    series= append(
+      list(list(type='line', color='red', datasetIndex=0, name='line1')),
+      ecr.band(df, 'lwr', 'upr', type='stack', name='stak')
+    ),
+    tooltip= list(trigger='axis', #console.log(x)"))
+                formatter=htmlwidgets::JS("(x) => 
+    x.length==1 ? 'line '+x[0].value[1] :
+    x.length==2 ? 'high <b>'+x[1].value[2]+'</b><br>low <b>'+x[0].value[1] :
+      'high <b>'+x[2].value[2]+'</b><br>line <b>'+
+      x[0].value[1]+'</b>'+'</b><br>low <b>'+x[1].value[1]"))
+  )
+  tmp <- p |> ec.inspect(target='full')
+  expect_true(inherits(tmp, 'json'))
+  expect_true(regexpr('^\\{\\n  "x": \\{', tmp)==1)
+  expect_true(grepl('dependencies', tmp))
+  #expect_true(grepl('new echarts.graphic.LinearGradient', tmp))
+    
+  v <- ec.fromJson(tmp)
+  expect_true(inherits(v, 'echarty'))
+  expect_equal(v$dependencies[[1]]$name, 'renderers')
+  
+  tmp <- p |> ec.inspect()  # opts only
+  expect_true(regexpr('^\\{\\n  "legend": \\{', as.character(tmp))==1)
+  
+  v <- ec.fromJson(tmp)
+  expect_equal(v$x$opts$xAxis$type, 'category')
 })
 
 test_that("ec.plugjs", {

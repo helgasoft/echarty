@@ -816,11 +816,11 @@ ec.data <- function(df, format='dataset', header=FALSE, jitter=0, layout='h', ..
 #' Helper function to display/format data column(s) by index or name
 #' 
 #' @param col A single column index(number) or column name(quoted string), \cr
-#'    or a \link[base]{sprintf} format string. Or 'log' for debugging.
-#'    Default is NULL, for charts with single values like tree, pie.\cr
-#'    'json' displays tooltip with all available values to choose from\cr 
-#'    'log' will write all values in the JS console (F12)\cr
-#'    starts with _'function('_ or has _') =>'_ - gets result of JS function\cr
+#'    or a \link[base]{sprintf} format string for multiple indexes.\cr
+#'    NULL(default) for charts with single values like tree, pie.\cr
+#'    'json' to display tooltip with all available values to choose from\cr 
+#'    'log' to write all values in the JS console (F12) for debugging.\cr
+#'    if starts with _'function('_ or has _') =>'_ - to get result of JS function\cr
 #' @param ... A comma separated column indexes or names, only when \emph{col} is \emph{sprintf}. This allows formatting of multiple columns, as for a tooltip.\cr
 #' @param scale A positive number, multiplier for numeric columns. When scale is 0, all numeric values are rounded.
 #' @return A JavaScript code string (usually a function) marked as executable, see \link[htmlwidgets]{JS}.

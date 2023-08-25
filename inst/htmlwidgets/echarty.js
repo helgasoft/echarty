@@ -93,7 +93,7 @@ HTMLWidgets.widget({
       //  tmp = chart.getModel()._optionManager._timelineOptions;
       //  if (tmp) {  }
       
-      if (window.HTMLWidgets.shinyMode) {    // shiny callbacks
+      if (HTMLWidgets.shinyMode) {    // shiny callbacks
 
         ecp = ":echartyParse";
         
@@ -122,28 +122,29 @@ HTMLWidgets.widget({
           // for events like datazoom, click, etc
           // defined in https://echarts.apache.org/en/api.html#events
           if (Array.isArray(x.capture)) {  // multiple events
-            for( let evt= 0; evt < x.capture.length; evt++) {
-              chart.on(x.capture[evt], function(e) {
-                Shiny.setInputValue(el.id +'_' +x.capture[evt] +ecp, e, {priority: 'event'});
-              });
-            }
+            x.capture.forEach(ev => chart.on(ev, function(es) {
+                Shiny.setInputValue(el.id +'_' +ev +ecp, es, {priority: 'event'});
+              })
+            )
           } else   // just one event
-              chart.on(x.capture, function(e) {
-                Shiny.setInputValue(el.id +'_' +x.capture +ecp, e, {priority: 'event'});
-              });
+            chart.on(x.capture, function(e) {
+              Shiny.setInputValue(el.id +'_' +x.capture +ecp, e, {priority: 'event'});
+            });
         }
       }
       
-      if(x.hasOwnProperty('on')){
-        for(var e = 0; e < x.on.length; e++){
+      if(x.hasOwnProperty('on')) {
+        x.on.forEach(ev => chart.on(ev.event, ev.query, ev.query) )
+      /*  for(var e = 0; e < x.on.length; e++){
           chart.on(x.on[e].event, x.on[e].query, x.on[e].handler);
-        }
+        }*/
       }
       
       if(x.hasOwnProperty('off')){
-        for(var ev = 0; ev < x.off.length; ev++){
+        x.off.forEach(ev => chart.on(ev.event, ev.query, ev.query) )
+      /*  for(var ev = 0; ev < x.off.length; ev++){
           chart.off(x.off[ev].event, x.off[ev].query, x.off[ev].handler);
-        }
+        }*/
       }
       
       if(x.hasOwnProperty('group')){
@@ -152,10 +153,11 @@ HTMLWidgets.widget({
       
       if(x.hasOwnProperty('connect')){
         if (Array.isArray(x.connect)) {
-          let connections = [];
-          for(var c = 0; c < x.connect.length; c++){
-            connections.push(get_e_charts(x.connect[c]));
-          }
+          connections = [];
+          x.connect.forEach(cc => connections.push(get_e_charts(cc)) )
+          //for(var c = 0; c < x.connect.length; c++){
+          //  connections.push(get_e_charts(x.connect[c]));
+          //}
           connections.push(chart);
           echarts.connect(connections);  
         } else

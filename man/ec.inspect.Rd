@@ -4,20 +4,21 @@
 \alias{ec.inspect}
 \title{Chart to JSON}
 \usage{
-ec.inspect(wt, target = NULL, json = TRUE, ...)
+ec.inspect(wt, target = "opts", ...)
 }
 \arguments{
 \item{wt}{An \code{echarty} widget as returned by \link{ec.init}}
 
-\item{target}{NULL(default) or 'data' to show info about chart's embedded data.}
-
-\item{json}{Boolean whether to return a JSON, or a \code{list}, default TRUE}
+\item{target}{type of resulting string value: \cr
+'opts' - the htmlwidget \emph{options} as JSON (default)\cr
+'full' - the \emph{entire} htmlwidget as JSON\cr
+'data' - info about chart's embedded data (char vector)}
 
 \item{...}{Additional attributes to pass to \link[jsonlite]{toJSON}}
 }
 \value{
-A JSON string if \code{json} is \code{TRUE} and
-a \code{list} otherwise.
+A JSON string, except when \code{target} is 'data' then
+a character vector.
 }
 \description{
 Convert chart to JSON string

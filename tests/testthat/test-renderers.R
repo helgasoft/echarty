@@ -1,22 +1,7 @@
 library(dplyr)
+# TODO: df,scatter, dset/data
 
-test_that("custom renderers - ecr.ebars grouped", {
-  df <- mtcars |> group_by(cyl,gear) |> summarise(yy= round(mean(mpg),2)) |>
-    mutate(low= round(yy-cyl*runif(1),2), high= round(yy+cyl*runif(1),2)) |>
-    relocate(cyl, .after = last_col())   # move group column behind first four cols
-  
-  p <- df |> ec.init(ctype='bar', load='custom', xAxis=list(type='category')) |>
-    ecr.ebars(df)
-  
-  expect_equal(length(p$x$opts$series), 6)
-  expect_equal(p$x$opts$series[[4]]$type, 'custom')
-  expect_true( p$x$opts$series[[4]]$renderItem == "sessionStorage.setItem('ErrorBar.oss','[\"\",\"\",\"3\",\"6\"]'); riErrorBar;")
-  expect_s3_class(p$x$opts$series[[4]]$renderItem, 'JS_EVAL')
-  expect_equal(p$x$opts$xAxis$type, 'category')
-  expect_equal(as.character(p$x$opts$series[[6]][['name']]), '8')
-})
-
-test_that("custom renderers - ecr.ebars non-grouped", {
+test_that("ecr.ebars scatter non-grouped", {
   df <- iris |> distinct(Sepal.Length, .keep_all= TRUE) |> 
     mutate(lo= Sepal.Width-Petal.Length/2, hi= Sepal.Width+Petal.Width) |>
     select(Sepal.Length, Sepal.Width, lo, hi, Species)
@@ -24,9 +9,51 @@ test_that("custom renderers - ecr.ebars non-grouped", {
     ecr.ebars(name= 'err')
   expect_equal(p$x$opts$series[[2]]$z, 3)
   expect_match(p$x$opts$series[[2]]$tooltip$formatter, 'range', fixed=TRUE)
+  
+  tmp <- round(rnorm(24, sin(1:24/2)*10, .5))
+  df <- data.frame(x = 1:24, val = tmp,
+         lower = round(rnorm(24, tmp -10, .5)),
+         upper = round(rnorm(24, tmp + 5, .8)),
+         cat= rep(c('A','B'),24) )
+  df <- df |> group_by(cat)
+  ec.init(df, load='custom') |> ecr.ebars(df)
 })
 
-test_that("custom renderers - riErrBarSimple", {
+test_that("ecr.ebars bars grouped", {
+  df <- mtcars |> group_by(cyl,gear) |> summarise(yy= round(mean(mpg),2)) |>
+    mutate(low= round(yy-cyl*runif(1),2), high= round(yy+cyl*runif(1),2)) |>
+    relocate(cyl, .after = last_col())   # move group column behind first four cols
+  
+  p <- df |> ec.init(load='custom', ctype='bar',
+                     xAxis=list(type='category')  # manual input
+  ) |> ecr.ebars(df)
+  
+  expect_equal(length(p$x$opts$series), 6)
+  expect_equal(p$x$opts$series[[4]]$type, 'custom')
+  expect_true(p$x$opts$series[[4]]$renderItem == 'riErrorBar')
+  expect_s3_class(p$x$opts$series[[4]]$renderItem, 'JS_EVAL')
+  expect_equal(p$x$opts$xAxis$type, 'category')
+  expect_equal(as.character(p$x$opts$series[[6]][['name']]), '8')
+  
+  # series.data
+  sers = list(
+    list(name= 's1',type= 'bar', data= list(5, 20, 36, 10, 10, 20, 4)),
+    list(name= 's2',type= 'bar', data= list(4, 2, 40, 40, 30, 22, 1)),
+    list(name= 's3',type= 'bar', data= list(15, 10, 36, 12, 9, 0, 14)),
+    list(name= 's1',type= 'custom', z=11, renderItem= htmlwidgets::JS('riErrorBar'), 
+         itemStyle= list(color= 'brown', borderDashOffset=8 ), # = halfWidth
+         data= list(list('Mon',5,4,7), list('Tue',10, 9, 11))
+    )
+  )
+  p <- ec.init(load='custom', ctype='bar', yAxis= list(show=T),
+               xAxis= list(data= list('Mon','Tue','Wed','Thu','Fri','Sat','Sun')),
+               series= sers
+  )
+  expect_equal(p$x$opts$xAxis$type, 'category')
+  expect_s3_class(p$x$opts$series[[4]]$renderItem, 'JS_EVAL')
+})
+
+test_that("ecr.ebars riErrBarSimple", {
   set.seed(222)
   df <- data.frame(category= paste0('category', seq(1,50,1)),
                    avg= round(runif(50) * 1000, 2)) |>
@@ -55,7 +82,7 @@ test_that("custom renderers - riErrBarSimple", {
   expect_equal(length(p$x$opts$series[[2]]$data), 50)
 })
 
-test_that("custom renderers - ecr.band", {
+test_that("ecr.band", {
   df <- Orange |> mutate(Tree=as.numeric(Tree)) |> relocate(Tree, .after= last_col())
   band <- ecr.band(df |> filter(Tree==4) |> inner_join(df |> filter(Tree=='1'), by='age'),
         'circumference.y', 
@@ -77,7 +104,7 @@ test_that("custom renderers - ecr.band", {
   expect_s3_class(p$x$opts$series[[1]]$renderItem, 'JS_EVAL')
 })
 
-test_that("custom renderers - ecr.band tooltips", {
+test_that("ecr.band tooltips", {
   df <- airquality |> mutate(lwr= round(Temp-Wind*2),
                              upr= round(Temp+Wind*2),
                              x= paste0(Month,'-',Day) ) |>
@@ -101,7 +128,7 @@ test_that("custom renderers - ecr.band tooltips", {
   expect_match(p$x$opts$tooltip$formatter, 'ss=[2.3,0.2,1.2]', fixed=TRUE)
 })
 
-test_that("custom renderers - geoJson", {
+test_that("leaflet with geoJson", {
   myGeojson= gsub('\n', '', '{
     "type": "FeatureCollection",
     "features": [
