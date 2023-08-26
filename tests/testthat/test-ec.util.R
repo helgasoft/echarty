@@ -1,6 +1,8 @@
 #' tests for ec.util()
 
 test_that("serie from ec.util with cartesian3D", {
+  expect_error(ec.util(cmd= 'dummy'))
+
   # usage for LIDAR data
   library(sf)
   tmp <- st_as_sf(data.frame(x=c(-70,-70,-70), y=c(45, 46, 47), z=c(1,2,3)), 
@@ -50,7 +52,20 @@ test_that("shapefile LINES from ZIP", {
     expect_equal(p$x$opts$series[[6]]$lineStyle$color, 'red')
     
   }
-  else expect_equal(1,1)
+  else expect_equal(1,1) # bypass
+})
+
+test_that("shapefile LINESTRING and MULTILINESTRING", {
+  p <- ec.init(load= 'leaflet')  #js= ec.util(cmd= 'sf.bbox', bbox= st_bbox(nc$geometry)),
+  ls <- st_linestring(rbind(c(0,0),c(1,1),c(2,1)))
+  nc <- ls %>% st_sfc %>% st_sf %>% st_cast(to='LINESTRING')
+  p$x$opts$series= ec.util(cmd= 'sf.series', df= nc, lineStyle= list(width=5))
+  expect_equal(p$x$opts$series[[1]]$name, 1)
+  
+  mls <- st_multilinestring(list(rbind(c(2,2),c(1,3)), rbind(c(0,0),c(1,1),c(2,1))))
+  nc <- mls %>% st_sfc %>% st_sf %>% st_cast(to='MULTILINESTRING')
+  p$x$opts$series= ec.util(cmd= 'sf.series', df= nc, lineStyle= list(width=5))
+  expect_equal(length(p$x$opts$series[[1]]$data[[2]]), 3)
 })
 
 test_that("shapefile POINTS from ZIP", {
@@ -71,7 +86,7 @@ test_that("shapefile POINTS from ZIP", {
   else expect_equal(1,1)
 })
 
-test_that("ec.util layout", {
+test_that("layout", {
   p <- lapply(list('dark','macarons','gray','jazz','dark-mushroom'),
               function(x) cars |> ec.init() |> ec.theme(x) ) |>
     ec.util(cmd='layout', cols= 4, title= 'my layout')
@@ -101,7 +116,7 @@ test_that("tabset with pipe", {
   expect_equal(as.character(r[[2]]$children[[6]]$children[[1]]), "virginica")
 })
 
-test_that("morph", {
+test_that("morph 1", {
   mc <- mtcars |> filter(cyl<8)
   datt <- function(idx) { return(mc[mc$cyl==idx,]$hp) }
   colors <- c("blue","red","green","yellow")
@@ -147,7 +162,7 @@ test_that("morph", {
   expect_equal(p$x$on[[1]]$event, 'mouseover')
 })
 
-test_that("ec.util morph", {
+test_that("morph 2", {
   setd <- function(type) {
     mtcars |> group_by(cyl) |> ec.init(ctype= type) |> ec.upd({
       title <- list(subtext='mouseover points to morph')
@@ -241,5 +256,82 @@ test_that("button", {
   expect_equal(p$style$fill, 'lightgray')
   expect_equal(p$textContent$style$text, 'btn')
   expect_s3_class(p$onclick, 'JS_EVAL')
+})
+
+test_that("ec.data dendrogram", {
+  hc <- hclust(dist(USArrests), "average")
+  p <- ec.init(preset= FALSE,
+               series= list(list(
+                 type= 'tree', roam= TRUE, initialTreeDepth= -1,
+                 data= ec.data(hc, format='dendrogram') ))
+  )
+  expect_equal(p$x$opts$series[[1]]$data[[1]]$name, 'p49')
+  expect_equal(p$x$opts$series[[1]]$data[[1]]$children[[1]]$children[[1]]$children[[2]]$name, 'North Carolina')
+  expect_equal(length(p$x$opts$series[[1]]$data[[1]]$children[[1]]$children), 2)
+})
+
+test_that("ec.data boxlpot", {
+  p <- mtcars |> dplyr::relocate(cyl,mpg) |> ec.data(format='boxplot')
+  expect_equal(p$series[[1]]$type, 'boxplot')
+  expect_equal(p$dataset$source[[1]][[3]], 22.8)
+  expect_equal(p$xAxis[[1]]$name, 'mpg')
+  
+  ds <- mtcars |> dplyr::select(cyl, drat) |>
+	ec.data(format='boxplot', jitter=0.1, layout= 'v',
+  			symbolSize=5, itemStyle=list(opacity=0.9), 
+  			emphasis= list(itemStyle= list(color= 'chartreuse', borderWidth=4, opacity=1))
+	)
+  p <- ec.init(
+    #colors= heat.colors(length(mcyl)),
+    legend= list(show= TRUE), tooltip= list(show=TRUE),
+    dataset= ds$dataset, series= ds$series, xAxis= ds$xAxis, yAxis= ds$yAxis
+  ) |> 
+  ec.upd({ 
+  	series[[1]] <- c(series[[1]], 
+  	                 list(color= 'LightGrey', itemStyle= list(color='DimGray')))
+  }) |> ec.theme('dark-mushroom')
+  expect_equal(p$x$opts$series[[1]]$name, 'boxplot')
+  expect_equal(p$x$opts$series[[4]]$name, '8')
+  expect_match(p$x$opts$series[[4]]$tooltip$formatter, "x[1] ); return c;}", fixed=TRUE)
+  expect_equal(p$x$opts$yAxis[[1]]$name, 'drat')
+  expect_equal(p$x$opts$xAxis[[2]]$max, 3)
+
+  # with grouping
+  ds <- airquality |> dplyr::mutate(Day=round(Day/10)) |> 
+    dplyr::relocate(Day,Wind,Month) |> dplyr::group_by(Month) |> 
+  	ec.data(format='boxplot', jitter=0.1)
+  p <- ec.init(
+    dataset= ds$dataset, series= ds$series,xAxis= ds$xAxis, yAxis= ds$yAxis,
+    legend= list(show= TRUE), tooltip= list(show=TRUE)
+  )
+  expect_equal(length(p$x$opts$dataset), 10)
+  expect_equal(p$x$opts$series[[5]]$type, 'boxplot')
+  expect_equal(p$x$opts$series[[5]]$datasetIndex, 9)
+  expect_equal(p$x$opts$series[[6]]$type, 'scatter')
+  expect_equal(p$x$opts$series[[6]]$name, '0')
+  expect_equal(p$x$opts$yAxis[[1]]$type, 'category')
+})
+
+test_that("ec.data treePC", {
+  df <- as.data.frame(Titanic) |> group_by(Survived,Class) |> 
+    summarise(value=sum(Freq), .groups='drop') |>
+    mutate(parents= as.character(Survived), 
+           children= as.character(Class)) |>
+    select(parents, children, value)
+  # add root to form a tree
+  df[nrow(df) + 1,] <- list('survived','Yes',711)
+  df[nrow(df) + 1,] <- list('survived','No', 1490)
+  df[nrow(df) + 1,] <- list('root2','survived',2201)
+  
+  p <- ec.init(preset= FALSE,
+          series= list(list(
+            type= 'sunburst', 
+            data= ec.data(df, format='treePC')[[1]]$children, 
+            radius=c('11%', '90%')
+            #,label=list(rotate='radial'), emphasis=list(focus='none')
+          ))
+  )
+  expect_equal(p$x$opts$series[[1]]$data[[1]]$value, 711)
+  expect_equal(length(p$x$opts$series[[1]]$data[[1]]$children), 4)
 })
 

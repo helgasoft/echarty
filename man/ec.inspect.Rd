@@ -25,6 +25,7 @@ Convert chart to JSON string
 }
 \details{
 Must be invoked or chained as last command.\cr
+target='full' will export all JavaScript custom code, ready to be used on import.
 }
 \examples{
 # extract JSON

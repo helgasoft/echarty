@@ -250,8 +250,7 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
   # ------------- data.frame -------------------
   if (!is.null(df)) {
     # if data.frame given, assign to dataset regardless of parameter 'preset'
-    if (!inherits(df, 'data.frame')) 
-      stop('ec.init: df must be a data.frame', call. = FALSE)
+    stopifnot('ec.init: df must be a data.frame'= inherits(df, 'data.frame'))
     
     # skip default group settings on map timeline
     if (!is.null(tl.series) && paste0(tl.series$type,'')=='map') ctype <- NULL
@@ -295,8 +294,7 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
         allp <- replace(allp, pos, FALSE)
         colX <- which(allp==TRUE)[1]   # first two==TRUE are X,Y
         colY <- which(allp==TRUE)[2]
-        if (is.na(colY))
-          stop('ec.init: df must have at least 3 columns when grouping by one', call.= FALSE)
+        stopifnot('ec.init: df must have at least 3 columns when grouping by one'= !is.na(colY))
       }
       # add encode if missing to series when grouping
       if (!(colX==1 && colY==2)) {
@@ -392,8 +390,6 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
     if (preset) {
       wt$x$opts$xAxis <- NULL
       wt$x$opts$yAxis <- NULL
-      #if (is.null(opts$series) || is.null(opts$series$type) || opts$series$type!='map')
-      #  wt$x$opts$series <- list(list(type='map', geoIndex=0))
       if (!is.null(df)) {  # add map serie if missing
         tmp <- sapply(wt$x$opts$series, \(x) {x$type} )
         if (!'map' %in% tmp)
@@ -526,10 +522,9 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
   # timeline is evaluated last
   
   if (is.null(df) || !is.grouped_df(df))
-    stop('ec.init: tl.series requires a grouped data.frame df', call. = FALSE)
+    stopifnot('ec.init: tl.series requires a grouped data.frame df'= 1==1)
 
-  if (is.null(tl.series$encode))
-    stop('ec.init: encode is required for tl.series', call. = FALSE)
+  stopifnot('ec.init: encode is required for tl.series'= !is.null(tl.series$encode))
 
   # add missing defaults
   if (is.null(tl.series$type)) tl.series$type <- 'scatter'
@@ -551,10 +546,8 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
   if (tl.series$type == 'map') {
     # tl.series type='map' has no encode/dataset API, needs 'data'
     wt$x$opts$dataset <- NULL
-    if (is.null(unlist(tl.series$encode[xtem])))
-      stop(paste0("tl.series: encode '",xtem,"' is required "), call.=FALSE)
-    if (is.null(unlist(tl.series$encode[ytem])))
-      stop(paste0("tl.series: encode '",ytem,"' is required "), call.=FALSE)
+    stopifnot("tl.series: encode 'name' is required"= !is.null(unlist(tl.series$encode[xtem])))
+    stopifnot("tl.series: encode 'value' is required"= !is.null(unlist(tl.series$encode[ytem])))
     
     gvar <- df |> group_vars() |> first() |> as.character()  # convert if factor
     optl <- lapply(df |> group_split(), \(gp) {
@@ -576,9 +569,8 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
       # replace only source, transforms stay
       wt$x$opts$dataset[[1]] <- list(source=ec.data(df, header=TRUE))
     }
-    if (is.null(unlist(tl.series$encode[ytem])))
-      stop(paste0("tl.series: encode '",ytem,"' is required for ",
-                  tl.series$coordinateSystem), call.=FALSE)
+    # paste0("tl.series: encode '",ytem,"' is required for ",tl.series$coordinateSystem)
+    stopifnot("tl.series: bad second parameter name for encode"= !is.null(unlist(tl.series$encode[ytem])))
     
     # dataset is already in, now loop group column(s)
     gvar <- df |> group_vars() |> first() |> as.character()  # convert if factor
@@ -611,8 +603,7 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
   wt$x$opts$options <- .merlis(optl, wt$x$opts$options)
   
   if (preset && !is.null(tl.series$groupBy)) {
-    if (!(tl.series$groupBy %in% colnames(df)))
-      stop('ec.init: tl.series groupBy column missing in df', call.= FALSE)
+    stopifnot('ec.init: tl.series groupBy column missing in df'= tl.series$groupBy %in% colnames(df))
     gvar <- df |> group_vars() |> first() |> as.character()  # convert if factor
     tgrp <- tl.series$groupBy
     # define additional filter transformations and option series based on preset ones
@@ -679,8 +670,7 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
 #' })
 #' @export
 ec.upd <- function(wt, ...) {
-  if (!inherits(wt, 'echarty'))
-    stop('ec.upd: expecting wt as echarty widget', call.=FALSE)
+  stopifnot('ec.upd: expecting wt as echarty widget'= inherits(wt, 'echarty'))
   
   wt$x$opts <- within(wt$x$opts, ...)
   wt
@@ -738,14 +728,14 @@ ec.upd <- function(wt, ...) {
 #' @export
 ecr.band <- function(df=NULL, lower=NULL, upper=NULL, type='stack', ...) {
   if (is.null(df) || is.null(lower) || is.null(upper)) 
-    stop("ecr.band: df, lower and upper are all required", call. = FALSE)
-  if (!inherits(df, 'data.frame')) 
-    stop("ecr.band: df must be a data.frame", call. = FALSE)
+    stop("ecr.band: df,lower,upper are required args", call. = FALSE)
+  stopifnot("ecr.band: df must be a data.frame"= inherits(df, 'data.frame'))
+  fstc <- colnames(df)[1]   # first column name
+  stopifnot("ecr.band: df first column is lower or upper"= !fstc %in% c('lower','upper'))
   if (!is.numeric(df[lower][[1]]) || !is.numeric(df[upper][[1]]))
     stop("ecr.band: lower and upper must be numeric", call. = FALSE)
   df <- na.omit(df)
   
-  fstc <- colnames(df)[1]   # first column name
   if (type=='stack') {
     colr <- paste("new echarts.graphic.LinearGradient(0, 0, 0, 1, [", 
                   "{offset: 0, color: 'rgba(255, 0, 135)'},", 
@@ -840,7 +830,8 @@ ecr.band <- function(df=NULL, lower=NULL, upper=NULL, type='stack', ...) {
 #' @export
 ecr.ebars <- function(wt, df=NULL, hwidth=6, ...) {
   # alternating bars with custom series doesn't work, first bars then customs
-  if (missing(wt)) stop('ecr.ebars: expecting widget', call.=FALSE)
+  stopifnot('ecr.ebars: expecting widget'= !missing(wt))
+  stopifnot('ecr.ebars: expecting echarty widget'= inherits(wt, "echarty"))
   if (!is.null(df) && !inherits(df, "data.frame")) 
     stop('ecr.ebars: df must be a data.frame', call.=FALSE)
 #  if (!'renderers' %in% unlist(lapply(wt$dependencies, \(d) d$name)))
@@ -848,7 +839,7 @@ ecr.ebars <- function(wt, df=NULL, hwidth=6, ...) {
     stop("use ec.init(load='custom') before ecr.ebars", call.=FALSE)
 
   ser <- wt$x$opts$series  # all series
-  if (is.null(ser)) stop('ecr.ebars: series are missing', call.=FALSE)
+  stopifnot('ecr.ebars: series are missing'= !is.null(ser))
   args <- list(...)
   
   cntr <- function(x, typ) { grep(typ, x) }
@@ -893,11 +884,10 @@ ecr.ebars <- function(wt, df=NULL, hwidth=6, ...) {
   
   # build the series
   if (is.null(df)) {
-    if (length(wt$x$opts$dataset)==1) {
-      if (is.null(name)) name <- wt$x$opts$dataset[[1]]$source[[1]][2]
+    stopifnot('ecr.ebars: no dataset'= !is.null(wt$x$opts$dataset))
+    stopifnot('ecr.ebars: dataset is grouped, set df parameter'= length(wt$x$opts$dataset)==1)
+    if (is.null(name)) name <- wt$x$opts$dataset[[1]]$source[[1]][2]
       cser <- list(oneSerie(name))
-    } else 
-      stop('ecr.ebars: dataset is grouped, set df parameter', call. = FALSE)
   }
   else {
     if (dplyr::is.grouped_df(df)) {    # groups
@@ -915,94 +905,6 @@ ecr.ebars <- function(wt, df=NULL, hwidth=6, ...) {
   #if (!"legend" %in% names(wt$x$opts)) wt$x$opts$legend <- list(show=TRUE)
   wt
 }
-
-ecr.ebarsOLD <- function(wt, df=NULL, hwidth=6, ...) {
-  # alternating bars with custom series doesn't work, first bars then customs
-  if (missing(wt)) stop('ecr.ebars: expecting widget', call.=FALSE)
-  if (!is.null(df) && !inherits(df, "data.frame")) 
-    stop('ecr.ebars: df must be a data.frame', call.=FALSE)
-  if (!'renderers' %in% unlist(lapply(wt$dependencies, \(d) d$name)))
-    stop("ecr.ebars: use ec.init(load='custom') for ecr.ebars", call.=FALSE)
-
-  ser <- wt$x$opts$series  # all series
-  if (is.null(ser)) stop('ecr.ebars: series are missing', call.=FALSE)
-  args <- list(...)
-  
-  # look for barGap(s), barCategoryGap(s)
-  allBarGaps <-   lapply(ser, \(x) { x$barGap })
-  allBarCgGaps <- lapply(ser, \(x) { x$barCategoryGap })
-  lbg <- utils::tail(unlist(allBarGaps),1); lbg <- if (is.null(lbg)) '' else lbg
-  lcg <- utils::tail(unlist(allBarCgGaps),1); lcg <- if (is.null(lcg)) '' else lcg
-  
-  cntr <- function(x, typ) { grep(typ, x) }
-  name <- args$name; 
-  tmp <- NULL   # count number of similar (grouped) series
-  if (!is.null(name)) 
-    tmp <- unlist(lapply(ser, function(x) { 
-      if (length(grep(name,x))>0) x$type else NULL }))[1]
-  if (!is.null(tmp))    # attached by name, count same-type series
-    info <- length(unlist(lapply(ser, \(x) grep(tmp, x))))
-  else {    # no name or not found - choose first of type bar/line/scatter, count how many
-    info <- length(unlist(lapply(ser, cntr, typ='bar')))
-    if (info==0) info <- length(unlist(lapply(ser, cntr, typ='scatter')))
-    if (info==0) info <- length(unlist(lapply(ser, cntr, typ='line')))
-  }
-  
-  if (info==0) return(wt)    # no bars/lines/scatter, nothing to attach to
-  
-  # set minimal info to be read by the renderer
-  # renderers.js works in a very isolated environment, so we send data thru sessionStorage
-  # info = last barGap, last barCategoryGap, number of bars, bar half-width in pixels
-  info <- c(lbg, lcg, as.character(info), hwidth)
-  
-  info <- paste0("sessionStorage.setItem('ErrorBar.oss','"
-                 ,jsonlite::toJSON(info),"'); riErrorBar;") #renderErrorBar2;
-  
-  oneSerie <- function(name, df=NULL) {
-    if (is.null(df))
-      c <- list(type='custom', name=name, renderItem = htmlwidgets::JS(info), ...)
-    else
-      c <- list(type='custom', name=name, renderItem = htmlwidgets::JS(info),
-                data= ec.data(df), ...)
-    
-    if (is.null(c$z)) c$z <- 3
-    if (is.null(c$itemStyle$borderWidth)) c$itemStyle$borderWidth <- 1.5
-    if (is.null(c$color) && is.null(c$itemStyle$color)) {
-      # set own color, or it will blend with main bar
-      # impression that c$itemStyle$color is better than c$color
-      c$itemStyle$color <- 'black'
-    }
-    if (is.null(c$tooltip))  # shows up on non-grouped data
-      c$tooltip <- list(formatter= ec.clmn(
-        '<br>value <b>%@</b> <br>range <b>%@ to %@</b>', 2,3,4))
-    c
-  }
-  
-  # build the series
-  if (is.null(df)) {
-    if (length(wt$x$opts$dataset)==1) {
-      if (is.null(name)) name <- wt$x$opts$dataset[[1]]$source[[1]][2]
-      cser <- list(oneSerie(name))
-    } else 
-      stop('ecr.ebars: dataset is grouped, set df parameter', call. = FALSE)
-  }
-  else {
-    if (dplyr::is.grouped_df(df)) {    # groups
-      grnm <- dplyr::group_vars(df)[[1]]   # just 1st g.column matters
-      tmp <- df |> dplyr::group_split()
-      cser <- lapply(tmp, \(gp) {
-        name <- unlist(unique(unname(gp[,grnm])))
-        oneSerie(name, gp)
-      })
-    }
-    else
-      cser <- list(oneSerie(names(df)[2], df))
-  }
-  wt$x$opts$series <- append(wt$x$opts$series, cser)
-  #if (!"legend" %in% names(wt$x$opts)) wt$x$opts$legend <- list(show=TRUE)
-  wt
-}
-
 
 
 # ----------- Shiny --------------
@@ -1096,10 +998,8 @@ ecs.proxy <- function(id) {
 #' @export
 ecs.exec <- function(proxy, cmd='p_merge') {
 
-  if (missing(proxy))
-    stop('ecs.exec: missing proxy', call. = FALSE)
-  if (!inherits(proxy, 'ecsProxy')) 
-    stop('ecs.exec: must pass ecsProxy object', call. = FALSE)
+  stopifnot('ecs.exec: missing proxy'= !missing(proxy))
+  stopifnot('ecs.exec: must pass ecsProxy object'= inherits(proxy, 'ecsProxy'))
   if (is.null(proxy$x) || is.null(proxy$x$opts))
     stop('ecs.exec: proxy is empty', call. = FALSE)
   
@@ -1148,8 +1048,7 @@ ecs.exec <- function(proxy, cmd='p_merge') {
 #' 
 #' @export 
 ec.paxis <- function (df=NULL, minmax=TRUE, cols=NULL, ...) {
-  if (!inherits(df, 'data.frame'))
-    stop('ec.paxis: df has to be data.frame', call.= FALSE)
+  stopifnot('ec.paxis: df has to be data.frame'= inherits(df, 'data.frame'))
   pax <- list(); grnm <- ''
   cfilter <- 1:length(colnames(df))
   if (dplyr::is.grouped_df(df)) {
@@ -1158,7 +1057,7 @@ ec.paxis <- function (df=NULL, minmax=TRUE, cols=NULL, ...) {
     cfilter <- cfilter[!cfilter==match(grnm,colnames(df))]
   }
   if (!is.null(cols)) {
-    if (!all(cols %in% colnames(df))) stop('ec.paxis: some cols not found', call.= FALSE)
+    stopifnot('ec.paxis: some cols not found'= all(cols %in% colnames(df)))
     cfilter <- match(cols, colnames(df))  # indexes
   }
   for(i in cfilter) {
@@ -1201,8 +1100,7 @@ ec.paxis <- function (df=NULL, minmax=TRUE, cols=NULL, ...) {
 #' @export
 ec.theme <- function (wt, name, code= NULL) 
 {
-  if (missing(name))
-    stop('ec.theme: must define a name', call. = FALSE)
+  stopifnot('ec.theme: name required'= !missing(name))
 
   wt$x$theme <- name
   if (!is.null(code))
@@ -1233,6 +1131,7 @@ ec.theme <- function (wt, name, code= NULL)
 #'  a character vector.
 #'
 #' @details Must be invoked or chained as last command.\cr
+#' target='full' will export all JavaScript custom code, ready to be used on import.
 #'
 #' @examples
 #' # extract JSON
@@ -1245,11 +1144,10 @@ ec.theme <- function (wt, name, code= NULL)
 #' @export
 ec.inspect <- function(wt, target='opts', ...) {
 
-  if (!target %in% c('opts','data','full')) stop("ec.inspect: target only 'opts', 'data' or 'full'", call. = FALSE)
-  if (target=='full')
-    opts <- wt
-  else
-    opts <- wt$x$opts
+  stopifnot("ec.inspect: target only 'opts', 'data' or 'full'"= target %in% c('opts','data','full'))
+	if (target=='full')
+		return(jsonlite::serializeJSON(wt))
+  opts <- wt$x$opts
   
   if (target=='data') {
     out <- list()
@@ -1279,14 +1177,14 @@ ec.inspect <- function(wt, target='opts', ...) {
   }
   
   params <- list(...)
-  if ('pretty' %in% names(params)) 
-    opts <- jsonlite::toJSON(opts, force=TRUE, auto_unbox=TRUE, 
+  if ('pretty' %in% names(params) && !params$pretty) 
+    tmp <- jsonlite::toJSON(opts, force=TRUE, auto_unbox=TRUE, 
                              null='null', ...)
   else  # pretty by default
-    opts <- jsonlite::toJSON(opts, force=TRUE, auto_unbox=TRUE, 
+    tmp <- jsonlite::toJSON(opts, force=TRUE, auto_unbox=TRUE, 
                              null='null', pretty=TRUE, ...)
   
-  return(opts)
+  return(tmp)
 }
 
 
@@ -1294,12 +1192,13 @@ ec.inspect <- function(wt, target='opts', ...) {
 #' 
 #' Convert JSON string to chart
 #' 
-#' @param txt JSON character string, url, or file, see \link[jsonlite]{fromJSON}
+#' @param txt JSON character string or object, url, or file, see \link[jsonlite]{fromJSON}
 #' @param ... Any attributes to pass to internal [ec.init]
 #' @return An _echarty_ widget.
 #' 
-#' @details _txt_ could be either a list of options (x$opts) to pass to ECharts function \href{https://echarts.apache.org/en/api.html#echartsInstance.setOption}{setOption},\cr
-#'  or an entire _htmlwidget_ generated thru \code{ec.inspect(target='full')}.
+#' @details _txt_ could be either a list of options (x$opts) only for \href{https://echarts.apache.org/en/api.html#echartsInstance.setOption}{setOption},\cr
+#'  or an entire _htmlwidget_ generated thru \code{ec.inspect(target='full')}.\cr
+#'  The latter imports also all JavaScript functions defined by the user.
 #' 
 #' @examples
 #' txt <- '{
@@ -1310,8 +1209,6 @@ ec.inspect <- function(wt, target='opts', ...) {
 #'
 #' @export
 ec.fromJson <- function(txt, ...) {
-  json <- jsonlite::fromJSON(txt, simplifyVector = FALSE)
-  
   recur <- \(opts) {
     names <- names(opts)
     for(k in seq_along(opts)) {
@@ -1320,34 +1217,34 @@ ec.fromJson <- function(txt, ...) {
         opts[[k]] <- recur(opts[[k]])  # recursive
       else if (
         (!is.null(names) && names[[k]]=='renderItem') || 
-        (is.character(nn) && (grepl(') =>', nn) || 
-                              startsWith(nn, 'function(') ||
-                              startsWith(nn, 'new echarts.')))) {
+        (inherits(nn,'character') && length(nn)==1 && 
+           (grepl(') =>', nn) || 
+            startsWith(nn, 'function(') ||
+            startsWith(nn, 'new echarts.')))) {
         opts[[k]] <- htmlwidgets::JS(opts[[k]])
       }
     }
     opts
   }
-
-  if (!is.null(json$dependencies)) {  # full
-    json$x$opts <- recur(json$x$opts)
-    json$dependencies <- lapply(json$dependencies, \(d) {structure(d, class= 'html_dependency')})
-    e <- htmlwidgets::createWidget(
-      name = 'echarty',
-      package = 'echarty',
-      x = json$x,
-      width = json$width,
-      height = json$height,
-      elementId = json$elementId,
-      sizingPolicy = json$sizingPolicy,
-      dependencies = json$dependencies
-    )
-  } else {
-    e <- ec.init(...)
-    e$x$opts <- recur(json)
+  
+  if (inherits(txt, 'json')) {
+  	tmp <- jsonlite::parse_json(txt, FALSE)
+  	if (!is.null(tmp$attributes$package)) {
+  	  badge <- tmp$attributes$package$value[[1]]
+  		if (badge=='echarty') {
+  			obj <- jsonlite::unserializeJSON(txt)
+     		return(obj)
+  		}
+      stop(paste('ec.fromJson: unknown input',badge))
+  	}
   }
-  e
+  tmp <- jsonlite::fromJSON(txt, simplifyVector = FALSE)
+	# options only
+	obj <- ec.init(...)
+	obj$x$opts <- recur(tmp)
+	obj
 }
+
 
 # ----------- Internal --------------
 
@@ -1381,11 +1278,10 @@ ec.fromJson <- function(txt, ...) {
 #'
 #' @export
 ec.plugjs <- function(wt=NULL, source=NULL, ask=FALSE) {
-  if (missing(wt))
-    stop('ec.plugjs: expecting widget', call. = FALSE)
+  stopifnot('ec.plugjs: expecting echarty widget'= inherits(wt, 'echarty'))
   if (is.null(source)) return(wt)
-  if (!startsWith(source, 'http') && !startsWith(source, 'file://'))
-    stop('ec.plugjs: expecting source as URL or file://', call. = FALSE)
+  stopifnot('ec.plugjs: expecting source as URL or file://'= 
+              startsWith(source, 'http') || startsWith(source, 'file://'))
   fname <- basename(source)
   fname <- unlist(strsplit(fname, '?', fixed=TRUE))[1]  # when 'X.js?key=Y'
   # if (!endsWith(fname, '.js'))
@@ -1468,8 +1364,6 @@ ec.plugjs <- function(wt=NULL, source=NULL, ask=FALSE) {
   else if (length(l1)==0) l2
 	else if (!inherits(l2, 'list')) l1
   else if (length(l2)==0) l1
-	#else if (inherits(l2[[1]], 'list'))
-	#  stop('.merlis: l2 is a list of lists', call. = FALSE)
 	else if (inherits(l1[[1]], 'list'))     # list of lists
 		lapply(l1, \(x) {
 			c(x, l2)[!duplicated(c(names(x), names(l2)), fromLast= TRUE)]
@@ -1478,7 +1372,7 @@ ec.plugjs <- function(wt=NULL, source=NULL, ask=FALSE) {
 		c(l1, l2)[!duplicated(c(names(l1), names(l2)), fromLast= TRUE)]
 }
 
-if (requireNamespace("shiny", quietly= TRUE)) {
+#if (requireNamespace("shiny", quietly= TRUE)) {
   
   # for Shiny actions
   .onAttach <- function(libname, pkgname) {
@@ -1493,7 +1387,7 @@ if (requireNamespace("shiny", quietly= TRUE)) {
       }, force = TRUE)
   }
   
-}
+#}
 
 #  ------------- Global Options -----------------
 #' 

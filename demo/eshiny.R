@@ -143,7 +143,7 @@ server <- function(input, output, session) {
     p
   })
   
-  # click & mouseover are the only built-in events, no need to capture them
+  # click, mouseover, mouseout are the only built-in events, no need to capture them
   # they contain: name, data, dataIndex, seriesName, value
   observeEvent(input$plot_click, {
     output$dclick <- renderText(input$plot_click$value)

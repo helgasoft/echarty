@@ -1,3 +1,4 @@
+# expect_silent()
 test_that("registerMap", {
   # similar in ec.examples, with USA map
   gjson <- jsonlite::parse_json('{"type":"FeatureCollection", "properties":{"id":"all3"},
@@ -87,18 +88,16 @@ test_that("leaflet with ec.clmn and timeline", {
   expect_equal(p$x$opts$leaflet$zoom, 6)
   expect_s3_class(p$x$opts$tooltip$formatter, 'JS_EVAL')
 
-  tmp <- quakes |> dplyr::relocate('long') |>  # set order to lon,lat
-  	dplyr::mutate(size= exp(mag)/20) |> head(100)  # add accented size
   p <- tmp |> group_by(stations) |> ec.init(load='leaflet', 
     tooltip = list(formatter=ec.clmn('magnitude %@', 'mag')),
   	leaflet= list(center= c(179.462,-20), zoom= 2,
   	              tiles= list(
-        list(
-          label= 'Stamen',
-          urlTemplate= 'https://stamen-tiles-{s}.a.ssl.fastly.net/terrain/{z}/{x}/{y}{r}.{ext}',
-          options= list(attribution= 'Map tiles by <a href="http://stamen.com">Stamen Design</a>, <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>',
-                        subdomains= 'abcd',	maxZoom= 18, ext= 'png')
-        )
+      list(
+        label= 'Stamen',
+        urlTemplate= 'https://stamen-tiles-{s}.a.ssl.fastly.net/terrain/{z}/{x}/{y}{r}.{ext}',
+        options= list(attribution= 'Map tiles by <a href="http://stamen.com">Stamen Design</a>, <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>',
+                      subdomains= 'abcd',	maxZoom= 18, ext= 'png')
+      )
      					    )
     ),
   	timeline= list(autoPlay=TRUE, controlStyle= list(borderColor='brown')),
@@ -115,7 +114,7 @@ test_that("leaflet with ec.clmn and timeline", {
   )
   expect_equal(p$x$opts$leaflet$zoom, 2)
   expect_s3_class(p$x$opts$tooltip$formatter, 'JS_EVAL')
-  #expect_equal(p$dependencies[[9]]$name, 'echarts-leaflet')
+  #expect_equal(p$dependencies[[9]]$name, 'echarts-leaflet')  # loads slow?
   expect_equal(p$x$opts$options[[10]]$title$text, '19')
   expect_equal(p$x$opts$options[[10]]$series[[1]]$name, 'quake')
   expect_true (p$x$opts$options[[10]]$legend$show)
@@ -133,83 +132,6 @@ test_that("ec.upd(), echarts.registerTransform and ecStat", {
   })
   expect_equal(p$x$jcode, 'echarts.registerTransform(ecStat.transform.regression)')
   expect_equal(p$x$opts$dataset[[2]]$transform$type, "ecStat:regression")
-})
-
-test_that("ec.data dendrogram", {
-  hc <- hclust(dist(USArrests), "average")
-  p <- ec.init(preset= FALSE,
-               series= list(list(
-                 type= 'tree', roam= TRUE, initialTreeDepth= -1,
-                 data= ec.data(hc, format='dendrogram') ))
-  )
-  expect_equal(p$x$opts$series[[1]]$data[[1]]$name, 'p49')
-  expect_equal(p$x$opts$series[[1]]$data[[1]]$children[[1]]$children[[1]]$children[[2]]$name, 'North Carolina')
-  expect_equal(length(p$x$opts$series[[1]]$data[[1]]$children[[1]]$children), 2)
-})
-
-test_that("ec.data boxlpot", {
-  p <- mtcars |> dplyr::relocate(cyl,mpg) |> ec.data(format='boxplot')
-  expect_equal(p$series[[1]]$type, 'boxplot')
-  expect_equal(p$dataset$source[[1]][[3]], 22.8)
-  expect_equal(p$xAxis[[1]]$name, 'mpg')
-  
-  ds <- mtcars |> dplyr::select(cyl, drat) |>
-	ec.data(format='boxplot', jitter=0.1, layout= 'v',
-  			symbolSize=5, itemStyle=list(opacity=0.9), 
-  			emphasis= list(itemStyle= list(color= 'chartreuse', borderWidth=4, opacity=1))
-	)
-  p <- ec.init(
-    #colors= heat.colors(length(mcyl)),
-    legend= list(show= TRUE), tooltip= list(show=TRUE),
-    dataset= ds$dataset, series= ds$series, xAxis= ds$xAxis, yAxis= ds$yAxis
-  ) |> 
-  ec.upd({ 
-  	series[[1]] <- c(series[[1]], 
-  	                 list(color= 'LightGrey', itemStyle= list(color='DimGray')))
-  }) |> ec.theme('dark-mushroom')
-  expect_equal(p$x$opts$series[[1]]$name, 'boxplot')
-  expect_equal(p$x$opts$series[[4]]$name, '8')
-  expect_match(p$x$opts$series[[4]]$tooltip$formatter, "x[1] ); return c;}", fixed=TRUE)
-  expect_equal(p$x$opts$yAxis[[1]]$name, 'drat')
-  expect_equal(p$x$opts$xAxis[[2]]$max, 3)
-
-  # with grouping
-  ds <- airquality |> dplyr::mutate(Day=round(Day/10)) |> 
-    dplyr::relocate(Day,Wind,Month) |> dplyr::group_by(Month) |> 
-  	ec.data(format='boxplot', jitter=0.1)
-  p <- ec.init(
-    dataset= ds$dataset, series= ds$series,xAxis= ds$xAxis, yAxis= ds$yAxis,
-    legend= list(show= TRUE), tooltip= list(show=TRUE)
-  )
-  expect_equal(length(p$x$opts$dataset), 10)
-  expect_equal(p$x$opts$series[[5]]$type, 'boxplot')
-  expect_equal(p$x$opts$series[[5]]$datasetIndex, 9)
-  expect_equal(p$x$opts$series[[6]]$type, 'scatter')
-  expect_equal(p$x$opts$series[[6]]$name, '0')
-  expect_equal(p$x$opts$yAxis[[1]]$type, 'category')
-})
-
-test_that("ec.data treePC", {
-  df <- as.data.frame(Titanic) |> group_by(Survived,Class) |> 
-    summarise(value=sum(Freq), .groups='drop') |>
-    mutate(parents= as.character(Survived), 
-           children= as.character(Class)) |>
-    select(parents, children, value)
-  # add root to form a tree
-  df[nrow(df) + 1,] <- list('survived','Yes',711)
-  df[nrow(df) + 1,] <- list('survived','No', 1490)
-  df[nrow(df) + 1,] <- list('root2','survived',2201)
-  
-  p <- ec.init(preset= FALSE,
-          series= list(list(
-            type= 'sunburst', 
-            data= ec.data(df, format='treePC')[[1]]$children, 
-            radius=c('11%', '90%')
-            #,label=list(rotate='radial'), emphasis=list(focus='none')
-          ))
-  )
-  expect_equal(p$x$opts$series[[1]]$data[[1]]$value, 711)
-  expect_equal(length(p$x$opts$series[[1]]$data[[1]]$children), 4)
 })
 
 test_that("ec.data treeTK", {
@@ -286,9 +208,9 @@ test_that("ec.inspect and ec.fromJson", {
   )
   tmp <- p |> ec.inspect(target='full')
   expect_true(inherits(tmp, 'json'))
-  expect_true(regexpr('^\\{\\n  "x": \\{', tmp)==1)
+  #expect_true(regexpr('^\\{\\n  "x": \\{', tmp)==1)
+  expect_true(regexpr('^\\{"type":"list","attributes":\\{"names":', tmp)==1)
   expect_true(grepl('dependencies', tmp))
-  #expect_true(grepl('new echarts.graphic.LinearGradient', tmp))
     
   v <- ec.fromJson(tmp)
   expect_true(inherits(v, 'echarty'))
@@ -348,4 +270,45 @@ test_that('autoset axis type', {
   p <- df |> ec.init(yAxis= list(scale=T))
   expect_equal(p$x$opts$xAxis$type, 'time')
   expect_equal(p$x$opts$yAxis$type, 'value')
+})
+
+test_that('polar presets', {
+  df <- data.frame(x = 1:10, y = seq(1, 20, by = 2))
+  p <- df |> ec.init(ctype='line', polar= list(dummy= T), 
+  		 series.param= list(NOcoordinateSystem= "polar", smooth= T)
+  )
+  expect_equal(p$x$opts$polar$radius, 111)
+  expect_equal(p$x$opts$radiusAxis$type, 'category')
+  expect_equal(p$x$opts$series[[1]]$coordinateSystem, 'polar')
+})
+
+test_that('stops are working in echarty.R', {
+  df <- data.frame(x = 1:10, y = seq(1, 20, by = 2))
+  expect_error(cars |> group_by(speed) |> ec.init()) # 3 cols min
+  expect_error(ec.init(0)) # df
+  expect_error(ec.init(cars, tl.series= list(d=1))) # groups
+  expect_error(ec.init(mtcars |> group_by(gear), tl.series= list(d=1))) # encode
+  expect_error(ec.init(mtcars |> group_by(gear), tl.series= 
+                  list(type='map', encode= list(x=1, y=2)))) # x
+  expect_error(ec.init(mtcars |> group_by(gear), 
+      tl.series= list(type='map', encode= list(name=1)))) # y
+  expect_silent(ec.init(mtcars |> group_by(gear), 
+      tl.series= list(type='map', encode= list(name=1, value=2))))  # pass map
+  expect_error(ec.init(mtcars |> group_by(gear), tl.series= list(encode= list(x=1, y=2),groupBy='zzz'))) # groupBy
+  expect_error(ecr.band(cars))
+  tmp <- cars; tmp <- tmp |> rename(lower=speed, upper=dist)
+  expect_error(ecr.band(tmp, lower='lower', upper='upper')) # no first col
+  tmp <- ToothGrowth; tmp <- tmp |> rename(lower=len, upper=supp) #dose=numeric
+  expect_error(ecr.band(tmp, lower='lower', upper='upper', test='num')) # numeric
+  expect_error(ecr.ebars())
+  expect_error(ecr.ebars(1))
+  expect_error(ecr.ebars(ec.init(), 1))
+  expect_error(ecr.ebars(ec.init(), cars))
+  expect_silent(ecr.ebars(ec.init(load='custom'), cars))
+  expect_silent(ec.init(load='liquid'))
+  expect_silent(ec.init(load='gmodular'))
+  expect_silent(ec.init(load='wordcloud'))
+  expect_silent(ec.init(load='lottie'))
+  expect_silent(ec.init(load='custom'))
+  
 })

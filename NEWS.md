@@ -1,6 +1,6 @@
 # history of package _echarty_
 
-## v.1.5.4.02  latest, in development
+## v.1.5.4.03  latest, in development
 
 - upgrade ECharts to v.5.4.3, built with R v.4.3.1
 - breaking change in _ec.init_ signature

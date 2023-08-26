@@ -7,7 +7,7 @@
 ec.fromJson(txt, ...)
 }
 \arguments{
-\item{txt}{JSON character string, url, or file, see \link[jsonlite]{fromJSON}}
+\item{txt}{JSON character string or object, url, or file, see \link[jsonlite]{fromJSON}}
 
 \item{...}{Any attributes to pass to internal \link{ec.init}}
 }
@@ -18,8 +18,9 @@ An \emph{echarty} widget.
 Convert JSON string to chart
 }
 \details{
-\emph{txt} could be either a list of options (x$opts) to pass to ECharts function \href{https://echarts.apache.org/en/api.html#echartsInstance.setOption}{setOption},\cr
-or an entire \emph{htmlwidget} generated thru \code{ec.inspect(target='full')}.
+\emph{txt} could be either a list of options (x$opts) only for \href{https://echarts.apache.org/en/api.html#echartsInstance.setOption}{setOption},\cr
+or an entire \emph{htmlwidget} generated thru \code{ec.inspect(target='full')}.\cr
+The latter imports also all JavaScript functions defined by the user.
 }
 \examples{
 txt <- '{

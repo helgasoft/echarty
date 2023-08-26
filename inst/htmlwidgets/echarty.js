@@ -93,9 +93,9 @@ HTMLWidgets.widget({
       //  tmp = chart.getModel()._optionManager._timelineOptions;
       //  if (tmp) {  }
       
-      if (HTMLWidgets.shinyMode) {    // shiny callbacks
+      if (HTMLWidgets.shinyMode) {
 
-        ecp = ":echartyParse";
+        ecp = ":echartyParse";    // built-in Shiny event callbacks
         
         chart.on("click", function(e){
           Shiny.onInputChange(el.id + '_click' + ecp, 
@@ -134,17 +134,11 @@ HTMLWidgets.widget({
       }
       
       if(x.hasOwnProperty('on')) {
-        x.on.forEach(ev => chart.on(ev.event, ev.query, ev.query) )
-      /*  for(var e = 0; e < x.on.length; e++){
-          chart.on(x.on[e].event, x.on[e].query, x.on[e].handler);
-        }*/
+        x.on.forEach(ev => chart.on(ev.event, ev.query, ev.handler) )
       }
       
       if(x.hasOwnProperty('off')){
-        x.off.forEach(ev => chart.on(ev.event, ev.query, ev.query) )
-      /*  for(var ev = 0; ev < x.off.length; ev++){
-          chart.off(x.off[ev].event, x.off[ev].query, x.off[ev].handler);
-        }*/
+        x.off.forEach(ev => chart.on(ev.event, ev.query, ev.handler) )
       }
       
       if(x.hasOwnProperty('group')){
@@ -155,9 +149,6 @@ HTMLWidgets.widget({
         if (Array.isArray(x.connect)) {
           connections = [];
           x.connect.forEach(cc => connections.push(get_e_charts(cc)) )
-          //for(var c = 0; c < x.connect.length; c++){
-          //  connections.push(get_e_charts(x.connect[c]));
-          //}
           connections.push(chart);
           echarts.connect(connections);  
         } else

@@ -196,7 +196,7 @@ ec.util <- function( ..., cmd='sf.series', js=NULL) {
                 coords <- append(coords, list(c(geom[k,1], geom[k,2])))
               
               sers <- append(sers, list( c(
-                list( type='lines', coordinateSystem= cs, polyline= TRUE,
+                list( type='lines', polyline= TRUE, coordinateSystem= cs,
                       name= dname, tooltip= list(formatter= '{a}'), 
                       data= list(coords)),
                 opts) ))
@@ -216,7 +216,7 @@ ec.util <- function( ..., cmd='sf.series', js=NULL) {
                 corda <- append(corda, list(coords))
               }
               sers <- append(sers, list( c(
-                list( type='lines', coordinateSystem= cs, polyline= TRUE,
+                list( type='lines', polyline= TRUE, coordinateSystem= cs,
                       name= dname, tooltip= list(formatter= '{a}'),
                       data= corda),
                 opts) ))
@@ -234,10 +234,8 @@ ec.util <- function( ..., cmd='sf.series', js=NULL) {
         sers
       }
       
-      if (is.null(opts$df))
-        stop('ec.util: expecting parameter df', call. = FALSE)
-      if (is.null(opts$df$geometry))
-        stop('ec.util: expecting df$geometry', call. = FALSE)
+      stopifnot('ec.util: expecting parameter df'= !is.null(opts$df))
+      stopifnot('ec.util: expecting df$geometry'= !is.null(opts$df$geometry))
       cs <- verbose <- NULL   # CRAN check fix
       do.opties(c('cs','verbose'), list('leaflet', FALSE))
       tmp <- opts$df
@@ -246,10 +244,8 @@ ec.util <- function( ..., cmd='sf.series', js=NULL) {
     },
     
     'sf.bbox'= {
-      if (is.null(opts$bbox))
-        stop('ec.util: expecting parameter bbox', call. = FALSE)
-      if (is.null(opts$bbox$ymin))
-        stop('ec.util: expecting bbox in sf format', call. = FALSE)
+      stopifnot('ec.util: expecting parameter bbox'= !is.null(opts$bbox))
+      stopifnot('ec.util: expecting bbox in sf format'= !is.null(opts$bbox$ymin))
       tmp <- opts$bbox
       rng <- paste0('[[',tmp$ymin,',',tmp$xmin,'],[',tmp$ymax,',',tmp$xmax,']]')
       out <- c('','', 
@@ -257,8 +253,7 @@ ec.util <- function( ..., cmd='sf.series', js=NULL) {
                      "map.fitBounds(",rng,");"))
     },
     'sf.unzip'= {
-      if (is.null(opts$url))
-        stop('ec.util: expecting url of zipped shapefile', call. = FALSE)
+      stopifnot('ec.util: expecting url of zipped shapefile'= !is.null(opts$url))
       destfile <- tempfile('shapefile')
       download.file(opts$url, destfile, mode='wb') #, method='curl')
       # get name only, use as folder name to unzip to
@@ -267,7 +262,8 @@ ec.util <- function( ..., cmd='sf.series', js=NULL) {
       # find name
       pat <- ifelse (is.null(opts$shp), '*.shp', paste0(opts$shp,'.shp'))
       tmp <- list.files(path= fldr, pattern= pat)
-      if (length(tmp)==0) stop(paste('ec.util:',pat,'file not found in folder',fldr), call. = FALSE)
+      if (length(tmp)==0) 
+        stop(paste('ec.util:',pat,'file not found in folder',fldr), call. = FALSE)
       out <- paste0(getwd(),'/',fldr,'/',tmp[1])
     },
     
@@ -465,16 +461,12 @@ body { padding: 10px; }
     'rescale'= {
       scale <- opts$t
       if (!is.numeric(scale)) scale <- c(0,10)
-      if (length(scale)!=2)
-        stop("ec.util: rescale 't' vector too long/short")
-      if (scale[1]==scale[2])
-        stop("ec.util: rescale 't' vector elements equal")
+      stopifnot("ec.util: rescale 't' vector too long/short"= length(scale)==2)
+      stopifnot("ec.util: rescale 't' vector elements equal"= scale[1]!=scale[2])
       smin <- min(scale);  smax <- max(scale)-smin; 
       vect <- opts$v
-      if (is.null(vect))
-        stop("ec.util: rescale 'v' paramater missing")
-      if (!is.numeric(vect))
-        stop("ec.util: rescale 'v' is not a numeric vector")
+      stopifnot("ec.util: rescale 'v' paramater missing"= !is.null(vect))
+      stopifnot("ec.util: rescale 'v' is not a numeric vector"= is.numeric(vect))
       #  out <- drop(scale(vect, center=min(vect)-min(vect)*0.05, scale=diff(range(vect)))) * smax
       out <- drop(scale(vect, center=min(vect), scale=diff(range(vect)))) * smax
       out <- sapply(out, as.vector)
@@ -599,11 +591,9 @@ body { padding: 10px; }
 #' @importFrom data.tree Aggregate
 #' @export
 ec.data <- function(df, format='dataset', header=FALSE, jitter=0, layout='h', ...) {
-  if (missing(df))
-    stop('ec.data: expecting parameter df', call. = FALSE)
+  stopifnot('ec.data: expecting parameter df'= !missing(df))
   if (format=='dendrogram') { 
-    if (!inherits(df, 'hclust'))
-      stop('ec.data: df should be hclust for dendrogram', call. = FALSE)
+    stopifnot('ec.data: df should be hclust for dendrogram'= inherits(df, 'hclust'))
     hc <- df
     # decode hc$merge with hc$labels
     inew <- list()
@@ -638,8 +628,7 @@ ec.data <- function(df, format='dataset', header=FALSE, jitter=0, layout='h', ..
     return(json$children)
     
   } 
-  if (!'data.frame' %in% class(df))
-    stop('ec.data: df has to be data.frame', call. = FALSE)
+  stopifnot('ec.data: df has to be data.frame'= inherits(df, 'data.frame'))
   
   if (format=='treePC') {
     # for sunburst,tree,treemap
@@ -707,10 +696,10 @@ ec.data <- function(df, format='dataset', header=FALSE, jitter=0, layout='h', ..
   } 
   else if (format=='boxplot') {
     cn <- colnames(df)
-    if (length(cn)<2) stop('boxplot: df should have 2+ columns', call.=FALSE)
+    stopifnot('boxplot: df should have 2+ columns'= length(cn)>1)
     colas <- cn[1]
     colb5 <- cn[2]
-    if (!is.numeric(df[[colb5]])) stop('boxplot: 2nd column must be numeric', call.=FALSE)
+    stopifnot('boxplot: 2nd column must be numeric'= is.numeric(df[[colb5]]))
     # is there another group beside colas ?
     grpcol <- if (is.grouped_df(df) && group_vars(df)[1]!=colas) 
       group_vars(df)[1] else NULL
