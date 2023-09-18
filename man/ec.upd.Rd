@@ -26,10 +26,9 @@ with\cr
 \verb{   }ec.upd(\{series <- ...\}) # update params thru R commands
 }
 \examples{
-Orange |> dplyr::group_by(Tree) |> ec.init() |>
-ec.upd({ series <- lapply(series, function(x) {
-    x$symbolSize= 15;
-    x$markPoint= list(data= list(list(type='max')))
-    x })
+Orange |> dplyr::group_by(Tree) |> 
+ec.init(series.param= list(universalTransition= list(enabled=TRUE))) |>
+ec.upd({ 
+ series <- lapply(series, function(ss) { ss$groupId <- ss$name; ss })
 })
 }

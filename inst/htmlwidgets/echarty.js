@@ -39,11 +39,11 @@ HTMLWidgets.widget({
         if (x.jcode) {
           let tmp = null;
           if (Array.isArray(x.jcode)) {
-            tmp = x.jcode[0];
+            tmp = x.jcode[0];   // #1 run before init
             eva2 = x.jcode[1];
             eva3 = x.jcode[2];
           } else
-            tmp = x.jcode;  // #1 run before init
+            tmp = x.jcode;
           try {
             eval(tmp);
           } catch(err) { console.log('eva1: ' + err.message) }
@@ -53,11 +53,7 @@ HTMLWidgets.widget({
       chart = echarts.init(document.getElementById(el.id), x.theme, 
       	{ renderer: x.renderer, locale: x.locale, useDirtyRect: x.useDirtyRect }
       );
-      /*
-      window.addEventListener('resize', function(event) {
-       	chart.resize();
-      }, true); */
-      
+
       if (window.onresize==undefined)   // single chart only, TODO: many
         window.onresize = function() {
         	//chart.resize();
@@ -65,8 +61,8 @@ HTMLWidgets.widget({
         }
 
       opts = x.opts;
-      opts.hwid = el.id;    // fullscreen support, multiple charts
-      window.hwid = el.id;  // save for single charts
+      opts.echwid = el.id;    // fullscreen support, multiple charts
+      window.echwid = el.id;  // save for single charts
       
       if (eva2) {	// #2 to change opts
         try {
@@ -88,47 +84,42 @@ HTMLWidgets.widget({
         chart.setOption({graphic: tmp}, { replaceMerge: 'graphic'});
       }
       
-      // TODO: timeline to include graphic, etc.   (ECUnitOption, OptionManager ?)
-      // find how to set timeline 'options'...
-      //  tmp = chart.getModel()._optionManager._timelineOptions;
-      //  if (tmp) {  }
-      
       if (HTMLWidgets.shinyMode) {
 
-        ecp = ":echartyParse";    // built-in Shiny event callbacks
+        // built-in Shiny event callbacks
         
         chart.on("click", function(e){
-          Shiny.onInputChange(el.id + '_click' + ecp, 
+          Shiny.setInputValue(el.id + '_click', 
             { name: e.name, data: e.data, dataIndex: e.dataIndex,
               seriesName: e.seriesName, value: e.value
             },  {priority:'event'});
         });
         
         chart.on("mouseover", function(e){
-          Shiny.onInputChange(el.id + '_mouseover' + ecp, 
+          Shiny.setInputValue(el.id + '_mouseover', 
             { name: e.name, data: e.data, dataIndex: e.dataIndex,
               seriesName: e.seriesName, value: e.value
             },  {priority:'event'});
         });
         
         chart.on("mouseout", function(e){
-          Shiny.onInputChange(el.id + '_mouseout' + ecp, 
+          Shiny.setInputValue(el.id + '_mouseout', 
             { name: e.name, data: e.data, dataIndex: e.dataIndex,
               seriesName: e.seriesName, value: e.value
             },  {priority:'event'});
         });
 
         if(x.hasOwnProperty('capture')){
-          // for events like datazoom, click, etc
+          // for events like datazoom, click, etc.
           // defined in https://echarts.apache.org/en/api.html#events
           if (Array.isArray(x.capture)) {  // multiple events
             x.capture.forEach(ev => chart.on(ev, function(es) {
-                Shiny.setInputValue(el.id +'_' +ev +ecp, es, {priority: 'event'});
+                Shiny.setInputValue(el.id +'_' +ev, es, {priority: 'event'});
               })
             )
           } else   // just one event
             chart.on(x.capture, function(e) {
-              Shiny.setInputValue(el.id +'_' +x.capture +ecp, e, {priority: 'event'});
+              Shiny.setInputValue(el.id +'_' +x.capture, e, {priority: 'event'});
             });
         }
       }
@@ -204,7 +195,6 @@ HTMLWidgets.widget({
         		if (keys.isFromClick) {
         		  //if (items.length==0) items = this.akeys; // send all keys: bad for map
         	    tmp = items.map(i=> chart.filk[i])
-        		  //console.log('s=',items,' > ',tmp);
         		  sel_handle.set(tmp.map(String));
               chart.sele = items;
         		}
@@ -309,7 +299,8 @@ ecfun = {
   geoz2: 0,
   zoom: {s: 0, e: 100 },  // dataZoom values
   fs: false,              // fullscreen flag Y/N
-  fscreen: function(hwid) {
+  
+  fscreen: function(chid) {
     // see also window.onresize
     function GoInFullscreen(element) {
        if (element.requestFullscreen)
@@ -337,7 +328,7 @@ ecfun = {
         GoOutFullscreen();
     }
     else {
-      tmp = document.getElementById(hwid);
+      tmp = document.getElementById(chid);
       GoInFullscreen(tmp)
     }
     this.fs = !this.fs;
@@ -373,8 +364,8 @@ ecfun = {
   labelsInside: function(params) {
     // labelLayout= htmlwidgets::JS("(params) => ecfun.labelsInside(params)")) 
     // https://github.com/apache/echarts/issues/17828   thanks to @plainheart
-    if (hwid=='') return null;   // single chart only (TODO: many)
-    dchart = get_e_charts(hwid);
+    if (echwid=='') return null;   // single chart only (TODO: many)
+    dchart = get_e_charts(echwid);
     const chartWidth = dchart.getWidth();
     const labelRect = params.labelRect;
     const labelX = labelRect.x;

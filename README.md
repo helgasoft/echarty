@@ -19,18 +19,37 @@ downloads](https://cranlogs.r-pkg.org/badges/last-day/echarty)](https://cranlogs
 
 This package is a thin R wrapper around Javascript library
 [ECharts](https://echarts.apache.org/en/index.html).  
-Two major commands use R lists to enclose the entire [ECharts API](https://echarts.apache.org/en/option.html). 
+One major command uses R lists to enclose the entire [ECharts API](https://echarts.apache.org/en/option.html). 
 Users can benefit from ECharts **full functionality** to build
 interactive charts in R and Shiny with minimal overhead.  
 
 Wider connectivity and deployment potential through [crosstalk
 support](https://helgasoft.github.io/echarty/xtalk.html).  
 
+<details> <summary><strong>Compare to echarts4r</strong></summary>
+
+R package | echarts4r | echarty
+--- | --- | ---
+initial commit | Mar 12, 2018 | Feb 5, 2021
+library size | ![878 KB](https://img.shields.io/github/languages/code-size/JohnCoene/echarts4r.svg) | ![224KB](https://img.shields.io/github/languages/code-size/helgasoft/echarty)
+test coverage | ![32%](https://coveralls.io/repos/github/JohnCoene/echarts4r/badge.svg) [![link](man/figs/external-link-16.png)](https://coveralls.io/github/JohnCoene/echarts4r) | ![93%](https://coveralls.io/repos/github/helgasoft/echarty/badge.svg) [![link](man/figs/external-link-16.png)](https://coveralls.io/github/helgasoft/echarty)
+lines of code | 1,171,938 [![link](man/figs/external-link-16.png)](https://api.codetabs.com/v1/loc/?github=JohnCoene/echarts4r)| 5,061 [![link](man/figs/external-link-16.png)](https://api.codetabs.com/v1/loc?github=helgasoft/echarty)
+API design <sup>(1)</sup>| own commands with parameters | mostly [ECharts option](https://echarts.apache.org/en/option.html) lists
+number of commands | over [200](https://echarts4r.john-coene.com/reference/) | **one** command + optional utilities
+data storage support | series data | **datasets**, series data
+crosstalk support | no	 | **yes**
+utilities | bezier, correlations, histogram, density, loess, flip, nesting, more | extended boxplots, tabsets, layouts, shapefiles, lotties, more
+
+This review done Sept 2023 for echarts4R v.0.4.5 and echarty v.1.5.4.03.
+
+(1) We encourage users to follow the original ECharts documentation to construct charts with echarty. 
+	This differs from echarts4r which uses own commands for most chart options.   
+</details>
 
 ## Installation
 
 <!-- [![Github version](https://img.shields.io/github/v/release/helgasoft/echarty?label=github)](https://github.com/helgasoft/echarty/releases)  <sup>.02</sup>  -->
-Latest development build <strong>1.5.4.03</strong>
+Latest development build <strong>1.6.0</strong>
 
 ``` r
 if (!requireNamespace('remotes')) install.packages('remotes')
@@ -62,14 +81,13 @@ iris |> group_by(Species) |> ec.init(load= '3D')
 #  timeline of two series with grouping, formatting, autoPlay
 iris |> group_by(Species) |> 
 ec.init(
+	timeline= list(autoPlay= TRUE),
   tl.series= list(
     symbolSize= ec.clmn(4, scale=4),
-    encode= list(x= NULL, y= c('Sepal.Width', 'Petal.Length')),
-    markPoint= list(data= list(list(type='max'), list(type='min')))
+    encode= list(y= c('Sepal.Width', 'Petal.Length')),
+    markLine= list(data= list(list(type='max'), list(type='min')))
   )
-) |> ec.upd({
-  timeline <- c(timeline, list(autoPlay= TRUE))
-})
+)
 
 ```
 

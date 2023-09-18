@@ -1,7 +1,7 @@
 #'-----------  Interactive charts with echarty and Shiny ------------
 #' run with command demo(eshiny)  #, package ='echarty')
 #'
-if (interactive()) {
+stopifnot('session non-interactive'= interactive())
 tryCatch ({
   library(shiny)
   library(dplyr)
@@ -129,7 +129,7 @@ server <- function(input, output, session) {
       legend= list(show=TRUE),
       xAxis= list(type="value", name='mpg', scale=TRUE),
       yAxis= list(name='disp'),
-      tooltip= list(formatter= ec.clmn(3)),
+      tooltip= list(show=T),  #formatter= ec.clmn(3)),
       toolbox= list( feature= list(brush= list(type=list("lineX", "clear")))),
       brush= list(toolbox= c('lineX'),
                   brushType= 'lineX', xAxisIndex= 0,
@@ -146,24 +146,24 @@ server <- function(input, output, session) {
   # click, mouseover, mouseout are the only built-in events, no need to capture them
   # they contain: name, data, dataIndex, seriesName, value
   observeEvent(input$plot_click, {
-    output$dclick <- renderText(input$plot_click$value)
+    output$dclick <- renderText(toString(input$plot_click$value))
   })
   observeEvent(input$plot_mouseover, {
     cat('\nMover:', toString(input$plot_mouseover$data))
   })
   observeEvent(input$plot_brushselected, {
     # activated from p$x$capture
-    tmp <- input$plot_brushselected$batch$selected[[1]]
+    tmp <- input$plot_brushselected$batch[[1]]
     output$brdat <- renderTable({
       # out <- data.frame(sName=tmp$seriesName, sDataIdx=unlist(lapply(tmp$dataIndex, toString)))  # raw
-      out <- lapply(1:length(tmp$seriesId), function(x) {
-        dix <- tmp$dataIndex[[x]]
+      out <- lapply(1:length(tmp$selected), function(x) {
+        dix <- c(unlist(tmp$selected[[x]]$dataIndex))
         if (length(dix)==0) return()
         dix <- dix + 1   # dataIndex comes from JS, need increment for R 
-        dd <- data |> filter(cyl==tmp$seriesName[x])
+        dd <- data |> filter(cyl==tmp$selected[[x]]$seriesName)
         dd[dix,] |> select(name, cyl)
       })
-      out <-  as.data.frame(do.call(rbind, out[lengths(out)!=0]))
+      out <- as.data.frame(do.call(rbind, out[lengths(out)!=0]))
       out
     })
   })
@@ -456,19 +456,19 @@ server <- function(input, output, session) {
   
   brushcap <- function(sele) {
     out <- lapply(sele, function(x) {
-      if (length(x$dataIndex[[1]])==0) return(NA)  # toolbar clicked or selection cleared
-      ifx <- paste(x$dataIndex[[1]]+1, collapse=',')
-      bars <- eval(parse(text = paste('base_df$ValX[c(',ifx,')]') ))
-      paste0(x$seriesName,': ', paste(bars, collapse='+') )
+      if (length(x$dataIndex)==0) return(NA)  # toolbar clicked or selection cleared
+      ifx <- paste(c(unlist(x$dataIndex)) +1, collapse=',')
+  	   bars <- eval(parse(text = paste('base_df$ValX[c(',ifx,')]') ))
+     	paste0(x$seriesName,': ', paste(bars, collapse='+') )
     })
     unlist(out)
   }
   observeEvent(input$barplot_vert_brushselected, {
-    tmp <- brushcap(input$barplot_vert_brushselected$batch$selected)
+    tmp <- brushcap(input$barplot_vert_brushselected$batch[[1]]$selected)
     output$vbrush <- renderText(na.omit(tmp))
   })
   observeEvent(input$barplot_horiz_brushselected, {
-    tmp <- brushcap(input$barplot_horiz_brushselected$batch$selected)
+    tmp <- brushcap(input$barplot_horiz_brushselected$batch[[1]]$selected)
     output$hbrush <- renderText(na.omit(tmp))
   })
 
@@ -515,7 +515,7 @@ shinyApp(ui = ui, server = server)
 error  = function(e) cat(e$message)
 #warning= function(w) cat(w$message)
 )
-}
+
   
 
 

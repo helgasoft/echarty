@@ -1,4 +1,4 @@
-# ----------- General --------------
+# ----------- Core --------------
 
 #' Introduction
 #' 
@@ -210,7 +210,7 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
       opts$xAxis <- opts$yAxis <- NULL
       if (is.null(opts$polar$radius)) opts$polar$radius = 111
       if (is.null(opts$radiusAxis)) opts$radiusAxis= list(type= 'category')
-      if (is.null(opts$angleAxis)) opts$angleAxis= list(doit=T)
+      if (is.null(opts$angleAxis)) opts$angleAxis= list(doit=TRUE)
       if (!is.null(series.param)) 
         series.param = .merlis(series.param, list(coordinateSystem= "polar"))
     }
@@ -405,6 +405,13 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
   }
   if (preset) {
     if (!is.null(series.param)) {
+      # decrement series.param$encode
+      if (!is.null(series.param$encode)) {
+        for (nn in names(series.param$encode)) {
+          if (is.numeric(series.param$encode[[nn]]))
+            series.param$encode[[nn]] = series.param$encode[[nn]] -1
+        }
+      }
       # merge custom params to auto-generated series
       # this is a shortcut to avoid using ec.upd later
       wt$x$opts$series <- .merlis(wt$x$opts$series, series.param)
@@ -662,11 +669,10 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
 #'   \verb{   }ec.init(...) |> \verb{   } # set or preset chart params\cr
 #'   \verb{   }ec.upd(\{series <- ...\}) # update params thru R commands
 #' @examples
-#' Orange |> dplyr::group_by(Tree) |> ec.init() |>
-#' ec.upd({ series <- lapply(series, function(x) {
-#'     x$symbolSize= 15;
-#'     x$markPoint= list(data= list(list(type='max')))
-#'     x })
+#' Orange |> dplyr::group_by(Tree) |> 
+#' ec.init(series.param= list(universalTransition= list(enabled=TRUE))) |>
+#' ec.upd({ 
+#'  series <- lapply(series, function(ss) { ss$groupId <- ss$name; ss })
 #' })
 #' @export
 ec.upd <- function(wt, ...) {
@@ -778,134 +784,144 @@ ecr.band <- function(df=NULL, lower=NULL, upper=NULL, type='stack', ...) {
 
 #' Error bars
 #' 
-#' Custom series to display error-bars for scatter,bar or line series
+#' Custom series to display error-bars for scatter, bar or line series
 #' 
-#' @param wt A widget to add error bars to, see \link[htmlwidgets]{createWidget}
-#' @param df NULL(default) or data.frame with four or more columns 
-#' ordered exactly x,y,low,high,(category),etc. When NULL, data is taken from 
-#' the wt dataset where order should be the same.
+#' @param wt An echarty widget to add error bars to, see [ec.init].
+#' @param encode Column selection for both axes (x & y) as vectors, see \href{https://echarts.apache.org/en/option.html#series-bar.encode}{encode}
 #' @param hwidth Half-width of error bar in pixels, default is 6.
 #' @param ... More parameters for \href{https://echarts.apache.org/en/option.html#series-custom.type}{custom serie}
-#' @return A widget with error bars added if successful, otherwise the input wt
+#' @return A widget with error bars added if successful, otherwise the input widget
 #'
 #' @details
+#' Command should be called after _ec.init_ where main series are set.\cr
 #' _ecr.ebars_ are custom series, so _ec.init(load='custom')_ is required. \cr
-#' Command should be called after _ec.init_ where all other series are set.\cr
-#' Have their own default tooltip format showing _value & high/low_.\cr
-#' Non-grouped series:\cr
-#' \verb{     }Adding a name parameter will show error bars separate in the legend.\cr
-#' \verb{     }Could be displayed with formatter _riErrBarSimple_ instead of _ecr.ebars_. See example below.\cr
-#' Grouped series are supported:\cr
-#' \verb{     }param _df_ is required with group column included. \cr
-#' \verb{     }chart's _xAxis_ needs to be type 'category'\cr
-#'
+#' Horizontal and vertical layouts supported, only switch _encode_ values 'x' and 'y', both for series and ecr.ebars.\cr
+#' Grouped bar series are supported.\cr
+#' Have own default tooltip format showing _value, high & low_.\cr
+#' Non-grouped series could be shown with formatter _riErrBarSimple_ instead of _ecr.ebars_. See example below.\cr
+#' Limitations:\cr
+#' \verb{     }manually add axis type='category' if needed\cr
+#' \verb{     }error bars cannot have own name when data is grouped\cr
+#' \verb{     }legend select/deselect will not re-position grouped error bars\cr
+#' 
 #' @examples
 #' library(dplyr)
-#' df <- iris |> distinct(Sepal.Length, .keep_all= TRUE) |> 
-#'   mutate(lo= Sepal.Width-Petal.Length/2, hi= Sepal.Width+Petal.Width) |>
-#'   select(Sepal.Length, Sepal.Width, lo, hi, Species)
-#'   
-#' df |> ec.init(load='custom', legend=list(show=TRUE), xAxis=list(scale=TRUE)) |> 
-#'   ecr.ebars(name= 'err')
-#' 
-#' # ----- grouped -------
-#' dfg <- df |> group_by(Species)
-#' dfg |> 
-#'   ec.init(load= 'custom', legend= list(show=TRUE), xAxis= list(scale=TRUE)) |>
-#'   ecr.ebars(dfg)
-#'   
+#' df <- mtcars |> group_by(cyl,gear) |> summarise(yy= round(mean(mpg),2)) |>
+#'   mutate(low= round(yy-cyl*runif(1),2), high= round(yy+cyl*runif(1),2))
+#' ec.init(df, load= 'custom', ctype= 'bar', tooltip= list(show=TRUE), 
+#'       xAxis= list(type='category')) |> 
+#' ecr.ebars(encode= list(y=c(3,4,5), x=2))
+#'      
 #' # ----- riErrBarSimple ------
-#' df |> ec.init(load= 'custom',
-#'               title= list(text= 'riErrBarSimple'),
-#'               legend= list(show= TRUE),
-#'               xAxis= list(scale= TRUE)
-#' ) |> ec.upd({
-#'   series <- append(series, list(
+#' df <- mtcars |> mutate(x=1:nrow(mtcars),hi=hp-drat*3, lo=hp+wt*3) |> select(x,hp,hi,lo)
+#' ec.init(df, load= 'custom', legend= list(show= TRUE)) |> 
+#' ec.upd({ series <- append(series, list(
 #'     list(type= 'custom', name= 'error',
-#'          itemStyle= list(color= 'brown'),
-#'          data= ec.data(df |> select(Sepal.Length,lo,hi)),
-#'          renderItem= htmlwidgets::JS('riErrBarSimple')) ))
+#'          data= ec.data(df |> select(x,hi,lo)),
+#'          renderItem= htmlwidgets::JS('riErrBarSimple')
+#'     )))
 #' })
 #' 
 #' @export
-ecr.ebars <- function(wt, df=NULL, hwidth=6, ...) {
+ecr.ebars <- function(wt, encode=list(x=1, y=c(2,3,4)), hwidth=6, ...) {
   # alternating bars with custom series doesn't work, first bars then customs
   stopifnot('ecr.ebars: expecting widget'= !missing(wt))
   stopifnot('ecr.ebars: expecting echarty widget'= inherits(wt, "echarty"))
-  if (!is.null(df) && !inherits(df, "data.frame")) 
-    stop('ecr.ebars: df must be a data.frame', call.=FALSE)
-#  if (!'renderers' %in% unlist(lapply(wt$dependencies, \(d) d$name)))
   if (!'renderers' %in% unlist(sapply(wt$dependencies, `[`, "name")))
     stop("use ec.init(load='custom') before ecr.ebars", call.=FALSE)
+  #stopifnot('ecr.ebars: encode is required'= !is.null(encode))
+  stopifnot('ecr.ebars: encode is invalid'= !is.null(encode$x) && !is.null(encode$y))
+  stopifnot('ecr.ebars: encode x/y invalid'= abs(length(encode$x)-length(encode$y))==2)
 
-  ser <- wt$x$opts$series  # all series
-  stopifnot('ecr.ebars: series are missing'= !is.null(ser))
+  sers <- wt$x$opts$series  # all series
+  stopifnot('ecr.ebars: series are missing'= !is.null(sers))
   args <- list(...)
   
-  cntr <- function(x, typ) { grep(typ, x) }
-  name <- args$name; 
-  tmp <- NULL   # count number of similar (grouped) series
-  if (!is.null(name)) 
-    tmp <- unlist(lapply(ser, function(x) { 
-      if (length(grep(name,x))>0) x$type else NULL }))[1]
-  if (!is.null(tmp))    # attached by name, count same-type series
-    info <- length(unlist(lapply(ser, \(x) grep(tmp, x))))
-  else {    # no name or not found - choose first of type bar/line/scatter, count how many
-    info <- length(unlist(lapply(ser, cntr, typ='bar')))
-    if (info==0) info <- length(unlist(lapply(ser, cntr, typ='scatter')))
-    if (info==0) info <- length(unlist(lapply(ser, cntr, typ='line')))
+  # find eligible series and extract names, etc.
+  cntr <- function(x, typ) { 
+    if (length(grep(typ, x))>0) {
+      nme <- if (!is.null(args$name)) args$name else if (is.null(x$name)) wt$x$opts$yAxis$name else x$name
+      ds <- if (is.null(x$datasetIndex)) 0 else x$datasetIndex
+      dm <- if (is.null(x$dimensions)) NULL else x$dimensions
+      dd <- if (is.null(x['data']$data)) NULL else x['data']$data
+      list(nm=nme, ds=ds, dd=dd, dm=dm)
+    } else NULL
+  }
+  tmp <-                           lapply(sers, cntr, typ='bar')
+  if (is.null(unlist(tmp))) tmp <- lapply(sers, cntr, typ='scatter')
+  if (is.null(unlist(tmp))) tmp <- lapply(sers, cntr, typ='line')
+  if (is.null(unlist(tmp))) 
+    return(wt)    # no bar/line/scatter, nothing to attach to
+  
+  enc2num <- function(out, liss) {
+    # convert encode to numerical if character
+    if (is.character(out)) {
+      if (is.null(liss$dm)) {   # get dims from dataset
+        ds <- wt$x$opts$dataset[[liss$ds +1]]
+        if (!is.null(ds)) {
+          if (!is.null(ds$dimensions))
+            out <- which(ds$dimensions %in% out)
+          else {
+            if (!is.null(ds$sourceHeader) && ds$sourceHeader)
+              out <- which(ds$source[[1]] %in% out)
+            else {
+              if (!class(ds$source[[1]]) %in% class(ds$source[[2]]))
+                out <- which(ds$source[[1]] %in% out)
+              else
+                stop('could not find names from encode', call.=FALSE)
+            }
+          }
+        }
+      } else
+        out <- which(liss$dm %in% out)  # from data
+    }
+    out
+  }
+  encode$y <- enc2num(encode$y, tmp[[1]])   # assumes all series from same dataset
+  encode$x <- enc2num(encode$x, tmp[[1]])
+  # set correct axis to type 'category' (char or factor)
+  enc <- wt$x$opts$dataset[[1]]$source[[2]]$encode
+  if (!is.null(enc)) {
+    if (length(encode$y)==1) {
+      if (is.character(enc$y) || is.factor(enc$y))
+        wt$x$opts$yAxis <- .merlis(wt$x$opts$yAxis, list(type='category'))
+    } else {
+      if (is.character(enc$x) || is.factor(enc$x))
+        wt$x$opts$xAxis <- .merlis(wt$x$opts$xAxis, list(type='category'))
+    }
   }
   
-  if (info==0) return(wt)    # no bars/lines/scatter, nothing to attach to
-  info <- "riErrorBar"
-  if (is.null(wt$elementId)) wt$elementId <- 'id---99';
-
-  oneSerie <- function(name, df=NULL) {
-    c <- list(type='custom', name=name, 
-    			 renderItem= htmlwidgets::JS(info), ...)
-	 if (!is.null(df))
-      c$data= ec.data(df)
-    
-    if (is.null(c$z)) c$z <- 3
-    if (is.null(c$itemStyle$borderWidth)) c$itemStyle$borderWidth <- 1.5
-    if (is.null(c$color) && is.null(c$itemStyle$color)) {
+  rim <- if (!is.null(args$renderItem)) args$renderItem else 'riErrBars'
+  oneSerie <- function(liss, ...) {
+    cc <- list(type='custom', datasetIndex= liss$ds, encode= encode,
+    			 renderItem= htmlwidgets::JS(rim), ...)
+	  if (is.null(cc$name)) cc$name <- liss$nm
+	  if (!is.null(liss$dd)) cc$data <- liss$dd
+	  #if (is.null(c$data) && is.null(c$datasetIndex)) c$datasetIndex <- 0
+    if (is.null(cc$z)) cc$z <- 3   # over bar
+    if (is.null(cc$itemStyle$borderWidth)) cc$itemStyle$borderWidth <- 1.5
+    if (is.null(cc$color) && is.null(cc$itemStyle$color)) {
       # set own color, or it will blend with main bar
-      # impression that c$itemStyle$color is better than c$color
-      c$itemStyle$color <- 'black'
+      # impression that cc$itemStyle$color is better than cc$color
+      cc$itemStyle$color <- 'brown'  # 'darkslategray'
     }
-    c$itemStyle$borderDashOffset <- hwidth  # => lineDashOffset
-    #c$itemStyle$borderCap <- wt$elementId   # => lineCap
+    cc$itemStyle$borderDashOffset <- hwidth  # => lineDashOffset
     
-    if (is.null(c$tooltip))  # shows up on non-grouped data
-      c$tooltip <- list(formatter= ec.clmn(
-        '<br>value <b>%@</b> <br>range <b>%@ to %@</b>', 2,3,4))
-    c
-  }
-  
-  # build the series
-  if (is.null(df)) {
-    stopifnot('ecr.ebars: no dataset'= !is.null(wt$x$opts$dataset))
-    stopifnot('ecr.ebars: dataset is grouped, set df parameter'= length(wt$x$opts$dataset)==1)
-    if (is.null(name)) name <- wt$x$opts$dataset[[1]]$source[[1]][2]
-      cser <- list(oneSerie(name))
-  }
-  else {
-    if (dplyr::is.grouped_df(df)) {    # groups
-      grnm <- dplyr::group_vars(df)[[1]]   # just 1st g.column matters
-      tmp <- df |> dplyr::group_split()
-      cser <- lapply(tmp, \(gp) {
-        name <- unlist(unique(unname(gp[,grnm])))
-        oneSerie(name, gp)
-      })
+    if (is.null(cc$tooltip) && is.null(encode$tooltip)) {
+      tt <- if (length(cc$encode$x) > length(cc$encode$y)) cc$encode$x else cc$encode$y
+      cc$tooltip <- list(formatter= ec.clmn(
+        '<br>value <b>%@</b> <br>range <b>%@</b> to <b>%@</b>', tt[1],tt[2],tt[3]))
     }
-    else
-      cser <- list(oneSerie(names(df)[2], df))
+    if (is.numeric(cc$encode$x)) cc$encode$x <- cc$encode$x -1  # R to JS
+    if (is.numeric(cc$encode$y)) cc$encode$y <- cc$encode$y -1  # R to JS
+    cc
   }
+  # build err.bar series
+  cser <- lapply(tmp, \(x) oneSerie(x, ...))
+
   wt$x$opts$series <- append(wt$x$opts$series, cser)
-  #if (!"legend" %in% names(wt$x$opts)) wt$x$opts$legend <- list(show=TRUE)
   wt
 }
-
 
 # ----------- Shiny --------------
 #'
@@ -923,8 +939,8 @@ ecr.ebars <- function(wt, df=NULL, hwidth=6, ...) {
 #' 
 #' @importFrom htmlwidgets shinyWidgetOutput
 #' @export
-ecs.output <- function(outputId, width = '100%', height = '400px') {
-  htmlwidgets::shinyWidgetOutput(outputId, 'echarty', width, height, package = 'echarty')
+ecs.output <- function(outputId, width= '100%', height= '400px') {
+  htmlwidgets::shinyWidgetOutput(outputId, 'echarty', width, height, package= 'echarty')
 }
 
 
@@ -941,11 +957,11 @@ ecs.output <- function(outputId, width = '100%', height = '400px') {
 #' 
 #' @importFrom htmlwidgets shinyRenderWidget
 #' @export
-ecs.render <- function(wt, env=parent.frame(), quoted=FALSE) {
+ecs.render <- function(wt, env=parent.frame(), quoted= FALSE) {
   if (!quoted) {
     wt <- substitute(wt)  # do not add ',env' in substitute command
   } # force quoted
-  htmlwidgets::shinyRenderWidget(wt, ecs.output, env, quoted = TRUE)
+  htmlwidgets::shinyRenderWidget(wt, ecs.output, env, quoted= TRUE)
 }
 
 
@@ -961,11 +977,14 @@ ecs.render <- function(wt, env=parent.frame(), quoted=FALSE) {
 #' 
 #' @export
 ecs.proxy <- function(id) {
-  if (requireNamespace("shiny", quietly = TRUE)) {
-    sessi <- shiny::getDefaultReactiveDomain()
-  } else
-    return(invisible(NULL))
-  proxy <- list(id = id, session = sessi)
+  sessi <- globalenv()
+  if (interactive()) {
+    if (requireNamespace("shiny", quietly = TRUE)) {
+      sessi <- shiny::getDefaultReactiveDomain()
+    } else 
+      return(invisible(NULL))
+  }
+  proxy <- list(id= id, session= sessi)
   class(proxy) <- 'ecsProxy'
   return(proxy)
 }
@@ -996,7 +1015,7 @@ ecs.proxy <- function(id) {
 #' }
 #' 
 #' @export
-ecs.exec <- function(proxy, cmd='p_merge') {
+ecs.exec <- function(proxy, cmd= 'p_merge') {
 
   stopifnot('ecs.exec: missing proxy'= !missing(proxy))
   stopifnot('ecs.exec: must pass ecsProxy object'= inherits(proxy, 'ecsProxy'))
@@ -1009,240 +1028,17 @@ ecs.exec <- function(proxy, cmd='p_merge') {
   
   # create web dependencies for JS, if present
   if (!is.null(proxy$dependencies)) {
-    if (requireNamespace("shiny", quietly = TRUE)) {
-      deps <- list(shiny::createWebDependency(
-        htmltools::resolveDependencies( proxy$dependencies )[[1]]
-      ))
-      plist$deps <- deps
+    if (interactive()) {
+      if (requireNamespace("shiny", quietly = TRUE)) {
+        plist$deps <- list(shiny::createWebDependency(
+          htmltools::resolveDependencies( proxy$dependencies )[[1]]
+        ))
+      }
     }
   }
-  
-  if (interactive())
+  if (!is.null(proxy$session))
     proxy$session$sendCustomMessage('kahuna', plist)
   return(proxy)
-}
-
-
-# ----------- Utilities ----------------------
-#  more utilities in util.R
-
-
-#' Parallel Axis
-#' 
-#' Create 'parallelAxis' for a parallel chart
-#' 
-#' @param df A data.frame, regular or grouped
-#' @param minmax Boolean to add max/min limits or not, default TRUE
-#' @param cols A string vector with columns names in desired order
-#' @param ... Additional attributes for \href{https://echarts.apache.org/en/option.html#parallelAxis}{parallelAxis}.
-#' @return A list, see format in \href{https://echarts.apache.org/en/option.html#parallelAxis}{parallelAxis}.
-#' @examples
-#' iris |> dplyr::group_by(Species) |> ec.init(ctype='parallel')
-#' 
-#' ec.init(preset= FALSE,
-#'         parallelAxis= ec.paxis(mtcars, 
-#'                                cols= c('gear','cyl','hp','carb'), nameRotate= 45),
-#'         series= list(list(type= 'parallel', smooth= TRUE, 
-#'                           data= ec.data(mtcars, 'dataset') ))
-#' )
-#' 
-#' @export 
-ec.paxis <- function (df=NULL, minmax=TRUE, cols=NULL, ...) {
-  stopifnot('ec.paxis: df has to be data.frame'= inherits(df, 'data.frame'))
-  pax <- list(); grnm <- ''
-  cfilter <- 1:length(colnames(df))
-  if (dplyr::is.grouped_df(df)) {
-    # dont include grouping column (grnm)
-    grnm <- dplyr::group_vars(df)[[1]]
-    cfilter <- cfilter[!cfilter==match(grnm,colnames(df))]
-  }
-  if (!is.null(cols)) {
-    stopifnot('ec.paxis: some cols not found'= all(cols %in% colnames(df)))
-    cfilter <- match(cols, colnames(df))  # indexes
-  }
-  for(i in cfilter) {
-    cn <- colnames(df)[i]
-    tmp <- list(dim=i-1, name=cn, ...)  # JS count is -1
-    if (!is.numeric(df[cn][[1]]))
-      tmp$type <- 'category'
-    else {
-      if (minmax) {
-        tmp$max <- max(df[cn])
-        tmp$min <- min(df[cn])
-      }
-    }
-    pax <- append(pax, list(tmp)); 
-  }
-  pax
-}                   
-
-
-#' Themes
-#'
-#' Apply a pre-built or custom coded theme to a chart
-#'
-#' @param wt An \code{echarty} widget as returned by [ec.init]
-#' @param name Name of existing theme file (without extension), or name of custom theme defined in \code{code}.
-#' @param code Custom theme as JSON formatted string, default NULL.
-#' @return An \code{echarty} widget.
-#'
-#' @details Just a few built-in themes are included in folder \code{inst/themes}.\cr
-#' Their names are dark, gray, jazz, dark-mushroom and macarons.\cr
-#' The entire ECharts theme collection could be found \href{https://github.com/apache/echarts/tree/master/theme}{here} and files copied if needed.\cr
-#' To create custom themes or view predefined ones, visit \href{https://echarts.apache.org/en/theme-builder.html}{this site}.
-#'
-#' @examples
-#' mtcars |> ec.init() |> ec.theme('dark-mushroom')
-#' cars |> ec.init() |> ec.theme('mine', code=
-#'   '{"color": ["green","#eeaa33"], 
-#'     "backgroundColor": "lemonchiffon"}')
-#' 
-#' @export
-ec.theme <- function (wt, name, code= NULL) 
-{
-  stopifnot('ec.theme: name required'= !missing(name))
-
-  wt$x$theme <- name
-  if (!is.null(code))
-    wt$x$themeCode <- code
-  else {
-    wt$x$themeCode <- NULL
-    path <- system.file('themes', package= 'echarty')
-    dep <- htmltools::htmlDependency(
-      name= name,
-      version= '1.0.0', src= c(file= path),
-      script= paste0(name, '.js'))
-    wt$dependencies <- append(wt$dependencies, list(dep))
-  }
-  wt
-}
-
-#' Chart to JSON
-#' 
-#' Convert chart to JSON string
-#' 
-#' @param wt An \code{echarty} widget as returned by [ec.init]
-#' @param target type of resulting string value: \cr
-#'    'opts' - the htmlwidget _options_ as JSON (default)\cr
-#'    'full' - the _entire_ htmlwidget as JSON\cr
-#'    'data' - info about chart's embedded data (char vector)
-#' @param ... Additional attributes to pass to \link[jsonlite]{toJSON}
-#' @return A JSON string, except when \code{target} is 'data' then
-#'  a character vector.
-#'
-#' @details Must be invoked or chained as last command.\cr
-#' target='full' will export all JavaScript custom code, ready to be used on import.
-#'
-#' @examples
-#' # extract JSON
-#' json <- cars |> ec.init() |> ec.inspect()
-#' json
-#'
-#' # get from JSON and modify plot
-#' ec.fromJson(json) |> ec.theme('macarons')
-#'
-#' @export
-ec.inspect <- function(wt, target='opts', ...) {
-
-  stopifnot("ec.inspect: target only 'opts', 'data' or 'full'"= target %in% c('opts','data','full'))
-	if (target=='full')
-		return(jsonlite::serializeJSON(wt))
-  opts <- wt$x$opts
-  
-  if (target=='data') {
-    out <- list()
-    if (!is.null(opts$dataset))
-      out <- sapply(opts$dataset, \(d) {
-        if (!is.null(d$source[1])) 
-          paste('dataset:',paste(unlist(d$source[1]), collapse=', '),
-                'rows=',length(d$source))
-        else if (!is.null(d$transform[1])) 
-          gsub('"', "'", paste(d$transform, collapse=', '))
-      })
-    
-    i <- 0
-    out <- append(out, sapply(opts$series, \(s) {
-      i <<- i+1 
-      str <- paste0('serie',i,' name:',s$name)
-      if (!is.null(s$type)) str <- paste0(str, ' type:',s$type)
-      if (!is.null(s$dimensions)) str <- paste0(str, ' dim:',s$dimensions)
-      if (!is.null(s$datasetIndex)) str <- paste0(str, ' dsi:',s$datasetIndex)
-      if (!is.null(s$encode)) str <- paste0(str, ' enc:',paste(s$encode, collapse=', '))
-      if (is.null(s$datasetIndex) && !is.null(s$data)) 
-        str <- paste(str, gsub('"', "'", paste(s$data[1], collapse=', ')))
-      str
-    }))
-    
-    return(unlist(out))
-  }
-  
-  params <- list(...)
-  if ('pretty' %in% names(params) && !params$pretty) 
-    tmp <- jsonlite::toJSON(opts, force=TRUE, auto_unbox=TRUE, 
-                             null='null', ...)
-  else  # pretty by default
-    tmp <- jsonlite::toJSON(opts, force=TRUE, auto_unbox=TRUE, 
-                             null='null', pretty=TRUE, ...)
-  
-  return(tmp)
-}
-
-
-#' JSON to chart
-#' 
-#' Convert JSON string to chart
-#' 
-#' @param txt JSON character string or object, url, or file, see \link[jsonlite]{fromJSON}
-#' @param ... Any attributes to pass to internal [ec.init]
-#' @return An _echarty_ widget.
-#' 
-#' @details _txt_ could be either a list of options (x$opts) only for \href{https://echarts.apache.org/en/api.html#echartsInstance.setOption}{setOption},\cr
-#'  or an entire _htmlwidget_ generated thru \code{ec.inspect(target='full')}.\cr
-#'  The latter imports also all JavaScript functions defined by the user.
-#' 
-#' @examples
-#' txt <- '{
-#'    "xAxis": { "data": ["Mon", "Tue", "Wed"]},
-#'    "yAxis": { },
-#'    "series": { "type": "line", "data": [150, 230, 224] } }'
-#' ec.fromJson(txt)
-#'
-#' @export
-ec.fromJson <- function(txt, ...) {
-  recur <- \(opts) {
-    names <- names(opts)
-    for(k in seq_along(opts)) {
-      nn <- opts[[k]]
-      if (inherits(nn, 'list'))
-        opts[[k]] <- recur(opts[[k]])  # recursive
-      else if (
-        (!is.null(names) && names[[k]]=='renderItem') || 
-        (inherits(nn,'character') && length(nn)==1 && 
-           (grepl(') =>', nn) || 
-            startsWith(nn, 'function(') ||
-            startsWith(nn, 'new echarts.')))) {
-        opts[[k]] <- htmlwidgets::JS(opts[[k]])
-      }
-    }
-    opts
-  }
-  
-  if (inherits(txt, 'json')) {
-  	tmp <- jsonlite::parse_json(txt, FALSE)
-  	if (!is.null(tmp$attributes$package)) {
-  	  badge <- tmp$attributes$package$value[[1]]
-  		if (badge=='echarty') {
-  			obj <- jsonlite::unserializeJSON(txt)
-     		return(obj)
-  		}
-      stop(paste('ec.fromJson: unknown input',badge))
-  	}
-  }
-  tmp <- jsonlite::fromJSON(txt, simplifyVector = FALSE)
-	# options only
-	obj <- ec.init(...)
-	obj$x$opts <- recur(tmp)
-	obj
 }
 
 
@@ -1372,23 +1168,23 @@ ec.plugjs <- function(wt=NULL, source=NULL, ask=FALSE) {
 		c(l1, l2)[!duplicated(c(names(l1), names(l2)), fromLast= TRUE)]
 }
 
-#if (requireNamespace("shiny", quietly= TRUE)) {
-  
-  # for Shiny actions
-  .onAttach <- function(libname, pkgname) {
-      shiny::registerInputHandler('echartyParse', function(data, ...) {
-        jsonlite::fromJSON(jsonlite::toJSON(data, auto_unbox = TRUE))
-      }, force = TRUE)
+if (interactive()) {
+  if (requireNamespace("shiny", quietly= TRUE)) {
+    
+    # for Shiny actions
+    .onAttach <- function(libname, pkgname) {
+        shiny::registerInputHandler('echartyParse', function(data, ...) {
+          jsonlite::fromJSON(jsonlite::toJSON(data, auto_unbox = TRUE))
+        }, force = TRUE)
+    }
+    
+    .onLoad <- function(libname, pkgname) {
+        shiny::registerInputHandler('echartyParse', function(data, ...) {
+          jsonlite::fromJSON(jsonlite::toJSON(data, auto_unbox = TRUE))
+        }, force = TRUE)
+    }
   }
-  
-  .onLoad <- function(libname, pkgname) {
-      shiny::registerInputHandler('echartyParse', function(data, ...) {
-        jsonlite::fromJSON(jsonlite::toJSON(data, auto_unbox = TRUE))
-      }, force = TRUE)
-  }
-  
-#}
-
+}
 #  ------------- Global Options -----------------
 #' 
 #' For info on options and prefixes, see [-- Introduction --].

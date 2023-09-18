@@ -1,55 +1,78 @@
 library(dplyr)
-# TODO: df,scatter, dset/data
 
-test_that("ecr.ebars scatter non-grouped", {
-  df <- iris |> distinct(Sepal.Length, .keep_all= TRUE) |> 
-    mutate(lo= Sepal.Width-Petal.Length/2, hi= Sepal.Width+Petal.Width) |>
-    select(Sepal.Length, Sepal.Width, lo, hi, Species)
-  p <- df |> ec.init(load='custom', legend=list(show=TRUE), xAxis=list(scale=TRUE)) |> 
-    ecr.ebars(name= 'err')
-  expect_equal(p$x$opts$series[[2]]$z, 3)
-  expect_match(p$x$opts$series[[2]]$tooltip$formatter, 'range', fixed=TRUE)
+test_that("ecr.ebars", {
+  # dset + groups
+  p <- iris |> group_by(Species) |>
+    ec.init(load= 'custom', ctype='bar', legend=list(show=T), yAxis=list(type='category')) |>
+    ecr.ebars(encode= list(x=c(2,3,4), y=1))
+  expect_equal(p$x$opts$series[[4]]$z, 3)
+  expect_match(p$x$opts$series[[4]]$tooltip$formatter, 'range', fixed=TRUE)
   
+  # dset + groups
+  df <- mtcars |> group_by(cyl,gear) |> summarise(yy= round(mean(mpg),2)) |>
+    mutate(low= round(yy-cyl*runif(1),2), high= round(yy+cyl*runif(1),2))
+  p <- ec.init(df, load='custom', ctype='bar', tooltip= list(s=T), xAxis=list(type='category')) |> 
+    ecr.ebars(encode= list(y=c(3,4,5), x=2))
+  expect_equal(p$x$opts$series[[6]]$name, '8')
+  expect_match(p$x$opts$series[[6]]$tooltip$formatter, 'range', fixed=TRUE)
+  expect_equal(length(p$x$opts$series), 6)
+  expect_equal(p$x$opts$series[[4]]$type, 'custom')
+  expect_true(p$x$opts$series[[4]]$renderItem == 'riErrBars')
+  expect_s3_class(p$x$opts$series[[4]]$renderItem, 'JS_EVAL')
+  expect_equal(p$x$opts$xAxis$type, 'category')
+
+  # test for auto xAxis= list(type='category')
+  p <- Orange |> arrange(Tree) |> mutate(  #Tree= paste0('D',Tree), # char
+          up= circumference+runif(5)*6,
+          lo= circumference-runif(5)*6 ) |> group_by(age) |> 
+    ec.init(load='custom', ctype='bar', legend= list(show=T),
+      series.param= list(encode= list(x='Tree', y='circumference'))           
+    ) |> ecr.ebars(encode= list(x=1, y=c(3,4,5)))
+  expect_equal(p$x$opts$xAxis$type, 'category')
+
+  # data + name + char.encode
+  p <- ec.init(load= 'custom', legend= list(show=T), tooltip= list(show=T), 
+               xAxis=list(type='category'),
+    series= list(list(type='bar', name= 'data',
+      dimensions= c('cyl','gear','yy','low','high'), encode= list(x='gear',y='yy'),
+      data= ec.data(df |> filter(cyl==4))
+  ))) |> 
+    ecr.ebars(encode= list(x='gear', y=c('yy','low','high')), hwidth=12, name='err',
+      itemStyle= list(borderWidth= 2.5, color= "red")
+  )
+  expect_equal(p$x$opts$series[[2]]$encode$y, c(2,3,4))
+  expect_equal(p$x$opts$series[[2]]$itemStyle$borderDashOffset, 12)
+
+  # grouped + non-categorical
   tmp <- round(rnorm(24, sin(1:24/2)*10, .5))
   df <- data.frame(x = 1:24, val = tmp,
          lower = round(rnorm(24, tmp -10, .5)),
          upper = round(rnorm(24, tmp + 5, .8)),
-         cat= rep(c('A','B'),24) )
-  df <- df |> group_by(cat)
-  ec.init(df, load='custom') |> ecr.ebars(df)
-})
+         cat= rep(c('A','B'),24) ) |> group_by(cat)
+  p <- ec.init(df, load='custom') |> ecr.ebars(encode= list(x=1, y=c(2,3,4)))
+  expect_equal(p$x$opts$series[[3]]$encode$y, c(1,2,3))
+    # make horizontal
+  p <- ec.init(df, load='custom', series.param= list(encode= list(y=1, x=2))) |> 
+    ecr.ebars(encode= list(y=1, x=c(2,3,4)))     #|> ec.inspect()
+  expect_equal(p$x$opts$series[[1]]$encode$y, 0)
+  expect_equal(p$x$opts$series[[3]]$encode$x, c(1,2,3))
 
-test_that("ecr.ebars bars grouped", {
-  df <- mtcars |> group_by(cyl,gear) |> summarise(yy= round(mean(mpg),2)) |>
-    mutate(low= round(yy-cyl*runif(1),2), high= round(yy+cyl*runif(1),2)) |>
-    relocate(cyl, .after = last_col())   # move group column behind first four cols
-  
-  p <- df |> ec.init(load='custom', ctype='bar',
-                     xAxis=list(type='category')  # manual input
-  ) |> ecr.ebars(df)
-  
-  expect_equal(length(p$x$opts$series), 6)
-  expect_equal(p$x$opts$series[[4]]$type, 'custom')
-  expect_true(p$x$opts$series[[4]]$renderItem == 'riErrorBar')
-  expect_s3_class(p$x$opts$series[[4]]$renderItem, 'JS_EVAL')
-  expect_equal(p$x$opts$xAxis$type, 'category')
-  expect_equal(as.character(p$x$opts$series[[6]][['name']]), '8')
-  
-  # series.data
+  # manual series + data
   sers = list(
-    list(name= 's1',type= 'bar', data= list(5, 20, 36, 10, 10, 20, 4)),
-    list(name= 's2',type= 'bar', data= list(4, 2, 40, 40, 30, 22, 1)),
-    list(name= 's3',type= 'bar', data= list(15, 10, 36, 12, 9, 0, 14)),
-    list(name= 's1',type= 'custom', z=11, renderItem= htmlwidgets::JS('riErrorBar'), 
-         itemStyle= list(color= 'brown', borderDashOffset=8 ), # = halfWidth
+    list(name= 's1',type= 'bar', data= list(5, 20, 36)),
+    list(name= 's2',type= 'bar', data= list(4, 2, 40)),
+    list(name= 's3',type= 'bar', data= list(15, 10, 36)),
+    list(name= 's2',type= 'custom', z=11, renderItem= htmlwidgets::JS('riErrBars'), 
+         itemStyle= list(color= 'brown', borderDashOffset=8 ), # 8= halfWidth
+         encode= list(x=1,y=c(2,3,4)),
          data= list(list('Mon',5,4,7), list('Tue',10, 9, 11))
     )
   )
-  p <- ec.init(load='custom', ctype='bar', yAxis= list(show=T),
-               xAxis= list(data= list('Mon','Tue','Wed','Thu','Fri','Sat','Sun')),
+  p <- ec.init(load='custom', yAxis= list(show=T),
+               xAxis= list(data= list('Mon','Tue','Wed')),
                series= sers
   )
-  expect_equal(p$x$opts$xAxis$type, 'category')
+  expect_equal(p$x$opts$series[[4]]$encode$y, c(1,2,3))
   expect_s3_class(p$x$opts$series[[4]]$renderItem, 'JS_EVAL')
 })
 
@@ -88,15 +111,14 @@ test_that("ecr.band", {
         'circumference.y', 
         'circumference.x', 
         type= 'polygon', name= 'poly1')
-  p <- df |> group_by(Tree) |> ec.init(load='custom',
-    legend= list(s=T), tooltip= list(trigger='axis'), 
-    dataZoom= list(type='inside', filterMode='none')
+  p <- ec.init(load='custom',
+  	legend= list(s=T), tooltip= list(trigger='axis'), 
+  	dataZoom= list(type='inside', filterMode='none'),
+  	series= list( band[[1]],
+  		list(type='line', data=ec.data(df |> filter(Tree==5)), 
+  			color='orange', name='line1', clip=F)
+  	)
   )
-  p$x$opts$series <- list(
-    band[[1]],
-    list(type='line', datasetIndex=3, color='orange', name='line1', clip=F)
-  )
-  
   expect_equal(length(p$x$opts$series), 2)
   expect_equal(p$x$opts$series[[1]]$type, 'custom')
   expect_equal(p$x$opts$series[[1]]$name, 'poly1')

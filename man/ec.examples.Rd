@@ -42,10 +42,9 @@ ec.fromJson(json) |> ec.theme("dark")
 iris |> mutate(Species= as.character(Species)) |>
         group_by(Species) |> ec.init()      # by non-factor column
 
-Orange |> group_by(Tree) |> ec.init() |>
-  ec.upd({ series <- lapply(series, function(x) {
-    x$symbolSize= 10; x$encode= list(x='age', y='circumference'); x } )
-  })
+Orange |> group_by(Tree) |> ec.init(
+  series.param= list(symbolSize= 10, encode= list(x='age', y='circumference'))
+)
 
 #------ Polar bar chart
 cnt <- 5; set.seed(222)
@@ -76,15 +75,13 @@ mtcars |> dplyr::relocate(wt,mpg) |> arrange(wt) |> group_by(cyl) |>
   ec.init(ctype= 'line', series.param= list(areaStyle= list(show=TRUE)) )
 
 #------ Plugin leaflet
-tmp <- quakes |> dplyr::relocate('long') |>  # set order to long,lat
-  mutate(size= exp(mag)/20) |> head(100)   # add accented size
-tmp |> ec.init(load= 'leaflet',
-               tooltip= list(formatter= ec.clmn('magnitude \%@', 'mag')),
-               legend= list(show=TRUE)
-) |> ec.upd({
-  series[[1]]$name <- 'quakes'
-  series[[1]]$symbolSize = ec.clmn(6, scale=2)  # 6th column is size
-})
+quakes |> dplyr::relocate('long') |>  # set order to long,lat
+  mutate(size= exp(mag)/20) |> head(100) |>  # add accented size
+ec.init(load= 'leaflet',
+   tooltip= list(formatter= ec.clmn('magnitude \%@', 'mag')),
+   legend= list(show=TRUE),
+	series.param= list(name= 'quakes', symbolSize= ec.clmn(6, scale=2))  # 6th column is size
+)
 
 #------ Plugin 'world' with visualMap
 cns <- data.frame(
@@ -108,11 +105,10 @@ if (!is.null(flights)) {
   tmp <- data.frame(airport1 = unique(head(flights,10)$airport1),
                     color = c("#387e78","#eeb422","#d9534f",'magenta'))
   tmp <- head(flights,10) |> inner_join(tmp)    # add color by airport
-  ec.init(load= 'world') |>
-  ec.upd({
-    geo$center <- c(mean(flights$start_lon), mean(flights$start_lat))
-    geo$zoom <- 7
-    series <- list(list(
+  ec.init(load= 'world',
+    geo= list(center= c(mean(flights$start_lon), mean(flights$start_lat)), 
+  	   		 zoom= 7, map='world' ),
+    series= list(list(
       type= 'lines', coordinateSystem= 'geo',
       data= lapply(ec.data(tmp, 'names'), function(x)
         list(coords = list(c(x$start_lon,x$start_lat),
@@ -121,7 +117,7 @@ if (!is.null(flights)) {
       ),
       lineStyle= list(curveness=0.3, width=3, color=ec.clmn('colr'))
     ))
-  })
+  )
 } }
 
 #------ registerMap JSON
@@ -215,11 +211,9 @@ iris |> group_by(Species) |>
           xAxis3D= list(name= 'Petal.Length'),
           yAxis3D= list(name= 'Sepal.Width'),
           zAxis3D= list(name= 'Sepal.Length'),
-          legend= list(show= TRUE) ) |>
-  ec.upd({
-    series <- lapply(series, function(s) {  # update preset series
-      s$symbolSize <- ec.clmn(6, scale=10); s })
-  })
+          legend= list(show= TRUE),
+    series.param= list(symbolSize= ec.clmn(6, scale=10))
+  )
 }
 
 
@@ -276,9 +270,9 @@ ec.init(load= 'custom',
 Orange |> group_by(age) |> ec.init(
   xAxis= list(type= 'category', name= 'tree'),
   yAxis= list(max= max(Orange$circumference)),
+  timeline= list(autoPlay= TRUE),
   tl.series= list(type= 'bar', encode= list(x='Tree', y='circumference'))
 ) |> ec.upd({
-  timeline <- append(timeline, list(autoPlay= TRUE))
   options <- lapply(options,
      function(o) { o$title$text <- paste('age',o$title$text,'days'); o })
 })
@@ -312,12 +306,9 @@ ds <- mtcars |> select(cyl, drat) |>
 ec.init(
   #colors= heat.colors(length(mcyl)),
   legend= list(show= TRUE), tooltip= list(show=TRUE),
-  dataset= ds$dataset, series= ds$series, xAxis= ds$xAxis, yAxis= ds$yAxis
-) |> 
-ec.upd({ 
-	 series[[1]] <- c(series[[1]], 
-	                  list(color= 'LightGrey', itemStyle= list(color='DimGray')))
-}) |> ec.theme('dark-mushroom')
+  dataset= ds$dataset, series= ds$series, xAxis= ds$xAxis, yAxis= ds$yAxis,
+  series.param= list(color= 'LightGrey', itemStyle= list(color='DimGray'))
+) |> ec.theme('dark-mushroom')
 
 
 #------ Boxplot with grouping
@@ -477,19 +468,18 @@ ec.init(preset= FALSE,
 
 
 #------ group connect 
-main <- mtcars |> ec.init(height= 200, legend= list(show=FALSE)) |>
-  ec.upd({ series[[1]]$name <- "this legend is shared" })
+main <- mtcars |> ec.init(height= 200, legend= list(show=FALSE),
+  series.param= list(name= "this legend is shared"))
 main$x$group <- 'group1' # same group name for all charts
 
-q1 <- main |> ec.upd({ 
-  series[[1]]$encode <- list(y='hp', x='mpg')
-  legend <- list(show=TRUE)  # show first legend to share
+q1 <- main |> ec.upd({ series[[1]]$encode <- list(y='hp', x='mpg')
+                   legend <- list(show=TRUE)  # show first legend to share
 })
 q2 <- main |> ec.upd({ series[[1]]$encode <- list(y='wt', x='mpg') })
 q3 <- main |> ec.upd({ series[[1]]$encode <- list(y='drat', x='mpg') })
 q4 <- main |> ec.upd({ series[[1]]$encode <- list(y='qsec', x='mpg')})
 q4$x$connect <- 'group1'
-# q4$x$disconnect <- 'group1'  # ok too
+# q4$x$disconnect <- 'group1'
 if (interactive()) {   # browsable
   ec.util(cmd='layout', list(q1,q2,q3,q4), cols=2, title='group connect')
 }
@@ -504,20 +494,22 @@ server <- function(input, output, session) {
   output$plot <- ecs.render({
     p <- mtcars |> group_by(cyl) |> ec.init(dataZoom= list(type= 'inside'))
     p$x$on <- list(                     # event(s) with Javascript handler
-      list(event= 'legendselectchanged',
-           handler= htmlwidgets::JS("(evt) => Shiny.setInputValue('result1',evt.name);"))
+      list(event= 'legendselectchanged', 
+        handler= htmlwidgets::JS("(e) => Shiny.setInputValue('lgnd', 'legend:'+e.name);"))
     )
     p$x$capture <- 'datazoom'
     p
   })
   observeEvent(input$plot_datazoom, {   # captured event
-    output$out1 <- renderText({ paste('Zoom.start:',input$plot_datazoom$batch$start,'\%') })
+    output$out1 <- renderText({ 
+      paste('Zoom.start:',input$plot_datazoom$batch[[1]]$start,'\%') })
   })
   observeEvent(input$plot_mouseover, {  # built-in event
-    output$out1 <- renderText({ toString(input$plot_mouseover) })
+    v <- input$plot_mouseover
+    output$out1 <- renderText({ paste('s:',v$seriesName,'d:',v$data[v$dataIndex+1]) })
   })
-  observeEvent(input$result1, {
-    output$out1 <- renderText({ paste('legend:',input$result1) }) 
+  observeEvent(input$lgnd, {            # reactive response to on:legend event
+    output$out1 <- renderText({ input$lgnd })
   })
 }
 shinyApp(ui, server)

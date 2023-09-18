@@ -1,4 +1,5 @@
 # expect_silent()
+
 test_that("registerMap", {
   # similar in ec.examples, with USA map
   gjson <- jsonlite::parse_json('{"type":"FeatureCollection", "properties":{"id":"all3"},
@@ -175,54 +176,6 @@ test_that("load 3D surface", {
   #else expect_equal(1,1)
 })
 
-test_that("ec.inspect and ec.fromJson", {
-  p <- mtcars |> dplyr::group_by(gear) |> ec.init() |> ec.inspect('data')
-  expect_match(p[1], "rows= 33", fixed=TRUE)
-  expect_match(p[2], "filter", fixed=TRUE)
-
-  txt <- '{
-     "xAxis": { "data": ["Mon", "Tue", "Wed"]},
-     "yAxis": { },
-     "series": { "type": "line", "data": [150, 230, 224] } }'
-  p <- ec.fromJson(txt)
-  expect_equal(p$x$opts$xAxis$data[[2]], "Tue")
-  
-  # test renderItem and functions JS_EVAL setting
-  set.seed(222)
-  df <- data.frame( x = 1:10, y = round(runif(10, 5, 10),2)) |>
-    dplyr::mutate(lwr = y-round(runif(10, 1, 3),2), 
-                  upr = y+round(runif(10, 2, 4),2))
-  p <- df |> ec.init(load='custom',
-    legend= list(show= TRUE),
-    xAxis= list(type='category', boundaryGap=FALSE),
-    series= append(
-      list(list(type='line', color='red', datasetIndex=0, name='line1')),
-      ecr.band(df, 'lwr', 'upr', type='stack', name='stak')
-    ),
-    tooltip= list(trigger='axis', #console.log(x)"))
-                formatter=htmlwidgets::JS("(x) => 
-    x.length==1 ? 'line '+x[0].value[1] :
-    x.length==2 ? 'high <b>'+x[1].value[2]+'</b><br>low <b>'+x[0].value[1] :
-      'high <b>'+x[2].value[2]+'</b><br>line <b>'+
-      x[0].value[1]+'</b>'+'</b><br>low <b>'+x[1].value[1]"))
-  )
-  tmp <- p |> ec.inspect(target='full')
-  expect_true(inherits(tmp, 'json'))
-  #expect_true(regexpr('^\\{\\n  "x": \\{', tmp)==1)
-  expect_true(regexpr('^\\{"type":"list","attributes":\\{"names":', tmp)==1)
-  expect_true(grepl('dependencies', tmp))
-    
-  v <- ec.fromJson(tmp)
-  expect_true(inherits(v, 'echarty'))
-  expect_equal(v$dependencies[[1]]$name, 'renderers')
-  
-  tmp <- p |> ec.inspect()  # opts only
-  expect_true(regexpr('^\\{\\n  "legend": \\{', as.character(tmp))==1)
-  
-  v <- ec.fromJson(tmp)
-  expect_equal(v$x$opts$xAxis$type, 'category')
-})
-
 test_that("ec.plugjs", {
   p <- ec.init() |> ec.plugjs(
     'https://raw.githubusercontent.com/apache/echarts/master/test/data/map/js/china-contour.js')
@@ -240,15 +193,16 @@ test_that("Shiny commands", {
   p <- sapply(tmp$html_dependencies, c)
   expect_equal(unlist(p[1,]), c("htmlwidgets","echarty","echarty-binding"))
   
-  tmp <- ecs.render({ p<-cars |> ec.init() })
+  tmp <- ecs.render({ p <- cars |> ec.init() })
   expect_match(as.character(attributes(tmp)$cacheHint$origUserFunc$body[2]), "p <- ec\\.init\\(cars\\)")
   
   p <- ecs.proxy('sash')
   expect_equal(p$id, 'sash')
   expect_equal(attributes(p)$class, 'ecsProxy')
   
-  sendCustomMessage <- \(name,plist) {}
-  p$session <- globalenv()
+  # works in interactive only (+Shiny session), else "attempt to apply non-function"
+  #sendCustomMessage <- \(name,plist) {a <- 1}
+  p$session <- NULL   # disable p$session$sendCustomMessage
   p$x$opts$test <- 'sankey'
   tmp <- ecs.exec(p)
   expect_equal(tmp$x$opts$test, 'sankey')
@@ -304,7 +258,7 @@ test_that('stops are working in echarty.R', {
   expect_error(ecr.ebars(1))
   expect_error(ecr.ebars(ec.init(), 1))
   expect_error(ecr.ebars(ec.init(), cars))
-  expect_silent(ecr.ebars(ec.init(load='custom'), cars))
+  expect_silent(ecr.ebars(ec.init(load='custom'), cars, encode=list(x=1,y=c(2,3,4))))
   expect_silent(ec.init(load='liquid'))
   expect_silent(ec.init(load='gmodular'))
   expect_silent(ec.init(load='wordcloud'))

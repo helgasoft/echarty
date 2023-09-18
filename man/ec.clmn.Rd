@@ -14,7 +14,7 @@ NULL(default) for charts with single values like tree, pie.\cr
 'log' to write all values in the JS console (F12) for debugging.\cr
 if starts with \emph{'function('} or has \emph{') =>'} - to get result of JS function\cr}
 
-\item{...}{A comma separated column indexes or names, only when \emph{col} is \emph{sprintf}. This allows formatting of multiple columns, as for a tooltip.\cr}
+\item{...}{Comma separated column indexes or names, only when \emph{col} is \emph{sprintf}. This allows formatting of multiple columns, as for a tooltip.\cr}
 
 \item{scale}{A positive number, multiplier for numeric columns. When scale is 0, all numeric values are rounded.}
 }

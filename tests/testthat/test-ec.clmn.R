@@ -1,5 +1,4 @@
 
-
 test_that("ec.clmn with sprintf, column indexes and names", {
   library(dplyr)
   tmp <- data.frame(Species= as.vector(unique(iris$Species)), 
@@ -55,5 +54,10 @@ test_that("ec.clmn with sprintf, column indexes and names", {
   expect_equal("function(x) {let c=String(typeof x=='object' ? x.value : x); return c;}",
                as.character(p$x$opts$tooltip$formatter) )
   expect_equal(p$x$opts$series$data[[1]]$name, 'Celebes')
+  
+  p <- ec.clmn('json', scale=NULL)
+  expect_match(p, 'stringify', fixed=TRUE)
+  p <- ec.clmn('log', scale=0)
+  expect_match(p, 'logged', fixed=TRUE)
 })
 

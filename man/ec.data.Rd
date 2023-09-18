@@ -26,7 +26,8 @@ Except when format is 'dendrogram', then df is a list, result of \link[stats]{hc
 
 \item{layout}{for boxplot, 'h' for horizontal(default) or 'v' for vertical layout\cr}
 
-\item{...}{for boxplot scatter, additional parameters for the \emph{scatter} (jitter) serie\cr}
+\item{...}{additional parameters for the boxplot \emph{jitter} (scatter) serie\cr
+Optional parameter \emph{outliers} for boxplot, a boolean to add outlier points (default FALSE)\cr}
 }
 \value{
 A list for \emph{dataset.source}, \emph{series.data} or other lists:\cr

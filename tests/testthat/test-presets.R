@@ -97,12 +97,17 @@ test_that("presets for parallel chart", {
 test_that("presets for parallelAxis", {
   df <- as.data.frame(state.x77) |> head(10)
   p <- df |> ec.init(ctype= 'parallel',
-              parallelAxis= ec.paxis(df, cols=c('Illiteracy','Population','Income')) ) |>
-    ec.upd({ series <- lapply(series,
-        function(ss) { ss$lineStyle <- list(width=3); ss }) 
-    })
+      parallelAxis= ec.paxis(df, cols= c('Illiteracy','Population','Income'), inverse=T),
+      series.param= list(lineStyle= list(width=3))
+  )
   expect_equal(length(p$x$opts$dataset[[1]]$source[[1]]), 8)
   expect_equal(p$x$opts$parallelAxis[[3]]$name, 'Income')
+  expect_true(p$x$opts$parallelAxis[[3]]$inverse)
+  
+  p <- df |> ec.init(ctype= 'parallel') |>     # chained ec.paxis
+    ec.paxis(cols= c('Illiteracy','Population','Income'))
+  expect_equal(p$x$opts$parallelAxis[[1]]$dim, 2)
+
 })
 
 test_that("presets for crosstalk", {

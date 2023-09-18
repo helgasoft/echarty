@@ -4,62 +4,51 @@
 \alias{ecr.ebars}
 \title{Error bars}
 \usage{
-ecr.ebars(wt, df = NULL, hwidth = 6, ...)
+ecr.ebars(wt, encode = list(x = 1, y = c(2, 3, 4)), hwidth = 6, ...)
 }
 \arguments{
-\item{wt}{A widget to add error bars to, see \link[htmlwidgets]{createWidget}}
+\item{wt}{An echarty widget to add error bars to, see \link{ec.init}.}
 
-\item{df}{NULL(default) or data.frame with four or more columns
-ordered exactly x,y,low,high,(category),etc. When NULL, data is taken from
-the wt dataset where order should be the same.}
+\item{encode}{Column selection for both axes (x & y) as vectors, see \href{https://echarts.apache.org/en/option.html#series-bar.encode}{encode}}
 
 \item{hwidth}{Half-width of error bar in pixels, default is 6.}
 
 \item{...}{More parameters for \href{https://echarts.apache.org/en/option.html#series-custom.type}{custom serie}}
 }
 \value{
-A widget with error bars added if successful, otherwise the input wt
+A widget with error bars added if successful, otherwise the input widget
 }
 \description{
-Custom series to display error-bars for scatter,bar or line series
+Custom series to display error-bars for scatter, bar or line series
 }
 \details{
+Command should be called after \emph{ec.init} where main series are set.\cr
 \emph{ecr.ebars} are custom series, so \emph{ec.init(load='custom')} is required. \cr
-Command should be called after \emph{ec.init} where all other series are set.\cr
-Have their own default tooltip format showing \emph{value & high/low}.\cr
-Non-grouped series:\cr
-\verb{     }Adding a name parameter will show error bars separate in the legend.\cr
-\verb{     }Could be displayed with formatter \emph{riErrBarSimple} instead of \emph{ecr.ebars}. See example below.\cr
-Grouped series are supported:\cr
-\verb{     }param \emph{df} is required with group column included. \cr
-\verb{     }chart's \emph{xAxis} needs to be type 'category'\cr
+Horizontal and vertical layouts supported, only switch \emph{encode} values 'x' and 'y', both for series and ecr.ebars.\cr
+Grouped bar series are supported.\cr
+Have own default tooltip format showing \emph{value, high & low}.\cr
+Non-grouped series could be shown with formatter \emph{riErrBarSimple} instead of \emph{ecr.ebars}. See example below.\cr
+Limitations:\cr
+\verb{     }manually add axis type='category' if needed\cr
+\verb{     }error bars cannot have own name when data is grouped\cr
+\verb{     }legend select/deselect will not re-position grouped error bars\cr
 }
 \examples{
 library(dplyr)
-df <- iris |> distinct(Sepal.Length, .keep_all= TRUE) |> 
-  mutate(lo= Sepal.Width-Petal.Length/2, hi= Sepal.Width+Petal.Width) |>
-  select(Sepal.Length, Sepal.Width, lo, hi, Species)
-  
-df |> ec.init(load='custom', legend=list(show=TRUE), xAxis=list(scale=TRUE)) |> 
-  ecr.ebars(name= 'err')
-
-# ----- grouped -------
-dfg <- df |> group_by(Species)
-dfg |> 
-  ec.init(load= 'custom', legend= list(show=TRUE), xAxis= list(scale=TRUE)) |>
-  ecr.ebars(dfg)
-  
+df <- mtcars |> group_by(cyl,gear) |> summarise(yy= round(mean(mpg),2)) |>
+  mutate(low= round(yy-cyl*runif(1),2), high= round(yy+cyl*runif(1),2))
+ec.init(df, load= 'custom', ctype= 'bar', tooltip= list(show=TRUE), 
+      xAxis= list(type='category')) |> 
+ecr.ebars(encode= list(y=c(3,4,5), x=2))
+     
 # ----- riErrBarSimple ------
-df |> ec.init(load= 'custom',
-              title= list(text= 'riErrBarSimple'),
-              legend= list(show= TRUE),
-              xAxis= list(scale= TRUE)
-) |> ec.upd({
-  series <- append(series, list(
+df <- mtcars |> mutate(x=1:nrow(mtcars),hi=hp-drat*3, lo=hp+wt*3) |> select(x,hp,hi,lo)
+ec.init(df, load= 'custom', legend= list(show= TRUE)) |> 
+ec.upd({ series <- append(series, list(
     list(type= 'custom', name= 'error',
-         itemStyle= list(color= 'brown'),
-         data= ec.data(df |> select(Sepal.Length,lo,hi)),
-         renderItem= htmlwidgets::JS('riErrBarSimple')) ))
+         data= ec.data(df |> select(x,hi,lo)),
+         renderItem= htmlwidgets::JS('riErrBarSimple')
+    )))
 })
 
 }
