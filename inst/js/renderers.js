@@ -19,7 +19,7 @@
 
 function riErrBars(params, api) {
   const group = { type: 'group', children: [] };
-  chart = get_e_charts(hwid);
+  chart = get_e_charts(echwid);
   halfWidth = api.style().lineDashOffset;
   let encode = params.encode;
   isHor = encode['x'].length > encode['y'].length;

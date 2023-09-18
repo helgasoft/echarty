@@ -841,7 +841,7 @@ ecr.ebars <- function(wt, encode=list(x=1, y=c(2,3,4)), hwidth=6, ...) {
   cntr <- function(x, typ) { 
     if (length(grep(typ, x))>0) {
       nme <- if (!is.null(args$name)) args$name else if (is.null(x$name)) wt$x$opts$yAxis$name else x$name
-      ds <- if (is.null(x$datasetIndex)) 0 else x$datasetIndex
+      ds <- if (is.null(x$datasetIndex)) 1 else x$datasetIndex
       dm <- if (is.null(x$dimensions)) NULL else x$dimensions
       dd <- if (is.null(x['data']$data)) NULL else x['data']$data
       list(nm=nme, ds=ds, dd=dd, dm=dm)
@@ -857,7 +857,7 @@ ecr.ebars <- function(wt, encode=list(x=1, y=c(2,3,4)), hwidth=6, ...) {
     # convert encode to numerical if character
     if (is.character(out)) {
       if (is.null(liss$dm)) {   # get dims from dataset
-        ds <- wt$x$opts$dataset[[liss$ds +1]]
+        ds <- wt$x$opts$dataset[[liss$ds]]
         if (!is.null(ds)) {
           if (!is.null(ds$dimensions))
             out <- which(ds$dimensions %in% out)
