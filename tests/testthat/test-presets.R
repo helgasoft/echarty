@@ -127,7 +127,7 @@ test_that("presets for crosstalk", {
   expect_equal(p$x$opts$dataset[[2]]$transform$config$dimension, 'Year')
 })
 
-test_that("presets for leaflet", {
+test_that("presets for leaflet/world", {
   tmp <- '
 lng,lat,name,date,place
 -118.808101,32.843715,"Seabed","2021-02-02","location A"
@@ -144,17 +144,28 @@ lng,lat,name,date,place
   )
   expect_equal(p$x$opts$series[[1]]$coordinateSystem, 'leaflet')
   expect_equal(p$x$opts$series[[1]]$encode$tooltip, c(2,3,4))
+  
+  p <- ec.init(quakes |> head(11), load='world', ctype= 'scatter',
+	  series.param= list( encode= list(lng=2, lat=1, value=3),
+		#encode= list(lng='long', lat='lat', value='mag'),
+		itemStyle= list(color='brown')) )
+  expect_equal(p$x$opts$series[[1]]$coordinateSystem, 'geo')
+  expect_equal(p$x$opts$geo$map, 'world')
 })
 
 test_that("presets with series.param", {
   p <- df |> ec.init(ctype='line', 
-          series.param= list(areaStyle= list(show= T), stack= 'stk'))
-  expect_equal(p$x$opts$series[[1]]$stack, 'stk')
+    series.param= list(symbol='pin', encode=list(x='size',y='name')))
+  expect_equal(p$x$opts$series[[1]]$symbol, 'pin')
+  expect_equal(p$x$opts$yAxis$type, 'category')
   p <- ec.init(ctype='line', 
      series.param= list(areaStyle= list(show= T), stack= 'stk', 
                         data= list(c(0,0), c(2,2)))
   )
   expect_equal(p$x$opts$series[[1]]$data[[2]], c(2,2))
+  p <- df |> relocate(symbol) |> group_by(symbol) |> 
+    ec.init(series.param= list(encode= list(x=3, y=2)))
+  expect_equal(p$x$opts$yAxis$name, 'name')
 })
 
 test_that("presets for visualMap", {
@@ -164,9 +175,21 @@ test_that("presets for visualMap", {
 })
 
 test_that('axis names from preset encode', {
-  p <- cars |> mutate(group = sample( c(1,2), 50, replace = TRUE)) |> 
-    relocate(group) |> group_by(group) |> ec.init()
+  tmp <- cars |> mutate(group = sample( c(1,2), 50, replace = TRUE)) |> 
+    relocate(group) |> group_by(group)    # group is 1st col
+  p <- tmp |> ec.init()
   expect_equal(p$x$opts$xAxis$name, 'speed')
   expect_equal(p$x$opts$yAxis$name, 'dist')
+  p <- tmp |> ec.init(series.param= list(encode= list(x='dist', y='speed')))
+  expect_equal(p$x$opts$yAxis$name, 'speed')
+  p <- tmp |> ec.init(series.param= list(encode= list(x=3, y=2)))
+  expect_equal(p$x$opts$xAxis$name, 'dist')
 })
 
+test_that('polar, pie, world', {
+  p <- cars |> ec.init(ctype='pie')
+  expect_equal(p$x$opts$dataset[[1]]$source[[1]][1], 'speed')
+  p <- cars |> ec.init(polar= list(radius= 222), 
+      series.param= list(type='line', smooth=T))
+  expect_equal(p$x$opts$series[[1]]$coordinateSystem, 'polar')
+})

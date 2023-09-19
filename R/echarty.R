@@ -105,7 +105,7 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
                      width= NULL, height= NULL) {
   
   opts <- list(...)  
-  # treacherous R does "partial matching of argument names" (bug to me): 
+  # treacherous R does "partial matching of argument names" (like a bug): 
   #   if 'series.param' is before ... and 'series' is added, the latter is ignored!
   elementId <- if (is.null(opts$elementId)) NULL else opts$elementId
   js <- if (is.null(opts$js)) NULL else opts$js
@@ -189,24 +189,26 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
   
   # presets are default settings, user can ignore or replace them
   if (preset) {
+    namop <- names(opts)
     # list(show=TRUE) or list(list()) is to create an empty object{} in JS
-    if (!'xAxis' %in% names(opts)) 
+    if (!'xAxis' %in% namop) 
       opts$xAxis <- list(show=TRUE)
-    if (!'yAxis' %in% names(opts)) 
+    if (!'yAxis' %in% namop) 
       opts$yAxis <- list(show=TRUE)
-    if (!any(c('series','options') %in% names(opts))) {
-    	if (!'world' %in% opts$load)   # world will add its own default serie
+    if (!any(c('series','options') %in% namop)) {
+    	#if (!'world' %in% opts$load)   # world will add its own default serie
     	  opts$series <- list(list(type=if (is.null(ctype)) 'scatter' else ctype) )
     }
+    
     if ('series' %in% names(opts)) {
       if (is.null(opts$series[[1]]$type))  # set default to user serie if omitted
         opts$series[[1]]$type <- if (is.null(ctype)) 'scatter' else ctype
       if (opts$series[[1]]$type %in% noAxis)
         opts$xAxis <- opts$yAxis <- NULL
     }
-    else if (!is.null(ctype) && ctype %in% noAxis)
+    else if (!is.null(ctype) && (ctype %in% noAxis))
         opts$xAxis <- opts$yAxis <- NULL
-    if ('polar' %in% names(opts)) {
+    if ('polar' %in% namop) {
       opts$xAxis <- opts$yAxis <- NULL
       if (is.null(opts$polar$radius)) opts$polar$radius = 111
       if (is.null(opts$radiusAxis)) opts$radiusAxis= list(type= 'category')
@@ -296,7 +298,7 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
         colY <- which(allp==TRUE)[2]
         stopifnot('ec.init: df must have at least 3 columns when grouping by one'= !is.na(colY))
       }
-      # add encode if missing to series when grouping
+      # add encode to series if missing after grouping
       if (!(colX==1 && colY==2)) {
         x$opts$series <- lapply(x$opts$series, function(ss) {
           tmp <- xyNamesCS(ss)
@@ -313,11 +315,34 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
           ss
         })
       }
-    }  # end preset
+      
+      # visualMap assist (min/max not needed with series[[x]].data)
+      vm <- x$opts$visualMap
+      if (!is.null(vm) && (is.null(vm$min) || is.null(vm$max))) {
+        if (is.null(vm$type) || (vm$type == 'continuous')) {
+          xx <- length(colnames(df))   # last column by default in ECharts
+          if (!is.null(vm$dimension)) xx <- vm$dimension
+          x$opts$visualMap$min <- min(df[,xx])
+          x$opts$visualMap$max <- max(df[,xx])
+        }
+      }
+    }  # colX,colY, visualMap
+  }
+  
+  if (!is.null(x$opts$series) && !is.null(series.param)) {
+    x$opts$series <- .merlis(x$opts$series, series.param)
+    # TODO: not 'x','y'
+    tmp <- series.param$encode
+    if (!is.null(tmp)) {
+      if (is.numeric(tmp$x)) colX <- tmp$x
+      else if (!is.null(df)) colX <- which(colnames(df) %in% tmp$x)
+      if (is.numeric(tmp$y)) colY <- tmp$y
+      else if (!is.null(df)) colY <- which(colnames(df) %in% tmp$y)
+    }
   }
   
   if (preset) {
-      
+    # TODO: set axis type from series.data
     # set X,Y axes type & name
     x$opts$xAxis <- doType(colX, x$opts$xAxis)
     x$opts$yAxis <- doType(colY, x$opts$yAxis)
@@ -332,19 +357,8 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
         }
       }
     }
-  }
-  #else { TODO: set axis type from series.data }
+  }  # axes
 
-  # visualMap assist (min/max not needed with series[[x]].data)
-  vm <- x$opts$visualMap
-  if (!is.null(vm) && (is.null(vm$min) || is.null(vm$max))) {
-    if (is.null(vm$type) || (vm$type == 'continuous')) {
-      xx <- length(colnames(df))   # last column by default in ECharts
-      if (!is.null(vm$dimension)) xx <- vm$dimension
-      x$opts$visualMap$min <- min(df[,xx])
-      x$opts$visualMap$max <- max(df[,xx])
-    }
-  }
   x$opts <- .renumber(x$opts)
   
   # ------------- create widget ----------------
@@ -390,11 +404,12 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
     if (preset) {
       wt$x$opts$xAxis <- NULL
       wt$x$opts$yAxis <- NULL
-      if (!is.null(df)) {  # add map serie if missing
-        tmp <- sapply(wt$x$opts$series, \(x) {x$type} )
-        if (!'map' %in% tmp)
-          wt$x$opts$series <- append(wt$x$opts$series,
-                                      list(list(type='map', geoIndex=0)))
+      if (!is.null(df)) {   # coordinateSystem='geo' needed for all series
+        wt$x$opts$series <- .merlis(wt$x$opts$series, list(coordinateSystem='geo'))
+        # tmp <- sapply(wt$x$opts$series, \(x) {x$type} )
+        # if (!'map' %in% tmp)  # add map serie if missing
+        #   wt$x$opts$series <- append(wt$x$opts$series,
+        #                               list(list(type='map', geoIndex=0)))
       }
       # WARN: map will duplicate if series have map='world' too
       if (!'geo' %in% names(wt$x$opts))
@@ -403,20 +418,7 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
       #   wt$x$opts$geo$center= c(mean(unlist(df[,1])), mean(unlist(df[,2])))
     }
   }
-  if (preset) {
-    if (!is.null(series.param)) {
-      # decrement series.param$encode
-      if (!is.null(series.param$encode)) {
-        for (nn in names(series.param$encode)) {
-          if (is.numeric(series.param$encode[[nn]]))
-            series.param$encode[[nn]] = series.param$encode[[nn]] -1
-        }
-      }
-      # merge custom params to auto-generated series
-      # this is a shortcut to avoid using ec.upd later
-      wt$x$opts$series <- .merlis(wt$x$opts$series, series.param)
-    }
-  }
+
   if ('leaflet' %in% load) {
     if (preset) {
       # customizations for leaflet
@@ -441,11 +443,11 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
       }
       
       if ('series' %in% names(wt$x$opts)) {
-        wt$x$opts$series <- lapply(wt$x$opts$series,
-          function(ss) {
-            if (is.null(ss$coordinateSystem)) 
-              ss$coordinateSystem <- 'leaflet'
-            ss })
+        # wt$x$opts$series <- lapply(wt$x$opts$series,
+        #   function(ss) {
+        #     if (is.null(ss$coordinateSystem)) ss$coordinateSystem <- 'leaflet'
+        #     ss })
+        wt$x$opts$series <- .merlis(wt$x$opts$series, list(coordinateSystem='leaflet'))
       }
     }
     
@@ -856,7 +858,7 @@ ecr.ebars <- function(wt, encode=list(x=1, y=c(2,3,4)), hwidth=6, ...) {
   enc2num <- function(out, liss) {
     # convert encode to numerical if character
     if (is.character(out)) {
-      if (is.null(liss$dm)) {   # get dims from dataset
+      if (is.null(liss$dm)) {   # get dimensions from dataset
         ds <- wt$x$opts$dataset[[liss$ds]]
         if (!is.null(ds)) {
           if (!is.null(ds$dimensions))
@@ -1121,9 +1123,6 @@ ec.plugjs <- function(wt=NULL, source=NULL, ask=FALSE) {
   if (!is.null(ss$encode)) {
     for(i in 1:length(ss$encode)) {
       if (!is.numeric(ss$encode[[i]])) next
-      # if (names(ss$encode[i])=='tooltip')
-      #   ss$encode$tooltip <- unlist(ss$encode$tooltip) -1
-      # else   # could be x,y,lng,lat,value,etc
         ss$encode[[i]] <- ss$encode[[i]] -1
     }
   }
