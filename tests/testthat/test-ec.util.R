@@ -340,17 +340,16 @@ test_that("ec.data treePC", {
 
 test_that("ec.data treeTK", {
   # see example https://helgasoft.github.io/echarty/uc3.html
-  df <- as.data.frame(Titanic) |> 
-      group_by(Survived,Age,Sex,Class) |> 
-      summarise(value= sum(Freq), .groups= 'drop') |> 
-      rowwise() |>
-      mutate(pathString= paste('Survive', Survived, Age, Sex, Class, sep='/')) |>
-      select(pathString, value)
+  df <- as.data.frame(Titanic) |> rename(value= Freq) |>
+    mutate(pathString= paste('Survive', Survived, Age, Sex, Class, sep='/'),
+		  itemStyle= case_when(Survived=='Yes' ~ "color='green'", TRUE ~ "color='pink'")) |>
+	  select(pathString, value, itemStyle)
+
   p <- ec.init(preset= FALSE,
   	title= list(text= 'Titanic: Survival by Class'),
   	tooltip= list(formatter= ec.clmn('%@ (%@%)', 'value','pct')),
   	series= list(list(
-  	  type= 'tree', symbolSize= ec.clmn(scale=0.08),
+  	  type= 'tree', symbolSize= htmlwidgets::JS("x => {return Math.log(x)*10}"),
   	  data= ec.data(df, format='treeTK') 
   	))
   )
@@ -403,5 +402,7 @@ test_that("ec.inspect and ec.fromJson", {
   
   v <- ec.fromJson(tmp)
   expect_equal(v$x$opts$xAxis$type, 'category')
+  p <- echarty::ec.fromJson('https://helgasoft.github.io/echarty/test/pfull.json')
+  expect_true(inherits(p, 'echarty'))
 })
 

@@ -40,13 +40,13 @@ HTMLWidgets.widget({
           let tmp = null;
           if (Array.isArray(x.jcode)) {
             tmp = x.jcode[0];   // #1 run before init
+            try {
+              eval(tmp);
+            } catch(err) { console.log('eva1: ' + err.message) }
             eva2 = x.jcode[1];
             eva3 = x.jcode[2];
           } else
-            tmp = x.jcode;
-          try {
-            eval(tmp);
-          } catch(err) { console.log('eva1: ' + err.message) }
+            eva3 = x.jcode;
         }
       }
       

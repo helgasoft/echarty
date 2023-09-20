@@ -33,9 +33,11 @@ Custom echarty widget attributes include: \cr
 \item load - name(s) of plugin(s) to load. A character vector or comma-delimited string. default NULL.
 \item ask - prompt user before downloading plugins when \emph{load} is present, FALSE by default
 \item js - single string or a vector with JavaScript expressions to evaluate.\cr
-First expression is evaluated before chart initialization. \cr
-Second is evaluated with exposed object \emph{opts}. \cr
-Third is evaluated with exposed \emph{chart} object after \emph{opts} have been set.
+single: exposed \emph{chart} object (most common)\cr
+vector:\cr
+\verb{     }First expression is evaluated before chart initialization. \cr
+\verb{     }Second is evaluated with exposed object \emph{opts}. \cr
+\verb{     }Third is evaluated with exposed \emph{chart} object after \emph{opts} set.
 \item renderer - 'canvas'(default) or 'svg'
 \item locale - 'EN'(default) or 'ZH'. Use predefined or custom \href{https://gist.github.com/helgasoft/0618c6537c45bfd9e86d3f9e1da497b8}{like so}.
 \item useDirtyRect - enable dirty rectangle rendering or not, FALSE by default, see \href{https://echarts.apache.org/en/api.html#echarts.init}{here}

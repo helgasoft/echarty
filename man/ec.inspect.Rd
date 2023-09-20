@@ -14,10 +14,11 @@ ec.inspect(wt, target = "opts", ...)
 \verb{   }'full' - the \emph{entire} htmlwidget as JSON\cr
 \verb{   }'data' - info about chart's embedded data (char vector)}
 
-\item{...}{Additional attributes to pass to \link[jsonlite]{toJSON}}
+\item{...}{Additional attributes to pass to \link[jsonlite]{toJSON}\cr
+'file' - optional file name to save to when target='full'\cr}
 }
 \value{
-A JSON string, except when \code{target} is 'data' then
+A JSON string, except when \code{target} is 'data' - then
 a character vector.
 }
 \description{

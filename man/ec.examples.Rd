@@ -433,18 +433,16 @@ ec.init(preset= FALSE, js= jcode,
 
 #------ Sankey and graph plots
 sankey <- data.frame(
-  node   = c("a","b", "c", "d", "e"),
+  name   = c("a","b", "c", "d", "e"),
   source = c("a", "b", "c", "d", "c"),
   target = c("b", "c", "d", "e", "e"),
   value  = c(5, 6, 2, 8, 13)
 )
 data <- ec.data(sankey, 'names')
-
 ec.init(preset= FALSE,
-        series= list(list(
-          type= 'sankey',
-          data= lapply(data, function(x) list(name= x$node)),
-          edges= data ))
+  series= list(list( type= 'sankey',
+    data= data,
+    edges= data ))
 )
 
 
@@ -469,20 +467,17 @@ ec.init(preset= FALSE,
 
 #------ group connect 
 main <- mtcars |> ec.init(height= 200, legend= list(show=FALSE),
-  series.param= list(name= "this legend is shared"))
+		 tooltip= list(axisPointer= list(axis='x')),
+    series.param= list(name= "this legend is shared"))
 main$x$group <- 'group1' # same group name for all charts
-
-q1 <- main |> ec.upd({ series[[1]]$encode <- list(y='hp', x='mpg')
-                   legend <- list(show=TRUE)  # show first legend to share
+main$x$connect <- 'group1'
+q1 <- main |> ec.upd({ series[[1]]$encode <- list(y='hp'); yAxis$name <- 'hp'
+       legend <- list(show=TRUE)  # show first legend to share
 })
-q2 <- main |> ec.upd({ series[[1]]$encode <- list(y='wt', x='mpg') })
-q3 <- main |> ec.upd({ series[[1]]$encode <- list(y='drat', x='mpg') })
-q4 <- main |> ec.upd({ series[[1]]$encode <- list(y='qsec', x='mpg')})
-q4$x$connect <- 'group1'
-# q4$x$disconnect <- 'group1'
-if (interactive()) {   # browsable
-  ec.util(cmd='layout', list(q1,q2,q3,q4), cols=2, title='group connect')
-}
+q2 <- main |> ec.upd({ series[[1]]$encode <- list(y='wt'); yAxis$name <- 'wt' })
+#if (interactive()) {   # browsable
+  ec.util(cmd='layout', list(q1,q2), cols=2, title='group connect')
+#}
 
 
 #------ Events in Shiny

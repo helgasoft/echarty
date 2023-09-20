@@ -1080,8 +1080,9 @@ ec.theme <- function (wt, name, code= NULL)
 #' \verb{   }'opts' - the htmlwidget _options_ as JSON (default)\cr
 #' \verb{   }'full' - the _entire_ htmlwidget as JSON\cr
 #' \verb{   }'data' - info about chart's embedded data (char vector)
-#' @param ... Additional attributes to pass to \link[jsonlite]{toJSON}
-#' @return A JSON string, except when \code{target} is 'data' then
+#' @param ... Additional attributes to pass to \link[jsonlite]{toJSON}\cr
+#' 'file' - optional file name to save to when target='full'\cr
+#' @return A JSON string, except when \code{target} is 'data' - then
 #'  a character vector.
 #'
 #' @details Must be invoked or chained as last command.\cr
@@ -1099,8 +1100,16 @@ ec.theme <- function (wt, name, code= NULL)
 ec.inspect <- function(wt, target='opts', ...) {
 
   stopifnot("ec.inspect: target only 'opts', 'data' or 'full'"= target %in% c('opts','data','full'))
-	if (target=='full')
-		return(jsonlite::serializeJSON(wt))
+	if (target=='full') {
+	  jjwt <- jsonlite::serializeJSON(wt)
+	  opts <- list(...)
+	  if ('file' %in% names(opts)) {
+	    fn <- opts$file
+      con <- file(fn,'wb'); write(jjwt, con); close(con)
+      return(paste('saved in',fn))
+	  } else
+	    return(jjwt)
+	}
   opts <- wt$x$opts
   
   if (target=='data') {
@@ -1154,7 +1163,7 @@ ec.inspect <- function(wt, target='opts', ...) {
 #' @return An _echarty_ widget.
 #' 
 #' @details _txt_ could be either a list of options (x$opts) to be set by \href{https://echarts.apache.org/en/api.html#echartsInstance.setOption}{setOption},\cr
-#'  OR an entire _htmlwidget_ generated thru \code{ec.inspect(target='full')}.\cr
+#'  OR an entire _htmlwidget_ generated thru [ec.inspect] when _target='full'_.\cr
 #'  The latter imports all JavaScript functions defined by the user.
 #' 
 #' @examples
@@ -1162,7 +1171,8 @@ ec.inspect <- function(wt, target='opts', ...) {
 #'    "xAxis": { "data": ["Mon", "Tue", "Wed"]}, "yAxis": { },
 #'    "series": { "type": "line", "data": [150, 230, 224] } }'
 #' ec.fromJson(txt)
-#'
+#' 
+#' # ec.fromJson('https://helgasoft.github.io/echarty/test/pfull.json')
 #' @export
 ec.fromJson <- function(txt, ...) {
 	recur <- \(opts) {
@@ -1185,17 +1195,6 @@ ec.fromJson <- function(txt, ...) {
   
 	if (inherits(txt, c('url','file')))
   		return(jsonlite::unserializeJSON(txt))
-	if (inherits(txt, 'XXjson')) {
-		tmp <- jsonlite::parse_json(txt, FALSE)
-		if (!is.null(tmp$attributes$package)) {
-	   	badge <- tmp$attributes$package$value[[1]]
-	  		if (badge=='echarty') {
-	  			obj <- jsonlite::unserializeJSON(txt)
-	  			return(obj)
-	  		}
-	   	stop(paste('ec.fromJson: unknown input',badge))
-		}
-	}
 	if (inherits(txt, 'character')) {
 		if (any(startsWith(txt, c('http://','https://'))))
 			return(jsonlite::unserializeJSON(url(txt)))

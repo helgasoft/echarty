@@ -23,7 +23,7 @@ Convert JSON string or file to chart
 }
 \details{
 \emph{txt} could be either a list of options (x$opts) to be set by \href{https://echarts.apache.org/en/api.html#echartsInstance.setOption}{setOption},\cr
-OR an entire \emph{htmlwidget} generated thru \code{ec.inspect(target='full')}.\cr
+OR an entire \emph{htmlwidget} generated thru \link{ec.inspect} when \emph{target='full'}.\cr
 The latter imports all JavaScript functions defined by the user.
 }
 \examples{
@@ -32,4 +32,5 @@ txt <- '{
    "series": { "type": "line", "data": [150, 230, 224] } }'
 ec.fromJson(txt)
 
+# ec.fromJson('https://helgasoft.github.io/echarty/test/pfull.json')
 }
