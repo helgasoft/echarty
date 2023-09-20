@@ -22,13 +22,13 @@ More detailed step-by-step examples with tips and tricks.
 
 [Example 2](uc2.md) - Like Clockwork
 
-[Example 3](uc3.md) - Hierarchical data
+[Example 3](uc3.html) - Hierarchical data
 
-[Example 4](uc4.md) - Sankey with timeline
+[Example 4](uc4.html) - Sankey with timeline
 
-[Example 5](uc5.html) - Bubbles without troubles with JavaScript - <span style="color:magenta">*live*</span>
+[Example 5](uc5.html) - Bubbles without troubles with JavaScript 
 
-[Example 6](uc6.md) - Grouped, stacked and timelined
+[Example 6](uc6.html) - Grouped, stacked and timelined
 <br />
 
 <br/> 
