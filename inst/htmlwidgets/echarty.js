@@ -57,7 +57,7 @@ HTMLWidgets.widget({
       if (window.onresize==undefined)   // single chart only, TODO: many
         window.onresize = function() {
         	//chart.resize();
-        	ecfun.fs = ecfun.IsFullScreen();  // handle ESC key
+        	ecf.fs = ecf.IsFullScreen();  // handle ESC key
         }
 
       opts = x.opts;
@@ -80,7 +80,7 @@ HTMLWidgets.widget({
       }
       
       if (opts.graphic && typeof lottieParser!=undefined) {
-        tmp = ecfun.lottieGraphic(opts.graphic);
+        tmp = ecf.lottieGraphic(opts.graphic);
         chart.setOption({graphic: tmp}, { replaceMerge: 'graphic'});
       }
       
@@ -285,14 +285,7 @@ function distinct(value, index, self) {
 }
       
 // extra functions
-ecfun = {
-  IsFullScreen: function() {
-    	var full_screen_element = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement || null;
-    	if (full_screen_element === null)
-    	  return false;
-    	else
-    	  return true;
-  },
+ecf = {
   
   geojson: null,
   geofill: 0,
@@ -300,6 +293,14 @@ ecfun = {
   zoom: {s: 0, e: 100 },  // dataZoom values
   fs: false,              // fullscreen flag Y/N
   
+  IsFullScreen: function() {
+    	var full_screen_element = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement || null;
+    	if (full_screen_element === null)
+    	  return false;
+    	else
+    	  return true;
+  },
+
   fscreen: function(chid) {
     // see also window.onresize
     function GoInFullscreen(element) {
@@ -362,7 +363,7 @@ ecfun = {
   },
 
   labelsInside: function(params) {
-    // labelLayout= htmlwidgets::JS("(params) => ecfun.labelsInside(params)")) 
+    // labelLayout= htmlwidgets::JS("(params) => ecf.labelsInside(params)")) 
     // https://github.com/apache/echarts/issues/17828   thanks to @plainheart
     if (echwid=='') return null;   // single chart only (TODO: many)
     dchart = get_e_charts(echwid);
@@ -377,7 +378,7 @@ ecfun = {
       dy: overflow ? -3 : 0
     }
   }
-  
+
 };
 
 if (HTMLWidgets.shinyMode) {

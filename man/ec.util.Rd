@@ -16,7 +16,7 @@ for \emph{tabset} parameters should be in format \emph{name1=chart1, name2=chart
 \item{js}{optional JavaScript function, default is NULL.\cr}
 }
 \description{
-tabset, table layout, support for GIS shapefiles through library sf
+tabset, table layout, support for GIS shapefiles through library 'sf'
 }
 \details{
 \strong{cmd = 'sf.series'}\cr

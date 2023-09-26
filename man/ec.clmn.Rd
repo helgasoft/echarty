@@ -8,11 +8,11 @@ ec.clmn(col = NULL, ..., scale = 1)
 }
 \arguments{
 \item{col}{A single column index(number) or column name(quoted string), \cr
-or a \link[base]{sprintf} format string for multiple indexes.\cr
+or a \link[base]{sprintf} string template for multiple indexes.\cr
 NULL(default) for charts with single values like tree, pie.\cr
-'json' to display tooltip with all available values to choose from\cr
+'json' to display tooltip with all available values to choose from.\cr
 'log' to write all values in the JS console (F12) for debugging.\cr
-if starts with \emph{'function('} or has \emph{') =>'} - to get result of JS function\cr}
+Can contain JS function starting with \emph{'function('} (or format \emph{'(x) => {}'}).\cr}
 
 \item{...}{Comma separated column indexes or names, only when \emph{col} is \emph{sprintf}. This allows formatting of multiple columns, as for a tooltip.\cr}
 
@@ -25,15 +25,15 @@ A JavaScript code string (usually a function) marked as executable, see \link[ht
 Helper function to display/format data column(s) by index or name
 }
 \details{
-This function is useful for attributes like formatter, color, symbolSize.\cr
-Column indexes are counted in R and start at 1.\cr
+This function is useful for attributes like formatter, color, symbolSize, label.\cr
+Column indexes are counted in R and start with 1.\cr
 Omit \emph{col} or use index -1 for single values in tree/pie charts, \emph{axisLabel.formatter} or \emph{valueFormatter}. See \link{ec.data} dendrogram example.\cr
-Use only column indexes when setting \emph{symbolSize}.\cr
 Column indexes are decimals for combo charts with multiple series, see \link{ecr.band} example. The whole number part is the serie index, the decimal part is the column index inside.\cr
 \emph{col} as sprintf has the same placeholder \emph{\%@} for both column indexes or column names.\cr
 \emph{col} as sprintf can contain double quotes, but not single or backquotes.\cr
-Placeholders:\cr
+Template placeholders with formatting:\cr
 \itemize{
+\item \emph{\%@} will display column value as-is.\cr
 \item \emph{\%L@} will display a number in locale format, like '12,345.09'.\cr
 \item \emph{\%LR@} rounded number in locale format, like '12,345'.\cr
 \item \emph{\%R@} rounded number, like '12345'.\cr
@@ -47,7 +47,7 @@ df <- iris |> dplyr::inner_join(tmp)      # add 6th column emoji
 df |> dplyr::group_by(Species) |> ec.init(
   series.param= list(label= list(show= TRUE, formatter= ec.clmn('emoji'))),
   tooltip= list(formatter=
-    # ec.clmn with sprintf + multiple column indexes
+    # with sprintf template + multiple column indexes
     ec.clmn('\%M@ species <b>\%@</b><br>s.len <b>\%@</b><br>s.wid <b>\%@</b>', 5,1,2))
 )
 

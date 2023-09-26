@@ -22,7 +22,7 @@ Best practice is to have the grouping column placed last. Grouping column cannot
 Timeline requires a \emph{grouped data.frame} to build its \href{https://echarts.apache.org/en/option.html#options}{options}.\cr
 If grouping is on multiple columns, only the first one is used to determine settings.}
 
-\item{preset}{Build preset xAxis,yAxis,serie for 2D, or grid3D,xAxis3D,yAxis3D,zAxis3D for 3D, default TRUE (enable).}
+\item{preset}{Boolean (default TRUE). Build preset attributes like dataset, series, xAxis, yAxis, etc.}
 
 \item{ctype}{Chart type of series. Default is 'scatter'. Set to NULL to disable series preset.}
 

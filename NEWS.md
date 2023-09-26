@@ -1,6 +1,11 @@
 # history of package _echarty_
 
-## v.1.6.0  latest, in development
+## v.1.6.0.01  latest, in development
+
+- _ec.data_ grouped boxplots: outliers are custom series
+- _ec.clmn_ expanded usage of column names
+
+## v.1.6.0  CRAN
 
 - _ec.paxis_ could be chained now
 - _ec.data_ format='boxplot' with optional outliers
@@ -14,7 +19,7 @@
 - fixed small bugs and improved code
 - added more tests
 
-## v.1.5.4  CRAN
+## v.1.5.4
 
 - _ec.util_ command 'layout' updated 
 - changes in axis names preset, _ec.clmn_ for empty values

@@ -4,7 +4,7 @@
 \alias{ec.data}
 \title{Data helper}
 \usage{
-ec.data(df, format = "dataset", header = FALSE, jitter = 0, layout = "h", ...)
+ec.data(df, format = "dataset", header = FALSE, ...)
 }
 \arguments{
 \item{df}{Chart data in data.frame format, required. \cr
@@ -22,12 +22,13 @@ Except when format is 'dendrogram', then df is a list, result of \link[stats]{hc
 
 \item{header}{for dataset, to include the column names or not, default TRUE. Set it to FALSE for \href{https://echarts.apache.org/en/option.html#series-scatter.data}{series.data}.\cr}
 
-\item{jitter}{for boxplot, value for \link[base]{jitter} of numerical values in second column, default 0 (no scatter). Adds scatter series on top of boxplot.\cr}
-
-\item{layout}{for boxplot, 'h' for horizontal(default) or 'v' for vertical layout\cr}
-
-\item{...}{additional parameters for the boxplot \emph{jitter} (scatter) serie\cr
-Optional parameter \emph{outliers} for boxplot, a boolean to add outlier points (default FALSE)\cr}
+\item{...}{optional parameters\cr
+Optional parameters for boxplot are:\cr
+\itemize{
+\item \emph{layout} 'h' for horizontal(default) or 'v' for vertical layout\cr
+\item \emph{outliers} boolean to add outlier points (default FALSE)\cr
+\item \emph{jitter} value for \link[base]{jitter} of numerical values in second column, default 0 (no scatter). Adds scatter series on top of boxplot.\cr
+}}
 }
 \value{
 A list for \emph{dataset.source}, \emph{series.data} or other lists:\cr
@@ -59,14 +60,14 @@ ec.init(
 
 hc <- hclust(dist(USArrests), "complete")
 ec.init(preset= FALSE,
-        series= list(list(
-          type= 'tree', orient= 'TB', roam= TRUE, initialTreeDepth= -1,
-          data= ec.data(hc, format='dendrogram'),
-          # layout= 'radial', symbolSize= ec.clmn(scale= 0.33),
-          ## exclude added labels like 'pXX', leaving only the originals
-          label= list(formatter= htmlwidgets::JS(
-            "function(n) { out= /p\\\\d+/.test(n.name) ? '' : n.name; return out;}"))
-        ))
+  series= list(list(
+    type= 'tree', orient= 'TB', roam= TRUE, initialTreeDepth= -1,
+    data= ec.data(hc, format='dendrogram'),
+    # layout= 'radial', symbolSize= ec.clmn(scale= 0.33),
+    ## exclude added labels like 'pXX', leaving only the originals
+    label= list(formatter= htmlwidgets::JS(
+      "function(n) { out= /p\\\\d+/.test(n.name) ? '' : n.name; return out;}"))
+  ))
 )
 
 }

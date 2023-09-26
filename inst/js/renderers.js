@@ -56,7 +56,7 @@ function riErrBars(params, api) {
             bcgm = tmp.option.barCategoryGap;
           }
         	olay = { count: sers.length };
-        	if (bgm) olay.barGap = bgm //!=='' ? bgm : '30%' is default for e_bar
+        	if (bgm) olay.barGap = bgm //!=='' ? bgm : '30%' is default for bar
         	if (bcgm) olay.barCategoryGap = bcgm //!=='' ? bcgm : '20%';
         	barLayouts = api.barLayout(olay);
       	  offset = barLayouts[idx].offsetCenter;
@@ -298,6 +298,50 @@ function riGeoJson(params, api) {
   }
 }
 
+//  outliers for grouped boxplots
+function riOutliers(params, api) {
+  chart = get_e_charts(echwid);
+  rady = api.style().lineDashOffset; if (!rady) rady = 5;  // ol.radius
+  encode = params.encode;
+  isHor = encode['x']>encode['y']
+  baseDimIdx = isHor ? 1 : 0
+  otherDimIdx = 1 - baseDimIdx;
+  let coordDims = ['x', 'y'];
+
+  prm = [];
+  prm[baseDimIdx] = api.value(encode[coordDims[baseDimIdx]][0]);
+  prm[otherDimIdx] = api.value(encode[coordDims[otherDimIdx]][0]);
+
+  thePoint = api.coord(prm);
+  if (isHor) thePoint.reverse();
+  var style = api.style({
+     //stroke: api.visual('color'), lineWidth: 2,
+     fill: api.visual('color')
+  });
+ 
+  offset = 0;  // calc boxplot offset
+  xx = isHor ? 0 : 1; yy = 1 - xx;
+  sers = chart.getModel().getSeries().filter(o => o.subType=='boxplot');
+  if (sers.length > 0) {
+     tmp = sers.find(o => o.name === params.seriesName);
+     if (tmp) {
+        // idx is index of related boxplot (by name)
+        idx = tmp.seriesIndex;
+      	olay = { count: sers.length, barGap:'30%',  barCategoryGap:'20%' };
+      	barLayouts = api.barLayout(olay);
+    	  offset = barLayouts[idx].offsetCenter;
+     }
+  }
+  return {
+     type: 'circle', x: xx*offset, y: yy*offset,
+     transition: ['shape'],
+     shape: { 
+       cx: thePoint[baseDimIdx], 
+       cy: thePoint[otherDimIdx], 
+       r:  rady },
+     style: style
+  }
+}
 
 /*
  ------------- Licence -----------------

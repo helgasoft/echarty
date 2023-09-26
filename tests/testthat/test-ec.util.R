@@ -184,7 +184,7 @@ test_that("morph 2", {
 test_that("fullscreen", {
   tbox <- list(right='20%', feature= ec.util(cmd='fullscreen'))
   #p <- cars |> ec.init(toolbox= tbox)
-  #expect_match(p$x$opts$toolbox$feature$myecfs$onclick, 'ecfun.fscreen', fixed=TRUE)
+  #expect_match(p$x$opts$toolbox$feature$myecfs$onclick, 'ecf.fscreen', fixed=TRUE)
   p <- crosstalk::bscols(
     cars |> ec.init(toolbox= tbox),
     mtcars |> ec.init(toolbox= tbox) |>
@@ -192,7 +192,7 @@ test_that("fullscreen", {
         htmltools::tags$style(".echarty:fullscreen { background-color: beige; }")
       )
   )
-  expect_match(p$children[[1]]$children[[1]][[1]]$children[[1]]$x$opts$toolbox$feature$myecfs$onclick, 'ecfun.fscreen(tmp.echwid)', fixed=TRUE)
+  expect_match(p$children[[1]]$children[[1]][[1]]$children[[1]]$x$opts$toolbox$feature$myecfs$onclick, 'ecf.fscreen(tmp.echwid)', fixed=TRUE)
   expect_match(p$children[[1]]$children[[1]][[2]]$children[[1]]$prepend[[1]]$children[[1]], '.echarty:fullscreen', fixed=TRUE)
 })
 
@@ -219,11 +219,11 @@ test_that("labelsInside and doType(xAxis)", {
       list(name= 'long text, 20 chars', type='line',
            data= c(110, 132, 101, 134, 90, 230, 210),
            endLabel= list( show=TRUE, formatter='{a}'),
-           labelLayout= htmlwidgets::JS("(params) => ecfun.labelsInside(params)")),
+           labelLayout= htmlwidgets::JS("(params) => ecf.labelsInside(params)")),
       list(name='longer text, this is 35 characters',type='line', 
            data= c(210, 232, 201,234, 290, 240, 230),
            endLabel=list(show=TRUE, formatter='{a}'),
-           labelLayout= htmlwidgets::JS("(params) => ecfun.labelsInside(params)"))
+           labelLayout= htmlwidgets::JS("(params) => ecf.labelsInside(params)"))
           # labelLayout= ec.util(cmd='labelsInside'))
     )
   )	
@@ -271,12 +271,15 @@ test_that("ec.data dendrogram", {
 })
 
 test_that("ec.data boxlpot", {
-  # without grouping
+  
+  # without grouping -------------------
   p <- mtcars |> relocate(cyl,mpg) |> ec.data(format='boxplot', outliers=TRUE)
   expect_equal(p$series[[1]]$type, 'boxplot')
   expect_equal(p$dataset[[1]]$source[[1]][[3]], 22.8)
   expect_equal(p$xAxis[[1]]$name, 'mpg')
-  expect_equal(p$series[[2]]$z, 4)
+  #expect_equal(p$series[[2]]$z, 4)
+  expect_equal(p$series[[2]]$encode$x, 2)
+  expect_equal(p$series[[2]]$type, 'scatter')
   
   ds <- mtcars |> select(cyl, drat) |>
 	ec.data(format='boxplot', jitter=0.1, layout= 'v',
@@ -298,20 +301,22 @@ test_that("ec.data boxlpot", {
   expect_equal(p$x$opts$yAxis[[1]]$name, 'drat')
   expect_equal(p$x$opts$xAxis[[2]]$max, 3)
 
-  # with grouping
+  # with grouping -------------------
   ds <- airquality |> mutate(Day=round(Day/10)) |> 
     relocate(Day,Wind,Month) |> group_by(Month) |> 
   	ec.data(format='boxplot', jitter=0.1, outliers=TRUE)
-  p <- ec.init(
+  p <- ec.init(load='custom',  # for outliers
     dataset= ds$dataset, series= ds$series,xAxis= ds$xAxis, yAxis= ds$yAxis,
     legend= list(show= TRUE), tooltip= list(show=TRUE)
   )
   expect_equal(length(p$x$opts$dataset), 15)
+  expect_equal(p$x$opts$yAxis[[1]]$type, 'category')
   expect_equal(p$x$opts$series[[5]]$type, 'boxplot')
   expect_equal(p$x$opts$series[[5]]$datasetIndex, 9)
-  expect_equal(p$x$opts$series[[6]]$type, 'scatter')
-  expect_equal(p$x$opts$series[[6]]$name, 5)
-  expect_equal(p$x$opts$yAxis[[1]]$type, 'category')
+  expect_equal(p$x$opts$series[[10]]$type, 'custom')
+  expect_equal(as.character(p$x$opts$series[[10]]$renderItem), 'riOutliers')
+  expect_equal(p$x$opts$series[[10]]$encode$x, 1)
+  expect_equal(p$x$opts$series[[14]]$type, 'scatter')
   expect_equal(p$x$opts$series[[14]]$name, '3')
 })
 
@@ -346,11 +351,11 @@ test_that("ec.data treeTK", {
 	  select(pathString, value, itemStyle)
 
   p <- ec.init(preset= FALSE,
-  	title= list(text= 'Titanic: Survival by Class'),
-  	tooltip= list(formatter= ec.clmn('%@ (%@%)', 'value','pct')),
+  	title= list(text= 'Titanic: Survival by Class'), tooltip= list(s=TRUE),
   	series= list(list(
   	  type= 'tree', symbolSize= htmlwidgets::JS("x => {return Math.log(x)*10}"),
-  	  data= ec.data(df, format='treeTK') 
+  	  data= ec.data(df, format='treeTK'),
+    	tooltip= list(formatter= ec.clmn('%@ (%@%)', 'value','pct'))
   	))
   )
   expect_equal(p$x$opts$series[[1]]$data[[1]]$value, 2201)
@@ -402,7 +407,7 @@ test_that("ec.inspect and ec.fromJson", {
   
   v <- ec.fromJson(tmp)
   expect_equal(v$x$opts$xAxis$type, 'category')
-  p <- echarty::ec.fromJson('https://helgasoft.github.io/echarty/test/pfull.json')
+  p <- ec.fromJson('https://helgasoft.github.io/echarty/test/pfull.json')
   expect_true(inherits(p, 'echarty'))
 })
 

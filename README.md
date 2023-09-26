@@ -49,7 +49,7 @@ This review done Sept 2023 for echarts4R v.0.4.5 and echarty v.1.5.4.03.
 ## Installation
 
 <!-- [![Github version](https://img.shields.io/github/v/release/helgasoft/echarty?label=github)](https://github.com/helgasoft/echarty/releases)  <sup>.02</sup>  -->
-Latest development build <strong>1.6.0</strong>
+Latest development build <strong>1.6.0.01</strong>
 
 ``` r
 if (!requireNamespace('remotes')) install.packages('remotes')
@@ -88,6 +88,9 @@ ec.init(
     markLine= list(data= list(list(type='max'), list(type='min')))
   )
 )
+
+# show a remote chart
+echarty::ec.fromJson('https://helgasoft.github.io/echarty/test/pfull.json')
 
 ```
 
