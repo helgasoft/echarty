@@ -248,6 +248,7 @@ test_that("leaflet with geoJson", {
   expect_s3_class(p$x$opts$series[[1]]$renderItem, 'JS_EVAL')
   expect_match(p$x$opts$series[[1]]$renderItem,"ecf.geofill=null", fixed=T)
   expect_equal(length(p$x$opts$series[[1]]$data), 5)
+  expect_equal(p$x$opts$series[[1]]$data[[5]][[1]], 5)
   
 # tmp <- jsonlite::fromJSON('https://echarts.apache.org/examples/data/asset/geo/USA.json')
 # p <- ec.init(load= c('leaflet', 'custom'), 

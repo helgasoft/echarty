@@ -263,6 +263,5 @@ test_that('stops are working in echarty.R', {
   expect_silent(ec.init(load='gmodular'))
   expect_silent(ec.init(load='wordcloud'))
   expect_silent(ec.init(load='lottie'))
-  expect_silent(ec.init(load='custom'))
   
 })

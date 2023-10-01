@@ -197,21 +197,21 @@ function riPolygon(params, api) {
   usage: 
     myGeojson <- gsub('\n', '', '{...}')
     ec.init(load= c('leaflet','custom'), 
-      js= paste('ecfun.geojson=',myGeojson),
+      js= paste('ecf.geojson=',myGeojson),
       series= list(list(
         type= 'custom',
         coordinateSystem= 'leaflet',  # or 'gmap',etc.
         renderItem= htmlwidgets::JS("riGeoJson") ...
 */
 function riGeoJson(params, api) {
-  gj = ecfun.geojson.features[params.dataIndex];
+  gj = ecf.geojson.features[params.dataIndex];
   type = gj.geometry.type.toLowerCase();
   ccc = gj.geometry.coordinates;
   colr = gj.properties.color;
   if (colr==undefined) colr = api.visual('color');
   fill = gj.properties.ppfill;
   if (fill==undefined) {
-	  fill = ecfun.geofill;
+	  fill = ecf.geofill;
 	  if (fill==0) fill = colr;
   }
   lwi = gj.properties.lwidth;
@@ -291,8 +291,8 @@ function riGeoJson(params, api) {
     	}
         break;
       }
-      ecfun.geoz2++; //z2++;
-      out.z2 = ecfun.geoz2;
+      ecf.geoz2++; //z2++;
+      out.z2 = ecf.geoz2;
       return out;
       })
   }
