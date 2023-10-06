@@ -209,10 +209,13 @@ test_that("Shiny commands", {
 })
 
 test_that(".merlis", {
-  aa = list(list("type"= "map", "geoIndex"= 0))
+  aa = list(list(type= "map", geoIndex= 0))
   p <- echarty:::.merlis(aa, list(val= 13))
   expect_equal(p[[1]]$val, 13)
   p <- echarty:::.merlis(aa[[1]], list(val= 13))
+  expect_equal(p$val, 13)
+  aa = list(x= list(type= "1st.is.named.list"), geoIndex= 0)
+  p <- echarty:::.merlis(aa, list(val= 13))
   expect_equal(p$val, 13)
 })
 

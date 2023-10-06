@@ -6,6 +6,8 @@
 #' With only two major commands (_ec.init_ and _ec.upd_), it can trigger multiple native ECharts options to build a chart. \cr
 #' The benefits - learn a very limited set of commands, and enjoy the **full functionality** of ECharts.
 #'
+#' @includeRmd vignettes/echarty.Rmd
+#' 
 #' @name -- Introduction --
 NULL
 
@@ -1164,13 +1166,14 @@ ec.plugjs <- function(wt=NULL, source=NULL, ask=FALSE) {
   opa
 }
 
-# merge named lists
+# merge named lists: list OR list.of.lists like series
 .merlis <- function(l1, l2) {
 	if (!inherits(l1, 'list')) l2
   else if (length(l1)==0) l2
 	else if (!inherits(l2, 'list')) l1
   else if (length(l2)==0) l1
-	else if (inherits(l1[[1]], 'list'))     # list of lists
+	#else if (inherits(l1[[1]], 'list'))     # list of lists
+	else if (inherits(l1[1],'list') && is.null(names(l1[1])))     # list of lists
 		lapply(l1, \(x) {
 			c(x, l2)[!duplicated(c(names(x), names(l2)), fromLast= TRUE)]
 		})

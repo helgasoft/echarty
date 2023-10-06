@@ -17,60 +17,60 @@
 #' \verb{   }Limitations:\cr 
 #' \verb{     }polygons can have only their name in tooltip,  \cr
 #' \verb{     }assumes Geodetic CRS is WGS 84, for conversion use \link[sf]{st_transform} with _crs=4326_.\cr
-#' \verb{   }parameter _df_ - value from \link[sf]{st_read}\cr
-#' \verb{   }optional parameters: \cr
-#' \verb{     }cs - _coordinateSystem_ value\cr
-#' \verb{     }nid - column name for name-id used in tooltips\cr
-#' \verb{     }verbose - print shapefile item names in console\cr
-#' \verb{   }returns a list of chart series\cr
+#' \verb{   }Parameters:\cr 
+#' \verb{   }df - value from \link[sf]{st_read}\cr
+#' \verb{   }cs - optional _coordinateSystem_ value\cr
+#' \verb{   }nid - optional column name for name-id used in tooltips\cr
+#' \verb{   }verbose - optional, print shapefile item names in console\cr
+#' \verb{   }Returns a list of chart series\cr
 #' **cmd = 'sf.bbox'**\cr
-#' \verb{   }returns JavaScript code to position a map inside a bounding box from \link[sf]{st_bbox}, for leaflet only.\cr
+#' \verb{   }Returns JavaScript code to position a map inside a bounding box from \link[sf]{st_bbox}, for leaflet only.\cr
 #' **cmd = 'sf.unzip'**\cr
 #' \verb{   }unzips a remote file and returns local file name of the unzipped .shp file\cr
 #' \verb{   }url - URL of remote zipped shapefile\cr
-#' \verb{   }optional \emph{shp} - name of .shp file inside ZIP file if multiple exist. Do not add file extension. \cr
+#' \verb{   }shp - optional name of .shp file inside ZIP file if multiple exist. Do not add file extension. \cr
 #' **cmd = 'geojson'** \cr
 #' \verb{   }custom series list with geoJson objects\cr
 #' \verb{   }geojson - object from \link[jsonlite]{fromJSON}\cr
 #' \verb{   }... - optional custom series attributes like _itemStyle_\cr
-#' \verb{   }optional parameters: \cr
-#' \verb{     }ppfill - fill color like '#F00', OR NULL for no-fill, for all Points and Polygons\cr
-#' \verb{     }nid - feature property for item name used in tooltips\cr
+#' \verb{   }ppfill - optional fill color like '#F00', OR NULL for no-fill, for all Points and Polygons\cr
+#' \verb{   }nid - optional feature property for item name used in tooltips\cr
 #' \verb{   }optional geoJSON _feature properties_: color, ppfill, lwidth, ldash, radius(for points)\cr
 #' **cmd = 'layout'** \cr
 #' \verb{   }multiple charts in table-like rows/columns format\cr
 #' \verb{   }... - List of charts\cr
-#' \verb{   }optional parameters: \cr
-#' \verb{     }title - Title for the set, rows= Number of rows, cols= Number of columns\cr
-#' \verb{   }returns a container \link[htmltools]{div} in rmarkdown, otherwise \link[htmltools]{browsable}.\cr
+#' \verb{   }title - optional title for the set, rows= Number of rows, cols= Number of columns\cr
+#' \verb{   }Returns a container \link[htmltools]{div} in rmarkdown, otherwise \link[htmltools]{browsable}.\cr
 #' \verb{   }For 3-4 charts one would use multiple series within a \href{https://echarts.apache.org/en/option.html#grid}{grid}. \cr
 #' \verb{   }For greater number of charts _ec.util(cmd='layout')_ comes in handy\cr
 #' **cmd = 'tabset'** \cr
 #' \verb{   }... - a list name/chart pairs like \emph{n1=chart1, n2=chart2}, each tab may contain a chart.\cr
-#' \verb{   }optional parameters are: \cr
-#' \verb{     }width - Width of tabs in pixels, height= Height of tabs in pixels\cr
-#' \verb{     }tabStyle - tab style string, see default \emph{tabStyle} variable in the code\cr
-#' \verb{   }returns A) \link[htmltools]{tagList} of tabs when in a pipe without '...' params, see example\cr
-#' \verb{   }returns B) \link[htmltools]{browsable} when '...' params are provided by user\cr
+#' \verb{   }width -  optional width of tabs in pixels\cr
+#' \verb{   }height - optional height of tabs in pixels\cr
+#' \verb{   }tabStyle - tab style string, see default \emph{tabStyle} variable in the code\cr
+#' \verb{   }Returns A) \link[htmltools]{tagList} of tabs when in a pipe without '...' params, see example\cr
+#' \verb{   }Returns B) \link[htmltools]{browsable} when '...' params are provided by user\cr
+#' **cmd = 'button'** \cr
+#' \verb{   }UI button to execute a JS function,\cr
+#' \verb{   }text - the button label\cr
+#' \verb{   }js - the JS function string\cr
+#' \verb{   }... - optional parameters for the \href{https://echarts.apache.org/en/option.html#graphic.elements-rect.type}{rect} element\cr
+#' \verb{   }Returns a graphic.elements-\href{https://echarts.apache.org/en/option.html#graphic.elements-rect.type}{rect} element.\cr
 #' **cmd = 'morph'** \cr
 #' \verb{   }... - a list of charts or chart options\cr
-#' \verb{   }optional parameter: \cr
-#' \verb{     }js - JS function for switching charts. Default function is on \emph{mouseover}.\cr
-#' \verb{   }returns a chart with ability to morph into other charts\cr
+#' \verb{   }js - optional JS function for switching charts. Default function is on \emph{mouseover}. Disable with FALSE.\cr
+#' \verb{   }Returns a chart with ability to morph into other charts\cr
 #' **cmd = 'fullscreen'** \cr
 #' \verb{   }a toolbox feature to toggle fullscreen on/off. Works in a browser, not in RStudio.\cr
 #' **cmd = 'rescale'** \cr
+#' \verb{   }v - input vector of numeric values to rescale\cr
 #' \verb{   }t - target range c(min,max), numeric vector of two\cr
-#' \verb{   }v - vector of numeric values to rescale\cr
 #' **cmd = 'level'** \cr
 #' \verb{   }calculate vertical levels for timeline \emph{line} charts, returns a numeric vector\cr
-#' \verb{   }df - data.frame with from & to columns\cr
+#' \verb{   }df - data.frame with _from_ and _to_ columns\cr
 #' \verb{   }from - name of 'from' column\cr
 #' \verb{   }to - name of 'to' column\cr
-#' **cmd = 'button'** \cr
-#' \verb{   }UI button to execute a JS function, returns a \href{https://echarts.apache.org/en/option.html#graphic.elements-text}{graphic.elements-text}\cr
-#' \verb{   }text - the button label, use _js_ for the JS function string \cr
-#'
+#' 
 #' @examples 
 #' if (interactive()) {  # comm.out: Fedora errors about some 'browser'
 #'   library(sf)
@@ -99,14 +99,10 @@
 #'   ec.util(cmd='layout', cols= 2, title= 'my layout')
 #'   
 #'   setd <- \(type) {
-#'     mtcars |> group_by(cyl) |> ec.init(ctype=type) |> ec.upd({
-#'     title <- list(subtext='mouseover points to morph')
-#'     xAxis <- list(scale=TRUE)
-#'     series <- lapply(series, \(ss) {
-#'       ss$groupId <- ss$name
-#'       ss$universalTransition <- list(enabled=TRUE)
-#'       ss })
-#'     })
+#' 	   mtcars |> group_by(cyl) |> 
+#' 	 ec.init(ctype= type,
+#' 		  title= list(subtext= 'mouseover points to morph'),
+#' 		  xAxis= list(scale= TRUE))
 #'   }
 #'   oscatter <- setd('scatter')
 #'   obar <- setd('bar')
@@ -139,7 +135,7 @@ ec.util <- function( ..., cmd='sf.series', js=NULL) {
       do.series <- \(dff) {
         polig <- \(geom) {
           for(k in 1:length(geom)) {
-            if ('matrix' %in% class(geom[[k]])) {
+            if (inherits(geom[[k]],'matrix')) {
               gm <- as.data.frame(geom[[k]])
               coords <- list()
               for(j in 1:nrow(gm))
@@ -354,7 +350,7 @@ body { padding: 10px; }
       tnames <- names(opts)
       isPipe <- FALSE
       if ((is.null(tnames) || length(tnames)==1) && 
-          ('echarty' %in% class(opts[[1]][[1]]))) {  # pipe
+          inherits(opts[[1]][[1]],'echarty')) {  # pipe
         opts <- opts[[1]]
         cnt <- 1
         tnames <- names(opts) <- lapply(opts, \(oo) {
@@ -429,8 +425,13 @@ body { padding: 10px; }
     
     'morph'= {
       
+      # TODO: individual oo$x$theme support
       opts <- lapply(opts, \(oo) {
-        if ('echarty' %in% class(oo)) oo$x$opts
+        if (inherits(oo, 'echarty')) {
+          oo$x$opts$series <- .merlis(oo$x$opts$series,
+                          list(universalTransition= list(enabled= TRUE)) )
+          oo$x$opts
+        }
         else oo
       })
       # series types should be different for morph options
@@ -441,8 +442,8 @@ body { padding: 10px; }
         for(i=0; i<keep.length; i++) {
     	    if (opt.series[0].type==keep[i].series[0].type) {
     	      next= (i+1) % keep.length;
-       		optcurr= Object.assign({}, keep[next]);
-       		break;
+       		  optcurr= Object.assign({}, keep[next]);
+       		  break;
     	    }
     	 };
     	 if (!optcurr) return;
@@ -538,34 +539,37 @@ body { padding: 10px; }
 #' 
 #' Make data lists from a data.frame
 #' 
-#' @param df Chart data in data.frame format, required. \cr
-#'     Except when format is 'dendrogram', then df is a list, result of \link[stats]{hclust} function.\cr
-#' @param format A key on how to format the output list \cr \itemize{
-#'  \item 'dataset' = list to be used in \href{https://echarts.apache.org/en/option.html#dataset.source}{dataset} (default), or in \href{https://echarts.apache.org/en/option.html#series-scatter.data}{series.data} (without header). \cr
-#'  \item 'values' = list for customized \href{https://echarts.apache.org/en/option.html#series-scatter.data}{series.data} \cr
-#'  \item 'names' = named lists useful for named data like \href{https://echarts.apache.org/en/option.html#series-sankey.links}{sankey links}.
-#'  \item 'dendrogram' = build series data for Hierarchical Clustering dendrogram
-#'  \item 'treePC' = build series data for sunburst,tree,treemap from parent/children data.frame
-#'  \item 'treeTK' = build series data for sunburst,tree,treemap from data.frame like Titanic. Supports column \emph{itemStyle}.
-#'  \item 'boxplot' = build dataset and source lists, see Details
+#' @param df Required chart data as **data.frame**. \cr
+#'     Except when format is _dendrogram_, then df is a **list**, result of \link[stats]{hclust} function.\cr
+#' @param format Output list format\cr \itemize{
+#'  \item **dataset** = list to be used in \href{https://echarts.apache.org/en/option.html#dataset.source}{dataset} (default), or in \href{https://echarts.apache.org/en/option.html#series-scatter.data}{series.data} (without header). \cr
+#'  \item **values** = list for customized \href{https://echarts.apache.org/en/option.html#series-scatter.data}{series.data} \cr
+#'  \item **names** = named lists useful for named data like \href{https://echarts.apache.org/en/option.html#series-sankey.links}{sankey links}.
+#'  \item **dendrogram** = build series data for Hierarchical Clustering dendrogram
+#'  \item **treePC** = build series data for tree charts from parent/children data.frame
+#'  \item **treeTT** = build series data for tree charts from data.frame like Titanic.\cr
+#'  \item **boxplot** = build dataset and source lists, see Details
 #' }
 #' @param header for dataset, to include the column names or not, default TRUE. Set it to FALSE for \href{https://echarts.apache.org/en/option.html#series-scatter.data}{series.data}.\cr
 #' @param ... optional parameters\cr
-#' Optional parameters for boxplot are:\cr
-#' * _layout_ 'h' for horizontal(default) or 'v' for vertical layout\cr
+#' Optional parameters for **boxplot** are:\cr
+#' * _layout_ = 'h' for horizontal(default) or 'v' for vertical layout\cr
 #' * _outliers_ boolean to add outlier points (default FALSE)\cr
 #' * _jitter_ value for \link[base]{jitter} of numerical values in second column, default 0 (no scatter). Adds scatter series on top of boxplot.\cr
 #' 
 #' @return A list for _dataset.source_, _series.data_ or other lists:\cr
 #'   For boxplot - a named list, see Details and Examples \cr
 #'   For dendrogram & treePC - a tree structure, see format in \href{https://echarts.apache.org/en/option.html#series-tree.data}{tree data}
-#' @details `format='boxplot'` requires the first two _df_ columns as: \cr
-#'   * column for the non-computational categorical axis\cr
-#'   * column with (numeric) data to compute the five boxplot values\cr
 #'   
+#' @details 
+#' `format='boxplot'` requires the first two _df_ columns as: \cr
+#' \verb{   }column for the non-computational categorical axis\cr
+#' \verb{   }column with (numeric) data to compute the five boxplot values\cr
 #'  Additional grouping is supported on a column after the second. Groups will show in the legend, if enabled.\cr
-#'  Returns a `list(dataset, series, xAxis, yAxis)` to set params in [ec.init].\cr
-#'  Make sure there is enough data for computation, 4+ values per boxplot.
+#'  Returns a `list(dataset, series, xAxis, yAxis)` to set params in [ec.init]. 
+#'  Make sure there is enough data for computation, 4+ values per boxplot.\cr
+#'  `format='treeTT'` expects data.frame _df_ columns _pathString,value,(optional itemStyle)_ for \link[data.tree]{FromDataFrameTable}.\cr
+#'  It will add column 'pct' with value percentage for each node. See Details.
 #' @seealso some live \href{https://rpubs.com/echarty/data-models}{code samples}
 #' 
 #' @examples
@@ -587,6 +591,19 @@ body { padding: 10px; }
 #'     label= list(formatter= htmlwidgets::JS(
 #'       "function(n) { out= /p\\d+/.test(n.name) ? '' : n.name; return out;}"))
 #'   ))
+#' )
+#' 
+#' # build required pathString,value and optional itemStyle columns
+#' df <- as.data.frame(Titanic) |> rename(value= Freq) |> mutate(
+#'   pathString= paste('Titanic\nSurvival', Survived, Age, Sex, Class, sep='/'),
+#' 	 itemStyle= case_when(Survived=='Yes' ~"color='green'", TRUE ~"color='LightSalmon'")) |>
+#' 	 select(pathString, value, itemStyle)
+#' ec.init(
+#' 	  series= list(list(
+#' 		  data= ec.data(df, format='treeTT'),
+#' 		  type= 'tree', symbolSize= ec.clmn("(x) => {return Math.log(x)*10}")
+#' 	  )),
+#' 	  tooltip= list(formatter= ec.clmn('%@<br>%@%','value','pct'))
 #' )
 #' 
 #' @importFrom utils tail
@@ -632,15 +649,15 @@ ec.data <- function(df, format='dataset', header=FALSE, ...) {
     
   } 
   stopifnot('ec.data: df has to be data.frame'= inherits(df, 'data.frame'))
-  # add var for ec.clmn
+  # save var for ec.clmn
   .setColnm(colnames(df))
   
   if (format=='treePC') {
     # for sunburst,tree,treemap
-    if (!all(colnames(df) == c('parents', 'children', 'value')) ||
+    if (# !all(colnames(df) == c('parents', 'children', 'value')) ||
         !all(unlist(unname(lapply(as.list(df[,1:3]), class))) == 
              c('character','character','numeric')) )
-      stop('ec.data: tree df columns need to be (parents, children, value) with value as numeric', call. = FALSE)
+      stop('ec.data: df columns need to be in order (parents, children, value), only value is numeric', call. = FALSE)
     
     tryCatch({
       tmp <- data.tree::FromDataFrameNetwork(df)
@@ -649,8 +666,8 @@ ec.data <- function(df, format='dataset', header=FALSE, ...) {
     json <- data.tree::ToListExplicit(tmp, unname=TRUE)
     return(json$children)
   }
-  if (format=='treeTK') {
-    # for sunburst,tree,treemap from Titanic-like data
+  if (format %in% c('treeTT','treeTK')) {
+    # data for tree,sunburst,treemap from Titanic-like data
     chNames <- function(lest) {
       stopifnot('chNames: expecting a list'= inherits(lest, 'list'))
       # recursive, build pct and itemStyle
@@ -675,11 +692,14 @@ ec.data <- function(df, format='dataset', header=FALSE, ...) {
         lest$itemStyle <- lest$children[[1]]$itemStyle
       lest
     }
+    # verify columns pathString, value, itemStyle
+    stopifnot('ec.data: df first columns not pathString,value'= c('pathString','value') %in% colnames(df))
+    stopifnot('ec.data: column value not numeric'= is.numeric(df$value))
     
     tryCatch({
       nod <- data.tree::FromDataFrameTable(df, ...)
     },
-    error= function(e) { stop(e) })
+      error= function(e) { stop(e) })
     nod$Do(function(x) x$value <- data.tree::Aggregate(x, "value", sum))
     json <- data.tree::ToListExplicit(nod)
     tmp <- chNames(json)

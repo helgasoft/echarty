@@ -1,6 +1,6 @@
 Package: echarty
 Title: Minimal R/Shiny Interface to JavaScript Library 'ECharts'
-Date: 2023-09-25
+Date: 2023-10-05
 Version: 1.6.0.01
 Author: Larry Helgason, with initial code from John Coene's library echarts4r
 Maintainer: Larry Helgason <larry@helgasoft.com>

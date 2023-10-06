@@ -7,25 +7,25 @@
 ec.data(df, format = "dataset", header = FALSE, ...)
 }
 \arguments{
-\item{df}{Chart data in data.frame format, required. \cr
-Except when format is 'dendrogram', then df is a list, result of \link[stats]{hclust} function.\cr}
+\item{df}{Required chart data as \strong{data.frame}. \cr
+Except when format is \emph{dendrogram}, then df is a \strong{list}, result of \link[stats]{hclust} function.\cr}
 
-\item{format}{A key on how to format the output list \cr \itemize{
-\item 'dataset' = list to be used in \href{https://echarts.apache.org/en/option.html#dataset.source}{dataset} (default), or in \href{https://echarts.apache.org/en/option.html#series-scatter.data}{series.data} (without header). \cr
-\item 'values' = list for customized \href{https://echarts.apache.org/en/option.html#series-scatter.data}{series.data} \cr
-\item 'names' = named lists useful for named data like \href{https://echarts.apache.org/en/option.html#series-sankey.links}{sankey links}.
-\item 'dendrogram' = build series data for Hierarchical Clustering dendrogram
-\item 'treePC' = build series data for sunburst,tree,treemap from parent/children data.frame
-\item 'treeTK' = build series data for sunburst,tree,treemap from data.frame like Titanic. Supports column \emph{itemStyle}.
-\item 'boxplot' = build dataset and source lists, see Details
+\item{format}{Output list format\cr \itemize{
+\item \strong{dataset} = list to be used in \href{https://echarts.apache.org/en/option.html#dataset.source}{dataset} (default), or in \href{https://echarts.apache.org/en/option.html#series-scatter.data}{series.data} (without header). \cr
+\item \strong{values} = list for customized \href{https://echarts.apache.org/en/option.html#series-scatter.data}{series.data} \cr
+\item \strong{names} = named lists useful for named data like \href{https://echarts.apache.org/en/option.html#series-sankey.links}{sankey links}.
+\item \strong{dendrogram} = build series data for Hierarchical Clustering dendrogram
+\item \strong{treePC} = build series data for tree charts from parent/children data.frame
+\item \strong{treeTT} = build series data for tree charts from data.frame like Titanic.\cr
+\item \strong{boxplot} = build dataset and source lists, see Details
 }}
 
 \item{header}{for dataset, to include the column names or not, default TRUE. Set it to FALSE for \href{https://echarts.apache.org/en/option.html#series-scatter.data}{series.data}.\cr}
 
 \item{...}{optional parameters\cr
-Optional parameters for boxplot are:\cr
+Optional parameters for \strong{boxplot} are:\cr
 \itemize{
-\item \emph{layout} 'h' for horizontal(default) or 'v' for vertical layout\cr
+\item \emph{layout} = 'h' for horizontal(default) or 'v' for vertical layout\cr
 \item \emph{outliers} boolean to add outlier points (default FALSE)\cr
 \item \emph{jitter} value for \link[base]{jitter} of numerical values in second column, default 0 (no scatter). Adds scatter series on top of boxplot.\cr
 }}
@@ -40,14 +40,13 @@ Make data lists from a data.frame
 }
 \details{
 \code{format='boxplot'} requires the first two \emph{df} columns as: \cr
-\itemize{
-\item column for the non-computational categorical axis\cr
-\item column with (numeric) data to compute the five boxplot values\cr
-}
-
+\verb{   }column for the non-computational categorical axis\cr
+\verb{   }column with (numeric) data to compute the five boxplot values\cr
 Additional grouping is supported on a column after the second. Groups will show in the legend, if enabled.\cr
-Returns a \code{list(dataset, series, xAxis, yAxis)} to set params in \link{ec.init}.\cr
-Make sure there is enough data for computation, 4+ values per boxplot.
+Returns a \code{list(dataset, series, xAxis, yAxis)} to set params in \link{ec.init}.
+Make sure there is enough data for computation, 4+ values per boxplot.\cr
+\code{format='treeTT'} expects data.frame \emph{df} columns \emph{pathString,value,(optional itemStyle)} for \link[data.tree]{FromDataFrameTable}.\cr
+It will add column 'pct' with value percentage for each node. See Details.
 }
 \examples{
 library(dplyr)
@@ -68,6 +67,19 @@ ec.init(preset= FALSE,
     label= list(formatter= htmlwidgets::JS(
       "function(n) { out= /p\\\\d+/.test(n.name) ? '' : n.name; return out;}"))
   ))
+)
+
+# build required pathString,value and optional itemStyle columns
+df <- as.data.frame(Titanic) |> rename(value= Freq) |> mutate(
+  pathString= paste('Titanic\nSurvival', Survived, Age, Sex, Class, sep='/'),
+	 itemStyle= case_when(Survived=='Yes' ~"color='green'", TRUE ~"color='LightSalmon'")) |>
+	 select(pathString, value, itemStyle)
+ec.init(
+	  series= list(list(
+		  data= ec.data(df, format='treeTT'),
+		  type= 'tree', symbolSize= ec.clmn("(x) => {return Math.log(x)*10}")
+	  )),
+	  tooltip= list(formatter= ec.clmn('\%@<br>\%@\%','value','pct'))
 )
 
 }
