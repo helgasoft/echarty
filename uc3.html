@@ -11,7 +11,7 @@
 
 
 
-<title>uc3.knit</title>
+<title> </title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -206,6 +206,83 @@ window.buildTabsets = function(tocID) {
   });
 };
 
+</script>
+<script>
+window.initializeCodeFolding = function(show) {
+
+  // handlers for show-all and hide all
+  $("#rmd-show-all-code").click(function() {
+    $('div.r-code-collapse').each(function() {
+      $(this).collapse('show');
+    });
+  });
+  $("#rmd-hide-all-code").click(function() {
+    $('div.r-code-collapse').each(function() {
+      $(this).collapse('hide');
+    });
+  });
+
+  // index for unique code element ids
+  var currentIndex = 1;
+
+  // select all R code blocks
+  var rCodeBlocks = $('pre.r, pre.python, pre.bash, pre.sql, pre.cpp, pre.stan, pre.julia, pre.foldable');
+  rCodeBlocks.each(function() {
+    // skip if the block has fold-none class
+    if ($(this).hasClass('fold-none')) return;
+
+    // create a collapsable div to wrap the code in
+    var div = $('<div class="collapse r-code-collapse"></div>');
+    var showThis = (show || $(this).hasClass('fold-show')) && !$(this).hasClass('fold-hide');
+    var id = 'rcode-643E0F36' + currentIndex++;
+    div.attr('id', id);
+    $(this).before(div);
+    $(this).detach().appendTo(div);
+
+    // add a show code button right above
+    var showCodeText = $('<span>' + (showThis ? 'Hide' : 'Show') + '</span>');
+    var showCodeButton = $('<button type="button" class="btn btn-default btn-xs btn-secondary btn-sm code-folding-btn pull-right float-right"></button>');
+    showCodeButton.append(showCodeText);
+    showCodeButton
+        .attr('data-toggle', 'collapse')
+        .attr('data-bs-toggle', 'collapse') // BS5
+        .attr('data-target', '#' + id)
+        .attr('data-bs-target', '#' + id)   // BS5
+        .attr('aria-expanded', showThis)
+        .attr('aria-controls', id);
+
+    var buttonRow = $('<div class="row"></div>');
+    var buttonCol = $('<div class="col-md-12"></div>');
+
+    buttonCol.append(showCodeButton);
+    buttonRow.append(buttonCol);
+
+    div.before(buttonRow);
+
+    // show the div if necessary
+    if (showThis) div.collapse('show');
+
+    // update state of button on show/hide
+    //   * Change text
+    //   * add a class for intermediate states styling
+    div.on('hide.bs.collapse', function () {
+      showCodeText.text('Show');
+      showCodeButton.addClass('btn-collapsing');
+    });
+    div.on('hidden.bs.collapse', function () {
+      showCodeButton.removeClass('btn-collapsing');
+    });
+    div.on('show.bs.collapse', function () {
+      showCodeText.text('Hide');
+      showCodeButton.addClass('btn-expanding');
+    });
+    div.on('shown.bs.collapse', function () {
+      showCodeButton.removeClass('btn-expanding');
+    });
+
+  });
+
+}
 </script>
 <style type="text/css">.hljs-literal {
 color: #990073;
@@ -1239,13 +1316,13 @@ HTMLWidgets.widget({
           let tmp = null;
           if (Array.isArray(x.jcode)) {
             tmp = x.jcode[0];   // #1 run before init
+            try {
+              eval(tmp);
+            } catch(err) { console.log('eva1: ' + err.message) }
             eva2 = x.jcode[1];
             eva3 = x.jcode[2];
           } else
-            tmp = x.jcode;
-          try {
-            eval(tmp);
-          } catch(err) { console.log('eva1: ' + err.message) }
+            eva3 = x.jcode;
         }
       }
       
@@ -1256,7 +1333,7 @@ HTMLWidgets.widget({
       if (window.onresize==undefined)   // single chart only, TODO: many
         window.onresize = function() {
         	//chart.resize();
-        	ecfun.fs = ecfun.IsFullScreen();  // handle ESC key
+        	ecf.fs = ecf.IsFullScreen();  // handle ESC key
         }
 
       opts = x.opts;
@@ -1279,7 +1356,7 @@ HTMLWidgets.widget({
       }
       
       if (opts.graphic && typeof lottieParser!=undefined) {
-        tmp = ecfun.lottieGraphic(opts.graphic);
+        tmp = ecf.lottieGraphic(opts.graphic);
         chart.setOption({graphic: tmp}, { replaceMerge: 'graphic'});
       }
       
@@ -1484,14 +1561,7 @@ function distinct(value, index, self) {
 }
       
 // extra functions
-ecfun = {
-  IsFullScreen: function() {
-    	var full_screen_element = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement || null;
-    	if (full_screen_element === null)
-    	  return false;
-    	else
-    	  return true;
-  },
+ecf = {
   
   geojson: null,
   geofill: 0,
@@ -1499,6 +1569,14 @@ ecfun = {
   zoom: {s: 0, e: 100 },  // dataZoom values
   fs: false,              // fullscreen flag Y/N
   
+  IsFullScreen: function() {
+    	var full_screen_element = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement || null;
+    	if (full_screen_element === null)
+    	  return false;
+    	else
+    	  return true;
+  },
+
   fscreen: function(chid) {
     // see also window.onresize
     function GoInFullscreen(element) {
@@ -1561,7 +1639,7 @@ ecfun = {
   },
 
   labelsInside: function(params) {
-    // labelLayout= htmlwidgets::JS("(params) => ecfun.labelsInside(params)")) 
+    // labelLayout= htmlwidgets::JS("(params) => ecf.labelsInside(params)")) 
     // https://github.com/apache/echarts/issues/17828   thanks to @plainheart
     if (echwid=='') return null;   // single chart only (TODO: many)
     dchart = get_e_charts(echwid);
@@ -1576,7 +1654,7 @@ ecfun = {
       dy: overflow ? -3 : 0
     }
   }
-  
+
 };
 
 if (HTMLWidgets.shinyMode) {
@@ -1747,6 +1825,41 @@ limitations under the License.
 ---------------------------------------
 */
 </script>
+<style>
+#nahead nav { background:#353535; background-color:#93bd20; max-width: 940px; margin-left: auto; margin-right: auto;}
+.centro { display: flex; justify-content: center; align-items: center; }
+
+@media print, screen and (max-width: 480px){
+#nahead{margin-top:0} section{margin-top:70px} nav{display:block}}
+#nahead nav ul{list-style-type:none;margin:0;padding:0}
+#nahead nav ul li{font-family:'OpenSansLight', "Helvetica Neue", Helvetica, Arial, sans-serif;font-weight:normal;list-style:none;display:inline;color:white;line-height:50px;text-shadow:0px 1px 0px rgba(0,0,0,0.2);font-size:14px}
+#nahead nav ul li a{color:white;border:1px solid #5d910b;background:linear-gradient(#93bd20, #659e10);border-radius:2px;box-shadow:inset 0px 1px 0px rgba(255,255,255,0.3),0px 3px 7px rgba(0,0,0,0.7);background-color:#93bd20;padding:10px 12px;margin-top:6px;line-height:14px;
+font-size:14px;display:inline-block;
+text-align:center}
+#nahead nav ul li a:hover{background:linear-gradient(#749619, #527f0e);background-color:#659e10;border:1px solid #527f0e;box-shadow:inset 0px 1px 1px rgba(0,0,0,0.2),0px 1px 0px transparent}
+#nahead nav ul li.fork{float:left;margin-left:0px}
+#nahead nav ul li.downloads{float:right;margin-left:6px}
+#nahead nav ul li.title{float:right;margin-right:10px;font-size:11px}
+.wrapper {max-width:650px;margin-top:66px;position:relative;padding:0 20px}
+</style>
+
+<div id="nahead">
+  <nav>
+    <ul>
+    <li class="fork">
+      <a href="https://github.com/helgasoft/echarty">
+              <svg viewBox="64 64 896 896" focusable="false" data-icon="github" width="1.5em" height="1.5em" fill="currentColor" aria-hidden="true">
+                <path d="M511.6 76.3C264.3 76.2 64 276.4 64 523.5 64 718.9 189.3 885 363.8 946c23.5 5.9 19.9-10.8 19.9-22.2v-77.5c-135.7 15.9-141.2-73.9-150.3-88.9C215 726 171.5 718 184.5 703c30.9-15.9 62.4 4 98.9 57.9 26.4 39.1 77.9 32.5 104 26 5.7-23.5 17.9-44.5 34.7-60.8-140.6-25.2-199.2-111-199.2-213 0-49.5 16.3-95 48.3-131.7-20.4-60.5 1.9-112.3 4.9-120 58.1-5.2 118.5 41.6 123.2 45.3 33-8.9 70.7-13.6 112.9-13.6 42.4 0 80.2 4.9 113.5 13.9 11.3-8.6 67.3-48.8 121.3-43.9 2.9 7.7 24.7 58.3 5.5 118 32.4 36.8 48.9 82.7 48.9 132.3 0 102.2-59 188.1-200 212.9a127.5 127.5 0 0138.1 91v112.5c.8 9 0 17.9 15 17.9 177.1-59.7 304.6-227 304.6-424.1 0-247.2-200.4-447.3-447.5-447.3z"></path>
+              </svg> 
+        GitHub ⭐</a></li>
+<li class="downloads"><a href="./">Home</a></li>
+    </ul>
+  </nav>
+</div>
+<!--
+<p>&nbsp;</p><p>&nbsp;</p>
+<div class="wrapper">
+-->
 
 <style type="text/css">
 code{white-space: pre-wrap;}
@@ -1851,6 +1964,9 @@ display: none;
 </style>
 
 <!-- code folding -->
+<style type="text/css">
+.code-folding-btn { margin-bottom: 4px; }
+</style>
 
 
 
@@ -1867,68 +1983,52 @@ display: none;
 
 <div id="header">
 
-
-
-
-</div>
-
-
-<style type="text/css">
-#header nav { background:#353535; background-color:#93bd20; }
-.centro { display: flex; justify-content: center; align-items: center; }
-
-@media print, screen and (max-width: 480px){
-#header{margin-top:0} section{margin-top:70px} nav{display:block}}
-#header nav ul{list-style-type:none;margin:0;padding:0}
-#header nav ul li{font-family:'OpenSansLight', "Helvetica Neue", Helvetica, Arial, sans-serif;font-weight:normal;list-style:none;display:inline;color:white;line-height:50px;text-shadow:0px 1px 0px rgba(0,0,0,0.2);font-size:14px}
-#header nav ul li a{color:white;border:1px solid #5d910b;background:linear-gradient(#93bd20, #659e10);border-radius:2px;box-shadow:inset 0px 1px 0px rgba(255,255,255,0.3),0px 3px 7px rgba(0,0,0,0.7);background-color:#93bd20;padding:10px 12px;margin-top:6px;line-height:14px;
-font-size:14px;display:inline-block;
-text-align:center}
-#header nav ul li a:hover{background:linear-gradient(#749619, #527f0e);background-color:#659e10;border:1px solid #527f0e;box-shadow:inset 0px 1px 1px rgba(0,0,0,0.2),0px 1px 0px transparent}
-#header nav ul li.fork{float:left;margin-left:0px}
-#header nav ul li.downloads{float:right;margin-left:6px}
-#header nav ul li.title{float:right;margin-right:10px;font-size:11px}
-.wrapper {max-width:650px;margin:0 auto;position:relative;padding:0 20px}
-</style>
-<div id="header">
-  <nav>
-    <ul>
-    <li class="fork">
-      <a href="https://github.com/helgasoft/echarty">
-              <svg viewBox="64 64 896 896" focusable="false" data-icon="github" width="1.5em" height="1.5em" fill="currentColor" aria-hidden="true">
-                <path d="M511.6 76.3C264.3 76.2 64 276.4 64 523.5 64 718.9 189.3 885 363.8 946c23.5 5.9 19.9-10.8 19.9-22.2v-77.5c-135.7 15.9-141.2-73.9-150.3-88.9C215 726 171.5 718 184.5 703c30.9-15.9 62.4 4 98.9 57.9 26.4 39.1 77.9 32.5 104 26 5.7-23.5 17.9-44.5 34.7-60.8-140.6-25.2-199.2-111-199.2-213 0-49.5 16.3-95 48.3-131.7-20.4-60.5 1.9-112.3 4.9-120 58.1-5.2 118.5 41.6 123.2 45.3 33-8.9 70.7-13.6 112.9-13.6 42.4 0 80.2 4.9 113.5 13.9 11.3-8.6 67.3-48.8 121.3-43.9 2.9 7.7 24.7 58.3 5.5 118 32.4 36.8 48.9 82.7 48.9 132.3 0 102.2-59 188.1-200 212.9a127.5 127.5 0 0138.1 91v112.5c.8 9 0 17.9 15 17.9 177.1-59.7 304.6-227 304.6-424.1 0-247.2-200.4-447.3-447.5-447.3z"></path>
-              </svg> 
-        GitHub ⭐</a></li>
-<li class="downloads"><a href="./">Back</a></li>
-    </ul>
-  </nav>
-</div>
-<p> </p><p> </p>
-<div class="wrapper">
-<div id="hierarchies-in-r-and-echarty" class="section level1">
-<h1>Hierarchies in R and echarty</h1>
-<p>There are several types of charts to represent hierarchical
-structures - sunburst, tree, treemap, sankey, graph.<br />
-Hierarchical data in R can be built with:</p>
-<ul>
-<li>list of lists - read as is</li>
-<li>data.frame with nested data.frame children - read thru
-<em>jsonlite::toJSON</em></li>
-<li>data.frame with parent &amp; child columns - read thru
-<em>ec.data(format=‘treePC’)</em></li>
-<li>data.frame with a column for each level, like Titanic data - read
-thru <em>ec.data(format=‘treeTK’)</em></li>
+<div class="btn-group pull-right float-right">
+<button type="button" class="btn btn-default btn-xs btn-secondary btn-sm dropdown-toggle" data-toggle="dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
+<ul class="dropdown-menu dropdown-menu-right" style="min-width: 50px;">
+<li><a id="rmd-show-all-code" href="#">Show All Code</a></li>
+<li><a id="rmd-hide-all-code" href="#">Hide All Code</a></li>
 </ul>
-<p>Many users find the <strong>third</strong> representation most
-intuitive and straightforward.<br />
-Note the difference in data setting for chart <em>tree</em> compared to
-<em>sunburst</em> and <em>treemap</em>. <em>Tree</em>’s data is the
-top-level node, while <em>sunburst</em> and <em>treemap</em> use the
-first lower level. Below are examples for all four types.<br />
-<br /></p>
+</div>
+
+
+
+<h1 class="title toc-ignore"> </h1>
+
+</div>
+
+
+<p>
+ 
+</p>
+<p>
+ 
+</p>
+<div id="hierarchical-data-and-charts-with-echarty" class="section level1">
+<h1>Hierarchical data and charts with <em>echarty</em></h1>
+<p>Hierarchical data in R can be represented with different
+<strong>data</strong> structures:</p>
+<ul>
+<li>list of lists</li>
+<li>data.frame with parent and child columns</li>
+<li>data.frame with a column for each level (like ‘Titanic’ data)</li>
+<li>data.frame with nested data.frame children</li>
+</ul>
+<p>Below are examples for those four data types. Click <code>Show</code>
+buttons to see code.<br />
+Many users find the <strong>second</strong> representation most
+intuitive and straightforward.</p>
+<p>Several <strong>charts</strong> can represent hierarchical data. Most
+common are sunburst, tree and treemap, but sometimes sankey, graph, even
+stacked bars can also do the job. <!--
+Note the difference in data setting for *tree* chart compared to *sunburst* and *treemap*.  *Tree*'s data is the top-level node, while *sunburst* and *treemap* use the first lower level.
+--></p>
 <div id="list-of-lists" class="section level2">
 <h2>List of lists</h2>
-<pre class="r"><code>data &lt;- list(
+<p>A simple data structure, but could become difficult to follow with
+larger trees. <em>echarty</em> can read it as it is, no need for data
+transformation.</p>
+<pre class="r fold-show"><code>data &lt;- list(
     list(name=&#39;Grandpa&#39;,
         children= list(
             list(name=&#39;Uncle Leo&#39;, value=15,
@@ -1947,103 +2047,140 @@ first lower level. Below are examples for all four types.<br />
 )# -------------------------------------------------
 
 library(echarty)
-ec.init(preset= FALSE,
-        series= list(list(
-            type= &#39;sunburst&#39;, data= data, 
-            radius= list(0, &#39;90%&#39;), label= list(rotate=&#39;radial&#39;)))
+ec.init(
+    series= list(list(
+        type= &#39;sunburst&#39;, 
+        data= data, 
+        radius= list(0, &#39;90%&#39;),
+        labelLayout= list(hideOverlap= TRUE) ))
 )</code></pre>
-<div class="echarty html-widget html-fill-item-overflow-hidden html-fill-item" id="htmlwidget-55e09c5c1532247c30d1" style="width:100%;height:500px;"></div>
-<script type="application/json" data-for="htmlwidget-55e09c5c1532247c30d1">{"x":{"theme":"","draw":true,"renderer":"canvas","locale":"EN","useDirtyRect":false,"jcode":null,"opts":{"series":[{"type":"sunburst","data":[{"name":"Grandpa","children":[{"name":"Uncle Leo","value":15,"children":[{"name":"Cousin Jack","value":2},{"name":"Cousin Mary","value":5,"children":[{"name":"Jackson","value":2}]},{"name":"Cousin Ben","value":4}]},{"name":"Father","value":10,"children":[{"name":"Me","value":5},{"name":"Brother Peter","value":1}]}]},{"name":"Granma Nancy","children":[{"name":"Uncle Nike","children":[{"name":"Cousin Betty","value":1},{"name":"Cousin Jenny","value":2}]}]}],"radius":[0,"90%"],"label":{"rotate":"radial"}}]},"settings":{"crosstalk_key":null,"crosstalk_group":null}},"evals":[],"jsHooks":[]}</script>
-</div>
-<div id="data-frame-with-nested-data.frame-children" class="section level2">
-<h2>Data frame with nested data.frame children</h2>
-<pre class="r"><code>animl &lt;- data.frame(name = &quot;Animals&quot;, value = 255)  # top level
-animl$children &lt;- 
-    list(data.frame(name = c(&quot;Mammals&quot;, &quot;Reptiles&quot;,&quot;Fish&quot;), value = c(100,90,60)))
-animl$children[[1]]$children &lt;- c(
-    list(data.frame(name = c(&quot;Dogs&quot;, &quot;Humans&quot;), value = c( 15, 35))),
-    list(data.frame(name = c(&quot;Snakes&quot;, &quot;Lizards&quot;), value = c(30, 40))),
-    list(data.frame(name = c(&quot;Sharks&quot;), value = 30)) )
-animl$children[[1]]$children[[3]]$children &lt;- 
-    list(data.frame(name = c(&quot;hammerhead&quot;, &quot;thresher&quot;), value = c(10,20)))
-# -------------------------------------------------
-
-library(echarty)
-p &lt;- ec.init(preset=FALSE,
-    series= list(list(type= &#39;tree&#39;, 
-        data= jsonlite::toJSON(animl), 
-        label= list(offset=c(0, -12)), 
-        symbolSize= htmlwidgets::JS(&quot;function(d) { return d; }&quot;)  # size by value
-)))
-
-p &lt;- ec.init(preset=FALSE,
-    series= list(list(type= &#39;treemap&#39;, 
-        data=jsonlite::toJSON(animl), leafDepth=1)) 
-)
-
-ec.init(preset= FALSE,
-    series= list(list(type= &#39;sunburst&#39;, 
-        data=jsonlite::toJSON(animl$children[[1]]), 
-        radius=c(0, &#39;90%&#39;), label=list(rotate=&#39;radial&#39;) ))
-)</code></pre>
-<div class="echarty html-widget html-fill-item-overflow-hidden html-fill-item" id="htmlwidget-58399b42808e88f06e95" style="width:100%;height:500px;"></div>
-<script type="application/json" data-for="htmlwidget-58399b42808e88f06e95">{"x":{"theme":"","draw":true,"renderer":"canvas","locale":"EN","useDirtyRect":false,"jcode":null,"opts":{"series":[{"type":"sunburst","data":[{"name":"Mammals","value":100,"children":[{"name":"Dogs","value":15},{"name":"Humans","value":35}]},{"name":"Reptiles","value":90,"children":[{"name":"Snakes","value":30},{"name":"Lizards","value":40}]},{"name":"Fish","value":60,"children":[{"name":"Sharks","value":30,"children":[{"name":"hammerhead","value":10},{"name":"thresher","value":20}]}]}],"radius":["0","90%"],"label":{"rotate":"radial"}}]},"settings":{"crosstalk_key":null,"crosstalk_group":null}},"evals":[],"jsHooks":[]}</script>
+<div class="echarty html-widget html-fill-item-overflow-hidden html-fill-item" id="htmlwidget-d28c751b5312acaf634e" style="width:100%;height:500px;"></div>
+<script type="application/json" data-for="htmlwidget-d28c751b5312acaf634e">{"x":{"theme":"","draw":true,"renderer":"canvas","locale":"EN","useDirtyRect":false,"jcode":null,"opts":{"series":[{"type":"sunburst","data":[{"name":"Grandpa","children":[{"name":"Uncle Leo","value":15,"children":[{"name":"Cousin Jack","value":2},{"name":"Cousin Mary","value":5,"children":[{"name":"Jackson","value":2}]},{"name":"Cousin Ben","value":4}]},{"name":"Father","value":10,"children":[{"name":"Me","value":5},{"name":"Brother Peter","value":1}]}]},{"name":"Granma Nancy","children":[{"name":"Uncle Nike","children":[{"name":"Cousin Betty","value":1},{"name":"Cousin Jenny","value":2}]}]}],"radius":[0,"90%"],"labelLayout":{"hideOverlap":true}}]},"settings":{"crosstalk_key":null,"crosstalk_group":null}},"evals":[],"jsHooks":[]}</script>
 </div>
 <div id="data-frame-with-parent-child-columns" class="section level2">
 <h2>Data frame with parent-child columns</h2>
-<pre class="r"><code>library(echarty)
-df &lt;- data.frame(
-   parents = c(&quot;&quot;,&quot;Reptiles&quot;, &quot;Reptiles&quot;, &quot;Mammals&quot;, &quot;Mammals&quot;, &quot;Fish&quot;, &quot;Sharks&quot;, &quot;Sharks&quot;, &quot;Animals&quot;, &quot;Animals&quot;, &quot;Animals&quot;),
+<p>Data needs to be transformed from <em>data.frame</em> to lists with
+utility <em>ec.data(format=‘treePC’)</em>.</p>
+<pre class="r"><code>df &lt;- data.frame(
+    parents = c(&quot;&quot;,&quot;Reptiles&quot;, &quot;Reptiles&quot;, &quot;Mammals&quot;, &quot;Mammals&quot;, &quot;Fish&quot;, &quot;Sharks&quot;, &quot;Sharks&quot;, &quot;Animals&quot;, &quot;Animals&quot;, &quot;Animals&quot;),
     children = c(&quot;Animals&quot;, &quot;Snakes&quot;, &quot;Lizards&quot;, &quot;Dogs&quot;, &quot;Humans&quot;, &quot;Sharks&quot;, &quot;hammerhead&quot;, &quot;thresher&quot;, &quot;Reptiles&quot;, &quot;Mammals&quot;, &quot;Fish&quot;),
-    value = c(255, 30, 40, 15, 35, 30, 10, 20, 90, 100, 60)) 
-df &lt;- ec.data(df, format=&#39;treePC&#39;)
+    value = c(100, 15, 20, 10, 25, 20, 8, 12, 40, 35, 25)) 
+dpc &lt;- ec.data(df, format=&#39;treePC&#39;)
 
-p &lt;- ec.init(preset= FALSE,
+p &lt;- ec.init(
     series= list(list(type= &#39;sunburst&#39;, 
-        data= df[[1]]$children,  # =df
-        radius= c(0, &#39;90%&#39;), label=list(rotate=&#39;radial&#39;), emphasis=list(focus=&#39;ancestor&#39;) ))
+        data= dpc, # =[[1]]$children,
+        radius= c(0, &#39;90%&#39;), 
+        label= list(rotate=&#39;tangential&#39;), 
+        emphasis=list(focus=&#39;ancestor&#39;) ))
 )
 
-p &lt;- ec.init(preset= FALSE,
+p &lt;- ec.init(
     series= list(list(type= &#39;treemap&#39;, 
-        data= df[[1]]$children, # =df, leafDepth=1, 
-        label= list(offset = c(0, -12)), symbolSize= ec.clmn() )),
+        data=dpc, leafDepth=2, 
+        label= list(offset = c(0, -12)), 
+        symbolSize= ec.clmn() )),
     tooltip= list(show= TRUE)
 )
-ec.init(preset= FALSE,
+
+#Hierarchy with sankey
+edges &lt;- df[-1,] |&gt; rename(source= parents, target= children)
+nodes &lt;- list();
+for(n in unique(c(edges$source, edges$target)))
+    nodes &lt;- append(nodes, list(list(name=n)))
+ec.init(
+    tooltip= list(show=T),
+    series= list(list(type= &#39;sankey&#39;, 
+        data= nodes, 
+        edges= ec.data(edges, &#39;names&#39;) ))
+) </code></pre>
+<div class="echarty html-widget html-fill-item-overflow-hidden html-fill-item" id="htmlwidget-c90d4ac870b19562c26a" style="width:100%;height:500px;"></div>
+<script type="application/json" data-for="htmlwidget-c90d4ac870b19562c26a">{"x":{"theme":"","draw":true,"renderer":"canvas","locale":"EN","useDirtyRect":false,"jcode":null,"opts":{"tooltip":{"show":true},"series":[{"type":"sankey","data":[{"name":"Reptiles"},{"name":"Mammals"},{"name":"Fish"},{"name":"Sharks"},{"name":"Animals"},{"name":"Snakes"},{"name":"Lizards"},{"name":"Dogs"},{"name":"Humans"},{"name":"hammerhead"},{"name":"thresher"}],"edges":[{"source":"Reptiles","target":"Snakes","value":15},{"source":"Reptiles","target":"Lizards","value":20},{"source":"Mammals","target":"Dogs","value":10},{"source":"Mammals","target":"Humans","value":25},{"source":"Fish","target":"Sharks","value":20},{"source":"Sharks","target":"hammerhead","value":8},{"source":"Sharks","target":"thresher","value":12},{"source":"Animals","target":"Reptiles","value":40},{"source":"Animals","target":"Mammals","value":35},{"source":"Animals","target":"Fish","value":25}]}]},"settings":{"crosstalk_key":null,"crosstalk_group":null}},"evals":[],"jsHooks":[]}</script>
+<pre class="r"><code>
+ec.init(
+    tooltip= list(formatter=&#39;{c}&#39;),
     series= list(list(type= &#39;tree&#39;, 
-        data= df, 
-        label= list(offset = c(0, -12)), symbolSize= ec.clmn() ))  # size by value
+        data= dpc, symbol= &#39;circle&#39;,
+        label= list(offset = c(0, -12)), 
+        symbolSize= ec.clmn() ))  # size by value
 )</code></pre>
-<div class="echarty html-widget html-fill-item-overflow-hidden html-fill-item" id="htmlwidget-949fe90206fd91354471" style="width:100%;height:500px;"></div>
-<script type="application/json" data-for="htmlwidget-949fe90206fd91354471">{"x":{"theme":"","draw":true,"renderer":"canvas","locale":"EN","useDirtyRect":false,"jcode":null,"opts":{"series":[{"type":"tree","data":[{"name":"Animals","value":255,"children":[{"name":"Reptiles","value":90,"children":[{"name":"Snakes","value":30},{"name":"Lizards","value":40}]},{"name":"Mammals","value":100,"children":[{"name":"Dogs","value":15},{"name":"Humans","value":35}]},{"name":"Fish","value":60,"children":[{"name":"Sharks","value":30,"children":[{"name":"hammerhead","value":10},{"name":"thresher","value":20}]}]}]}],"label":{"offset":[0,-12]},"symbolSize":"function(x) {let c=String(typeof x=='object' ? x.value : x); return c;}"}]},"settings":{"crosstalk_key":null,"crosstalk_group":null}},"evals":["opts.series.0.symbolSize"],"jsHooks":[]}</script>
+<div class="echarty html-widget html-fill-item-overflow-hidden html-fill-item" id="htmlwidget-87e7117623d33ea838fa" style="width:100%;height:500px;"></div>
+<script type="application/json" data-for="htmlwidget-87e7117623d33ea838fa">{"x":{"theme":"","draw":true,"renderer":"canvas","locale":"EN","useDirtyRect":false,"jcode":null,"opts":{"tooltip":{"formatter":"{c}"},"series":[{"type":"tree","data":[{"name":"Animals","value":100,"children":[{"name":"Reptiles","value":40,"children":[{"name":"Snakes","value":15},{"name":"Lizards","value":20}]},{"name":"Mammals","value":35,"children":[{"name":"Dogs","value":10},{"name":"Humans","value":25}]},{"name":"Fish","value":25,"children":[{"name":"Sharks","value":20,"children":[{"name":"hammerhead","value":8},{"name":"thresher","value":12}]}]}]}],"symbol":"circle","label":{"offset":[0,-12]},"symbolSize":"function(x) {pos=[]; c= String(typeof x=='object' ? x.value : x); return c;}"}]},"settings":{"crosstalk_key":null,"crosstalk_group":null}},"evals":["opts.series.0.symbolSize"],"jsHooks":[]}</script>
 </div>
 <div id="data-frame-with-a-column-for-each-level" class="section level2">
 <h2>Data frame with a column for each level</h2>
-<pre class="r"><code>library(dplyr)
-# build required pathString and optional itemStyle columns
-df &lt;- as.data.frame(Titanic) |&gt; rename(value= Freq) |&gt;
-   mutate(pathString= paste(&#39;Survive&#39;, Survived, Age, Sex, Class, sep=&#39;/&#39;),
-        itemStyle= case_when(Survived==&#39;Yes&#39; ~ &quot;color=&#39;green&#39;&quot;, TRUE ~ &quot;color=&#39;pink&#39;&quot;)) |&gt;
+<p>Data is transformed from <em>data.frame</em> to lists with utility
+<em>ec.data(format=‘treeTK’)</em></p>
+<pre class="r"><code>
+# build required pathString,value and optional itemStyle columns
+df &lt;- as.data.frame(Titanic) |&gt; rename(value= Freq) |&gt; mutate(
+    pathString= paste(&#39;Titanic\nSurvival&#39;, Survived, Age, Sex, Class, sep=&#39;/&#39;),
+    itemStyle= case_when(Survived==&#39;Yes&#39; ~&quot;color=&#39;green&#39;&quot;, TRUE ~&quot;color=&#39;LightSalmon&#39;&quot;)) |&gt;
     select(pathString, value, itemStyle)
 
-library(echarty)
 dat &lt;- ec.data(df, format=&#39;treeTK&#39;)
-dat[[1]] &lt;- within(dat[[1]], { itemStyle &lt;- list(color= &#39;white&#39;); pct &lt;- 0 })  # customize top
+dat[[1]] &lt;- within(dat[[1]], { 
+    itemStyle &lt;- list(color= &#39;white&#39;); pct &lt;- 100 })  # customize top
 
-ec.init(preset= FALSE,
-    title= list(text= &#39;Titanic: Survival by Class&#39;),
-    tooltip= list(formatter= ec.clmn(&#39;%@%&#39;,&#39;pct&#39;)),
+ec.init(
+    tooltip= list(formatter= ec.clmn(&#39;%@&lt;br&gt;%@%&#39;,&#39;value&#39;,&#39;pct&#39;)),
     series= list(list(
         type= &#39;sunburst&#39;, radius= c(0, &#39;90%&#39;), label= list(rotate=0),
         # type= &#39;tree&#39;, symbolSize= htmlwidgets::JS(&quot;x =&gt; {return Math.log(x)*10}&quot;,
         # type= &#39;treemap&#39;, upperLabel= list(show=TRUE, height=30), itemStyle= list(borderColor= &#39;#999&#39;), #leafDepth=4,
         data= dat,
+        labelLayout= list(hideOverlap= TRUE),
         emphasis= list(focus=&#39;none&#39;) 
     ))
 )</code></pre>
-<div class="echarty html-widget html-fill-item-overflow-hidden html-fill-item" id="htmlwidget-4c5188ba70440122a2b1" style="width:100%;height:500px;"></div>
-<script type="application/json" data-for="htmlwidget-4c5188ba70440122a2b1">{"x":{"theme":"","draw":true,"renderer":"canvas","locale":"EN","useDirtyRect":false,"jcode":null,"opts":{"title":{"text":"Titanic: Survival by Class"},"tooltip":{"formatter":"function(x) {var sprintf= (template, values) => { let j=0;\nreturn template.replace(/%@|%L@|%LR@|%R@|%M@/g, (m) => {\n  if (m=='%@') return values[j++];\n  if (m=='%L@') return Number(values[j++]).toLocaleString();\n  if (m=='%LR@') return Math.round(Number(values[j++])).toLocaleString();\n  if (m=='%R@') return Math.round(Number(values[j++]));\n  if (m=='%M@') return x.marker;\n}); }; if (!x.data) return `no data`; \nlet args=[`pct`], vv=[x.data['pct']]; pos=[];\nif (x.dimensionNames && x.dimensionNames.length>0) \n  pos= args.map(z => x.dimensionNames.indexOf(z));\nif (x.data.length)\n  vv= pos.map(p => x.data[p]); vv= vv.map(e => isNaN(e) | !e ? e : e* 1 ); let c = sprintf(` %@% `, vv); return c; }"},"series":[{"type":"sunburst","radius":["0","90%"],"label":{"rotate":0},"data":[{"name":"Survive","value":2201,"children":[{"value":1490,"children":[{"value":52,"children":[{"value":35,"children":[{"itemStyle":{"color":"pink"},"value":0,"name":"1st","pct":0},{"itemStyle":{"color":"pink"},"value":0,"name":"2nd","pct":0},{"itemStyle":{"color":"pink"},"value":35,"name":"3rd","pct":100},{"itemStyle":{"color":"pink"},"value":0,"name":"Crew","pct":0}],"name":"Male","pct":67.31,"itemStyle":{"color":"pink"}},{"value":17,"children":[{"itemStyle":{"color":"pink"},"value":0,"name":"1st","pct":0},{"itemStyle":{"color":"pink"},"value":0,"name":"2nd","pct":0},{"itemStyle":{"color":"pink"},"value":17,"name":"3rd","pct":100},{"itemStyle":{"color":"pink"},"value":0,"name":"Crew","pct":0}],"name":"Female","pct":32.69,"itemStyle":{"color":"pink"}}],"name":"Child","pct":3.49,"itemStyle":{"color":"pink"}},{"value":1438,"children":[{"value":1329,"children":[{"itemStyle":{"color":"pink"},"value":118,"name":"1st","pct":8.880000000000001},{"itemStyle":{"color":"pink"},"value":154,"name":"2nd","pct":11.59},{"itemStyle":{"color":"pink"},"value":387,"name":"3rd","pct":29.12},{"itemStyle":{"color":"pink"},"value":670,"name":"Crew","pct":50.41}],"name":"Male","pct":92.42,"itemStyle":{"color":"pink"}},{"value":109,"children":[{"itemStyle":{"color":"pink"},"value":4,"name":"1st","pct":3.67},{"itemStyle":{"color":"pink"},"value":13,"name":"2nd","pct":11.93},{"itemStyle":{"color":"pink"},"value":89,"name":"3rd","pct":81.65000000000001},{"itemStyle":{"color":"pink"},"value":3,"name":"Crew","pct":2.75}],"name":"Female","pct":7.58,"itemStyle":{"color":"pink"}}],"name":"Adult","pct":96.51000000000001,"itemStyle":{"color":"pink"}}],"name":"No","pct":67.7,"itemStyle":{"color":"pink"}},{"value":711,"children":[{"value":57,"children":[{"value":29,"children":[{"itemStyle":{"color":"green"},"value":5,"name":"1st","pct":17.24},{"itemStyle":{"color":"green"},"value":11,"name":"2nd","pct":37.93},{"itemStyle":{"color":"green"},"value":13,"name":"3rd","pct":44.83},{"itemStyle":{"color":"green"},"value":0,"name":"Crew","pct":0}],"name":"Male","pct":50.88,"itemStyle":{"color":"green"}},{"value":28,"children":[{"itemStyle":{"color":"green"},"value":1,"name":"1st","pct":3.57},{"itemStyle":{"color":"green"},"value":13,"name":"2nd","pct":46.43},{"itemStyle":{"color":"green"},"value":14,"name":"3rd","pct":50},{"itemStyle":{"color":"green"},"value":0,"name":"Crew","pct":0}],"name":"Female","pct":49.12,"itemStyle":{"color":"green"}}],"name":"Child","pct":8.02,"itemStyle":{"color":"green"}},{"value":654,"children":[{"value":338,"children":[{"itemStyle":{"color":"green"},"value":57,"name":"1st","pct":16.86},{"itemStyle":{"color":"green"},"value":14,"name":"2nd","pct":4.14},{"itemStyle":{"color":"green"},"value":75,"name":"3rd","pct":22.19},{"itemStyle":{"color":"green"},"value":192,"name":"Crew","pct":56.8}],"name":"Male","pct":51.68,"itemStyle":{"color":"green"}},{"value":316,"children":[{"itemStyle":{"color":"green"},"value":140,"name":"1st","pct":44.3},{"itemStyle":{"color":"green"},"value":80,"name":"2nd","pct":25.32},{"itemStyle":{"color":"green"},"value":76,"name":"3rd","pct":24.05},{"itemStyle":{"color":"green"},"value":20,"name":"Crew","pct":6.33}],"name":"Female","pct":48.32,"itemStyle":{"color":"green"}}],"name":"Adult","pct":91.98,"itemStyle":{"color":"green"}}],"name":"Yes","pct":32.3,"itemStyle":{"color":"green"}}],"itemStyle":{"color":"white"},"pct":0}],"emphasis":{"focus":"none"}}]},"settings":{"crosstalk_key":null,"crosstalk_group":null}},"evals":["opts.tooltip.formatter"],"jsHooks":[]}</script>
+<div class="echarty html-widget html-fill-item-overflow-hidden html-fill-item" id="htmlwidget-ce05fe5ae8fbae6590c3" style="width:100%;height:500px;"></div>
+<script type="application/json" data-for="htmlwidget-ce05fe5ae8fbae6590c3">{"x":{"theme":"","draw":true,"renderer":"canvas","locale":"EN","useDirtyRect":false,"jcode":null,"opts":{"tooltip":{"formatter":"function(x) {var sprintf= (template, vals) => { j=0; if (template=='%@') return vals[j++]; return template.replace(/%@|%L@|%LR@|%R@|%R2@|%M@/g, (m) => {   if (m=='%@') return vals[j++];   if (m=='%L@') return Number(vals[j++]).toLocaleString();   if (m=='%LR@') return Math.round(Number(vals[j++])).toLocaleString();   if (m=='%R@') return Math.round(Number(vals[j++]));   if (m=='%R2@') return Number(vals[j++]).toFixed(2);   if (m=='%M@') return x.marker; }); }; pos=['pathString','value','itemStyle'];  aa= Array.isArray(x) ? x : x.data; tmp= null; if (aa && aa instanceof Object && !Array.isArray(aa)) {  tmp= Object.keys(aa); if (tmp.length==1 && tmp[0]=='value') aa= x.data.value;} if (tmp && tmp.length>1)  vv=[x.data['value'],x.data['pct']]; else {  if (!aa || !aa.length) return `no data`;  args= [`value`,`pct`];   pos= args.map(z => pos.indexOf(z));  vv= pos.map(p => aa[p]); } vv= vv.map(e => isNaN(e) | !e ? e : e* 1 );c= sprintf(`%@<br>%@%`, vv); return c; }"},"series":[{"type":"sunburst","radius":["0","90%"],"label":{"rotate":0},"data":[{"name":"Titanic\nSurvival","value":2201,"children":[{"value":1490,"children":[{"value":52,"children":[{"value":35,"children":[{"itemStyle":{"color":"LightSalmon"},"value":0,"name":"1st","pct":0},{"itemStyle":{"color":"LightSalmon"},"value":0,"name":"2nd","pct":0},{"itemStyle":{"color":"LightSalmon"},"value":35,"name":"3rd","pct":100},{"itemStyle":{"color":"LightSalmon"},"value":0,"name":"Crew","pct":0}],"name":"Male","pct":67.31,"itemStyle":{"color":"LightSalmon"}},{"value":17,"children":[{"itemStyle":{"color":"LightSalmon"},"value":0,"name":"1st","pct":0},{"itemStyle":{"color":"LightSalmon"},"value":0,"name":"2nd","pct":0},{"itemStyle":{"color":"LightSalmon"},"value":17,"name":"3rd","pct":100},{"itemStyle":{"color":"LightSalmon"},"value":0,"name":"Crew","pct":0}],"name":"Female","pct":32.69,"itemStyle":{"color":"LightSalmon"}}],"name":"Child","pct":3.49,"itemStyle":{"color":"LightSalmon"}},{"value":1438,"children":[{"value":1329,"children":[{"itemStyle":{"color":"LightSalmon"},"value":118,"name":"1st","pct":8.880000000000001},{"itemStyle":{"color":"LightSalmon"},"value":154,"name":"2nd","pct":11.59},{"itemStyle":{"color":"LightSalmon"},"value":387,"name":"3rd","pct":29.12},{"itemStyle":{"color":"LightSalmon"},"value":670,"name":"Crew","pct":50.41}],"name":"Male","pct":92.42,"itemStyle":{"color":"LightSalmon"}},{"value":109,"children":[{"itemStyle":{"color":"LightSalmon"},"value":4,"name":"1st","pct":3.67},{"itemStyle":{"color":"LightSalmon"},"value":13,"name":"2nd","pct":11.93},{"itemStyle":{"color":"LightSalmon"},"value":89,"name":"3rd","pct":81.65000000000001},{"itemStyle":{"color":"LightSalmon"},"value":3,"name":"Crew","pct":2.75}],"name":"Female","pct":7.58,"itemStyle":{"color":"LightSalmon"}}],"name":"Adult","pct":96.51000000000001,"itemStyle":{"color":"LightSalmon"}}],"name":"No","pct":67.7,"itemStyle":{"color":"LightSalmon"}},{"value":711,"children":[{"value":57,"children":[{"value":29,"children":[{"itemStyle":{"color":"green"},"value":5,"name":"1st","pct":17.24},{"itemStyle":{"color":"green"},"value":11,"name":"2nd","pct":37.93},{"itemStyle":{"color":"green"},"value":13,"name":"3rd","pct":44.83},{"itemStyle":{"color":"green"},"value":0,"name":"Crew","pct":0}],"name":"Male","pct":50.88,"itemStyle":{"color":"green"}},{"value":28,"children":[{"itemStyle":{"color":"green"},"value":1,"name":"1st","pct":3.57},{"itemStyle":{"color":"green"},"value":13,"name":"2nd","pct":46.43},{"itemStyle":{"color":"green"},"value":14,"name":"3rd","pct":50},{"itemStyle":{"color":"green"},"value":0,"name":"Crew","pct":0}],"name":"Female","pct":49.12,"itemStyle":{"color":"green"}}],"name":"Child","pct":8.02,"itemStyle":{"color":"green"}},{"value":654,"children":[{"value":338,"children":[{"itemStyle":{"color":"green"},"value":57,"name":"1st","pct":16.86},{"itemStyle":{"color":"green"},"value":14,"name":"2nd","pct":4.14},{"itemStyle":{"color":"green"},"value":75,"name":"3rd","pct":22.19},{"itemStyle":{"color":"green"},"value":192,"name":"Crew","pct":56.8}],"name":"Male","pct":51.68,"itemStyle":{"color":"green"}},{"value":316,"children":[{"itemStyle":{"color":"green"},"value":140,"name":"1st","pct":44.3},{"itemStyle":{"color":"green"},"value":80,"name":"2nd","pct":25.32},{"itemStyle":{"color":"green"},"value":76,"name":"3rd","pct":24.05},{"itemStyle":{"color":"green"},"value":20,"name":"Crew","pct":6.33}],"name":"Female","pct":48.32,"itemStyle":{"color":"green"}}],"name":"Adult","pct":91.98,"itemStyle":{"color":"green"}}],"name":"Yes","pct":32.3,"itemStyle":{"color":"green"}}],"itemStyle":{"color":"white"},"pct":100}],"labelLayout":{"hideOverlap":true},"emphasis":{"focus":"none"}}]},"settings":{"crosstalk_key":null,"crosstalk_group":null}},"evals":["opts.tooltip.formatter"],"jsHooks":[]}</script>
+</div>
+<div id="data-frame-with-nested-data.frame-children" class="section level2">
+<h2>Data frame with nested data.frame children</h2>
+<p>Similar to list-of-lists, but with <em>data.frame</em> items, rarely
+used. Data transformation is carried out with
+<em>jsonlite::toJSON</em></p>
+<pre class="r"><code>animl &lt;- data.frame(name= &quot;Animals&quot;, value= 255)  # top level
+animl$children &lt;- 
+    list(data.frame(name= c(&quot;Mammals&quot;, &quot;Reptiles&quot;,&quot;Fish&quot;), value= c(100,90,60)))
+animl$children[[1]]$children &lt;- c(
+    list(data.frame(name= c(&quot;Dogs&quot;, &quot;Humans&quot;), value= c( 15, 35))),
+    list(data.frame(name= c(&quot;Snakes&quot;, &quot;Lizards&quot;), value= c(30, 40))),
+    list(data.frame(name= c(&quot;Sharks&quot;), value = 30)) )
+animl$children[[1]]$children[[3]]$children &lt;- 
+    list(data.frame(name= c(&quot;hammerhead&quot;, &quot;thresher&quot;), value= c(10,20)))
+
+data &lt;- jsonlite::toJSON(animl)
+
+p &lt;- ec.init(
+    series= list(list(type= &#39;tree&#39;, 
+        data= data, 
+        label= list(offset=c(0, -12)), 
+        symbolSize= ec.clmn()  # size by value
+)))
+
+p &lt;- ec.init(
+    series= list(list(type= &#39;treemap&#39;, 
+        data= data, leafDepth= 2)) 
+)
+
+ec.init(
+    series= list(list(type= &#39;sunburst&#39;, 
+        # use children instead of root(data) to auto-color descendants
+        data= jsonlite::toJSON(animl$children[[1]]), 
+        radius= c(0, &#39;90%&#39;), 
+        label= list(rotate= &#39;tangential&#39;) ))
+)</code></pre>
+<div class="echarty html-widget html-fill-item-overflow-hidden html-fill-item" id="htmlwidget-48ca37b0c9167721ac1e" style="width:100%;height:500px;"></div>
+<script type="application/json" data-for="htmlwidget-48ca37b0c9167721ac1e">{"x":{"theme":"","draw":true,"renderer":"canvas","locale":"EN","useDirtyRect":false,"jcode":null,"opts":{"series":[{"type":"sunburst","data":[{"name":"Mammals","value":100,"children":[{"name":"Dogs","value":15},{"name":"Humans","value":35}]},{"name":"Reptiles","value":90,"children":[{"name":"Snakes","value":30},{"name":"Lizards","value":40}]},{"name":"Fish","value":60,"children":[{"name":"Sharks","value":30,"children":[{"name":"hammerhead","value":10},{"name":"thresher","value":20}]}]}],"radius":["0","90%"],"label":{"rotate":"tangential"}}]},"settings":{"crosstalk_key":null,"crosstalk_group":null}},"evals":[],"jsHooks":[]}</script>
+See also an interesting <a href="https://rpubs.com/echarty/hierarchy">morphing demo</a> between
+tree and sunburst charts.<br />
+PS: if you like these solutions, please consider granting a Github star
+⭐ to <a href="https://github.com/helgasoft/echarty">echarty</a>.
+<p>
+ 
+</p>
 </div>
 </div>
 
@@ -2080,6 +2217,11 @@ $(document).ready(function () {
 </script>
 
 <!-- code folding -->
+<script>
+$(document).ready(function () {
+  window.initializeCodeFolding("hide" === "show");
+});
+</script>
 
 
 <!-- dynamically load mathjax for compatibility with self-contained -->

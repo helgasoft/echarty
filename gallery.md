@@ -1,6 +1,10 @@
+<title>echarty gallery</title>
+
 # Gallery
 
- Some interesting charts along with their **source code**. Several have Live Demos hosted on [RPubs](https://rpubs.com/echarty). The *echarty* package has two dozen more code examples - in RStudio type *?ec.examples* to see them in Help panel.
+Various charts and their **source code** showing *echarty* usage. Some have Live Demos hosted on [RPubs](https://rpubs.com/echarty).  
+This page is searchable if you are interested in a specific keyword.  
+The package itself has two dozen more code examples - type ```?ec.examples``` to see them.
    
 <br />  
 
@@ -252,21 +256,21 @@ jcode <- "setInterval(function () {
 }, 2000);"
 
 library(echarty)
-p <- ec.init(js= jcode) |> ec.theme('dark')
-p$x$opts <- list(series= list(
-    list(type= "gauge", 
-    anchor= list(show= TRUE, showAbove= TRUE,
-    size= 18, itemStyle= list(color= "#FAC858")), 
-    pointer= list(icon= "path://M2.9,0.7L2.9,0.7c1.4,0,2.6,1.2,2.6,2.6v115c0,1.4-1.2,2.6-2.6,2.6l0,0c-1.4,0-2.6-1.2-2.6-2.6V3.3C0.3,1.9,1.4,0.7,2.9,0.7z",
-    width= 8, length= "80%", offsetCenter= list(0, "8%")), 
-    progress= list(show= TRUE,
-      overlap= TRUE, roundCap= TRUE), axisLine= list(roundCap= TRUE), 
-    data= list(
-      list(value= 20, name= "One", title= list(offsetCenter= list("-40%", "80%")), detail= list(offsetCenter= list("-40%","95%"))), 
-      list(value= 40, name= "Two", title= list(offsetCenter= list("0%", "80%")), detail= list(offsetCenter= list("0%", "95%"))), 
-      list(value= 60, name= "Three", title= list(offsetCenter= list("40%", "80%")), detail= list(offsetCenter= list("40%","95%")))), 
-    title= list(fontSize= 14), detail= list(width= 40, height= 14, fontSize= 14, color= "#fff", backgroundColor= "auto", borderRadius= 3, formatter= "{value}%"))))
-p
+ec.init(js= jcode,
+	series= list(list(type= "gauge", 
+		anchor= list(show= TRUE, showAbove= TRUE, size= 18, itemStyle= list(color= "#FAC858")), 
+		pointer= list(icon= "path://M2.9,0.7L2.9,0.7c1.4,0,2.6,1.2,2.6,2.6v115c0,1.4-1.2,2.6-2.6,2.6l0,0c-1.4,0-2.6-1.2-2.6-2.6V3.3C0.3,1.9,1.4,0.7,2.9,0.7z",
+						  width= 8, length= "80%", offsetCenter= list(0, "8%")), 
+		progress= list(show= TRUE, overlap= TRUE, roundCap= TRUE), 
+		axisLine= list(roundCap= TRUE), 
+		data= list(
+       list(value= 20, name= "One", title= list(offsetCenter= list("-40%", "80%")), detail= list(offsetCenter= list("-40%","95%"))), 
+       list(value= 40, name= "Two", title= list(offsetCenter= list("0%", "80%")), detail= list(offsetCenter= list("0%", "95%"))), 
+       list(value= 60, name= "Three", title= list(offsetCenter= list("40%", "80%")), detail= list(offsetCenter= list("40%","95%")))
+		), 
+		title= list(fontSize= 14), 
+		detail= list(width= 40, height= 14, fontSize= 14, color= "#fff", backgroundColor= "auto", borderRadius= 3, formatter= "{value}%")
+))) |> ec.theme('dark')
 ```
 </details>
 <br />
@@ -405,13 +409,12 @@ plugin **3D**, test with 36,000 points
 library(onion); library(echarty)
 data(bunny)
 tmp <- as.data.frame(bunny)
-tmp |> ec.init(load= '3D', 
+tmp |> ec.init(load= '3D',
+   series.param= list(symbolSize= 2),
    visualMap= list(
       inRange= list(color= rainbow(10)), calculable= TRUE,
-      min= min(tmp$y), max= max(tmp$y), dimension= 1)) |> 
-ec.upd({ series[[1]]$symbolSize <- 2 }) |>
-ec.theme('dark-mushroom')
-```
+      dimension= 'y')
+) |> ec.theme('dark-mushroom')```
 </details>
 <br />
 
@@ -1269,7 +1272,7 @@ ec.util(cmd= 'tabset', cars= p1, mtcars= p2)
 
 ## Time based charts
 use for history, schedules, Gantt, etc.  See also [<span style="color:magenta">live calendar</span>](https://rpubs.com/echarty/paris-art)<br />
-<img src='img/cb-time.png' alt='time' />
+<img src='img/cb-time2.png' alt='time' />
 <details><summary>🔻 View code</summary>
 
 ```r
@@ -1352,7 +1355,7 @@ p
 
 <a id='extras'></a>
 
-# Visit also the [extras collection](extras.md)</a>
+# Visit also the [extras collection](extras.md) 💲</a>
 ## Survey mapping
 Eurobarometer public opinion survey<br />
 <img src='img/cb-eubaro.png' alt='pies demo' width=300 />
@@ -1364,7 +1367,7 @@ Rich customization including jittered data points and mean<br />
 <br />
 
 ## 3D regression planes
-Plot fitted regression planes on groups of scatter points
+Plot fitted regression planes on groups of scatter points<br />
 <img src='img/reg.planes.png' alt='planes' width=300 />
 <br />
 

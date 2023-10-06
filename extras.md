@@ -4,18 +4,14 @@ Utilities and small applications built with open-source library _echarty_. They 
 Considerable amount of time was spent in design, development and testing of these modules.  
 <br>
 They are fairly priced at **$30 each** and payable through [**Paypal**](https://www.paypal.com/paypalme/helgasoft).  
-Please include module description when ordering under "_What is this payment for ?_". Delivery and support by email. Future versions could be sent on demand.  
+Please include module description when ordering under "_What is this payment for ?_". Delivery and support by email. Future versions could be sent on demand. For questions please [contact us](mailto:contact@helgasoft.com?subject=echarty.extras).
 
-<div style="display:none;">  The entire (all as a) bundle for $200.  
-(not?) included in the price and code will be sent on demand.  
-(external, enhancements, based on, ,  (not part of) favorably)
-These utilities were developed ...with the intent of ( and destined to)    to help clients solve/achieve very specific and uncommon tasks/results.
-A knowledgable soft eng could..   singular 
+<div style="display:none;"> 
+https://helgasoft.com/#contact-section
 </div>
-<br />
 
 ## Violin chart  
-<br />  
+ 
 Violin charts are similar to boxplot, but show the full distribution of the data. Supports single or grouped datasets. Rich customization including jittered data points and mean.  
 <details><summary>🔻 Parameters</summary>  
 
@@ -38,11 +34,9 @@ Violin charts are similar to boxplot, but show the full distribution of the data
    src="img/violin.mp4" type="video/mp4" muted="muted" controls>
    Your browser does not support the video tag.
 </video>
-
-<br />
+<br /><br />
 
 ## Keyboard Input Support
-<br />
 
 Enter keyboard mode with _click_, exit with _Tab_  
 Keys with functions implemented, many more possible:  
@@ -54,11 +48,9 @@ Keys with functions implemented, many more possible:
    src="img/keys.mp4" type="video/mp4" muted="muted" controls>
    Your browser does not support the video tag.
 </video>
-<br />
-<br />
+<br /><br />
 
 ## 3D regression planes
-<br />
 
 The familiar _quakes_ R dataset is visualized in 3D environment (lat,long,depth) over an area map with tectonic plate boundaries. 
 User can show/hide 3D regression planes(s) built from selected 3D points.  
@@ -69,10 +61,9 @@ User can show/hide 3D regression planes(s) built from selected 3D points.
 </video>
 
 See also 3D regression planes in [iris dataset](img/iris3d.mp4).
-<br />
-<br />
+<br /><br />
+
 ## Morphing drilldown
-<br />
 
 The _mtcars_ R dataset presented with morphing drilldown. There are two levels of data:
 - top level is an aggregate, like counts by type, or average by type
@@ -88,7 +79,6 @@ Morphing is achieved between two top levels, and between top and lower levels.
 <br />
 
 ## Eurobarometer Survey
-<br />
 
 🗺️ Eurobarometer public opinion [survey Summer 2022](https://europa.eu/eurobarometer/surveys/detail/2693).  
 180 questions with multiple answers mapped by country, 26K participants from 27 countries.
@@ -98,8 +88,8 @@ An interactive R/Shiny/echarty app.
 <br><br>
 
 <a id='ternary'></a>
+
 ## Ternary Plots
-<br />
 
 Interactive - data groups with show/hide, zoom, click, customizable tooltips.  
 <details><summary>🔻 3D rotation allows checking for data consistency</summary>  
@@ -108,12 +98,34 @@ The plot depicts the ratios of the three variables as positions in an equilatera
 </details>  
 
 Demo [example data](https://gist.githubusercontent.com/toja/811f0ddc765c59c26de544fd0e0ba46f/raw/eef11e930f6c05700faca47711b173f795a84181/sectors.csv) is for world countries GDP by economic sectors.
-<br />
+<br /><br />
 <video id="ternary" preload="auto" 
    src="img/ternary.mp4" type="video/mp4" muted="muted" controls>
    Your browser does not support the video tag.
 </video>
-<br><br>
+<br/><br/>
+
+<a id='quadrant'></a>
+
+## Quadrant chart
+
+Offers the following options:
+
+- cutomizable axes with or without labels
+- points with constant or variable size
+- automatic coloring of points and/or point labels by quadrant
+- interactivity: tooltip, drag and drop points across the chart
+- toolbox button to save chart as PNG
+- responsive auto-resize
+
+Javascript version currently available. _echarty_ version coming soon.
+
+<br /> 
+<video id="quadrant" preload="auto" 
+   src="img/quadrant.mp4" type="video/mp4" muted="muted" controls>
+   Your browser does not support the video tag.
+</video>
+<br />
 
 
 <!--
