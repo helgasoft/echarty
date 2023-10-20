@@ -1,4 +1,5 @@
 library(dplyr)
+
 test_that("ec.clmn with sprintf, column indexes and names", {
   
   # dataset + column indexes

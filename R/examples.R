@@ -245,22 +245,36 @@
 #' dats <- as.data.frame(EuStockMarkets) |> mutate(day= 1:n()) |>
 #'   # first column ('day') becomes X-axis by default
 #'   dplyr::relocate(day) |> slice_head(n= 100)
-#'           
+#' 
 #' # 1. with unnamed data
-#' ec.init(load= 'custom',
-#'  legend= list(show= TRUE), 
-#'  dataZoom= list(type= 'slider', end= 50),
-#'  series = append(
-#'    ecr.band(dats, 'DAX','FTSE', name= 'Ftse-Dax', color= 'lemonchiffon'),
-#'    list(list(type= 'line', name= 'CAC', color= 'red', symbolSize= 1,
-#'              data= ec.data(dats |> select(day,CAC), 'values')
-#'    ))
-#'  )
+#' bands <- ecr.band(dats, 'DAX','FTSE', name= 'Ftse-Dax', 
+#' 						areaStyle= list(color='pink'))
+#' ec.init(load= 'custom', 
+#'   tooltip= list(trigger= 'axis'),
+#'   legend= list(show= TRUE), xAxis= list(type= 'category'),
+#'   dataZoom= list(type= 'slider', end= 50),
+#'   series = append( bands,
+#'     list(list(type= 'line', name= 'CAC', color= 'red', symbolSize= 1,
+#'               data= ec.data(dats |> select(day,CAC), 'values')
+#'     ))
+#'   )
 #' )
 #' 
 #' # 2. with a dataset
 #' # dats |> ec.init(load= 'custom', ...
 #' #   + replace data=... with encode= list(x='day', y='CAC')
+#'
+#'
+#' #------ Error Bars on grouped data
+#' df <- mtcars |> group_by(cyl,gear) |> summarise(yy= round(mean(mpg),2)) |>
+#'   mutate(low= round(yy-cyl*runif(1),2), 
+#'          high= round(yy+cyl*runif(1),2))
+#' df |> ec.init(load='custom', ctype='bar',
+#'               xAxis= list(type='category'), tooltip= list(show=TRUE)) |>
+#'   ecr.ebars( # name = 'eb',  # cannot have own name in grouped series
+#'     encode= list(x='gear', y=c('yy','low','high')),
+#'     tooltip = list(formatter=ec.clmn('high <b>%@</b><br>low <b>%@</b>', 'high','low')))
+#' 
 #' 
 #' #------ Timeline animation and use of ec.upd for readability
 #' Orange |> group_by(age) |> ec.init(
@@ -317,15 +331,18 @@
 #' )
 #' 
 #' 
-#' #------ ECharts feature: custom transform - a regression line
+#' #------ ecStat plugin: dataset transform to regression line
 #' # presets for xAxis,yAxis,dataset and series are used
 #' data.frame(x= 1:10, y= sample(1:100,10)) |>
-#'   ec.init(js= 'echarts.registerTransform(ecStat.transform.regression)') |>
-#'   ec.upd({ 
-#'     dataset[[2]] <- list(transform = list(type= 'ecStat:regression'))
-#'     series[[2]] <- list(
-#'       type= 'line', itemStyle=list(color= 'red'), datasetIndex= 1)
-#'   })
+#' ec.init(load= 'ecStat',
+#'   js= c('echarts.registerTransform(ecStat.transform.regression)','','')) |>
+#' ec.upd({
+#'   dataset[[2]] <- list(
+#'   	 transform= list(type= 'ecStat:regression', 
+#'                     config= list(method= 'polynomial', order= 3)))
+#'   series[[2]] <- list(
+#'     type= 'line', itemStyle=list(color= 'red'), datasetIndex= 1)
+#' })
 #' 
 #' 
 #' #------ ECharts: dataset, transform and sort
@@ -388,18 +405,6 @@
 #'                            radius= list(0, '90%'),
 #'                            label= list(rotate='radial') ))
 #' )
-#' 
-#' 
-#' #------ Error Bars on grouped data
-#' if (interactive()) {
-#' df <- mtcars |> group_by(cyl,gear) |> summarise(yy= round(mean(mpg),2)) |>
-#'   mutate(low= round(yy-cyl*runif(1),2), high= round(yy+cyl*runif(1),2)) |>
-#'   dplyr::relocate(cyl, .after= last_col())   # move group column as last
-#' df |> ec.init(ctype='bar', load='custom',
-#'               xAxis= list(type='category'), tooltip= list(show=TRUE)) |>
-#'   ecr.ebars(df, name = 'eb',
-#'     tooltip = list(formatter=ec.clmn('high <b>%@</b><br>low <b>%@</b>', 4,3)))
-#' }
 #' 
 #' #------ Gauge
 #' ec.init(preset= FALSE,

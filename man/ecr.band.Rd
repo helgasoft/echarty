@@ -30,7 +30,7 @@ A 'custom' serie with lower and upper boundaries
 \details{
 \itemize{
 \item type='stack': two \emph{stacked} lines are drawn, one with customizable areaStyle. The upper boundary coordinates are values added on top of the lower boundary coordinates.\cr
-\emph{xAxis} is required to be of type 'category'.
+\emph{xAxis} is required to be type 'category'.
 \item type='polygon': coordinates of the two boundaries are chained into a polygon and displayed as one. Tooltips do not show upper band values.
 }
 Optional parameter \emph{name}, if given, will show up in legend. Legend will merge all series with the same name into one item.

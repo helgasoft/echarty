@@ -5,7 +5,7 @@
   Error bars attach to "host" series - bar,line or scatter. 
   Attaching is done automatically by type, or by name.
   Show/hide together with host series when user clicks on a legend button.	
-  Inherit color from the host series, so it is recommended to use a custom color(itemStyle.color), default is 'brown'.
+  Inherit color from the host series, so it is recommended to use a custom itemStyle.color, default is 'brown'.
   They add a legend if none is found.
   Error bars should be set at the end, after all other series.
   They are custom series, so ec.init(load='custom') is required.

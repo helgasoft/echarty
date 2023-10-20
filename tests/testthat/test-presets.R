@@ -36,9 +36,9 @@ test_that("ec.init presets for non-grouped data.frame", {
 })
 
 test_that("ec.init presets for grouped data.frame", {
-  p <- df |> dplyr::group_by(symbol) |> ec.init(yAxis= list(scale=TRUE))
+  p <- df |> dplyr::group_by(symbol) |> ec.init(yAxis= list(scale=TRUE, name='yaxe'))
   expect_equal(p$x$opts$xAxis$type, 'category')
-  expect_true(!is.null(p$x$opts$yAxis))
+  expect_equal(p$x$opts$yAxis$name, 'yaxe')
   expect_equal(length(p$x$opts$dataset[[1]]$source), 11)
   expect_equal(length(p$x$opts$legend$data), 3)
   expect_equal(p$x$opts$series[[1]]$type, 'scatter')
@@ -49,21 +49,23 @@ test_that("ec.init presets for grouped data.frame", {
 test_that("ec.init presets for timeline", {
   dftl <- data.frame(
     year = unlist(lapply(2018:2021, function(x) {rep(x, 4)})), 
-    quarter = rep(1:4, 4), 
+    quarter = as.factor(rep(1:4, 4)),
     value = runif(16)
   )
   barTL <- function(data, timeline_var, x_var, bar_var) {
     bt <- data |> dplyr::group_by(!!dplyr::sym(timeline_var)) |> 
-      ec.init(tl.series = list(type='bar', encode=list(x=x_var, y=bar_var)))
+      ec.init(tl.series = list(type='bar', encode=list(x=x_var, y=bar_var)),
+              xAxis= list(name='xval'))
     bt
   }
-  p <- barTL(dftl, timeline_var= "year", bar_var= "quarter", x_var= "value")
+  p <- barTL(dftl, timeline_var= "year", x_var= "value", bar_var= "quarter")
   o <- p$x$opts
   expect_equal(length(o$dataset[[1]]$source), 17)
   expect_equal(length(o$dataset), 5)
   expect_equal(length(o$options), 4)
   expect_equal(o$options[[4]]$title$text, '2021')
   expect_equal(o$yAxis$name, 'quarter')
+  expect_equal(o$xAxis$name, 'xval')
 })
 
 test_that("ec.init presets for timeline groupBy", {
@@ -77,7 +79,7 @@ test_that("ec.init presets for timeline groupBy", {
   ) 
   p <- dat |> group_by(x1) |> ec.init(
     tl.series= list(encode= list(x= 'x3', y= 'x5'), 
-                    symbolSize= ec.clmn(2, scale=30),
+                    symbolSize= ec.clmn('x4', scale=30),
                     groupBy= 'x2') 
   )
   p$x$opts$legend <- list(show=TRUE)

@@ -262,9 +262,10 @@ test_that('stops are working in echarty.R', {
   expect_error(ecr.ebars(ec.init(), 1))
   expect_error(ecr.ebars(ec.init(), cars))
   expect_silent(ecr.ebars(ec.init(load='custom'), cars, encode=list(x=1,y=c(2,3,4))))
-  expect_silent(ec.init(load='liquid'))
-  expect_silent(ec.init(load='gmodular'))
-  expect_silent(ec.init(load='wordcloud'))
   expect_silent(ec.init(load='lottie'))
+  expect_silent(ec.init(load='ecStat'))
+  #expect_silent(ec.init(load='liquid'))   # Debian throws warnings in CRAN check
+  #expect_silent(ec.init(load='gmodular'))
+  #expect_silent(ec.init(load='wordcloud'))
   
 })

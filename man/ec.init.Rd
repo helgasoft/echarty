@@ -87,6 +87,7 @@ Numerical indexes for series,visualMap,etc. are R-counted (1,2...)\cr
 \item leaflet - Leaflet maps with customizable tiles, see \href{https://github.com/gnijuohz/echarts-leaflet#readme}{source}\cr
 \item world - world map with country boundaries, see \href{https://github.com/apache/echarts/tree/master/test/data/map/js}{source} \cr
 \item lottie - support for \href{https://lottiefiles.com}{lotties} \cr
+\item ecStat - statistical tools, see\href{https://github.com/ecomfe/echarts-stat}{echarts-stat}\cr
 \item custom - renderers for \link{ecr.band} and \link{ecr.ebars} \cr
 Plugins with one-time installation: \cr
 \item 3D - 3D charts and WebGL acceleration, see \href{https://github.com/ecomfe/echarts-gl}{source} and \href{https://echarts.apache.org/en/option-gl.html#series}{docs} \cr
@@ -111,7 +112,7 @@ ec.init(        # init with presets
   tooltip= list(show= TRUE),
   series.param= list( 
     symbolSize= ec.clmn(4, scale=7),
-    tooltip= list(formatter= ec.clmn('Petal.Width: \%@', 4))
+    tooltip= list(formatter= ec.clmn('Petal.Width: \%@', 'Petal.Width'))
   )
 )
 

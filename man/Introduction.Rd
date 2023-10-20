@@ -12,8 +12,9 @@ The benefits - learn a very limited set of commands, and enjoy the \strong{full 
 \subsection{Description}{
 
 \strong{echarty} provides a lean interface between R and Javascript library
-ECharts. We encourage users to follow the original ECharts documentation
-to construct charts with echarty.
+\href{https://echarts.apache.org/en/index.html}{ECharts}. We encourage users
+to follow the original ECharts \href{https://echarts.apache.org/en/option.html}{API documentation} to construct
+charts with echarty.
 The main command \strong{ec.init} can set multiple native ECharts options to
 build a chart.
 The benefits - learn a very limited set of commands, and enjoy the

@@ -71,6 +71,7 @@ the$.ecv.colnames <- NULL
 #'  * leaflet - Leaflet maps with customizable tiles, see \href{https://github.com/gnijuohz/echarts-leaflet#readme}{source}\cr
 #'  * world - world map with country boundaries, see \href{https://github.com/apache/echarts/tree/master/test/data/map/js}{source} \cr
 #'  * lottie - support for \href{https://lottiefiles.com}{lotties} \cr
+#'  * ecStat - statistical tools, see\href{https://github.com/ecomfe/echarts-stat}{echarts-stat}\cr
 #'  * custom - renderers for [ecr.band] and [ecr.ebars] \cr 
 #'  Plugins with one-time installation: \cr
 #'  * 3D - 3D charts and WebGL acceleration, see \href{https://github.com/ecomfe/echarts-gl}{source} and \href{https://echarts.apache.org/en/option-gl.html#series}{docs} \cr
@@ -97,7 +98,7 @@ the$.ecv.colnames <- NULL
 #'   tooltip= list(show= TRUE),
 #'   series.param= list( 
 #'     symbolSize= ec.clmn(4, scale=7),
-#'     tooltip= list(formatter= ec.clmn('Petal.Width: %@', 4))
+#'     tooltip= list(formatter= ec.clmn('Petal.Width: %@', 'Petal.Width'))
 #'   )
 #' )
 #' 
@@ -109,6 +110,24 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
                      series.param= NULL, tl.series= NULL, 
                      width= NULL, height= NULL) {
   
+  key <- group <- deps <- dfKey <- NULL; isCrosstalk <- FALSE
+  if (requireNamespace("crosstalk", quietly= TRUE)) {
+    if (crosstalk::is.SharedData(df)) {
+      isCrosstalk <- TRUE
+      key <- as.list(df$key())
+      group <- df$groupName()
+      deps <- crosstalk::crosstalkLibs()
+      dfKey <- df$key()
+      df <- df$origData()
+    }
+  }
+  
+  if (!is.null(df)) {
+    stopifnot('ec.init: df must be a data.frame'= inherits(df, 'data.frame'))
+    .setColnm(colnames(df))
+  } 
+  #else .setColnm()  # do not reset, ec.data could've done it
+  
   opts <- list(...)  
   # treacherous R does "partial matching of argument names" (like a bug): 
   #   if 'series.param' is before ... and 'series' is added, the latter is ignored!
@@ -119,12 +138,12 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
   locale <- if (is.null(opts$locale)) 'EN' else toupper(opts$locale)
   useDirtyRect <- if (is.null(opts$useDirtyRect)) FALSE else opts$useDirtyRect
   xtKey <- if (is.null(opts$xtKey)) 'XkeyX' else opts$xtKey
+  if (xtKey=='XkeyX') df$XkeyX <- dfKey   # add new column for Xtalk filtering, if needed
   # remove the above attributes since they are not valid ECharts options
   opts$ask <- opts$js <- opts$renderer <- opts$locale <- NULL
   opts$useDirtyRect <- opts$elementId <- opts$xtKey <- NULL
   noAxis <- c('radar','parallel','map','gauge','pie','funnel','polar', #'graph', 
               'sunburst','tree','treemap','sankey')
-  .setColnm()
 
   doType <- function(idx, axx) {
     # get one axis type & name
@@ -170,8 +189,19 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
         if (is.character(ss$encode$y)) tmp$y <<- c(tmp$y, ss$encode$y[1])
       }
     })
-    if (!is.null(tmp$x)) x$opts$xAxis$name <<- trimws(paste(unique(tmp$x), collapse=','))
-    if (!is.null(tmp$y)) x$opts$yAxis$name <<- trimws(paste(unique(tmp$y), collapse=','))
+
+    if (!is.null(tmp$x)) {
+      if (is.null(x$opts$xAxis$name))
+        x$opts$xAxis$name <<- trimws(paste(unique(tmp$x), collapse=','))
+      tt <- tmp$x[1]
+      colX <<- if (is.numeric(tt)) tt else which(colnames(df)==tt)[1]
+    }
+    if (!is.null(tmp$y)) {
+      if (is.null(x$opts$yAxis$name))
+        x$opts$yAxis$name <<- trimws(paste(unique(tmp$y), collapse=','))
+      tt <- tmp$y[1]
+      colY <<- if (is.numeric(tt)) tt else which(colnames(df)==tt)[1]
+    }
   }
   xyNamesCS <- function(ser) {
     # no coordinateSystem = pie,funnel,gauge, sunburst/tree/treemap/sankey (graph)
@@ -193,51 +223,6 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
     return(list(x=xtem, y=ytem, c=ser$coordinateSystem))
   }
   
-  # presets are default settings, user can ignore or replace them
-  if (preset) {
-    namop <- names(opts)
-    # list(show=TRUE) or list(list()) is to create an empty object{} in JS
-    if (!'xAxis' %in% namop) 
-      opts$xAxis <- list(show=TRUE)
-    if (!'yAxis' %in% namop) 
-      opts$yAxis <- list(show=TRUE)
-    if (!any(c('series','options') %in% namop)) {
-    	#if (!'world' %in% opts$load)   # world will add its own default serie
-    	  opts$series <- list(list(type=if (is.null(ctype)) 'scatter' else ctype) )
-    }
-    
-    if ('series' %in% names(opts)) {
-      if (is.null(opts$series[[1]]$type))  # set default to user serie if omitted
-        opts$series[[1]]$type <- if (is.null(ctype)) 'scatter' else ctype
-      if (opts$series[[1]]$type %in% noAxis)
-        opts$xAxis <- opts$yAxis <- NULL
-    }
-    else if (!is.null(ctype) && (ctype %in% noAxis))
-        opts$xAxis <- opts$yAxis <- NULL
-    if ('polar' %in% namop) {
-      opts$xAxis <- opts$yAxis <- NULL
-      if (is.null(opts$polar$radius)) opts$polar$radius = 111
-      if (is.null(opts$radiusAxis)) opts$radiusAxis= list(type= 'category')
-      if (is.null(opts$angleAxis)) opts$angleAxis= list(doit=TRUE)
-      if (!is.null(series.param)) 
-        series.param = .merlis(series.param, list(coordinateSystem= "polar"))
-    }
-  }
-
-  key <- group <- deps <- NULL; isCrosstalk <- FALSE
-  if (requireNamespace("crosstalk", quietly= TRUE)) {
-    if (crosstalk::is.SharedData(df)) {
-      isCrosstalk <- TRUE
-      key <- as.list(df$key())
-      group <- df$groupName()
-      deps <- crosstalk::crosstalkLibs()
-      tmp <- df$key()
-      df <- df$origData()
-      if (xtKey=='XkeyX')
-	      df$XkeyX <- tmp   # add new column for Xtalk filtering, if needed
-    }
-  }
-  
   # forward widget options using x
   x <- list(
     theme = '',
@@ -252,15 +237,12 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
       crosstalk_group = group
     )
   )
+ 
+  # ------------- data.frame -------------------
   colX <- 1     # by default 1st column is X, 2nd is Y, 3rd is Z
   colY <- 2
-  
-  # ------------- data.frame -------------------
   if (!is.null(df)) {
     # if data.frame given, assign to dataset regardless of parameter 'preset'
-    stopifnot('ec.init: df must be a data.frame'= inherits(df, 'data.frame'))
-    # add var for ec.clmn
-    .setColnm(colnames(df))
 
     # skip default group settings on map timeline
     if (!is.null(tl.series) && paste0(tl.series$type,'')=='map') ctype <- NULL
@@ -284,9 +266,8 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
         legd$data <- append(legd$data, list(list(name=as.character(nm))))
       }
       if (preset) {
-        if (is.null(tl.series) && is.null(x$opts$options))
+        #if (is.null(tl.series) && is.null(x$opts$options))
           x$opts$series <- sers
-        #if (is.null(x$opts$legend))  overwrite simple legend=(show=T)
         x$opts$legend <- legd
       }
       x$opts$dataset <- append(x$opts$dataset, txfm)
@@ -295,7 +276,7 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
       x$opts$dataset <- list(list(source = ec.data(df, header=TRUE)))
     
     if (preset) {
-      # grouping by any column, group columns do not become X or Y axis
+      # group by any column, group columns do not become X or Y axis
       if (!is.null(grnm)) {  # find pos of grp column
         pos <- which(colnames(df)==grnm)
         if (!is.null(tl.series) && !is.null(tl.series$groupBy))
@@ -336,10 +317,39 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
       }
     }  # colX,colY, visualMap
   }
-  
+
+  # presets are default settings, user can ignore or replace them
+  if (preset) {
+    namop <- names(x$opts)
+    # list(show=TRUE) or list(list()) is to create an empty object{} in JS
+    if (!'xAxis' %in% namop) 
+      x$opts$xAxis <- list(show=TRUE)
+    if (!'yAxis' %in% namop) 
+      x$opts$yAxis <- list(show=TRUE)
+    if (!any(c('series','options') %in% namop))
+      x$opts$series <- list(list(type=if (is.null(ctype)) 'scatter' else ctype) )
+    
+    if ('series' %in% names(x$opts)) { 
+      if (is.null(x$opts$series[[1]]$type))  # set default to user serie if omitted
+        x$opts$series[[1]]$type <- if (is.null(ctype)) 'scatter' else ctype
+      if (x$opts$series[[1]]$type %in% noAxis)
+        x$opts$xAxis <- x$opts$yAxis <- NULL
+    }
+    else if (!is.null(ctype) && (ctype %in% noAxis))
+        x$opts$xAxis <- x$opts$yAxis <- NULL
+    if ('polar' %in% namop) {
+      x$opts$xAxis <- x$opts$yAxis <- NULL
+      if (is.null(x$opts$polar$radius)) x$opts$polar$radius = 111
+      if (is.null(x$opts$radiusAxis)) x$opts$radiusAxis= list(type= 'category')
+      if (is.null(x$opts$angleAxis)) x$opts$angleAxis= list(doit=TRUE)
+      if (!is.null(series.param)) 
+        series.param = .merlis(series.param, list(coordinateSystem= "polar"))
+    }
+  }
+   
   if (!is.null(x$opts$series) && !is.null(series.param)) {
     x$opts$series <- .merlis(x$opts$series, series.param)
-    # TODO: not 'x','y'
+    # TODO: when names not 'x','y'
     tmp <- series.param$encode
     if (!is.null(tmp)) {
       if (is.numeric(tmp$x)) colX <- tmp$x
@@ -352,10 +362,10 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
   if (preset) {
     # TODO: set axis type from series.data
     # set X,Y axes type & name
-    x$opts$xAxis <- doType(colX, x$opts$xAxis)
-    x$opts$yAxis <- doType(colY, x$opts$yAxis)
     axNamesEnc(x$opts$series)
     axNamesEnc(list(tl.series))
+    x$opts$xAxis <- doType(colX, x$opts$xAxis)
+    x$opts$yAxis <- doType(colY, x$opts$yAxis)
       
     if (!is.null(x$opts$series)) {
       if (!is.null(x$opts$series[[1]]$type)) {
@@ -480,6 +490,12 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
       src = c(file = path), script= 'lottie-parser.js')
     wt$dependencies <- append(wt$dependencies, list(dep))
   }
+  if ('ecStat' %in% load) {
+    dep <- htmltools::htmlDependency(
+      name = 'ecStat', version = '1.0.0', 
+      src = c(file = path), script= 'ecStat.min.js')
+    wt$dependencies <- append(wt$dependencies, list(dep))
+  }
   
   # Plugins implemented as dynamic load on-demand
   cdn <- 'https://cdn.jsdelivr.net/npm/'
@@ -516,7 +532,7 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
       paste0(cdn,'echarts-wordcloud@2.0.0/dist/echarts-wordcloud.min.js'), ask)
   
   # load unknown plugins
-  unk <- load[! load %in% c('leaflet','custom','world','lottie',
+  unk <- load[! load %in% c('leaflet','custom','world','lottie','ecStat',
                             '3D','liquid','gmodular','wordcloud')]
   if (length(unk)>0) {
     for(pg in unk)
@@ -713,7 +729,7 @@ ec.upd <- function(wt, ...) {
 #' @details
 #' \itemize{
 #'  \item type='stack': two _stacked_ lines are drawn, one with customizable areaStyle. The upper boundary coordinates are values added on top of the lower boundary coordinates.\cr
-#'      _xAxis_ is required to be of type 'category'.
+#'      _xAxis_ is required to be type 'category'.
 #'  \item type='polygon': coordinates of the two boundaries are chained into a polygon and displayed as one. Tooltips do not show upper band values.
 #' }
 #' Optional parameter _name_, if given, will show up in legend. Legend will merge all series with the same name into one item.
@@ -1189,23 +1205,6 @@ ec.plugjs <- function(wt=NULL, source=NULL, ask=FALSE) {
   invisible(old)
 }
 
-if (interactive()) {
-  if (requireNamespace("shiny", quietly= TRUE)) {
-    
-    # for Shiny actions
-    .onAttach <- function(libname, pkgname) {
-        shiny::registerInputHandler('echartyParse', function(data, ...) {
-          jsonlite::fromJSON(jsonlite::toJSON(data, auto_unbox = TRUE))
-        }, force = TRUE)
-    }
-    
-    .onLoad <- function(libname, pkgname) {
-        shiny::registerInputHandler('echartyParse', function(data, ...) {
-          jsonlite::fromJSON(jsonlite::toJSON(data, auto_unbox = TRUE))
-        }, force = TRUE)
-    }
-  }
-}
 #  ------------- Global Options -----------------
 #' 
 #' For info on options and prefixes, see [-- Introduction --].
