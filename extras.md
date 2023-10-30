@@ -127,6 +127,35 @@ Javascript version currently available. _echarty_ version coming soon.
 </video>
 <br />
 
+<a id='trimZero'></a>
+
+## Compressed bars
+
+Sparse datasets could show exessive **empty spaces** in a bar chart. Problem is solved by compressing bars with a non-linear axis. Custom function _trimZero_ will transform the initial dataset and prepare the non-linear axis for display. Below is a comparison sample.
+<details><summary>🔻 View simulated code</summary> 
+
+```r
+tmp <- "
+A, B, C,D
+10,10,0,0
+0, 7, 8,0
+6, 9, 7,6"
+df <- read.csv(text=tmp, header=T)
+
+tz <- trimZero(df)
+ec.init(
+  dataset= tz$dataset, 
+  xAxis= tz$xAxis,
+  series= list(list(type= 'bar', encode= list(x= 'x', y= 'value') )),
+  visualMap= list(
+    type= 'piecewise', top= 10, right= 10,
+    categories= sort(unlist(unique(lapply(tz$dataset$source, \(x) x$group)))),
+    inRange= list(color= c('blue','green','gold'))
+  )
+)
+```
+</details>  
+<img src='img/trimZero.png' alt='trimZero' />
 
 <!--
 ## Panoramas and maps  
