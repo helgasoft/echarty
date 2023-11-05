@@ -17,7 +17,7 @@ And improve readability by chaining commands after ec.init
 \details{
 ec.upd makes changes to chart elements already set by ec.init.\cr
 It should be always piped after ec.init.\cr
-Numerical indexes for series,visualMap,etc. are JS-counted (0,1...)\cr
+All numerical indexes for series,visualMap,etc. are JS-counted (0,1...)\cr
 Replaces syntax\cr
 \verb{   }p <- ec.init(...)\cr
 \verb{   }p$x$opts$series <- ...\cr

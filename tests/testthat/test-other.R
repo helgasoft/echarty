@@ -9,30 +9,29 @@ test_that("registerMap", {
      {"type":"Feature", "geometry":{"type":"MultiPolygon", "coordinates":[[[[2.333466,48.866204],[2.333061,48.86588],[2.332897,48.865906],[2.332466,48.865801],[2.332165,48.865776],[2.331811,48.865475],[2.331621,48.86532],[2.331466,48.865265],[2.331274,48.865283]]]]},
      	"properties":{"lat":48.859475,"lon":2.329466,"name":"bic2","range":1000, "id":"1 min"} },
      {"type":"Feature", "geometry":{"type":"MultiPolygon", "coordinates":[[[[2.335466,48.869736],[2.335037,48.870046],[2.334836,48.870105],[2.334466,48.870265],[2.334289,48.870298],[2.333577,48.870364],[2.333466,48.870381],[2.333364,48.870373],[2.332485,48.870456]]]]},
-     	"properties": {"lat":48.859475, "lon":2.329466, "name":"bic3", "range":1500, "id":"1.5 min"} }
+     	"properties": {"lat":48.859475,"lon":2.329466,"name":"bic3","range":1500, "id":"1.5 min"} }
   ]}')
   ext <- function(dd) { unlist(unname(sapply(gjson$features, \(f) {f$properties[dd]}))) }
-  vals <- ext('range')
-  dparis <- data.frame(name= ext('name'), value= vals)
+  #vals <- ext('range')
+  dparis <- data.frame(name= ext('name'), value= ext('range'))
   p <- ec.init(preset= FALSE,
     geo= list(map= 'paris', roam= TRUE),
     series =list(list(
-      type= 'map', geoIndex=0, coordinateSystem= 'geo',
+      type= 'map', coordinateSystem= 'geo', geoIndex=1,
       data= ec.data(dparis, 'names')
     )),
     visualMap= list(type='continuous', calculable=TRUE,
-      inRange= list(color = rainbow(8)),
-      min= min(vals), max= max(vals))
+      inRange= list(color = rainbow(8)) )
+      #,min= min(vals), max= max(vals))
   )
   p$x$registerMap <- list(list(mapName= 'paris', geoJSON= gjson))
   p
   expect_equal(length(p$x$registerMap[[1]]$geoJSON), 3)
   expect_equal(p$x$opts$geo$map, 'paris')
-  expect_equal(p$x$opts$series[[1]]$geoIndex, 0)
   expect_equal(p$x$opts$series[[1]]$data[[2]]$value, 1000)
 })
 
-test_that("tl.series, timeline options, groupby", {
+test_that("tl.series, timeline options, groupBy", {  # also in test-presets
   p <- Orange |> dplyr::group_by(age) |> ec.init(
     timeline= list(autoPlay=TRUE),
     tl.series= list(type='bar', encode=list(x='Tree', y='circumference'))
@@ -61,7 +60,6 @@ test_that("tl.series, timeline options, groupby", {
 })
 
 test_that("tl.series type 'map'", {
-#  if (interactive()) {
     cns <- data.frame(
       country = c('United States','China','Russia'),
       value = runif(3, 1, 100)
@@ -71,8 +69,7 @@ test_that("tl.series type 'map'", {
         visualMap= list(calculable=TRUE, max=100)
     )
     expect_equal(p$x$opts$options[[1]]$series[[1]]$data[[1]]$name, "China")
-#  }
-#  else expect_equal(1,1)
+    expect_equal(p$x$opts$options[[1]]$series[[1]]$geoIndex, 0)  # decremented
 })
 
 test_that("leaflet with ec.clmn and timeline", {

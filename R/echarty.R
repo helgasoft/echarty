@@ -144,6 +144,7 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
   opts$useDirtyRect <- opts$elementId <- opts$xtKey <- NULL
   noAxis <- c('radar','parallel','map','gauge','pie','funnel','polar', #'graph', 
               'sunburst','tree','treemap','sankey')
+  axis2d <- c('line','scatter','bar','pictorialBar','candlestick','boxplot','heatmap','custom','effectScatter')
 
   doType <- function(idx, axx) {
     # get one axis type & name
@@ -190,14 +191,14 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
       }
     })
 
-    if (!is.null(tmp$x)) {
-      if (is.null(x$opts$xAxis$name))
+    if (!is.null(tmp$x)) {   # dont name multiple xAxis
+      if (is.null(x$opts$xAxis$name) && !is.null(names(lengths(x$opts$xAxis))))
         x$opts$xAxis$name <<- trimws(paste(unique(tmp$x), collapse=','))
       tt <- tmp$x[1]
       colX <<- if (is.numeric(tt)) tt else which(colnames(df)==tt)[1]
     }
     if (!is.null(tmp$y)) {
-      if (is.null(x$opts$yAxis$name))
+      if (is.null(x$opts$yAxis$name) && !is.null(names(lengths(x$opts$yAxis))))
         x$opts$yAxis$name <<- trimws(paste(unique(tmp$y), collapse=','))
       tt <- tmp$y[1]
       colY <<- if (is.numeric(tt)) tt else which(colnames(df)==tt)[1]
@@ -208,7 +209,7 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
     xtem <- 'x'; ytem <- 'y'
     if (is.null(ser$coordinateSystem))
       ser$coordinateSystem <- 'unknown'
-    if (ser$type %in% c('line','scatter','bar','pictorialBar','candlestick','boxplot'))
+    if (ser$type %in% axis2d)
       ser$coordinateSystem <- 'cartesian2d'
     #if (startsWith(ser$coordinateSystem, 'cartesian')) { 
     #  xtem <- 'x'; ytem <- 'y' } #,ztem <- 'z' }
@@ -260,15 +261,15 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
         k <- k+1
         txfm <- append(txfm, list(list(transform = list(
           type='filter', config=list(dimension=grnm, '='=nm)))))
-        sers <- append(sers, list(list(
-          type= ctype, datasetIndex= k, name= as.character(nm))))
+        sers <- append(sers, list(list(  # datasetIndex will be decremented later
+          type= ctype, datasetIndex= k+1, name= as.character(nm))))
         # if (colnames(df)[1]==grnm)  # grouping by 1st column - breaks prll,map,etc.
         legd$data <- append(legd$data, list(list(name=as.character(nm))))
       }
       if (preset) {
         #if (is.null(tl.series) && is.null(x$opts$options))
           x$opts$series <- sers
-        x$opts$legend <- legd
+        x$opts$legend <- .merlis(x$opts$legend, legd)
       }
       x$opts$dataset <- append(x$opts$dataset, txfm)
     } 
@@ -311,8 +312,13 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
         if (is.null(vm$type) || (vm$type == 'continuous')) {
           xx <- length(colnames(df))   # last column by default in ECharts
           if (!is.null(vm$dimension)) xx <- vm$dimension
-          x$opts$visualMap$min <- min(df[,xx])
-          x$opts$visualMap$max <- max(df[,xx])
+          #x$opts$visualMap$min <- min(na.omit(df[,xx]))
+          #x$opts$visualMap$max <- max(na.omit(df[,xx]))
+          x$opts$visualMap <- .merlis(x$opts$visualMap, list(
+            min= min(na.omit(df[,xx])),
+            max= max(na.omit(df[,xx])),
+            calculable= TRUE
+          ))
         }
       }
     }  # colX,colY, visualMap
@@ -424,10 +430,6 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
       wt$x$opts$yAxis <- NULL
       if (!is.null(df)) {   # coordinateSystem='geo' needed for all series
         wt$x$opts$series <- .merlis(wt$x$opts$series, list(coordinateSystem='geo'))
-        # tmp <- sapply(wt$x$opts$series, \(x) {x$type} )
-        # if (!'map' %in% tmp)  # add map serie if missing
-        #   wt$x$opts$series <- append(wt$x$opts$series,
-        #                               list(list(type='map', geoIndex=0)))
       }
       # WARN: map will duplicate if series have map='world' too
       if (!'geo' %in% names(wt$x$opts))
@@ -589,7 +591,7 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
       tmp <- gp
       names(tmp)[names(tmp)==tl.series$encode[xtem]] <- 'name'
       names(tmp)[names(tmp)==tl.series$encode[ytem]] <- 'value'
-      series <- list(list(type= "map", geoIndex=0,
+      series <- list(list(type= "map", geoIndex= 1,
                           data= ec.data(tmp, 'names')))
       tmp <- list(title= list(text= as.character(unique(gp[gvar]))),  
                   series= series)
@@ -602,9 +604,8 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
       df <- df |> group_modify(~ { .x |> mutate(XcolX = 1:nrow(.)) })
       tl.series$encode[xtem] <- 'XcolX'    # instead of relocate(XcolX)
       # replace only source, transforms stay
-      wt$x$opts$dataset[[1]] <- list(source=ec.data(df, header=TRUE))
+      wt$x$opts$dataset[[1]] <- list(source= ec.data(df, header=TRUE))
     }
-    # paste0("tl.series: encode '",ytem,"' is required for ",tl.series$coordinateSystem)
     stopifnot("tl.series: bad second parameter name for encode"= !is.null(unlist(tl.series$encode[ytem])))
     
     # dataset is already in, now loop group column(s)
@@ -618,12 +619,8 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
       # multiple series for each Y, like y=c('col1', 'col3')
       series <- lapply(unname(unlist(tl.series$encode[ytem])), 
         \(sname) {
-          append(list(datasetIndex= di), tl.series)  # , name= sname
+          append(list(datasetIndex= di +1), tl.series)  # , name= sname
       })
-      # series <- lapply(series, \(s) {
-      #   s$encode[ytem] <- s$name   # replace multiple col.names with one
-      #   s
-      # })
       
       #tmp <- list(title= list(text= as.character(unique(gp[gvar]))),  
       tmp <- list(title= list(text= unique(unlist(lapply(gp[gvar], as.character)))),
@@ -643,12 +640,14 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
     tgrp <- tl.series$groupBy
     # define additional filter transformations and option series based on preset ones
     dsf <- list()  # new filters
-    opts <- list() 
+    optm <- list() 
     filterIdx <- 0
-    for (i in 1:length(unlist(unname(lapply(unique(df[gvar]), as.list))))) {
+    #for (ii in 1:length(unlist(unname(lapply(unique(df[gvar]), as.list))))) {
+    for (ii in 1:length(unname(unlist(unique(df[gvar])))) ) {
       snames <- c()
-      for (x2 in unlist(unname(lapply(unique(df[tgrp]), as.list)))) {
-        dst <- wt$x$opts$dataset[[i+1]]  # skip source-dataset 1st
+      #for (x2 in unlist(unname(lapply(unique(df[tgrp]), as.list)))) {
+      for (x2 in unname(unlist(unique(df[tgrp]))) ) {
+        dst <- wt$x$opts$dataset[[ii+1]]  # skip source-dataset 1st
         dst$transform$config <- list(and= list(
           dst$transform$config,
           list(dimension= tgrp, `=`= x2)
@@ -656,20 +655,20 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
         dsf <- append(dsf, list(dst))
         snames <- c(snames, x2)
       }
-      ooo <- wt$x$opts$options[[i]]
+      ooo <- wt$x$opts$options[[ii]]
       sss <- lapply(snames, \(s) {
         filterIdx <<- filterIdx + 1
         tmp <- ooo$series[[1]]
         tmp$name <- s
-        tmp$datasetIndex <- filterIdx
+        tmp$datasetIndex <- filterIdx +1 # will be decremented
         tmp$groupBy <- NULL
         tmp
       })
-      opts <- append(opts, list(
+      optm <- append(optm, list(
         list(title= ooo$title, series= sss)))
     }
     wt$x$opts$dataset <- append(wt$x$opts$dataset[1], dsf)   # keep source-dataset [1]
-    wt$x$opts$options <- opts
+    wt$x$opts$options <- optm
     wt$x$opts$legend <- .merlis(wt$x$opts$legend, list(show=TRUE))  # needed for sub-group
   }
   
@@ -689,7 +688,7 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
 #'
 #' @details ec.upd makes changes to chart elements already set by ec.init.\cr
 #' It should be always piped after ec.init.\cr
-#' Numerical indexes for series,visualMap,etc. are JS-counted (0,1...)\cr
+#' All numerical indexes for series,visualMap,etc. are JS-counted (0,1...)\cr
 #' Replaces syntax\cr
 #'   \verb{   }p <- ec.init(...)\cr
 #'   \verb{   }p$x$opts$series <- ...\cr
@@ -891,7 +890,7 @@ ecr.ebars <- function(wt, encode=list(x=1, y=c(2,3,4)), hwidth=6, ...) {
             out <- which(ds$dimensions %in% out)
           else {
             if (!is.null(ds$sourceHeader) && ds$sourceHeader)
-              # series.seriesLayoutBy
+              # TODO: series.seriesLayoutBy 
               out <- which(ds$source[[1]] %in% out)
             else {
               if (!class(ds$source[[1]]) %in% class(ds$source[[2]]))
@@ -910,17 +909,17 @@ ecr.ebars <- function(wt, encode=list(x=1, y=c(2,3,4)), hwidth=6, ...) {
   # assuming all attached series from same dataset
   encode$y <- enc2num(encode$y, tmp[[1]])
   encode$x <- enc2num(encode$x, tmp[[1]])
-  # set correct axis to type 'category' (char or factor)
-  enc <- wt$x$opts$dataset[[1]]$source[[2]]$encode
-  if (!is.null(enc)) {
-    if (length(encode$y)==1) {
-      if (is.character(enc$y) || is.factor(enc$y))
-        wt$x$opts$yAxis <- .merlis(wt$x$opts$yAxis, list(type='category'))
-    } else {
-      if (is.character(enc$x) || is.factor(enc$x))
-        wt$x$opts$xAxis <- .merlis(wt$x$opts$xAxis, list(type='category'))
-    }
-  }
+  # # set correct axis to type 'category' (char or factor)
+  # enc <- wt$x$opts$dataset[[1]]$source[[2]]$encode
+  # if (!is.null(enc)) {
+  #   if (length(encode$y)==1) {
+  #     if (is.character(enc$y) || is.factor(enc$y))
+  #       wt$x$opts$yAxis <- .merlis(wt$x$opts$yAxis, list(type='category'))
+  #   } else {
+  #     if (is.character(enc$x) || is.factor(enc$x))
+  #       wt$x$opts$xAxis <- .merlis(wt$x$opts$xAxis, list(type='category'))
+  #   }
+  # }
   
   rim <- if (!is.null(args$renderItem)) args$renderItem else 'riErrBars'
   oneSerie <- function(liss, ...) {
@@ -1157,7 +1156,11 @@ ec.plugjs <- function(wt=NULL, source=NULL, ask=FALSE) {
   }
   if (!is.null(ss$xAxisIndex)) ss$xAxisIndex <- ss$xAxisIndex -1
   if (!is.null(ss$yAxisIndex)) ss$yAxisIndex <- ss$yAxisIndex -1
-  #if (!is.null(ss$datasetIndex)) ss$datasetIndex <- ss$datasetIndex -1
+  if (!is.null(ss$datasetIndex)) ss$datasetIndex <- ss$datasetIndex -1
+  if (!is.null(ss$geoIndex)) ss$geoIndex <- ss$geoIndex -1
+  if (!is.null(ss$polarIndex)) ss$polarIndex <- ss$polarIndex -1
+  if (!is.null(ss$calendarIndex)) ss$calendarIndex <- ss$calendarIndex -1
+  if (!is.null(ss$radarIndex)) ss$radarIndex <- ss$radarIndex -1
   ss
 }
 

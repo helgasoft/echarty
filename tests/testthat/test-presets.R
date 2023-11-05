@@ -37,13 +37,14 @@ test_that("ec.init presets for non-grouped data.frame", {
 
 test_that("ec.init presets for grouped data.frame", {
   p <- df |> dplyr::group_by(symbol) |> ec.init(yAxis= list(scale=TRUE, name='yaxe'))
-  expect_equal(p$x$opts$xAxis$type, 'category')
-  expect_equal(p$x$opts$yAxis$name, 'yaxe')
-  expect_equal(length(p$x$opts$dataset[[1]]$source), 11)
-  expect_equal(length(p$x$opts$legend$data), 3)
-  expect_equal(p$x$opts$series[[1]]$type, 'scatter')
-  expect_equal(p$x$opts$series[[1]]$datasetIndex, 1)
-  expect_equal(p$x$opts$series[[1]]$name, 'circle')
+  po <- p$x$opts
+  expect_equal(po$xAxis$type, 'category')
+  expect_equal(po$yAxis$name, 'yaxe')
+  expect_equal(length(po$dataset[[1]]$source), 11)
+  expect_equal(length(po$legend$data), 3)
+  expect_equal(po$series[[1]]$type, 'scatter')
+  expect_equal(po$series[[1]]$name, 'circle')
+  expect_equal(po$series[[2]]$datasetIndex, 2)
 })
 
 test_that("ec.init presets for timeline", {
@@ -78,11 +79,11 @@ test_that("ec.init presets for timeline groupBy", {
     x5 = abs(runif(16))
   ) 
   p <- dat |> group_by(x1) |> ec.init(
+    legend= list(show=TRUE),
     tl.series= list(encode= list(x= 'x3', y= 'x5'), 
                     symbolSize= ec.clmn('x4', scale=30),
                     groupBy= 'x2') 
   )
-  p$x$opts$legend <- list(show=TRUE)
   expect_equal(p$x$opts$options[[4]]$series[[1]]$type, 'scatter')
   expect_equal(p$x$opts$options[[4]]$series[[1]]$encode$y, 'x5')
   expect_equal(p$x$opts$yAxis$name, 'x5')

@@ -766,7 +766,7 @@ ec.data <- function(df, format='dataset', header=FALSE, ...) {
           name= tmp[[i]][[grpcol]][1], 
           #tooltip= list(formatter= tbox), 
           encode= list(tooltip= ttip),
-          type= 'boxplot', datasetIndex= i+length(tmp)-1) ))
+          type= 'boxplot', datasetIndex= i+length(tmp)) ))  # will be decremented
       }
 	    axe <- paste0("function(v) { return ['",axe,"'][v]; }")
 	   
