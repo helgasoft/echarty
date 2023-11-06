@@ -4,6 +4,7 @@
 
 - make crosstalk work with improved ec.clmn
 - add _ecStat_ to built-in plugins
+- removed _dataTool.min.js_ from dependencies (yaml)
 - dataset,geo,polar,etc. indexes in series now with R-counting
 
 ## v.1.6.2  on CRAN
