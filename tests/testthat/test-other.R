@@ -241,7 +241,7 @@ test_that('stops are working in echarty.R', {
   expect_error(cars |> group_by(speed) |> ec.init()) # 3 cols min
   expect_error(ec.init(0)) # df
   expect_error(ec.init(cars, tl.series= list(d=1))) # groups
-  expect_error(ec.init(mtcars |> group_by(gear), tl.series= list(d=1))) # encode
+  #expect_error(ec.init(mtcars |> group_by(gear), tl.series= list(d=1))) # encode
   expect_error(ec.init(mtcars |> group_by(gear), tl.series= 
                   list(type='map', encode= list(x=1, y=2)))) # x
   expect_error(ec.init(mtcars |> group_by(gear), 

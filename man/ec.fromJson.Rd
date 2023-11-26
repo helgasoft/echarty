@@ -23,7 +23,7 @@ Convert JSON string or file to chart
 }
 \details{
 \emph{txt} could be either a list of options (x$opts) to be set by \href{https://echarts.apache.org/en/api.html#echartsInstance.setOption}{setOption},\cr
-OR an entire \emph{htmlwidget} generated thru \link{ec.inspect} when \emph{target='full'}.\cr
+OR an entire \emph{htmlwidget} generated thru \link{ec.inspect} with \emph{target='full'}.\cr
 The latter imports all JavaScript functions defined by the user.
 }
 \examples{

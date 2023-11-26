@@ -899,6 +899,7 @@ ec.data <- function(df, format='dataset', header=FALSE, ...) {
 #' * \emph{%L@} will display a number in locale format, like '12,345.09'.\cr
 #' * \emph{%LR@} rounded number in locale format, like '12,345'.\cr
 #' * \emph{%R@} rounded number, like '12345'.\cr
+#' * \emph{%R2@} rounded number, two digits after decimal point.\cr
 #' * \emph{%M@} marker in serie's color.\cr
 #' 
 #' @examples
@@ -1159,7 +1160,7 @@ ec.theme <- function (wt, name, code= NULL)
 #' @export
 ec.inspect <- function(wt, target='opts', ...) {
 
-  stopifnot("ec.inspect: target only 'opts', 'data' or 'full'"= target %in% c('opts','data','full'))
+  stopifnot("ec.inspect: target to be 'opts', 'data' or 'full'"= target %in% c('opts','data','full'))
 	if (target=='full') {
 	  jjwt <- jsonlite::serializeJSON(wt)
 	  opts <- list(...)
@@ -1223,7 +1224,7 @@ ec.inspect <- function(wt, target='opts', ...) {
 #' @return An _echarty_ widget.
 #' 
 #' @details _txt_ could be either a list of options (x$opts) to be set by \href{https://echarts.apache.org/en/api.html#echartsInstance.setOption}{setOption},\cr
-#'  OR an entire _htmlwidget_ generated thru [ec.inspect] when _target='full'_.\cr
+#'  OR an entire _htmlwidget_ generated thru [ec.inspect] with _target='full'_.\cr
 #'  The latter imports all JavaScript functions defined by the user.
 #' 
 #' @examples

@@ -6,6 +6,10 @@
 - add _ecStat_ to built-in plugins
 - removed _dataTool.min.js_ from dependencies (yaml)
 - dataset,geo,polar,etc. indexes in series now with R-counting
+- built with R v.4.3.2
+- add default _coordinateSystem_ for 3D charts
+- fix _datasetIndex_ for timeline 3D series
+- add _encode_ default, improve _ec.init_ docs
 
 ## v.1.6.2  on CRAN
 

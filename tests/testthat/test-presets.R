@@ -49,17 +49,17 @@ test_that("ec.init presets for grouped data.frame", {
 
 test_that("ec.init presets for timeline", {
   dftl <- data.frame(
-    year = unlist(lapply(2018:2021, function(x) {rep(x, 4)})), 
+    value = runif(16),
     quarter = as.factor(rep(1:4, 4)),
-    value = runif(16)
+    year = unlist(lapply(2018:2021, function(x) {rep(x, 4)}))
   )
-  barTL <- function(data, timeline_var, x_var, bar_var) {
+  barTL <- function(data, timeline_var) {  #}, x_var, bar_var) {
     bt <- data |> dplyr::group_by(!!dplyr::sym(timeline_var)) |> 
-      ec.init(tl.series = list(type='bar', encode=list(x=x_var, y=bar_var)),
+      ec.init(tl.series = list(type='bar'), #,encode=list(x=x_var, y=bar_var)),
               xAxis= list(name='xval'))
     bt
   }
-  p <- barTL(dftl, timeline_var= "year", x_var= "value", bar_var= "quarter")
+  p <- barTL(dftl, timeline_var= "year") #, x_var= "value", bar_var= "quarter")
   o <- p$x$opts
   expect_equal(length(o$dataset[[1]]$source), 17)
   expect_equal(length(o$dataset), 5)
@@ -67,6 +67,7 @@ test_that("ec.init presets for timeline", {
   expect_equal(o$options[[4]]$title$text, '2021')
   expect_equal(o$yAxis$name, 'quarter')
   expect_equal(o$xAxis$name, 'xval')
+  expect_equal(o$options[[1]]$series[[1]]$encode, list(x=0, y=1, z=2))
 })
 
 test_that("ec.init presets for timeline groupBy", {
@@ -74,19 +75,31 @@ test_that("ec.init presets for timeline groupBy", {
   dat <- data.frame(
     x1 = rep(2020:2023, each = 4),
     x2 = rep(c("A", "A", "B", "B"), 4),
-    x3 = runif(16),
+    x = runif(16),
     x4 = runif(16),
-    x5 = abs(runif(16))
+    y = abs(runif(16)), z= runif(16)
   ) 
   p <- dat |> group_by(x1) |> ec.init(
     legend= list(show=TRUE),
-    tl.series= list(encode= list(x= 'x3', y= 'x5'), 
+    tl.series= list(encode= list(x= 'x', y= 'y'), 
                     symbolSize= ec.clmn('x4', scale=30),
                     groupBy= 'x2') 
   )
   expect_equal(p$x$opts$options[[4]]$series[[1]]$type, 'scatter')
-  expect_equal(p$x$opts$options[[4]]$series[[1]]$encode$y, 'x5')
-  expect_equal(p$x$opts$yAxis$name, 'x5')
+  expect_equal(p$x$opts$options[[4]]$series[[1]]$encode$y, 'y')
+  expect_equal(p$x$opts$yAxis$name, 'y')
+
+  p <- dat |> group_by(x1) |> ec.init(preset=F,  #load='3D',
+    xAxis3D=list(s=T),yAxis3D=list(s=T),zAxis3D=list(s=T),grid3D=list(s=T),
+    legend= list(show=TRUE),
+    tl.series= list(encode= list(x='x', y='y', z='z'), type='scatter3D',
+                    symbolSize= ec.clmn('x4', scale=30),
+                    groupBy= 'x2')
+  )
+  expect_equal(p$x$opts$options[[1]]$series[[1]]$coordinateSystem, 'cartesian3D')
+  expect_equal(length(p$x$opts$options[[1]]$series), 2)
+  expect_equal(p$x$opts$options[[4]]$series[[2]]$datasetIndex, 8)
+  expect_equal(p$x$opts$options[[4]]$series[[2]]$name, 'B')
 })
 
 test_that("presets for parallel chart", {

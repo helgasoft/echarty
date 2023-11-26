@@ -82,7 +82,7 @@ iris |> group_by(Species) |> ec.init(load= '3D')
 #  timeline of two series with grouping, formatting, autoPlay
 iris |> group_by(Species) |> 
 ec.init(
-	timeline= list(autoPlay= TRUE),
+  timeline= list(autoPlay= TRUE),
   tl.series= list(
     symbolSize= ec.clmn('Petal.Width', scale= 3),
     encode= list(y= c('Sepal.Width', 'Petal.Length')),

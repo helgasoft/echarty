@@ -23,29 +23,35 @@ the$.ecv.colnames <- NULL
 #'   Best practice is to have the grouping column placed last. Grouping column cannot be used as axis.\cr
 #'   Timeline requires a _grouped data.frame_ to build its \href{https://echarts.apache.org/en/option.html#options}{options}.\cr
 #'   If grouping is on multiple columns, only the first one is used to determine settings.
-#' @param ctype Chart type of series. Default is 'scatter'. Set to NULL to disable series preset.
+#' @param ctype Default chart type, set to 'scatter'.
 #' @param preset Boolean (default TRUE). Build preset attributes like dataset, series, xAxis, yAxis, etc.
+#' @param tl.series List defines \href{https://echarts.apache.org/en/option.html#series}{options series} for timeline.\cr
+#'  Default is NULL. Similar to _series.param_.\cr
+#'  A grouped _df_ must be present, each group providing data for one options series.
+#'  Timeline \href{https://echarts.apache.org/en/option.html#timeline.data}{data} and \href{https://echarts.apache.org/en/option.html#options}{options} will be preset for the chart.\cr
+#'  Another preset is _encode(x=1,y=2,z=3)_, which are the first 3 columns of _df_. Parameter _z_ is ignored in 2D. See Details below.\cr
+#'  Optional attribute _groupBy_, a _df_ column name, can create series groups inside each timeline option.\cr
+#'  _tl.series_ cannot be used for hierarchical charts like graph,tree,treemap,sankey. Chart options/timeline have to be built directly, see \href{https://helgasoft.github.io/echarty/uc4.html}{example}.
+#' @param series.param  Additional parameters for preset series, default is NULL.\cr
+#'  Unlike _tl.series_, this parameter is for regular (non-timeline) series only.\cr
+#'  One can also define the complete series with _series= list(list(...),...)_.
+#' @param ...  Optional widget attributes. See Details. \cr
 #' @param width,height A valid CSS unit (like \code{'100\%'},
 #'   \code{'500px'}, \code{'auto'}) or a number, which will be coerced to a
 #'   string and have \code{'px'} appended.
-#' @param tl.series A list to build a timeline or NULL(default). The list defines options \href{https://echarts.apache.org/en/option.html#series}{series} and their attributes. \cr
-#'   The only required attribute is \href{https://echarts.apache.org/en/option.html#series-line.encode}{encode}.\cr
-#'  _encode_ defines which data columns names to use for the axes: \cr
-#'  * set _x_ and _y_ for coordinateSystem _cartesian2d_
-#'  * set _lng_ and _lat_ for coordinateSystem _geo_
-#'  * set _radius_ and _angle_ for coordinateSystem _polar_
-#'  * set _value_ and _itemName_ for _pie_ chart
-#'  * set _value_ and _name_ for _map_ chart
+#'
+#' @details  Command _ec.init_ creates a widget with \link[htmlwidgets]{createWidget}, then adds some ECharts features to it.\cr
+#'  Numerical indexes for series,visualMap,etc. are R-counted (1,2...)\cr
+#' 
+#'  **Presets**: \cr 
+#'  When a data.frame is chained to _ec.init_, a \href{https://echarts.apache.org/en/option.html#dataset}{dataset} is preset. \cr
+#'  When the data.frame is grouped and _ctype_ is not null, more datasets with legend and series are also preset. \cr
+#'  Plugin '3D' is required for 2D series 'scatterGL'. Use _preset=FALSE_ and set explicitly _xAxis_ and _yAxis_. \cr
+#'  Plugins 'leaflet' and 'world' preset _zoom=6_ and _center_ to the mean of all coordinates. \cr
+#'  Users can delete or overwrite any presets as needed. \cr
 #'  
-#'   Attribute _coordinateSystem_ is not set by default and depends on chart _type_.\cr
-#'   Custom attribute _groupBy_, a _df_ column name, can create series groups inside each timeline step.\cr
-#'   A grouped _df_ must be present, with group column providing the \href{https://echarts.apache.org/en/option.html#timeline.data}{timeline data}.
-#'   Auto-generated _timeline_ and _options_ will be preset for the chart.\cr
-#'   _tl.series_ cannot be used for hierarchical charts like graph,tree,treemap,sankey. Chart options/timeline have to be built directly, see \href{https://helgasoft.github.io/echarty/uc4.html}{example}.
-#' @param series.param  Additional parameters for preset series, or NULL(default).\cr
-#'   One can also define the complete series with _series= list(list(...),...)_.
-#' @param ...  List contains other attributes to pass to the widget. \cr
-#'   Custom echarty widget attributes include: \cr
+#'  **Widget attributes**: \cr
+#'  Optional echarty widget attributes include: \cr
 #'  * elementId - Id of the widget, default is NULL(auto-generated)
 #'  * load - name(s) of plugin(s) to load. A character vector or comma-delimited string. default NULL.
 #'  * ask - prompt user before downloading plugins when _load_ is present, FALSE by default
@@ -57,15 +63,7 @@ the$.ecv.colnames <- NULL
 #'  \verb{     }Third is evaluated with exposed _chart_ object after _opts_ set.
 #'  * renderer - 'canvas'(default) or 'svg'
 #'  * locale - 'EN'(default) or 'ZH'. Use predefined or custom \href{https://gist.github.com/helgasoft/0618c6537c45bfd9e86d3f9e1da497b8}{like so}.
-#'  * useDirtyRect - enable dirty rectangle rendering or not, FALSE by default, see \href{https://echarts.apache.org/en/api.html#echarts.init}{here}
-#'
-#' @details  Command _ec.init_ creates a widget with \link[htmlwidgets]{createWidget}, then adds some ECharts features to it.\cr
-#'  When _ec.init_ is chained after a data.frame, a \href{https://echarts.apache.org/en/option.html#dataset}{dataset} is preset. \cr
-#'  When data.frame is grouped and _ctype_ is not null, more datasets with legend and series are also preset. \cr
-#'  Plugin '3D' presets will not work for 'scatterGL'. Instead, use _preset=FALSE_ and set explicitly _xAxis,yAxis_. \cr
-#'  Plugins 'leaflet' and 'world' preset zoom=6 and center to the mean of all coordinates. \cr
-#'  Users can delete or overwrite any presets as needed. \cr
-#'  Numerical indexes for series,visualMap,etc. are R-counted (1,2...)\cr
+#'  * useDirtyRect - enable dirty rectangle rendering or not, FALSE by default, see \href{https://echarts.apache.org/en/api.html#echarts.init}{here}\cr
 #'  
 #'  **Built-in plugins**: \cr 
 #'  * leaflet - Leaflet maps with customizable tiles, see \href{https://github.com/gnijuohz/echarts-leaflet#readme}{source}\cr
@@ -84,7 +82,15 @@ the$.ecv.colnames <- NULL
 #'  Parameter _df_ should be of type \link[crosstalk]{SharedData}, see \href{https://helgasoft.github.io/echarty/gallery.html#crosstalk-2d}{more info}.\cr
 #'  Optional parameter _xtKey_: unique ID column name of data frame _df_. Must be same as _key_ parameter used in _SharedData$new()_. If missing, a new column _XkeyX_ will be appended to df.\cr
 #'  Enabling _crosstalk_ will also generate an additional dataset called _Xtalk_ and bind the **first series** to it.\cr
-#'  
+#' 
+#'  **\href{https://echarts.apache.org/en/option.html#series-line.encode}{Encode}** \cr
+#'  A series attribute to define which columns to use for the axes, depending on chart type and coordinate system: \cr
+#'  * set _x_ and _y_ for coordinateSystem _cartesian2d_
+#'  * set _lng_ and _lat_ for coordinateSystem _geo_
+#'  * set _radius_ and _angle_ for coordinateSystem _polar_
+#'  * set _value_ and _itemName_ for _pie_ chart
+#'  * set _value_ and _name_ for _map_ chart
+#'  Example: \code{encode(x='col3', y='col1')} binds xAxis to _df_ column 'col3'.
 #' 
 #' @return A widget to plot, or to save and expand with more features.
 #' 
@@ -97,7 +103,7 @@ the$.ecv.colnames <- NULL
 #' ec.init(        # init with presets
 #'   tooltip= list(show= TRUE),
 #'   series.param= list( 
-#'     symbolSize= ec.clmn(4, scale=7),
+#'     symbolSize= ec.clmn('Petal.Width', scale=7),
 #'     tooltip= list(formatter= ec.clmn('Petal.Width: %@', 'Petal.Width'))
 #'   )
 #' )
@@ -144,7 +150,7 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
   opts$useDirtyRect <- opts$elementId <- opts$xtKey <- NULL
   noAxis <- c('radar','parallel','map','gauge','pie','funnel','polar', #'graph', 
               'sunburst','tree','treemap','sankey')
-  axis2d <- c('line','scatter','bar','pictorialBar','candlestick','boxplot','heatmap','custom','effectScatter')
+  axis2d <- c('line','scatter','bar','pictorialBar','candlestick','boxplot','heatmap','custom','effectScatter','scatterGL')
 
   doType <- function(idx, axx) {
     # get one axis type & name
@@ -211,8 +217,8 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
       ser$coordinateSystem <- 'unknown'
     if (ser$type %in% axis2d)
       ser$coordinateSystem <- 'cartesian2d'
-    #if (startsWith(ser$coordinateSystem, 'cartesian')) { 
-    #  xtem <- 'x'; ytem <- 'y' } #,ztem <- 'z' }
+    if (ser$type %in% c('scatter3D','bar3D','line3D','surface'))
+      ser$coordinateSystem <- 'cartesian3D'
     if (ser$type == 'pie') {
       xtem <- 'value'; ytem <- 'itemName' }
     if (ser$coordinateSystem=='polar') { 
@@ -221,7 +227,7 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
       xtem <- 'lng'; ytem <- 'lat' }
     if (ser$type == 'map') {
       xtem <- 'name'; ytem <- 'value' }
-    return(list(x=xtem, y=ytem, c=ser$coordinateSystem))
+    return(list(x=xtem, y=ytem, z='z', c=ser$coordinateSystem))
   }
   
   # forward widget options using x
@@ -507,10 +513,10 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
         wt$x$opts$xAxis <- NULL   
         wt$x$opts$yAxis <- NULL
         nops <- names(wt$x$opts)
-        if (!('xAxis3D' %in% nops)) wt$x$opts$xAxis3D <- list(list())
-        if (!('yAxis3D' %in% nops)) wt$x$opts$yAxis3D <- list(list())
-        if (!('zAxis3D' %in% nops)) wt$x$opts$zAxis3D <- list(list())
-        if (!('grid3D'  %in% nops)) wt$x$opts$grid3D <- list(list())
+        if (!('xAxis3D' %in% nops)) wt$x$opts$xAxis3D <- list(list(s=T))
+        if (!('yAxis3D' %in% nops)) wt$x$opts$yAxis3D <- list(list(s=T))
+        if (!('zAxis3D' %in% nops)) wt$x$opts$zAxis3D <- list(list(s=T))
+        if (!('grid3D'  %in% nops)) wt$x$opts$grid3D <- list(list(s=T))
       }
       # valid 3D types: scatter3D, bar3D, surface, etc.
       if ('series' %in% names(wt$x$opts)) {  # if default 2D, change it
@@ -561,8 +567,10 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
   if (is.null(df) || !is.grouped_df(df))
     stopifnot('ec.init: tl.series requires a grouped data.frame df'= 1==1)
 
-  stopifnot('ec.init: encode is required for tl.series'= !is.null(tl.series$encode))
-
+  #stopifnot('ec.init: encode is required for tl.series'= !is.null(tl.series$encode))
+  if (is.null(tl.series$encode))
+    tl.series$encode <- list(x=1, y=2, z=3)  # set default
+  
   # add missing defaults
   if (is.null(tl.series$type)) tl.series$type <- 'scatter'
   
@@ -622,7 +630,6 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
           append(list(datasetIndex= di +1), tl.series)  # , name= sname
       })
       
-      #tmp <- list(title= list(text= as.character(unique(gp[gvar]))),  
       tmp <- list(title= list(text= unique(unlist(lapply(gp[gvar], as.character)))),
                   series= unname(series))
       tmp <- .renumber(tmp)
@@ -634,18 +641,16 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
   wt$x$opts$legend <- NULL
   wt$x$opts$options <- .merlis(optl, wt$x$opts$options)
   
-  if (preset && !is.null(tl.series$groupBy)) {
+  if (!is.null(tl.series$groupBy)) {
     stopifnot('ec.init: tl.series groupBy column missing in df'= tl.series$groupBy %in% colnames(df))
     gvar <- df |> group_vars() |> first() |> as.character()  # convert if factor
     tgrp <- tl.series$groupBy
-    # define additional filter transformations and option series based on preset ones
+    # define additional filter transformations and option series based on groupBy
     dsf <- list()  # new filters
     optm <- list() 
     filterIdx <- 0
-    #for (ii in 1:length(unlist(unname(lapply(unique(df[gvar]), as.list))))) {
     for (ii in 1:length(unname(unlist(unique(df[gvar])))) ) {
       snames <- c()
-      #for (x2 in unlist(unname(lapply(unique(df[tgrp]), as.list)))) {
       for (x2 in unname(unlist(unique(df[tgrp]))) ) {
         dst <- wt$x$opts$dataset[[ii+1]]  # skip source-dataset 1st
         dst$transform$config <- list(and= list(
@@ -657,15 +662,15 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
       }
       ooo <- wt$x$opts$options[[ii]]
       sss <- lapply(snames, \(s) {
-        filterIdx <<- filterIdx + 1
         tmp <- ooo$series[[1]]
         tmp$name <- s
-        tmp$datasetIndex <- filterIdx +1 # will be decremented
+        filterIdx <<- filterIdx + 1
+        tmp$datasetIndex <- filterIdx   # wont be decremented
         tmp$groupBy <- NULL
         tmp
       })
-      optm <- append(optm, list(
-        list(title= ooo$title, series= sss)))
+      tmp <- list(title= ooo$title, series= sss)
+      optm <- append(optm, list(tmp))
     }
     wt$x$opts$dataset <- append(wt$x$opts$dataset[1], dsf)   # keep source-dataset [1]
     wt$x$opts$options <- optm
