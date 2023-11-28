@@ -100,6 +100,21 @@ test_that("ec.init presets for timeline groupBy", {
   expect_equal(length(p$x$opts$options[[1]]$series), 2)
   expect_equal(p$x$opts$options[[4]]$series[[2]]$datasetIndex, 8)
   expect_equal(p$x$opts$options[[4]]$series[[2]]$name, 'B')
+  
+  cns <- data.frame(
+    country = c('United States','China','Russia'),
+    val = runif(3, 1, 100)
+  )
+  p <- cns |> group_by(country) |> 
+  ec.init(load= 'world', 
+    geo= list(roam=T), tooltip= list(show=T),
+    tl.series=list(type='map', 
+      encode=list(value='val', name='country')),
+    visualMap= list(calculable=TRUE)
+  )
+  expect_equal(p$x$opts$options[[3]]$series[[1]]$geoIndex,0)
+  expect_equal(p$x$opts$options[[1]]$series[[1]]$data[[1]]$name, 'China')
+  expect_equal(p$x$opts$geo$map, 'world')
 })
 
 test_that("presets for parallel chart", {

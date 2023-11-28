@@ -9,6 +9,8 @@
 [![Coveralls test coverage](https://coveralls.io/repos/github/helgasoft/echarty/badge.svg)](https://coveralls.io/r/helgasoft/echarty?branch=main)
 [![size](https://img.shields.io/github/languages/code-size/helgasoft/echarty)](https://github.com/helgasoft/echarty/releases/)
 [![website](https://img.shields.io/badge/Website-Visit-blue)](https://helgasoft.github.io/echarty)
+[![website](https://img.shields.io/twitter/follow/echarty.svg?style=social&label=Follow)](https://twitter.com/echarty_R)
+
 <!--
 [![CRAN
 downloads](https://cranlogs.r-pkg.org/badges/last-day/echarty)](https://cranlogs.r-pkg.org/badges/last-day/echarty)   -->
@@ -25,7 +27,7 @@ interactive charts in R and Shiny with minimal overhead.
 
 Wider connectivity and deployment potential through [crosstalk](https://rpubs.com/echarty/crosstalk).  
 
-<details> <summary><strong>Compare to echarts4r</strong></summary>
+<details> <summary><strong>Compare to echarts4r 📌</strong></summary>
 
 R package | echarts4r | echarty
 --- | --- | ---

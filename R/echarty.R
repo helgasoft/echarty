@@ -86,10 +86,10 @@ the$.ecv.colnames <- NULL
 #'  **\href{https://echarts.apache.org/en/option.html#series-line.encode}{Encode}** \cr
 #'  A series attribute to define which columns to use for the axes, depending on chart type and coordinate system: \cr
 #'  * set _x_ and _y_ for coordinateSystem _cartesian2d_
-#'  * set _lng_ and _lat_ for coordinateSystem _geo_
+#'  * set _lng_ and _lat_ for coordinateSystem _geo_ and _scatter_ series
+#'  * set _value_ and _name_ for coordinateSystem _geo_ and _map_ series
 #'  * set _radius_ and _angle_ for coordinateSystem _polar_
 #'  * set _value_ and _itemName_ for _pie_ chart
-#'  * set _value_ and _name_ for _map_ chart
 #'  Example: \code{encode(x='col3', y='col1')} binds xAxis to _df_ column 'col3'.
 #' 
 #' @return A widget to plot, or to save and expand with more features.
@@ -580,16 +580,20 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
   
   if (tl.series$coordinateSystem %in% c('geo','leaflet')) {
       xtem <- 'lng'; ytem <- 'lat'
-      center <- c(mean(unlist(df[,tl.series$encode$lng])),
-                  mean(unlist(df[,tl.series$encode$lat])))
-      if (tl.series$coordinateSystem=='geo')
-        wt$x$opts$geo$center <- center
-      if (tl.series$coordinateSystem=='leaflet') 
-        wt$x$opts$leaflet$center <- center
+      if (!is.null(unlist(tl.series$encode[xtem])) &&
+          !is.null(unlist(tl.series$encode[ytem])) ) {
+        center <- c(mean(unlist(df[,tl.series$encode$lng])),
+                    mean(unlist(df[,tl.series$encode$lat])))
+        if (tl.series$coordinateSystem=='geo')
+          wt$x$opts$geo$center <- center
+        if (tl.series$coordinateSystem=='leaflet') 
+          wt$x$opts$leaflet$center <- center
+      }
   } 
   
   if (tl.series$type == 'map') {
     # tl.series type='map' has no encode/dataset API, needs 'data'
+    xtem <- 'name'; ytem <- 'value'
     wt$x$opts$dataset <- NULL
     stopifnot("tl.series: encode 'name' is required"= !is.null(unlist(tl.series$encode[xtem])))
     stopifnot("tl.series: encode 'value' is required"= !is.null(unlist(tl.series$encode[ytem])))

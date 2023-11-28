@@ -10,6 +10,7 @@
 - add default _coordinateSystem_ for 3D charts
 - fix _datasetIndex_ for timeline 3D series
 - add _encode_ default, improve _ec.init_ docs
+- fix _tl.series_ type 'map' encode
 
 ## v.1.6.2  on CRAN
 
