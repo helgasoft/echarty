@@ -24,16 +24,16 @@ If grouping is on multiple columns, only the first one is used to determine sett
 
 \item{preset}{Boolean (default TRUE). Build preset attributes like dataset, series, xAxis, yAxis, etc.}
 
-\item{ctype}{Default chart type, set to 'scatter'.}
+\item{ctype}{Chart type, default is 'scatter'.}
 
 \item{...}{Optional widget attributes. See Details. \cr}
 
-\item{series.param}{Additional parameters for preset series, default is NULL.\cr
-Unlike \emph{tl.series}, this parameter is for regular (non-timeline) series only.\cr
+\item{series.param}{Additional attributes for preset series, default is NULL.\cr
+This parameter is for regular (non-timeline) series only.\cr
 One can also define the complete series with \emph{series= list(list(...),...)}.}
 
 \item{tl.series}{List defines \href{https://echarts.apache.org/en/option.html#series}{options series} for timeline.\cr
-Default is NULL. Similar to \emph{series.param}.\cr
+Default is NULL. Similar to \emph{series.param} but for timeline series.\cr
 A grouped \emph{df} must be present, each group providing data for one options series.
 Timeline \href{https://echarts.apache.org/en/option.html#timeline.data}{data} and \href{https://echarts.apache.org/en/option.html#options}{options} will be preset for the chart.\cr
 Another preset is \emph{encode(x=1,y=2,z=3)}, which are the first 3 columns of \emph{df}. Parameter \emph{z} is ignored in 2D. See Details below.\cr
@@ -102,10 +102,10 @@ Enabling \emph{crosstalk} will also generate an additional dataset called \emph{
 A series attribute to define which columns to use for the axes, depending on chart type and coordinate system: \cr
 \itemize{
 \item set \emph{x} and \emph{y} for coordinateSystem \emph{cartesian2d}
-\item set \emph{lng} and \emph{lat} for coordinateSystem \emph{geo}
+\item set \emph{lng} and \emph{lat} for coordinateSystem \emph{geo} and \emph{scatter} series
+\item set \emph{value} and \emph{name} for coordinateSystem \emph{geo} and \emph{map} series
 \item set \emph{radius} and \emph{angle} for coordinateSystem \emph{polar}
 \item set \emph{value} and \emph{itemName} for \emph{pie} chart
-\item set \emph{value} and \emph{name} for \emph{map} chart
 Example: \code{encode(x='col3', y='col1')} binds xAxis to \emph{df} column 'col3'.
 }
 }

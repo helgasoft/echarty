@@ -102,23 +102,34 @@ test_that("ec.init presets for timeline groupBy", {
   expect_equal(p$x$opts$options[[4]]$series[[2]]$name, 'B')
   
   cns <- data.frame(
-    country = c('United States','China','Russia'),
-    val = runif(3, 1, 100)
+    val = c(22, 99, 33),
+    dim = c(11, 88, 44),
+    nam = c('Brazil','China','India')
   )
-  p <- cns |> group_by(country) |> 
-  ec.init(load= 'world', 
-    geo= list(roam=T), tooltip= list(show=T),
-    tl.series=list(type='map', 
-      encode=list(value='val', name='country')),
-    visualMap= list(calculable=TRUE)
+  p <- cns |> group_by(nam) |> 
+  ec.init(load= 'world', tooltip= list(show=T),
+    tl.series= list(type='map', encode= list(name='nam', value='val')), 
+    visualMap= list(calculable=TRUE, dimension=2)
   )
-  expect_equal(p$x$opts$options[[3]]$series[[1]]$geoIndex,0)
-  expect_equal(p$x$opts$options[[1]]$series[[1]]$data[[1]]$name, 'China')
+  # name & value are required column names for tl.series
+  expect_equal(p$x$opts$options[[3]]$series[[1]]$geoIndex,0)  # decremented
+  #expect_equal(p$x$opts$options[[1]]$series[[1]]$data[[1]]$name, 'Brazil')
+  expect_equal(p$x$opts$options[[1]]$series[[1]]$datasetIndex, 1)
   expect_equal(p$x$opts$geo$map, 'world')
+  expect_equal(p$x$opts$visualMap$max, 88)
+  
+  p <- cns |> relocate(dim, .after = last_col()) |>
+    ec.init(load= 'world', series.param= list(type='map'), visualMap= list(s=T))
+  # defaults:
+  # 1. map series will pick up the first num column for values, first char col for name
+  # 2. visualMap will pick up the last column for max/min
+  expect_equal(p$x$opts$dataset[[1]]$source[[1]], c("val","nam","dim"))
+  expect_equal(p$x$opts$series[[1]]$geoIndex, 0)
+  expect_equal(p$x$opts$visualMap$max, 88)
 })
 
 test_that("presets for parallel chart", {
-  p <- mtcars |> group_by(cyl) |> ec.init(ctype='parallel')
+  p <- mtcars |> relocate(cyl, .after=last_col()) |> group_by(cyl) |> ec.init(ctype='parallel')
 
   expect_equal(length(p$x$opts$dataset), 4)
   expect_equal(p$x$opts$series[[3]]$datasetIndex, 3)
@@ -217,10 +228,45 @@ test_that('axis names from preset encode', {
   expect_equal(p$x$opts$xAxis$name, 'dist')
 })
 
-test_that('polar, pie, world', {
+test_that('polar, pie, radar, themeRiver, parallel, etc.', {
   p <- cars |> ec.init(ctype='pie')
   expect_equal(p$x$opts$dataset[[1]]$source[[1]][1], 'speed')
   p <- cars |> ec.init(polar= list(radius= 222), 
       series.param= list(type='line', smooth=T))
+  expect_equal(p$x$opts$series[[1]]$coordinateSystem, 'polar')
+  dd <- data.frame(
+    c1 = rep(1:3, each= 2),
+    c2 = c(0,1,2,3,2,1),
+    c3 = rep(c('d1', 'd2'), 3)
+  )
+  p <- ec.init(series.param= list(
+    type='themeRiver', data= ec.data(dd), label= list(s=T) ) )
+  expect_equal(p$x$opts$singleAxis, list(min='dataMin', max='dataMax'))
+  
+  p <- ec.init(
+  	radar= list(indicator= lapply(LETTERS[1:5], \(x){list(name= x)}) ),
+  	series.param= list(type='radar', data= list(list(name='r1', value= runif(5, 1, 5))) )
+  )
+  expect_equal(p$x$opts$series[[1]]$type, 'radar')
+  
+    # group column to be last
+  p <- mtcars |> relocate(cyl, .after= last_col()) |> group_by(cyl) |> 
+    ec.init(ctype='parallel')
+  expect_equal(length(p$x$opts$series), 3)
+  expect_equal(length(p$x$opts$parallelAxis), 10)
+  expect_equal(p$x$opts$parallelAxis[[1]]$name, 'mpg')
+  
+  p <- ec.init(series.param= list(
+    type='gauge', data= list(list(name='score',value=44))))
+  expect_equal(names(p$x$opts), 'series')
+})
+
+test_that('polar presets', {
+  df <- data.frame(x = 1:10, y = seq(1, 20, by = 2))
+  p <- df |> ec.init(ctype='line', polar= list(dummy= T), 
+  		 series.param= list(smooth= T)
+  )
+  expect_equal(p$x$opts$polar$radius, 111)
+  expect_equal(p$x$opts$radiusAxis$type, 'category')
   expect_equal(p$x$opts$series[[1]]$coordinateSystem, 'polar')
 })

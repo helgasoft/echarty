@@ -45,8 +45,6 @@
 #' \verb{   }For greater number of charts _ec.util(cmd='layout')_ comes in handy\cr
 #' **cmd = 'tabset'** \cr
 #' \verb{   }... - a list name/chart pairs like \emph{n1=chart1, n2=chart2}, each tab may contain a chart.\cr
-#' \verb{   }width -  optional width of tabs in pixels\cr
-#' \verb{   }height - optional height of tabs in pixels\cr
 #' \verb{   }tabStyle - tab style string, see default \emph{tabStyle} variable in the code\cr
 #' \verb{   }Returns A) \link[htmltools]{tagList} of tabs when in a pipe without '...' params, see example\cr
 #' \verb{   }Returns B) \link[htmltools]{browsable} when '...' params are provided by user\cr
@@ -288,9 +286,9 @@ ec.util <- function( ..., cmd='sf.series', js=NULL) {
     },
     
     'tabset'= {
-      width <- height <- tabStyle <- NULL   # CRAN check fix
-      do.opties(c('width','height','tabStyle'), 
-                list('100%', 400, "<style>
+      tabStyle <- NULL   # CRAN check fix
+      do.opties(c('tabStyle'), 
+                list("<style>
 /*	CSS for the main interaction */
 .tabset > input[type='radio'] {
  position: absolute;
@@ -374,8 +372,8 @@ body { padding: 10px; }
         tset <- htmltools::tagAppendChildren(tset, 
             tinp, htmltools::tags$label(`for`=tid, n))
         cont <- unname(opts[n]) 
-        cont[[1]]$width <- width
-        cont[[1]]$height <- height
+        #cont[[1]]$width <- width
+        #cont[[1]]$height <- height
         tpans <- htmltools::tagAppendChild(tpans, 
             htmltools::tags$section(id=n, class='tab-panel', cont))
         tout <- htmltools::tagAppendChild(tset, tpans)
@@ -435,7 +433,7 @@ body { padding: 10px; }
         else oo
       })
       # series types should be different for morph options
-      defaultHandler <- htmlwidgets::JS("
+      clickHandler <- htmlwidgets::JS("
     function(event) {
         opt= this.getOption();
         keep= opt.morph;
@@ -455,7 +453,7 @@ body { padding: 10px; }
       out$x$opts$morph <- opts
       if (is.null(js))
         out$x$on <- list(list(
-          event= 'mouseover', handler= defaultHandler
+          event= 'click', handler= clickHandler
         ))
       out    
     },
@@ -654,8 +652,7 @@ ec.data <- function(df, format='dataset', header=FALSE, ...) {
   
   if (format=='treePC') {
     # for sunburst,tree,treemap
-    if (# !all(colnames(df) == c('parents', 'children', 'value')) ||
-        !all(unlist(unname(lapply(as.list(df[,1:3]), class))) == 
+    if (!all(unlist(unname(lapply(as.list(df[,1:3]), class))) == 
              c('character','character','numeric')) )
       stop('ec.data: df columns need to be in order (parents, children, value), only value is numeric', call. = FALSE)
     
@@ -1147,7 +1144,8 @@ ec.theme <- function (wt, name, code= NULL)
 #'  a character vector.
 #'
 #' @details Must be invoked or chained as last command.\cr
-#' target='full' will export all JavaScript custom code, ready to be used on import.
+#' target='full' will export all JavaScript custom code, ready to be used on import.\cr
+#' See also [ec.fromJson].
 #'
 #' @examples
 #' # extract JSON

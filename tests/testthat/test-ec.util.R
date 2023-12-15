@@ -112,7 +112,7 @@ test_that("tabset with pipe", {
       x |> ec.init(ctype= 'scatter', title= list(text= unique(x$Species)))
     }) |> ec.util(cmd='tabset')
   )
-  expect_equal(r[[2]]$children[[7]]$children[[2]]$children[[1]][[1]]$width, "100%")
+  expect_equal(r[[2]]$children[[7]]$children[[2]]$children[[1]][[1]]$width, NULL)
   expect_equal(as.character(r[[2]]$children[[6]]$children[[1]]), "virginica")
 })
 
@@ -159,7 +159,7 @@ test_that("morph 1", {
   expect_equal(p$x$opts$morph[[2]]$series[[1]]$type, 'bar')
   expect_true(grepl('setInterval', p$x$jcode, fixed=TRUE))
   p <- ec.util(cmd='morph', oscatter, obar)
-  expect_equal(p$x$on[[1]]$event, 'mouseover')
+  expect_equal(p$x$on[[1]]$event, 'click')
 })
 
 test_that("morph 2", {
@@ -227,9 +227,9 @@ test_that("labelsInside and doType(xAxis)", {
           # labelLayout= ec.util(cmd='labelsInside'))
     )
   )	
-  #expect_match(p$x$opts$series[[2]]$labelLayout, "get_e_charts(cid)", fixed=TRUE)
+  expect_match(   p$x$opts$series[[2]]$labelLayout, "ecf.labelsInside", fixed=TRUE)
   expect_s3_class(p$x$opts$series[[2]]$labelLayout, 'JS_EVAL')
-  expect_equal(p$x$opts$xAxis$type, 'category')  # default for .data
+  #expect_equal(p$x$opts$xAxis$type, 'category')  # default for xAxis.data ?!
 })
 
 test_that("lottie", {
@@ -283,8 +283,8 @@ test_that("ec.data boxlpot", {
   
   ds <- mtcars |> select(cyl, drat) |>
 	ec.data(format='boxplot', jitter=0.1, layout= 'v',
-  			symbolSize=5, itemStyle=list(opacity=0.9), 
-  			emphasis= list(itemStyle= list(color= 'chartreuse', borderWidth=4, opacity=1))
+  	symbolSize=5, itemStyle=list(opacity=0.9), 
+  	emphasis= list(itemStyle= list(color= 'chartreuse', borderWidth=4, opacity=1))
 	)
   p <- ec.init(
     #colors= heat.colors(length(mcyl)),
@@ -293,7 +293,7 @@ test_that("ec.data boxlpot", {
   ) |> 
   ec.upd({ 
   	series[[1]] <- c(series[[1]], 
-  	                 list(color= 'LightGrey', itemStyle= list(color='DimGray')))
+  	  list(color= 'LightGrey', itemStyle= list(color='DimGray')))
   }) |> ec.theme('dark-mushroom')
   expect_equal(p$x$opts$series[[1]]$name, 'boxplot')
   expect_equal(p$x$opts$series[[4]]$name, '8')

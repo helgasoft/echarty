@@ -4,7 +4,7 @@
 \alias{ecr.band}
 \title{Area band}
 \usage{
-ecr.band(df = NULL, lower = NULL, upper = NULL, type = "stack", ...)
+ecr.band(df = NULL, lower = NULL, upper = NULL, type = "polygon", ...)
 }
 \arguments{
 \item{df}{A data.frame with lower and upper numerical columns and first column with X coordinates.}
@@ -15,25 +15,27 @@ ecr.band(df = NULL, lower = NULL, upper = NULL, type = "stack", ...)
 
 \item{type}{Type of rendering
 \itemize{
-\item 'stack' - by two \href{https://echarts.apache.org/en/option.html#series-line.stack}{stacked lines} (default)
-\item 'polygon' - by drawing a polygon as polyline from upper/lower points.
+\item 'polygon' - by drawing a polygon as polyline from upper/lower points (default)
+\item 'stack' - by two \href{https://echarts.apache.org/en/option.html#series-line.stack}{stacked lines}
 }}
 
-\item{...}{More parameters for \href{https://echarts.apache.org/en/option.html#series-line.type}{serie}}
+\item{...}{More attributes for \href{https://echarts.apache.org/en/option.html#series-line.type}{serie}}
 }
 \value{
-A list of one serie when type='polygon', or two series when type='stack'
+A list of \strong{one serie} when type='polygon', or list of \strong{two series} when type='stack'
 }
 \description{
 A 'custom' serie with lower and upper boundaries
 }
 \details{
 \itemize{
-\item type='stack': two \emph{stacked} lines are drawn, one with customizable areaStyle. The upper boundary coordinates are values added on top of the lower boundary coordinates.\cr
-\emph{xAxis} is required to be type 'category'.
-\item type='polygon': coordinates of the two boundaries are chained into a polygon and displayed as one. Tooltips do not show upper band values.
+\item type='polygon': coordinates of the two boundaries are chained into one polygon. Tooltips do not show upper band values.
+Set fill color with attribute \emph{color}.\cr
+\item type='stack': two \emph{stacked} lines are drawn, the lower with customizable areaStyle.\cr
+\emph{xAxis} should be type 'category'! Tooltips could include upper band values.\cr
+Set fill color with attribute \emph{areaStyle$color}.\cr
 }
-Optional parameter \emph{name}, if given, will show up in legend. Legend will merge all series with the same name into one item.
+Optional parameter \emph{name}, if given, will show up in legend. Legend merges all series with same name into one item.
 }
 \examples{
 df <- airquality |> dplyr::mutate(
@@ -41,7 +43,7 @@ df <- airquality |> dplyr::mutate(
     upr= round(Temp+Wind*2),
       x= paste0(Month,'-',Day) ) |>
   dplyr::relocate(x, Temp)
-bands <- ecr.band(df, 'lwr', 'upr', # type='stack',
+bands <- ecr.band(df, 'lwr', 'upr', type='stack',
                   name= 'stak', areaStyle= list(opacity=0.4))
 df |> ec.init( load= 'custom',
    legend= list(show= TRUE),

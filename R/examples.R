@@ -80,16 +80,17 @@
 #' )
 #'
 #' #------ Plugin 'world' with visualMap
-#' cns <- data.frame(
-#'   country = c('United States','China','Russia'),
-#'   value = runif(3, 1, 100)
+#' set.seed(333)
+#' cns <- data.frame(   
+#'   val = runif(3, 1, 100),
+#'   dim = runif(3, 1, 100),
+#'   nam = c('Brazil','China','India')
 #' )
-#' cns |> group_by(country) |> ec.init(
-#'   load='world',
-#'   visualMap= list(calculable=TRUE, max=100),
+#' cns |> group_by(nam) |> ec.init(load= 'world',
+#'   tl.series= list(type='map', 
+#'       encode=list(value='val', name='nam')),
 #'   toolbox= list(feature= list(restore= list())),
-#'   tl.series= list(type= 'map', 
-#'                   encode= list(value='value', name='country')) 
+#'   visualMap= list(calculable=TRUE, dimension=2)
 #' )
 #'
 #' #------ Plugin 'world' with lines and color coding

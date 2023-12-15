@@ -13,6 +13,10 @@ NULL
 
 the <- new.env(parent = emptyenv())
 the$.ecv.colnames <- NULL
+noAxis <- c('radar','parallel','themeRiver','map','gauge','pie','funnel','polar',  
+        'sunburst','tree','treemap','sankey','lines')
+noCoord <- c('polar','radar','singleAxis','parallelAxis')
+# using list(show=TRUE) or list(list()) is to create empty object{} in JS
 
 #' Initialize command
 #'
@@ -23,18 +27,18 @@ the$.ecv.colnames <- NULL
 #'   Best practice is to have the grouping column placed last. Grouping column cannot be used as axis.\cr
 #'   Timeline requires a _grouped data.frame_ to build its \href{https://echarts.apache.org/en/option.html#options}{options}.\cr
 #'   If grouping is on multiple columns, only the first one is used to determine settings.
-#' @param ctype Default chart type, set to 'scatter'.
+#' @param ctype Chart type, default is 'scatter'.
 #' @param preset Boolean (default TRUE). Build preset attributes like dataset, series, xAxis, yAxis, etc.
+#' @param series.param  Additional attributes for preset series, default is NULL.\cr
+#'  This parameter is for regular (non-timeline) series only.\cr
+#'  One can also define the complete series with _series= list(list(...),...)_.
 #' @param tl.series List defines \href{https://echarts.apache.org/en/option.html#series}{options series} for timeline.\cr
-#'  Default is NULL. Similar to _series.param_.\cr
+#'  Default is NULL. Similar to _series.param_ but for timeline series.\cr
 #'  A grouped _df_ must be present, each group providing data for one options series.
 #'  Timeline \href{https://echarts.apache.org/en/option.html#timeline.data}{data} and \href{https://echarts.apache.org/en/option.html#options}{options} will be preset for the chart.\cr
 #'  Another preset is _encode(x=1,y=2,z=3)_, which are the first 3 columns of _df_. Parameter _z_ is ignored in 2D. See Details below.\cr
 #'  Optional attribute _groupBy_, a _df_ column name, can create series groups inside each timeline option.\cr
 #'  _tl.series_ cannot be used for hierarchical charts like graph,tree,treemap,sankey. Chart options/timeline have to be built directly, see \href{https://helgasoft.github.io/echarty/uc4.html}{example}.
-#' @param series.param  Additional parameters for preset series, default is NULL.\cr
-#'  Unlike _tl.series_, this parameter is for regular (non-timeline) series only.\cr
-#'  One can also define the complete series with _series= list(list(...),...)_.
 #' @param ...  Optional widget attributes. See Details. \cr
 #' @param width,height A valid CSS unit (like \code{'100\%'},
 #'   \code{'500px'}, \code{'auto'}) or a number, which will be coerced to a
@@ -134,23 +138,36 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
   } 
   #else .setColnm()  # do not reset, ec.data could've done it
   
-  opts <- list(...)  
+  opt1 <- list(...)  
   # treacherous R does "partial matching of argument names" (like a bug): 
   #   if 'series.param' is before ... and 'series' is added, the latter is ignored!
-  elementId <- if (is.null(opts$elementId)) NULL else opts$elementId
-  js <- if (is.null(opts$js)) NULL else opts$js
-  ask <- if (is.null(opts$ask)) FALSE else opts$ask
-  renderer <- if (is.null(opts$renderer)) 'canvas' else tolower(opts$renderer)
-  locale <- if (is.null(opts$locale)) 'EN' else toupper(opts$locale)
-  useDirtyRect <- if (is.null(opts$useDirtyRect)) FALSE else opts$useDirtyRect
-  xtKey <- if (is.null(opts$xtKey)) 'XkeyX' else opts$xtKey
+  elementId <- if (is.null(opt1$elementId)) NULL else opt1$elementId
+  js <- if (is.null(opt1$js)) NULL else opt1$js
+  ask <- if (is.null(opt1$ask)) FALSE else opt1$ask
+  renderer <- if (is.null(opt1$renderer)) 'canvas' else tolower(opt1$renderer)
+  locale <- if (is.null(opt1$locale)) 'EN' else toupper(opt1$locale)
+  useDirtyRect <- if (is.null(opt1$useDirtyRect)) FALSE else opt1$useDirtyRect
+  xtKey <- if (is.null(opt1$xtKey)) 'XkeyX' else opt1$xtKey
   if (xtKey=='XkeyX') df$XkeyX <- dfKey   # add new column for Xtalk filtering, if needed
   # remove the above attributes since they are not valid ECharts options
-  opts$ask <- opts$js <- opts$renderer <- opts$locale <- NULL
-  opts$useDirtyRect <- opts$elementId <- opts$xtKey <- NULL
-  noAxis <- c('radar','parallel','map','gauge','pie','funnel','polar', #'graph', 
-              'sunburst','tree','treemap','sankey')
-  axis2d <- c('line','scatter','bar','pictorialBar','candlestick','boxplot','heatmap','custom','effectScatter','scatterGL')
+  opt1$ask <- opt1$js <- opt1$renderer <- opt1$locale <- NULL
+  opt1$useDirtyRect <- opt1$elementId <- opt1$xtKey <- NULL
+  axis2d <- c('pictorialBar','candlestick','boxplot','custom','scatterGL')
+  
+  # forward widget options using x
+  x <- list(
+    theme = '',
+    draw = TRUE,
+    renderer = renderer,
+    locale = locale,
+    useDirtyRect = useDirtyRect,
+    jcode = js,
+    opts = opt1,
+    settings = list(
+      crosstalk_key = key,
+      crosstalk_group = group
+    )
+  )
 
   doType <- function(idx, axx) {
     # get one axis type & name
@@ -191,7 +208,7 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
     # set axes names from encode
     tmp <- list(x=NULL, y=NULL)
     lapply(series, \(ss) {
-      if (!is.null(ss$encode)) {
+      if (any(names(ss)=='encode')) {
         if (is.character(ss$encode$x)) tmp$x <<- c(tmp$x, ss$encode$x[1])
         if (is.character(ss$encode$y)) tmp$y <<- c(tmp$y, ss$encode$y[1])
       }
@@ -211,14 +228,37 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
     }
   }
   xyNamesCS <- function(ser) {
-    # no coordinateSystem = pie,funnel,gauge, sunburst/tree/treemap/sankey (graph)
+    # set x,y names + cs, called from single or tl.series
+    # careful: setting x$opts$ but could be wt$x$opts coming from tl.series
     xtem <- 'x'; ytem <- 'y'
     if (is.null(ser$coordinateSystem))
       ser$coordinateSystem <- 'unknown'
     if (ser$type %in% axis2d)
-      ser$coordinateSystem <- 'cartesian2d'
+      ser$coordinateSystem <- 'cartesian2d'   # default 'scatter' comes here
+    if (any(noCoord %in% names(opt1)) || 
+        ser$type %in% c('map','themeRiver'))
+      ser$coordinateSystem <- 'unknown'       # keep to compare below
     if (ser$type %in% c('scatter3D','bar3D','line3D','surface'))
       ser$coordinateSystem <- 'cartesian3D'
+    if (ser$type %in% c('scatter3D','bar3D','lines3D')) {
+      if (!is.null(opt1$geo3D)) ser$coordinateSystem <- 'geo3D'
+      if (!is.null(opt1$globe)) ser$coordinateSystem <- 'globe'
+    }
+    if (!is.null(opt1$geo) && ser$type %in% c('scatter','scatterGL','lines'))
+      ser$coordinateSystem <- 'geo'
+    if (!is.null(opt1$leaflet)) ser$coordinateSystem <- 'leaflet'
+    #if (!is.null(opt1$radar)) series?$type <- 'radar'
+    if (ser$type == 'parallel') {
+      if (is.null(opt1$parallelAxis) && !is.null(df))
+        x$opts$parallelAxis <<- ec.paxis(df)
+      if (!is.null(grnm) && tail(colnames(df),1) != grnm)
+        stop(paste0("ec.init: df group column '",grnm,"' should be last for parallel chart"))
+    }
+    if (ser$type == 'themeRiver')
+      x$opts$singleAxis <<- .merlis(x$opts$singleAxis, list(min='dataMin', max='dataMax'))
+    if (ser$type %in% noAxis || any(c('roam') %in% names(ser))) # +graph
+      x$opts$xAxis <<- x$opts$yAxis <<- NULL
+    
     if (ser$type == 'pie') {
       xtem <- 'value'; ytem <- 'itemName' }
     if (ser$coordinateSystem=='polar') { 
@@ -227,37 +267,55 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
       xtem <- 'lng'; ytem <- 'lat' }
     if (ser$type == 'map') {
       xtem <- 'name'; ytem <- 'value' }
+    if (ser$coordinateSystem=='unknown')
+      ser$coordinateSystem <- NULL
     return(list(x=xtem, y=ytem, z='z', c=ser$coordinateSystem))
   }
-  
-  # forward widget options using x
-  x <- list(
-    theme = '',
-    draw = TRUE,
-    renderer = renderer,
-    locale = locale,
-    useDirtyRect = useDirtyRect,
-    jcode = js,
-    opts = opts,
-    settings = list(
-      crosstalk_key = key,
-      crosstalk_group = group
-    )
-  )
+  doVMap <- function(wid) {
+    # visualMap assist
+    vm <- wid$opts$visualMap
+    out <- NULL
+    if (!is.null(df) && !is.null(vm) &&
+        is.null(vm$min) && is.null(vm$max) &&
+        (is.null(vm$type) || (vm$type == 'continuous')) ) {
+      
+      if (any(names(df) == 'value') && (
+            (!is.null(tl.series) && tl.series$type=='map') ||
+            (!is.null(series.param) && series.param$type=='map'))
+         )
+          # get min/max from df, despite conversion df to series.data 
+          out <- list(  # for tl.series 'map'
+            min= min(na.omit(df$value)),  
+            max= max(na.omit(df$value)),
+            calculable= TRUE
+          )
+      else {
+        xx <- length(colnames(df))   # last column by default in ECharts
+        if (!is.null(vm$dimension)) xx <- vm$dimension
+        out <- list(
+          min= min(na.omit(df[,xx])),
+          max= max(na.omit(df[,xx])),
+          calculable= TRUE
+        )
+      } 
+    }
+    out
+  }
  
   # ------------- data.frame -------------------
   colX <- 1     # by default 1st column is X, 2nd is Y, 3rd is Z
   colY <- 2
+  grnm <- NULL
   if (!is.null(df)) {
-    # if data.frame given, assign to dataset regardless of parameter 'preset'
+    # if data.frame given, build dataset regardless of 'preset' or 'dataset'
 
     # skip default group settings on map timeline
-    if (!is.null(tl.series) && paste0(tl.series$type,'')=='map') ctype <- NULL
+    #if (!is.null(tl.series) && paste0(tl.series$type,'')=='map') ctype <- NULL
     
     # grouping uses transform
-    grnm <- NULL
     if (!is.null(ctype) && dplyr::is.grouped_df(df)) {
-      grnm <- dplyr::group_vars(df)[[1]]   # name of 1st grouping column 
+      #grnm <- dplyr::group_vars(df)[[1]]   # name of 1st grouping column 
+      grnm <- df |> group_vars() |> first() |> as.character()  # convert if factor
       x$opts$dataset <- list(list(source = ec.data(df, header=TRUE)))
       grvals <- unname(unlist(dplyr::group_data(df)[grnm]))
       txfm <- sers <- list()
@@ -274,8 +332,8 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
       }
       if (preset) {
         #if (is.null(tl.series) && is.null(x$opts$options))
-          x$opts$series <- sers
-        x$opts$legend <- .merlis(x$opts$legend, legd)
+        x$opts$series <- sers
+        if (is.null(opt1$legend)) x$opts$legend <- legd
       }
       x$opts$dataset <- append(x$opts$dataset, txfm)
     } 
@@ -283,7 +341,7 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
       x$opts$dataset <- list(list(source = ec.data(df, header=TRUE)))
     
     if (preset) {
-      # group by any column, group columns do not become X or Y axis
+      # group by any column, prevent group columns from becoming X/Y axis
       if (!is.null(grnm)) {  # find pos of grp column
         pos <- which(colnames(df)==grnm)
         if (!is.null(tl.series) && !is.null(tl.series$groupBy))
@@ -294,101 +352,92 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
         colY <- which(allp==TRUE)[2]
         stopifnot('ec.init: df must have at least 3 columns when grouping by one'= !is.na(colY))
       }
-      # add encode to series if missing after grouping
-      if (!(colX==1 && colY==2)) {
-        x$opts$series <- lapply(x$opts$series, function(ss) {
-          tmp <- xyNamesCS(ss)
-          if (tmp$c != 'unknown') {
-            if (is.null(ss$coordinateSystem)) ss$coordinateSystem <- tmp$c
-          }
-          if (is.null(ss$encode)) {
-              xtem <- tmp$x; ytem <- tmp$y
-              ss$encode <- list()
-              ss$encode[xtem] <- colX   # R count
-              ss$encode[ytem] <- colY 
-          }
-          # else don't overwrite user's encode
-          ss
-        })
-      }
-      
-      # visualMap assist (min/max not needed with series[[x]].data)
-      vm <- x$opts$visualMap
-      if (!is.null(vm) && (is.null(vm$min) || is.null(vm$max))) {
-        if (is.null(vm$type) || (vm$type == 'continuous')) {
-          xx <- length(colnames(df))   # last column by default in ECharts
-          if (!is.null(vm$dimension)) xx <- vm$dimension
-          #x$opts$visualMap$min <- min(na.omit(df[,xx]))
-          #x$opts$visualMap$max <- max(na.omit(df[,xx]))
-          x$opts$visualMap <- .merlis(x$opts$visualMap, list(
-            min= min(na.omit(df[,xx])),
-            max= max(na.omit(df[,xx])),
-            calculable= TRUE
-          ))
-        }
-      }
+
+      tmp <- doVMap(x)
+      x$opts$visualMap <- .merlis(x$opts$visualMap, tmp)
+      #if (is.null(opt1$visualMap)) x$opts$visualMap <- tmp
     }  # colX,colY, visualMap
   }
 
   # presets are default settings, user can ignore or replace them
   if (preset) {
     namop <- names(x$opts)
-    # list(show=TRUE) or list(list()) is to create an empty object{} in JS
     if (!'xAxis' %in% namop) 
       x$opts$xAxis <- list(show=TRUE)
     if (!'yAxis' %in% namop) 
       x$opts$yAxis <- list(show=TRUE)
-    if (!any(c('series','options') %in% namop))
-      x$opts$series <- list(list(type=if (is.null(ctype)) 'scatter' else ctype) )
+    # if (!any(c('series','options') %in% namop))
+    #   x$opts$series <- list(list(type= if (is.null(ctype)) 'scatter' else ctype) )
+    if (!any(c('series','options') %in% namop) && !is.null(ctype))
+      x$opts$series <- list(list(type= ctype))
     
     if ('series' %in% names(x$opts)) { 
-      if (is.null(x$opts$series[[1]]$type))  # set default to user serie if omitted
-        x$opts$series[[1]]$type <- if (is.null(ctype)) 'scatter' else ctype
-      if (x$opts$series[[1]]$type %in% noAxis)
+      # set default to user serie if omitted
+      if (is.null(x$opts$series[[1]]$type) && !is.null(ctype))
+        x$opts$series[[1]]$type <- ctype
+        #series.param = .merlis(series.param, list(type= ctype)) # TODO?
+      if (x$opts$series[[1]]$type %in% noAxis) { # || series.param$type %in% noAxis) {
         x$opts$xAxis <- x$opts$yAxis <- NULL
+      }
     }
-    else if (!is.null(ctype) && (ctype %in% noAxis))
-        x$opts$xAxis <- x$opts$yAxis <- NULL
-    if ('polar' %in% namop) {
+    #else if ((!is.null(ctype) && (ctype %in% noAxis)) ||
+    if (any(c('geo',noCoord) %in% namop))
       x$opts$xAxis <- x$opts$yAxis <- NULL
+    if ('polar' %in% namop) {
       if (is.null(x$opts$polar$radius)) x$opts$polar$radius = 111
       if (is.null(x$opts$radiusAxis)) x$opts$radiusAxis= list(type= 'category')
       if (is.null(x$opts$angleAxis)) x$opts$angleAxis= list(doit=TRUE)
       if (!is.null(series.param)) 
         series.param = .merlis(series.param, list(coordinateSystem= "polar"))
     }
-  }
-   
-  if (!is.null(x$opts$series) && !is.null(series.param)) {
-    x$opts$series <- .merlis(x$opts$series, series.param)
-    # TODO: when names not 'x','y'
-    tmp <- series.param$encode
-    if (!is.null(tmp)) {
-      if (is.numeric(tmp$x)) colX <- tmp$x
-      else if (!is.null(df)) colX <- which(colnames(df) %in% tmp$x)
-      if (is.numeric(tmp$y)) colY <- tmp$y
-      else if (!is.null(df)) colY <- which(colnames(df) %in% tmp$y)
+    
+    # series --------------------
+    if (!is.null(series.param)) {
+      x$opts$series <- .merlis(x$opts$series, series.param)
+      
+      # if (x$opts$series[[1]]$type=='map')
+      #   x$opts$series[[1]] <- .merlis(x$opts$series[[1]], list(geoIndex=1))
     }
+    x$opts$series <- lapply(x$opts$series, function(ss) {
+      tmp <- xyNamesCS(ss)
+      if (!is.null(tmp$c)) ss$coordinateSystem <- tmp$c
+
+      if (ss$type=='map' && is.null(ss$geoIndex))
+        ss <- .merlis(ss, list(geoIndex=1))
+      
+      # add encode to series after grouping, if missing 
+      if (!(colX==1 && colY==2)) {
+        xtem <- tmp$x; ytem <- tmp$y
+        if (!any(names(ss)=='encode')) {
+            ss$encode <- list()
+            ss$encode[xtem] <- colX   # R count
+            ss$encode[ytem] <- colY 
+        }
+        # else don't overwrite user's encode
+      }
+      ss
+    })
+      
+      # reading from encode (set above)
+        # TODO: when names not 'x','y' ?
+      tmp <- series.param$encode
+      if (!is.null(tmp) && !is.null(x$opts$xAxis)) {
+        if (is.numeric(tmp$x)) colX <- tmp$x
+        else if (!is.null(df)) colX <- which(colnames(df) %in% tmp$x)
+        if (is.numeric(tmp$y)) colY <- tmp$y
+        else if (!is.null(df)) colY <- which(colnames(df) %in% tmp$y)
+      }
+  
+      # set X,Y axes type & name from df
+      # TODO: get axis type also from series.data
+      if (!is.null(df)) {
+        axNamesEnc(x$opts$series)
+        axNamesEnc(list(tl.series))
+        if (!is.null(x$opts$xAxis)) x$opts$xAxis <- doType(colX, x$opts$xAxis)
+        if (!is.null(x$opts$yAxis)) x$opts$yAxis <- doType(colY, x$opts$yAxis)
+      }
   }
   
-  if (preset) {
-    # TODO: set axis type from series.data
-    # set X,Y axes type & name
-    axNamesEnc(x$opts$series)
-    axNamesEnc(list(tl.series))
-    x$opts$xAxis <- doType(colX, x$opts$xAxis)
-    x$opts$yAxis <- doType(colY, x$opts$yAxis)
-      
-    if (!is.null(x$opts$series)) {
-      if (!is.null(x$opts$series[[1]]$type)) {
-        if (x$opts$series[[1]]$type == 'parallel') {
-          if (is.null(x$opts$parallelAxis))
-            x$opts$parallelAxis <- ec.paxis(df)
-        }
-      }
-    }
-  }  # axes
-
   x$opts <- .renumber(x$opts)
   
   # ------------- create widget ----------------
@@ -417,7 +466,8 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
     wt <- ec.theme(wt, tmp)
   
   # ------------- plugins loading -----------------------------
-  load <- wt$x$opts$load;
+  opt1 <- wt$x$opts
+  load <- opt1$load;
   wt$x$opts$load <- NULL
   if (length(load)==1 && grepl(',', load, fixed=TRUE))
       load <- unlist(strsplit(load, ','))
@@ -432,16 +482,17 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
     wt$dependencies <- append(wt$dependencies, list(dep))
     
     if (preset) {
-      wt$x$opts$xAxis <- NULL
-      wt$x$opts$yAxis <- NULL
+      wt$x$opts$xAxis <- wt$x$opts$yAxis <- NULL
       if (!is.null(df)) {   # coordinateSystem='geo' needed for all series
         wt$x$opts$series <- .merlis(wt$x$opts$series, list(coordinateSystem='geo'))
       }
-      # WARN: map will duplicate if series have map='world' too
-      if (!'geo' %in% names(wt$x$opts))
+      # WARN: duplicate maps if series have map='world' too
+      if (!'geo' %in% names(opt1))
         wt$x$opts$geo = list(map='world', roam=TRUE)
       else
         wt$x$opts$geo = .merlis(wt$x$opts$geo, list(map='world'))
+      if (is.null(wt$x$opts$geo$roam))
+        wt$x$opts$geo$roam <- TRUE
       # if (!is.null(df))  # cancelled: don't know if df first 2 cols are 'lng','lat'
       #   wt$x$opts$geo$center= c(mean(unlist(df[,1])), mean(unlist(df[,2])))
     }
@@ -450,33 +501,27 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
   if ('leaflet' %in% load) {
     if (preset) {
       # customizations for leaflet
-      wt$x$opts$xAxis <- NULL
-      wt$x$opts$yAxis <- NULL
+      wt$x$opts$xAxis <- wt$x$opts$yAxis <- NULL
       urltls <- getOption('echarty.urlTiles')
       if (is.null(urltls))
         urltls <- 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
-      if (!'leaflet' %in% names(wt$x$opts)) {
+      if (!'leaflet' %in% names(opt1)) {
         wt$x$opts$leaflet = list(
           roam = TRUE,
           tiles = list( list(urlTemplate = urltls))
         )
       } 
-      if (!'tiles' %in% names(wt$x$opts$leaflet))
+      if (!'tiles' %in% names(opt1$leaflet))
         wt$x$opts$leaflet$tiles <- list( list(urlTemplate = urltls))
-      if (!'zoom' %in% names(wt$x$opts$leaflet))
+      if (!'zoom' %in% names(opt1$leaflet))
         wt$x$opts$leaflet$zoom <- 6
-      if (!'center' %in% names(wt$x$opts$leaflet)) {
+      if (!'center' %in% names(opt1$leaflet)) {
         if (!is.null(df)) 
           wt$x$opts$leaflet$center= c(mean(unlist(df[,1])), mean(unlist(df[,2])))
       }
-      
-      if ('series' %in% names(wt$x$opts)) {
-        # wt$x$opts$series <- lapply(wt$x$opts$series,
-        #   function(ss) {
-        #     if (is.null(ss$coordinateSystem)) ss$coordinateSystem <- 'leaflet'
-        #     ss })
+      if ('series' %in% names(opt1))
         wt$x$opts$series <- .merlis(wt$x$opts$series, list(coordinateSystem='leaflet'))
-      }
+      
     }
     
     dep <- htmltools::htmlDependency(
@@ -509,17 +554,20 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
   cdn <- 'https://cdn.jsdelivr.net/npm/'
   if ('3D' %in% load) {
     if (preset) {       # replace 2D presets with 3D
-      if (ctype != 'scatterGL') {  # scatterGL is 2D
-        wt$x$opts$xAxis <- NULL   
-        wt$x$opts$yAxis <- NULL
-        nops <- names(wt$x$opts)
+      isScatGL <- 'scatterGL' %in% unlist(lapply(opt1$series, \(k){k$type}))  # scatterGL is 2D
+      if (!isScatGL && is.null(opt1$globe) && is.null(opt1$geo3D) ) {  
+        wt$x$opts$xAxis <- wt$x$opts$yAxis <- NULL
+        nops <- names(opt1)
         if (!('xAxis3D' %in% nops)) wt$x$opts$xAxis3D <- list(list(s=T))
         if (!('yAxis3D' %in% nops)) wt$x$opts$yAxis3D <- list(list(s=T))
         if (!('zAxis3D' %in% nops)) wt$x$opts$zAxis3D <- list(list(s=T))
         if (!('grid3D'  %in% nops)) wt$x$opts$grid3D <- list(list(s=T))
       }
+      if (!is.null(opt1$globe) || !is.null(opt1$geo3D) ) {  
+        wt$x$opts$xAxis <- wt$x$opts$yAxis <- NULL
+      }
       # valid 3D types: scatter3D, bar3D, surface, etc.
-      if ('series' %in% names(wt$x$opts)) {  # if default 2D, change it
+      if ('series' %in% names(opt1)) {  # if default 2D, change it
         wt$x$opts$series <- lapply(wt$x$opts$series,
           \(s) { s$type= if (s$type=='scatter') 'scatter3D' else s$type; s })
       }
@@ -565,20 +613,19 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
   # timeline is evaluated last
   
   if (is.null(df) || !is.grouped_df(df))
-    stopifnot('ec.init: tl.series requires a grouped data.frame df'= 1==1)
+    stop('ec.init: tl.series requires a grouped data.frame df')
 
-  #stopifnot('ec.init: encode is required for tl.series'= !is.null(tl.series$encode))
   if (is.null(tl.series$encode))
-    tl.series$encode <- list(x=1, y=2, z=3)  # set default
+    tl.series$encode <- list(x=1, y=2, z=3)  # set default for non-map series
   
   # add missing defaults
   if (is.null(tl.series$type)) tl.series$type <- 'scatter'
   
   tmp <- xyNamesCS(tl.series)
   xtem <- tmp$x; ytem <- tmp$y
-  if (is.null(tl.series$coordinateSystem)) tl.series$coordinateSystem <- tmp$c
+  if (!is.null(tmp$c)) tl.series$coordinateSystem <- tmp$c
   
-  if (tl.series$coordinateSystem %in% c('geo','leaflet')) {
+  if (any(c('geo','leaflet') %in% tl.series$coordinateSystem)) {
       xtem <- 'lng'; ytem <- 'lat'
       if (!is.null(unlist(tl.series$encode[xtem])) &&
           !is.null(unlist(tl.series$encode[ytem])) ) {
@@ -592,20 +639,12 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
   } 
   
   if (tl.series$type == 'map') {
-    # tl.series type='map' has no encode/dataset API, needs 'data'
     xtem <- 'name'; ytem <- 'value'
-    wt$x$opts$dataset <- NULL
-    stopifnot("tl.series: encode 'name' is required"= !is.null(unlist(tl.series$encode[xtem])))
-    stopifnot("tl.series: encode 'value' is required"= !is.null(unlist(tl.series$encode[ytem])))
-    
-    gvar <- df |> group_vars() |> first() |> as.character()  # convert if factor
+    di <- 0
     optl <- lapply(df |> group_split(), \(gp) {
-      tmp <- gp
-      names(tmp)[names(tmp)==tl.series$encode[xtem]] <- 'name'
-      names(tmp)[names(tmp)==tl.series$encode[ytem]] <- 'value'
-      series <- list(list(type= "map", geoIndex= 1,
-                          data= ec.data(tmp, 'names')))
-      tmp <- list(title= list(text= as.character(unique(gp[gvar]))),  
+      di <<- di+1
+      series <- list(list(type= 'map', geoIndex= 1, datasetIndex= di +1))
+      tmp <- list(title= list(text= as.character(unique(gp[grnm]))),  
                   series= series)
       tmp <- .renumber(tmp)
     })
@@ -621,7 +660,7 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
     stopifnot("tl.series: bad second parameter name for encode"= !is.null(unlist(tl.series$encode[ytem])))
     
     # dataset is already in, now loop group column(s)
-    gvar <- df |> group_vars() |> first() |> as.character()  # convert if factor
+    #gvar <- df |> group_vars() |> first() |> as.character()  # convert if factor
     di <- 0
     optl <- lapply(df |> group_split(), \(gp) {
       di <<- di+1
@@ -634,29 +673,29 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
           append(list(datasetIndex= di +1), tl.series)  # , name= sname
       })
       
-      tmp <- list(title= list(text= unique(unlist(lapply(gp[gvar], as.character)))),
+      tmp <- list(title= list(text= unique(unlist(lapply(gp[grnm], as.character)))),
                   series= unname(series))
       tmp <- .renumber(tmp)
     })
   }
   
   #wt$x$opts$xAxis <- list(type='category')  # geo,leaf do not like
-  wt$x$opts$series <- NULL
-  wt$x$opts$legend <- NULL
+  wt$x$opts$series <- NULL   # otherwise legend + scatter series may stay behind
+  # wt$x$opts$legend <- NULL
   wt$x$opts$options <- .merlis(optl, wt$x$opts$options)
   
   if (!is.null(tl.series$groupBy)) {
     stopifnot('ec.init: tl.series groupBy column missing in df'= tl.series$groupBy %in% colnames(df))
-    gvar <- df |> group_vars() |> first() |> as.character()  # convert if factor
+    #gvar <- df |> group_vars() |> first() |> as.character()  # convert if factor
     tgrp <- tl.series$groupBy
     # define additional filter transformations and option series based on groupBy
     dsf <- list()  # new filters
     optm <- list() 
     filterIdx <- 0
-    for (ii in 1:length(unname(unlist(unique(df[gvar])))) ) {
+    for (ii in 1:length(unlist(unique(df[grnm]))) ) {
       snames <- c()
       for (x2 in unname(unlist(unique(df[tgrp]))) ) {
-        dst <- wt$x$opts$dataset[[ii+1]]  # skip source-dataset 1st
+        dst <- opt1$dataset[[ii+1]]  # skip source-dataset 1st
         dst$transform$config <- list(and= list(
           dst$transform$config,
           list(dimension= tgrp, `=`= x2)
@@ -697,7 +736,7 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
 #'
 #' @details ec.upd makes changes to chart elements already set by ec.init.\cr
 #' It should be always piped after ec.init.\cr
-#' All numerical indexes for series,visualMap,etc. are JS-counted (0,1...)\cr
+#' All numerical indexes for series,visualMap,etc. are JS-counted (start at 0)\cr
 #' Replaces syntax\cr
 #'   \verb{   }p <- ec.init(...)\cr
 #'   \verb{   }p$x$opts$series <- ...\cr
@@ -728,19 +767,21 @@ ec.upd <- function(wt, ...) {
 #' @param upper The column name of band's upper boundary (string).
 #' @param type Type of rendering
 #' \itemize{
-#'  \item 'stack' - by two \href{https://echarts.apache.org/en/option.html#series-line.stack}{stacked lines} (default)
-#'  \item 'polygon' - by drawing a polygon as polyline from upper/lower points. 
+#'  \item 'polygon' - by drawing a polygon as polyline from upper/lower points (default)
+#'  \item 'stack' - by two \href{https://echarts.apache.org/en/option.html#series-line.stack}{stacked lines}
 #' }
-#' @param ... More parameters for \href{https://echarts.apache.org/en/option.html#series-line.type}{serie}
-#' @return A list of one serie when type='polygon', or two series when type='stack'
+#' @param ... More attributes for \href{https://echarts.apache.org/en/option.html#series-line.type}{serie}
+#' @return A list of **one serie** when type='polygon', or list of **two series** when type='stack'
 #'
 #' @details
 #' \itemize{
-#'  \item type='stack': two _stacked_ lines are drawn, one with customizable areaStyle. The upper boundary coordinates are values added on top of the lower boundary coordinates.\cr
-#'      _xAxis_ is required to be type 'category'.
-#'  \item type='polygon': coordinates of the two boundaries are chained into a polygon and displayed as one. Tooltips do not show upper band values.
+#'  \item type='polygon': coordinates of the two boundaries are chained into one polygon. Tooltips do not show upper band values.
+#'      Set fill color with attribute _color_.\cr
+#'  \item type='stack': two _stacked_ lines are drawn, the lower with customizable areaStyle.\cr
+#'      _xAxis_ should be type 'category'! Tooltips could include upper band values.\cr
+#'      Set fill color with attribute _areaStyle$color_.\cr
 #' }
-#' Optional parameter _name_, if given, will show up in legend. Legend will merge all series with the same name into one item.
+#' Optional parameter _name_, if given, will show up in legend. Legend merges all series with same name into one item.
 #' 
 #' @examples 
 #' df <- airquality |> dplyr::mutate(
@@ -748,7 +789,7 @@ ec.upd <- function(wt, ...) {
 #'     upr= round(Temp+Wind*2),
 #'       x= paste0(Month,'-',Day) ) |>
 #'   dplyr::relocate(x, Temp)
-#' bands <- ecr.band(df, 'lwr', 'upr', # type='stack',
+#' bands <- ecr.band(df, 'lwr', 'upr', type='stack',
 #'                   name= 'stak', areaStyle= list(opacity=0.4))
 #' df |> ec.init( load= 'custom',
 #'    legend= list(show= TRUE),
@@ -768,7 +809,7 @@ ec.upd <- function(wt, ...) {
 #' 
 #' @importFrom stats na.omit
 #' @export
-ecr.band <- function(df=NULL, lower=NULL, upper=NULL, type='stack', ...) {
+ecr.band <- function(df=NULL, lower=NULL, upper=NULL, type='polygon', ...) {
   if (is.null(df) || is.null(lower) || is.null(upper)) 
     stop("ecr.band: df,lower,upper are required args", call. = FALSE)
   stopifnot("ecr.band: df must be a data.frame"= inherits(df, 'data.frame'))
@@ -979,7 +1020,7 @@ ecr.ebars <- function(wt, encode=list(x=1, y=c(2,3,4)), hwidth=6, ...) {
 #' @importFrom htmlwidgets shinyWidgetOutput
 #' @export
 ecs.output <- function(outputId, width= '100%', height= '400px') {
-  htmlwidgets::shinyWidgetOutput(outputId, 'echarty', width, height, package= 'echarty')
+  htmlwidgets::shinyWidgetOutput(outputId, 'echarty', width, height) #, package= 'echarty')
 }
 
 
@@ -1157,14 +1198,17 @@ ec.plugjs <- function(wt=NULL, source=NULL, ask=FALSE) {
 # }
 
 .r2jsEncode <- function(ss) {
-  if (!is.null(ss$encode)) {
+
+  if (any(names(ss)=='encode')) {
     for(i in 1:length(ss$encode)) {
       if (!is.numeric(ss$encode[[i]])) next
         ss$encode[[i]] <- ss$encode[[i]] -1
     }
   }
-  if (!is.null(ss$xAxisIndex)) ss$xAxisIndex <- ss$xAxisIndex -1
-  if (!is.null(ss$yAxisIndex)) ss$yAxisIndex <- ss$yAxisIndex -1
+  if (!ss$type %in% noAxis) {
+    if (!is.null(ss$xAxisIndex)) ss$xAxisIndex <- ss$xAxisIndex -1
+    if (!is.null(ss$yAxisIndex)) ss$yAxisIndex <- ss$yAxisIndex -1
+  }
   if (!is.null(ss$datasetIndex)) ss$datasetIndex <- ss$datasetIndex -1
   if (!is.null(ss$geoIndex)) ss$geoIndex <- ss$geoIndex -1
   if (!is.null(ss$polarIndex)) ss$polarIndex <- ss$polarIndex -1
@@ -1181,15 +1225,15 @@ ec.plugjs <- function(wt=NULL, source=NULL, ask=FALSE) {
   
   tmp <- opa$visualMap
   if (!is.null(tmp)) {
-    doVmap <- function(x) {
+    decVmap <- function(x) {
       if (!is.null(x$dimension) && is.numeric(x$dimension)) x$dimension <- x$dimension -1
       if (!is.null(x$seriesIndex)) x$seriesIndex <- x$seriesIndex -1
       x
     }
     if (all(sapply(tmp, is.list)))
-      opa$visualMap <- lapply(tmp, doVmap)
+      opa$visualMap <- lapply(tmp, decVmap)
     else
-      opa$visualMap <- doVmap(tmp)
+      opa$visualMap <- decVmap(tmp)
   }
   opa
 }

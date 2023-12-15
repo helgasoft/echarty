@@ -17,7 +17,7 @@ test_that("registerMap", {
   p <- ec.init(preset= FALSE,
     geo= list(map= 'paris', roam= TRUE),
     series =list(list(
-      type= 'map', coordinateSystem= 'geo', geoIndex=1,
+      type= 'map', geoIndex=1,
       data= ec.data(dparis, 'names')
     )),
     visualMap= list(type='continuous', calculable=TRUE,
@@ -59,19 +59,6 @@ test_that("tl.series, timeline options, groupBy", {  # also in test-presets
   expect_true(p$x$opts$dataset[[9]]$transform$config$and[[2]]$dimension=='x2')
 })
 
-test_that("tl.series type 'map'", {
-    cns <- data.frame(
-      country = c('United States','China','Russia'),
-      value = runif(3, 1, 100)
-    )
-    p <- cns |> group_by(country) |> ec.init(load='world',
-        tl.series= list(type='map', encode=list(value='value', name='country')),
-        visualMap= list(calculable=TRUE, max=100)
-    )
-    expect_equal(p$x$opts$options[[1]]$series[[1]]$data[[1]]$name, "China")
-    expect_equal(p$x$opts$options[[1]]$series[[1]]$geoIndex, 0)  # decremented
-})
-
 test_that("leaflet with ec.clmn and timeline", {
 
   tmp <- quakes |> dplyr::relocate('long') |>  # set order to lon,lat
@@ -101,7 +88,7 @@ test_that("leaflet with ec.clmn and timeline", {
   	timeline= list(autoPlay=TRUE, controlStyle= list(borderColor='brown')),
   	options= list(legend= list(show=T)), 
     tl.series= list( 
-        type='scatter', coordinateSystem='leaflet', name='quake',
+        type='scatter', name='quake',
         symbolSize = ec.clmn(6, scale=2),
         encode= list(lng='long', lat='lat', tooltip=c(4,5))
     ),
@@ -116,6 +103,7 @@ test_that("leaflet with ec.clmn and timeline", {
   expect_equal(p$x$opts$options[[10]]$title$text, '19')
   expect_equal(p$x$opts$options[[10]]$series[[1]]$name, 'quake')
   expect_true (p$x$opts$options[[10]]$legend$show)
+  expect_equal(p$x$opts$options[[41]]$series[[1]]$coordinateSystem, 'leaflet')
   expect_equal(p$x$opts$timeline$data[[10]], '19')
   expect_equal(p$x$opts$dataset[[2]]$transform$config$`=`, 10)
 })
@@ -226,28 +214,14 @@ test_that('autoset axis type', {
   expect_equal(p$x$opts$yAxis$type, 'value')
 })
 
-test_that('polar presets', {
-  df <- data.frame(x = 1:10, y = seq(1, 20, by = 2))
-  p <- df |> ec.init(ctype='line', polar= list(dummy= T), 
-  		 series.param= list(NOcoordinateSystem= "polar", smooth= T)
-  )
-  expect_equal(p$x$opts$polar$radius, 111)
-  expect_equal(p$x$opts$radiusAxis$type, 'category')
-  expect_equal(p$x$opts$series[[1]]$coordinateSystem, 'polar')
-})
-
 test_that('stops are working in echarty.R', {
   df <- data.frame(x = 1:10, y = seq(1, 20, by = 2))
   expect_error(cars |> group_by(speed) |> ec.init()) # 3 cols min
   expect_error(ec.init(0)) # df
   expect_error(ec.init(cars, tl.series= list(d=1))) # groups
-  #expect_error(ec.init(mtcars |> group_by(gear), tl.series= list(d=1))) # encode
-  expect_error(ec.init(mtcars |> group_by(gear), tl.series= 
-                  list(type='map', encode= list(x=1, y=2)))) # x
-  expect_error(ec.init(mtcars |> group_by(gear), 
-      tl.series= list(type='map', encode= list(name=1)))) # y
-  expect_silent(ec.init(mtcars |> group_by(gear), 
-      tl.series= list(type='map', encode= list(name=1, value=2))))  # pass map
+  expect_silent(ec.init(mtcars |> group_by(gear), tl.series= list(type='map'))) # no name/value, can use encode
+  expect_error(ec.init(data.frame(name='n',value=1) |> group_by(name), 
+      tl.series= list(type='map')))  # 3 cols min
   expect_error(ec.init(mtcars |> group_by(gear), tl.series= list(encode= list(x=1, y=2),groupBy='zzz'))) # groupBy
   expect_error(ecr.band(cars))
   tmp <- cars; tmp <- tmp |> rename(lower=speed, upper=dist)

@@ -10,7 +10,9 @@
 - add default _coordinateSystem_ for 3D charts
 - fix _datasetIndex_ for timeline 3D series
 - add _encode_ default, improve _ec.init_ docs
-- fix _tl.series_ type 'map' encode
+- _tl.series_ type 'map': add support 'dimension' for visualMap and fix 'legend' bug 
+- removed width/height from 'tabset', handled by _ec.init_
+- _ecr.band_ replaced default type from 'stack' to 'polygon'
 
 ## v.1.6.2  on CRAN
 
