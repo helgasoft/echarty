@@ -48,6 +48,7 @@ test_that("ec.init presets for grouped data.frame", {
 })
 
 test_that("ec.init presets for timeline", {
+  # TODO 'timeline= list(data=,axisType=)'...
   dftl <- data.frame(
     value = runif(16),
     quarter = as.factor(rep(1:4, 4)),
@@ -56,7 +57,9 @@ test_that("ec.init presets for timeline", {
   barTL <- function(data, timeline_var) {  #}, x_var, bar_var) {
     bt <- data |> dplyr::group_by(!!dplyr::sym(timeline_var)) |> 
       ec.init(tl.series = list(type='bar'), #,encode=list(x=x_var, y=bar_var)),
-              xAxis= list(name='xval'))
+              xAxis= list(name='xval'),
+              timeline= list(s=T) # data= c(1,2,3,4), axisType='value') #ok
+      )
     bt
   }
   p <- barTL(dftl, timeline_var= "year") #, x_var= "value", bar_var= "quarter")
@@ -64,7 +67,7 @@ test_that("ec.init presets for timeline", {
   expect_equal(length(o$dataset[[1]]$source), 17)
   expect_equal(length(o$dataset), 5)
   expect_equal(length(o$options), 4)
-  expect_equal(o$options[[4]]$title$text, '2021')
+  expect_equal(o$timeline$axisType, 'category')
   expect_equal(o$yAxis$name, 'quarter')
   expect_equal(o$xAxis$name, 'xval')
   expect_equal(o$options[[1]]$series[[1]]$encode, list(x=0, y=1, z=2))

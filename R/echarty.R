@@ -603,7 +603,7 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
                        #"^(50|56|62|68|74|152|158)$")
     )))
     wt$x$opts$dataset <- append(wt$x$opts$dataset, tmp)
-    if (!is.null(wt$x$opts$series))
+    if ('series' %in% names(opt1))
       wt$x$opts$series[[1]]$datasetId= 'Xtalk'
   }
   
@@ -621,6 +621,7 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
   # add missing defaults
   if (is.null(tl.series$type)) tl.series$type <- 'scatter'
   
+  steps <- c()
   tmp <- xyNamesCS(tl.series)
   xtem <- tmp$x; ytem <- tmp$y
   if (!is.null(tmp$c)) tl.series$coordinateSystem <- tmp$c
@@ -643,8 +644,9 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
     di <- 0
     optl <- lapply(df |> group_split(), \(gp) {
       di <<- di+1
+      steps <<- c(steps, unique(unlist(lapply(gp[grnm], as.character))))
       series <- list(list(type= 'map', geoIndex= 1, datasetIndex= di +1))
-      tmp <- list(title= list(text= as.character(unique(gp[grnm]))),  
+      tmp <- list( #title= list(text= as.character(unique(gp[grnm]))),  
                   series= series)
       tmp <- .renumber(tmp)
     })
@@ -664,6 +666,7 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
     di <- 0
     optl <- lapply(df |> group_split(), \(gp) {
       di <<- di+1
+      steps <<- c(steps, unique(unlist(lapply(gp[grnm], as.character))))
       # nicer looking lines with sorted X 
       #if (!is.null(xcol)) gp <- gp |> arrange(across(all_of(xcol)))
       
@@ -673,7 +676,7 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
           append(list(datasetIndex= di +1), tl.series)  # , name= sname
       })
       
-      tmp <- list(title= list(text= unique(unlist(lapply(gp[grnm], as.character)))),
+      tmp <- list( #title= list(text= unique(unlist(lapply(gp[grnm], as.character)))),
                   series= unname(series))
       tmp <- .renumber(tmp)
     })
@@ -720,8 +723,13 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
     wt$x$opts$legend <- .merlis(wt$x$opts$legend, list(show=TRUE))  # needed for sub-group
   }
   
-  steps <- lapply(optl, \(x) { paste(x$title$text, collapse=' ') })
-  wt$x$opts$timeline <- .merlis(wt$x$opts$timeline, list(data=steps, axisType='category'))
+  if ('timeline' %in% names(opt1)) {
+    if (is.null(opt1$timeline$data))
+       wt$x$opts$timeline <- .merlis(wt$x$opts$timeline, list(data= steps))
+    if (is.null(opt1$timeline$axisType))
+       wt$x$opts$timeline <- .merlis(wt$x$opts$timeline, list(axisType='category'))
+  } else
+    wt$x$opts$timeline <- .merlis(wt$x$opts$timeline, list(data=steps, axisType='category'))
   
   return(wt)
 }

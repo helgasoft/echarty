@@ -36,8 +36,8 @@ test_that("tl.series, timeline options, groupBy", {  # also in test-presets
     timeline= list(autoPlay=TRUE),
     tl.series= list(type='bar', encode=list(x='Tree', y='circumference'))
   ) |> ec.upd({
-    options <- lapply(options, 
-      function(o) { o$title$text <- paste('age',o$title$text,'days'); o })
+    options <- lapply(seq_along(options), 
+      function(i) { options[[i]]$title$text <- paste('age',timeline$data[[i]],'days'); options[[i]] })
   })
   expect_equal(p$x$opts$options[[5]]$title$text, "age 1231 days")
   expect_equal(p$x$opts$options[[5]]$series[[1]]$datasetIndex, 5)
@@ -53,9 +53,10 @@ test_that("tl.series, timeline options, groupBy", {  # also in test-presets
   )
   p <- dat |> group_by(x1) |> ec.init(
     tl.series= list(encode= list(x= 'x3', y= 'x5'), groupBy='x2',
-                    symbolSize= ec.clmn(4, scale=30)) 
+                    symbolSize= ec.clmn(4, scale=30)),
+    legend= list(s=T)
   )
-  expect_equal(p$x$opts$options[[4]]$title$text, '2023')
+  expect_equal(p$x$opts$options[[4]]$series[[2]]$name, 'B')
   expect_true(p$x$opts$dataset[[9]]$transform$config$and[[2]]$dimension=='x2')
 })
 
@@ -100,7 +101,7 @@ test_that("leaflet with ec.clmn and timeline", {
   expect_equal(p$x$opts$leaflet$zoom, 2)
   expect_s3_class(p$x$opts$tooltip$formatter, 'JS_EVAL')
   #expect_equal(p$dependencies[[9]]$name, 'echarts-leaflet')  # loads slow?
-  expect_equal(p$x$opts$options[[10]]$title$text, '19')
+  #expect_equal(p$x$opts$options[[10]]$title$text, '19')
   expect_equal(p$x$opts$options[[10]]$series[[1]]$name, 'quake')
   expect_true (p$x$opts$options[[10]]$legend$show)
   expect_equal(p$x$opts$options[[41]]$series[[1]]$coordinateSystem, 'leaflet')
