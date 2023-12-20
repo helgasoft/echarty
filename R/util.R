@@ -566,7 +566,7 @@ body { padding: 10px; }
 #'  Additional grouping is supported on a column after the second. Groups will show in the legend, if enabled.\cr
 #'  Returns a `list(dataset, series, xAxis, yAxis)` to set params in [ec.init]. 
 #'  Make sure there is enough data for computation, 4+ values per boxplot.\cr
-#'  `format='treeTT'` expects data.frame _df_ columns _pathString,value,(optional itemStyle)_ for \link[data.tree]{FromDataFrameTable}.\cr
+#' `format='treeTT'` expects data.frame _df_ columns _pathString,value,(optional itemStyle)_ for \link[data.tree]{FromDataFrameTable}.\cr
 #'  It will add column 'pct' with value percentage for each node. See Details.
 #' @seealso some live \href{https://rpubs.com/echarty/data-models}{code samples}
 #' 
@@ -898,6 +898,7 @@ ec.data <- function(df, format='dataset', header=FALSE, ...) {
 #' * \emph{%R@} rounded number, like '12345'.\cr
 #' * \emph{%R2@} rounded number, two digits after decimal point.\cr
 #' * \emph{%M@} marker in serie's color.\cr
+#' Notice that tooltip _formatter_ will work for _trigger='item'_, but not for _trigger='axis'_ when there are multiple value sets.
 #' 
 #' @examples
 #' tmp <- data.frame(Species = as.vector(unique(iris$Species)),

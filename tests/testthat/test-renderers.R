@@ -2,9 +2,13 @@ library(dplyr)
 
 test_that("ecr.ebars", {
   # dset + groups
-  p <- iris |> group_by(Species) |>
-    ec.init(load= 'custom', ctype='bar', legend=list(show=T), yAxis=list(type='category')) |>
-    ecr.ebars(encode= list(x=c(2,3,4), y=1))
+  tmp <- iris |> group_by(Species) |>
+    ec.init(load= 'custom', ctype='bar', legend=list(show=T), yAxis=list(type='category'))
+  p <- tmp |> ecr.ebars(encode= list(x=c('Sepal.Width', 'Petal.Length', 'Petal.Width'), y='Sepal.Length'))
+  expect_equal(p$x$opts$series[[6]]$name, 'virginica')
+  expect_equal(p$x$opts$xAxis$name, 'Sepal.Length')     # horiz.bars
+  
+  p <- tmp |> ecr.ebars(encode= list(x=c(2,3,4), y=1))  # numeric encode
   expect_equal(p$x$opts$series[[4]]$z, 3)
   expect_match(p$x$opts$series[[4]]$tooltip$formatter, 'range', fixed=TRUE)
   
@@ -34,7 +38,8 @@ test_that("ecr.ebars", {
   p <- ec.init(load= 'custom', legend= list(show=T), tooltip= list(show=T), 
                xAxis=list(type='category'),
     series= list(list(type='bar', name= 'data',
-      dimensions= c('cyl','gear','yy','low','high'), encode= list(x='gear',y='yy'),
+      encode= list(x='gear',y='yy'),
+      dimensions= c('cyl','gear','yy','low','high'),
       data= ec.data(df |> filter(cyl==4))
   ))) |> 
     ecr.ebars(encode= list(x='gear', y=c('yy','low','high')), hwidth=12, name='err',

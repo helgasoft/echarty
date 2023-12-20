@@ -29,10 +29,11 @@ A 'custom' serie with lower and upper boundaries
 }
 \details{
 \itemize{
-\item type='polygon': coordinates of the two boundaries are chained into one polygon. Tooltips do not show upper band values.
+\item type='polygon': coordinates of the two boundaries are chained into one polygon. Tooltips do not show upper band values.\cr
+\emph{xAxis type} could be 'category' or 'value'.\cr
 Set fill color with attribute \emph{color}.\cr
 \item type='stack': two \emph{stacked} lines are drawn, the lower with customizable areaStyle.\cr
-\emph{xAxis} should be type 'category'! Tooltips could include upper band values.\cr
+\emph{xAxis type} should be 'category'! Tooltips could include upper band values.\cr
 Set fill color with attribute \emph{areaStyle$color}.\cr
 }
 Optional parameter \emph{name}, if given, will show up in legend. Legend merges all series with same name into one item.

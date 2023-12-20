@@ -70,6 +70,10 @@ test_that("shapefile LINESTRING and MULTILINESTRING", {
 })
 
 test_that("shapefile POINTS from ZIP", {
+  fn <- ec.util(cmd= 'sf.unzip', 
+          url= 'https://mapcruzin.com/sierra-leone-shapefiles/points.zip')
+  expect_true(endsWith(fn, 'points.shp'))
+
   if (interactive()) {  # creates a subfolder 'points'
     library(sf)
     fn <- ec.util(cmd= 'sf.unzip', 

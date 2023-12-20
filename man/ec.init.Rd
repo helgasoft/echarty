@@ -29,18 +29,12 @@ If grouping is on multiple columns, only the first one is used to determine sett
 \item{...}{Optional widget attributes. See Details. \cr}
 
 \item{series.param}{Additional attributes for preset series, default is NULL.\cr
-This parameter is for regular (non-timeline) series only.\cr
-One can also define the complete series with \emph{series= list(list(...),...)}.}
+Can be used for non-timeline and timeline series (instead of \emph{tl.series}). A single list defines one series type only.\cr
+One could also define all series directly with \emph{series=list(list(...),list...)} instead.}
 
-\item{tl.series}{List defines \href{https://echarts.apache.org/en/option.html#series}{options series} for timeline.\cr
-Default is NULL. Similar to \emph{series.param} but for timeline series.\cr
-A grouped \emph{df} must be present, each group providing data for one options series.
-Timeline \href{https://echarts.apache.org/en/option.html#timeline.data}{data} and \href{https://echarts.apache.org/en/option.html#options}{options} will be preset for the chart.\cr
-Another preset is \emph{encode(x=1,y=2,z=3)}, which are the first 3 columns of \emph{df}. Parameter \emph{z} is ignored in 2D. See Details below.\cr
-Optional attribute \emph{groupBy}, a \emph{df} column name, can create series groups inside each timeline option.\cr
-\emph{tl.series} cannot be used for hierarchical charts like graph,tree,treemap,sankey. Chart options/timeline have to be built directly, see \href{https://helgasoft.github.io/echarty/uc4.html}{example}.}
+\item{tl.series}{Deprecated, use \emph{timeline} and \emph{series.param} instead.\cr}
 
-\item{width, height}{A valid CSS unit (like \code{'100\%'},
+\item{width, height}{Optional valid CSS unit (like \code{'100\%'},
 \code{'500px'}, \code{'auto'}) or a number, which will be coerced to a
 string and have \code{'px'} appended.}
 }
@@ -98,6 +92,14 @@ Parameter \emph{df} should be of type \link[crosstalk]{SharedData}, see \href{ht
 Optional parameter \emph{xtKey}: unique ID column name of data frame \emph{df}. Must be same as \emph{key} parameter used in \emph{SharedData$new()}. If missing, a new column \emph{XkeyX} will be appended to df.\cr
 Enabling \emph{crosstalk} will also generate an additional dataset called \emph{Xtalk} and bind the \strong{first series} to it.\cr
 
+\strong{Timeline}:\cr
+Defined by \emph{series.param} for the \href{https://echarts.apache.org/en/option.html#series}{options series} and a \emph{timeline} list for the \href{https://echarts.apache.org/en/option.html#timeline}{actual control}.
+A grouped \emph{df} is required, each group providing data for one option serie.
+Timeline \href{https://echarts.apache.org/en/option.html#timeline.data}{data} and \href{https://echarts.apache.org/en/option.html#options}{options} will be preset for the chart.\cr
+Another preset is \emph{encode(x=1,y=2,z=3)}, which are the first 3 columns of \emph{df}. Parameter \emph{z} is ignored in 2D. See Details below.\cr
+Optional attribute \emph{groupBy}, a \emph{df} column name, can create series groups inside each timeline option.\cr
+Timeline cannot be used for hierarchical charts like graph,tree,treemap,sankey. Chart options/timeline have to be built directly, see \href{https://helgasoft.github.io/echarty/uc4.html}{example}.
+
 \strong{\href{https://echarts.apache.org/en/option.html#series-line.encode}{Encode}} \cr
 A series attribute to define which columns to use for the axes, depending on chart type and coordinate system: \cr
 \itemize{
@@ -121,6 +123,11 @@ ec.init(        # init with presets
     symbolSize= ec.clmn('Petal.Width', scale=7),
     tooltip= list(formatter= ec.clmn('Petal.Width: \%@', 'Petal.Width'))
   )
+)
+
+data.frame(n=1:5) |> dplyr::group_by(n) |> ec.init(
+  timeline= list(show=TRUE, autoPlay=TRUE),
+  series.param= list(type='gauge', max=5)
 )
 
 }

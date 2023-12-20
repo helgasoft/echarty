@@ -39,6 +39,7 @@ Template placeholders with formatting:\cr
 \item \emph{\%R@} rounded number, like '12345'.\cr
 \item \emph{\%R2@} rounded number, two digits after decimal point.\cr
 \item \emph{\%M@} marker in serie's color.\cr
+Notice that tooltip \emph{formatter} will work for \emph{trigger='item'}, but not for \emph{trigger='axis'} when there are multiple value sets.
 }
 }
 \examples{

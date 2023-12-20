@@ -34,10 +34,12 @@ test_that("registerMap", {
 test_that("tl.series, timeline options, groupBy", {  # also in test-presets
   p <- Orange |> dplyr::group_by(age) |> ec.init(
     timeline= list(autoPlay=TRUE),
-    tl.series= list(type='bar', encode=list(x='Tree', y='circumference'))
+    series.param= list(type='bar', encode=list(x='Tree', y='circumference'))
   ) |> ec.upd({
     options <- lapply(seq_along(options), 
-      function(i) { options[[i]]$title$text <- paste('age',timeline$data[[i]],'days'); options[[i]] })
+      \(i) { 
+        options[[i]]$title$text <- paste('age',timeline$data[[i]],'days'); 
+        options[[i]] })
   })
   expect_equal(p$x$opts$options[[5]]$title$text, "age 1231 days")
   expect_equal(p$x$opts$options[[5]]$series[[1]]$datasetIndex, 5)
@@ -152,14 +154,34 @@ test_that("ec.data treeTK", {
 
 test_that("load 3D surface", {
   #if (interactive()) {  # first time will load echarts-gl.js in source folder 'js'
-    data <- list()
-    for(y in 1:dim(volcano)[2]) for(x in 1:dim(volcano)[1])
-      data <- append(data, list(c(x, y, volcano[x,y])))
-    p <- ec.init(load= '3D', series= list(list(type= 'surface',	data= data)) )
-    
-    expect_equal(length(p$x$opts$series[[1]]$data), 5307)
-  #}
-  #else expect_equal(1,1)
+  data <- list()
+  for(y in 1:dim(volcano)[2]) for(x in 1:dim(volcano)[1])
+    data <- append(data, list(c(x, y, volcano[x,y])))
+  p <- ec.init(load= '3D', series= list(list(type= 'surface',	data= data)) )
+  
+  expect_equal(length(p$x$opts$series[[1]]$data), 5307)
+})
+
+test_that("3D globe", {
+  p <- ec.init(load='3D',
+    globe= list(viewControl= list(autoRotate= FALSE)),
+    series= list(
+      list(type= 'scatter3D',
+        data= list(c(32,-117,11), c(2,44,22)) ,
+        symbolSize= 40, itemStyle= list(color= 'red')
+    ))
+  )
+  expect_equal(p$x$opts$series[[1]]$coordinateSystem, 'globe')
+})
+
+test_that("calendar", {
+  df <- data.frame(d= seq(as.Date("2023-01-01"), by="day", length.out=360), v=runif(360,1,100))
+  p <- df |> ec.init(
+    visualMap= list(show= FALSE, min= 0, max= 100), 
+    calendar = list(range= c('2023-01','2023-04')),
+    series = list(list(type = 'scatter'))
+  )
+  expect_equal(p$x$opts$series[[1]]$coordinateSystem, "calendar")
 })
 
 test_that("ec.plugjs", {
@@ -216,13 +238,18 @@ test_that('autoset axis type', {
 })
 
 test_that('stops are working in echarty.R', {
-  df <- data.frame(x = 1:10, y = seq(1, 20, by = 2))
-  expect_error(cars |> group_by(speed) |> ec.init()) # 3 cols min
+  df <- data.frame(x = 1:10, y = seq(1, 20, by=2))
   expect_error(ec.init(0)) # df
   expect_error(ec.init(cars, tl.series= list(d=1))) # groups
   expect_silent(ec.init(mtcars |> group_by(gear), tl.series= list(type='map'))) # no name/value, can use encode
-  expect_error(ec.init(data.frame(name='n',value=1) |> group_by(name), 
-      tl.series= list(type='map')))  # 3 cols min
+  expect_silent(ec.init(df |> group_by(y), series.param= list(type='bar')))
+  expect_silent(ec.init(df |> group_by(y), series.param= list(type='bar'), 
+                        timeline= list(s=T)))
+  # expect_error(cars |> group_by(speed) |> ec.init()) # 3 cols min
+  # expect_error(ec.init(data.frame(name='n',value=1) |> group_by(name), 
+  #     tl.series= list(type='bar')))  # 3 cols min
+  # expect_silent(ec.init(data.frame(name='n',value=1) |> group_by(name), 
+  #     tl.series= list(type='map')))  # 2 cols exception for map
   expect_error(ec.init(mtcars |> group_by(gear), tl.series= list(encode= list(x=1, y=2),groupBy='zzz'))) # groupBy
   expect_error(ecr.band(cars))
   tmp <- cars; tmp <- tmp |> rename(lower=speed, upper=dist)
