@@ -352,6 +352,8 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
         pos <- which(colnames(df)==grnm)
         if (!is.null(tl.series) && !is.null(tl.series$groupBy))
           pos <- c(pos, which(colnames(df)==tl.series$groupBy))
+        if (!is.null(series.param) && !is.null(series.param$groupBy))
+          pos <- c(pos, which(colnames(df)==series.param$groupBy))
         allp <- rep(TRUE, length(colnames(df)))
         allp <- replace(allp, pos, FALSE)
         colX <- which(allp==TRUE)[1]   # first two==TRUE are X,Y
@@ -625,6 +627,7 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
   
   # ------------- timeline  -----------------
   if (is.null(tl.series) && is.null(opt1$timeline)) return(wt)
+  if (!preset) return(wt)
   # timeline is evaluated last
   if (is.null(tl.series) && 
       !is.null(opt1$timeline) && 
@@ -632,7 +635,7 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
     tl.series <- series.param
   
   if (is.null(df) || !is.grouped_df(df))
-    stop('ec.init: tl.series requires a grouped data.frame df')
+      stop('ec.init: tl.series requires a grouped data.frame df')
 
   if (is.null(tl.series$encode))
     tl.series$encode <- list(x=1, y=2, z=3)  # set default for non-map series

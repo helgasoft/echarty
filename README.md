@@ -85,9 +85,9 @@ iris |> group_by(Species) |> ec.init(load= '3D')
 iris |> group_by(Species) |> 
 ec.init(
   timeline= list(autoPlay= TRUE),
-  tl.series= list(
-    symbolSize= ec.clmn('Petal.Width', scale= 3),
-    encode= list(y= c('Sepal.Width', 'Petal.Length')),
+  series.param = list(
+    symbolSize= ec.clmn('Petal.Width', scale= 9),
+    encode= list(x= 'Sepal.Width', y='Petal.Length'),
     markLine= list(data= list(list(type='max'), list(type='min')))
   )
 )
@@ -99,12 +99,12 @@ echarty::ec.fromJson('https://helgasoft.github.io/echarty/test/pfull.json')
 
 ## Get started
 
+The Coder is a good introduction, type ```library(echarty); demo(coder)```.  
 The [**WEBSITE**](https://helgasoft.github.io/echarty) has a gallery with code and tutorials.  
-<br /> The package has plenty of [**code
-examples**](https://github.com/helgasoft/echarty/blob/main/R/examples.R)
+The package itself has plenty of [**code examples**](https://github.com/helgasoft/echarty/blob/main/R/examples.R)
 included. Type
 **?ec.examples**, then copy/paste any code to
-see the result.  
+see the chart.  
 
 Now you can start building [**beautiful
 ECharts**](https://echarts.apache.org/examples/en/index.html) (and

@@ -35,7 +35,7 @@
 #' \verb{   }... - optional custom series attributes like _itemStyle_\cr
 #' \verb{   }ppfill - optional fill color like '#F00', OR NULL for no-fill, for all Points and Polygons\cr
 #' \verb{   }nid - optional feature property for item name used in tooltips\cr
-#' \verb{   }optional geoJSON _feature properties_: color, ppfill, lwidth, ldash, radius(for points)\cr
+#' \verb{   }optional geoJson _feature properties_: color, ppfill, lwidth, ldash, radius(for points)\cr
 #' **cmd = 'layout'** \cr
 #' \verb{   }multiple charts in table-like rows/columns format\cr
 #' \verb{   }... - List of charts\cr

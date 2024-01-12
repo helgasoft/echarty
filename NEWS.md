@@ -1,6 +1,6 @@
 # history of package _echarty_
 
-## v.1.6.2.02  latest, in development
+## v.1.6.3
 
 - added coder.R demo
 - correct gridIndex numbering for xAxis/yAxis

@@ -56,7 +56,7 @@ test_that("ec.init presets for timeline", {
   )
   barTL <- function(data, timeline_var) {  #}, x_var, bar_var) {
     bt <- data |> dplyr::group_by(!!dplyr::sym(timeline_var)) |> 
-      ec.init(tl.series = list(type='bar'), #,encode=list(x=x_var, y=bar_var)),
+      ec.init(series.param = list(type='bar'), #,encode=list(x=x_var, y=bar_var)),
               xAxis= list(name='xval'),
               timeline= list(s=T) # data= c(1,2,3,4), axisType='value') #ok
       )
@@ -92,12 +92,12 @@ test_that("ec.init presets for timeline groupBy", {
   expect_equal(p$x$opts$options[[4]]$series[[1]]$encode$y, 'y')
   expect_equal(p$x$opts$yAxis$name, 'y')
 
-  p <- dat |> group_by(x1) |> ec.init(preset=F,  #load='3D',
+  p <- dat |> group_by(x1) |> ec.init(#load='3D',
     xAxis3D=list(s=T),yAxis3D=list(s=T),zAxis3D=list(s=T),grid3D=list(s=T),
-    legend= list(show=TRUE),
-    tl.series= list(encode= list(x='x', y='y', z='z'), type='scatter3D',
-                    symbolSize= ec.clmn('x4', scale=30),
-                    groupBy= 'x2')
+    timeline=list(s=T), legend= list(show=TRUE), 
+    series.param= list(type='scatter3D', groupBy= 'x2',
+      encode= list(x='x', y='y', z='z'), 
+      symbolSize= ec.clmn('x4', scale=30) )
   )
   expect_equal(p$x$opts$options[[1]]$series[[1]]$coordinateSystem, 'cartesian3D')
   expect_equal(length(p$x$opts$options[[1]]$series), 2)

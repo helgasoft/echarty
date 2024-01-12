@@ -86,8 +86,8 @@
 #'   dim = runif(3, 1, 100),
 #'   nam = c('Brazil','China','India')
 #' )
-#' cns |> group_by(nam) |> ec.init(load= 'world',
-#'   tl.series= list(type='map', 
+#' cns |> group_by(nam) |> ec.init(load= 'world', timeline= list(s=TRUE),
+#'   series.param= list(type='map', 
 #'       encode=list(value='val', name='nam')),
 #'   toolbox= list(feature= list(restore= list())),
 #'   visualMap= list(calculable=TRUE, dimension=2)
@@ -282,10 +282,14 @@
 #'   xAxis= list(type= 'category', name= 'tree'),
 #'   yAxis= list(max= max(Orange$circumference)),
 #'   timeline= list(autoPlay= TRUE),
-#'   tl.series= list(type= 'bar', encode= list(x='Tree', y='circumference'))
+#'   series.param= list(type= 'bar', encode= list(x='Tree', y='circumference'))
 #' ) |> ec.upd({
 #'   options <- lapply(options,
-#'      function(o) { o$title$text <- paste('age',o$title$text,'days'); o })
+#'      function(o) {
+#'        vv <- o$series[[1]]$datasetIndex +1;
+#'        vv <- dataset[[vv]]$transform$config[["="]]
+#'        o$title$text <- paste('age',vv,'days'); 
+#'        o })
 #' })
 #' 
 #' 
@@ -298,12 +302,12 @@
 #'   color= c("blue","purple","red","gold","blue","purple","red","gold")
 #' )
 #' df |> group_by(group) |> ec.init( 
-#'      preset= FALSE,
-#'      legend= list(selectedMode= "single"),
-#'      tl.series= list(type= 'pie', roseType= 'radius',
-#'                      itemStyle= list(color=ec.clmn(5)), 
-#'                      label= list(formatter=ec.clmn(4)),
-#'                      encode=list(value='value', itemName='type'))
+#'      preset= FALSE, legend= list(selectedMode= "single"),
+#'      timeline= list(show=TRUE),
+#'      series.param= list(type= 'pie', roseType= 'radius',
+#'        itemStyle= list(color=ec.clmn(5)), 
+#'        label= list(formatter=ec.clmn(4)),
+#'        encode=list(value='value', itemName='type'))
 #' )
 #'
 #'
