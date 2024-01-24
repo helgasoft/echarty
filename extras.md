@@ -118,7 +118,7 @@ Offers the following options:
 - toolbox button to save chart as PNG
 - responsive auto-resize
 
-Javascript version currently available. _echarty_ version coming soon.
+Only <span style="color:black; background:orange">&nbsp;Javascript&nbsp;</span> version currently available.
 
 <br /> 
 <video id="quadrant" preload="auto" 
@@ -149,13 +149,56 @@ ec.init(
   series= list(list(type= 'bar', encode= list(x= 'x', y= 'value') )),
   visualMap= list(
     type= 'piecewise', top= 10, right= 10,
-    categories= sort(unlist(unique(lapply(tz$dataset$source, \(x) x$group)))),
+    categories= tz$vmCat,
     inRange= list(color= c('blue','green','gold'))
   )
 )
 ```
 </details>  
 <img src='img/trimZero.png' alt='trimZero' />
+
+<a id='axisGroups'></a>
+
+## Axis category groups
+
+Helper function to build a two-level axis, with responsive auto-resize.  
+Only <span style="color:black; background:orange">&nbsp;Javascript&nbsp;</span> version currently available, but could be used with _ec.init_.
+<details><summary>🔻 View JS simulated code</summary> 
+
+```js
+function grax(dd, vv, ll, gg){...}
+dset = [
+  ['value', 'name', 'group', 'col'],
+  [5, 'apple','fruits','red'],
+  [20,'orange','fruits','blue'],
+  [36,'kiwi','fruits','red'],
+  [28,'carrot','vegetables','green'],
+  [22,'lettuce','vegetables',], 
+  [20,'cabbage','vegetables',],
+  [18,'celery','vegetables',null]
+];
+out = grax(dset, 'value', 'name', 'group')
+
+out.series.find(o => o.type==='bar').itemStyle = {
+  color: (v) => { gr= v.value[2]; return gr=='fruits' ? '#482878' : '#1F9E89'; }
+}
+
+option = {
+  dataset: out.dset, 
+  series: out.series,
+  xAxis: out.axis,
+  yAxis: { name: 'val' },
+  tooltip: { formatter: (p) => {return 'y=' + p.data[0]; } }
+};
+```
+</details>
+
+<br /> 
+<video id="axgrp" preload="auto" 
+   src="img/barGroups.mp4" type="video/mp4" muted="muted" controls>
+   Your browser does not support the video tag.
+</video>
+<br />
 
 <!--
 ## Panoramas and maps  
