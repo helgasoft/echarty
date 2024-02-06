@@ -11,9 +11,27 @@ Building complex charts as data structures is a powerful concept, also simple an
 
 ## Gallery
 Enjoy [the gallery](gallery.html) and grab some chart code!  
-Best place to get started with **echarty** 
+Good place to get started with **echarty** 
 [![](img/echarty.gallery.png)](gallery.html)
 <br /><br />
+
+## Learn by example
+Try [WebR Coder](test/coder.html) or the more complete R **Coder**:
+```r
+demo(coder, package='echarty')
+```
+See what you can do with echarty and **Shiny**
+```r
+demo(eshiny, package='echarty')
+```
+Have fun with **Translator Assistant**  - translate Javascript data to R! 
+&nbsp; ECharts has lots of great [examples](https://echarts.apache.org/examples/en/)
+. The goal is to facilitate translation of their JSON-like data (*option* object) to R lists.
+```r
+demo(js2r, package='echarty')
+```
+Or browse some interesting <a href='https://gist.github.com/helgasoft'>code gists</a>.
+<br/><br/>
 
 ## Tutorials
 More detailed step-by-step examples with tips and tricks.
@@ -29,30 +47,12 @@ More detailed step-by-step examples with tips and tricks.
 [Example 5](uc5.html) - Bubbles without troubles with JavaScript 
 
 [Example 6](uc6.html) - Grouped, stacked and timelined
-<br />
-
-<br/> 
+<br /><br/>
 
 ## Crosstalk 
 Social media for charts!  Examples - [basic](https://rpubs.com/echarty/crosstalk) and [advanced](https://rpubs.com/echarty/crossmap) &nbsp; <span style="color:magenta">*live*</span>  
 More in the [gallery](gallery.md#crosstalk-2d).
-<br />
-<br/>
-
-## Learn by example
-See what you can do with echarty and **Shiny**
-```r
-demo(eshiny, package='echarty')
-```
-Have fun with **Translator Assistant**  - translate Javascript data to R! 
-&nbsp; ECharts has lots of great [examples](https://echarts.apache.org/examples/en/)
-. The goal is to facilitate translation of their JSON-like data (*option* object) to R lists. Give it a go with the following R command
-```r
-demo(js2r, package='echarty')
-```
-Or browse some interesting <a href='https://gist.github.com/helgasoft'>code gists</a>.
-<br/>
-<br/>
+<br /><br/>
 
 ## Extras
 Specific utilities and applications [💲 code for sale](extras.md).
