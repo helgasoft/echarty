@@ -25,7 +25,7 @@ This package is a thin R wrapper around Javascript library
 Benefit from ECharts **full functionality** and build
 interactive charts in R and Shiny with minimal overhead.  
 
-Wider connectivity and deployment potential through [crosstalk](https://rpubs.com/echarty/crosstalk).  
+Wider connectivity and deployment potential through [crosstalk](https://rpubs.com/echarty/crosstalk) and [WebR](https://helgasoft.github.io/echarty/test/coder.html).  
 
 <details> <summary><strong>Compare to echarts4r 📌</strong></summary>
 
@@ -34,16 +34,17 @@ R package | echarts4r | echarty
 initial commit | Mar 12, 2018 | Feb 5, 2021
 library size | ![878 KB](https://img.shields.io/github/languages/code-size/JohnCoene/echarts4r.svg) | ![224KB](https://img.shields.io/github/languages/code-size/helgasoft/echarty)
 test coverage | ![32%](https://coveralls.io/repos/github/JohnCoene/echarts4r/badge.svg) [![link](man/figs/external-link-16.png)](https://coveralls.io/github/JohnCoene/echarts4r) | ![93%](https://coveralls.io/repos/github/helgasoft/echarty/badge.svg) [![link](man/figs/external-link-16.png)](https://coveralls.io/github/helgasoft/echarty)
-lines of code | 1,171,938 [![link](man/figs/external-link-16.png)](https://api.codetabs.com/v1/loc/?github=JohnCoene/echarts4r)| 5,061 [![link](man/figs/external-link-16.png)](https://api.codetabs.com/v1/loc?github=helgasoft/echarty)
+lines of code | 1,202,623 [![link](man/figs/external-link-16.png)](https://api.codetabs.com/v1/loc/?github=JohnCoene/echarts4r)| 5,517 [![link](man/figs/external-link-16.png)](https://api.codetabs.com/v1/loc?github=helgasoft/echarty)
 API design <sup>(1)</sup>| own commands with parameters | mostly [ECharts option](https://echarts.apache.org/en/option.html) lists
 number of commands | over [200](https://echarts4r.john-coene.com/reference/) | **one** command + optional utilities
 data storage support | series data | **[datasets](https://echarts.apache.org/en/option.html#dataset)**, series data
 [crosstalk](https://rstudio.github.io/crosstalk/) support | no	 | **yes**
+[WebR](https://docs.r-wasm.org/webr/latest/) support | no	 | **yes**
 utilities | bezier, correlations, histogram, density, loess, flip, nesting, more | extended boxplots, tabsets, layouts, shapefiles, lotties, more
 
-This review done Sept 2023 for echarts4R v.0.4.5 and echarty v.1.5.4.03.
+This review done Feb 2024 for current versions of echarts4R and echarty.
 
-(1) We encourage users to follow the original ECharts documentation to construct charts with echarty. 
+(1) We encourage users to follow the original ECharts API to construct charts with echarty. 
 	This differs from echarts4r which uses own commands for most chart options.   
 </details>
   <br />
@@ -52,7 +53,7 @@ Please consider granting a Github star ⭐ to show your support.
 ## Installation
 
 <!-- [![Github version](https://img.shields.io/github/v/release/helgasoft/echarty?label=github)](https://github.com/helgasoft/echarty/releases)  <sup>.02</sup>  -->
-Latest development build <strong>1.6.2.02</strong>
+Latest development build <strong>1.6.3.01</strong>
 
 ``` r
 if (!requireNamespace('remotes')) install.packages('remotes')
@@ -99,9 +100,9 @@ echarty::ec.fromJson('https://helgasoft.github.io/echarty/test/pfull.json')
 
 ## Get started
 
-The Coder is a good introduction, type ```library(echarty); demo(coder)```.  
-The [**WEBSITE**](https://helgasoft.github.io/echarty) has a gallery with code and tutorials.  
-The package itself has plenty of [**code examples**](https://github.com/helgasoft/echarty/blob/main/R/examples.R)
+The **Coder** is a good introduction, type ```library(echarty); demo(coder)```.  
+The [**WEBSITE**](https://helgasoft.github.io/echarty) has a vast gallery with code and tutorials.  
+The package itself has also [**code examples**](https://github.com/helgasoft/echarty/blob/main/R/examples.R)
 included. Type
 **?ec.examples**, then copy/paste any code to
 see the chart.  

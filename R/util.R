@@ -554,6 +554,9 @@ body { padding: 10px; }
 #' * _layout_ = 'h' for horizontal(default) or 'v' for vertical layout\cr
 #' * _outliers_ boolean to add outlier points (default FALSE)\cr
 #' * _jitter_ value for \link[base]{jitter} of numerical values in second column, default 0 (no scatter). Adds scatter series on top of boxplot.\cr
+#' Optional parameter for **names**:\cr
+#' * _nasep_ = single character name separator for nested lists, see Examples. \cr
+#' Purpose is to facilitate conversion from _data.frame_ to nested named lists.\cr
 #' 
 #' @return A list for _dataset.source_, _series.data_ or other lists:\cr
 #'   For boxplot - a named list, see Details and Examples \cr
@@ -604,6 +607,14 @@ body { padding: 10px; }
 #' 	  tooltip= list(formatter= ec.clmn('%@<br>%@%','value','pct'))
 #' )
 #' 
+#' # column itemStyle_color will become itemStyle= list(color=...) in data list
+#' # attribute names separator (nasep) is "_"
+#' df <- data.frame(name= c('A','B','C'), value= c(1,2,3), 
+#'      itemStyle_color= c('chartreuse','lightblue','pink'),
+#'      emphasis_itemStyle_color= c('darkgreen','blue','red')
+#' )
+#' ec.init(series.param= list(type='pie', data= ec.data(df, 'names', nasep='_')))
+#'
 #' @importFrom utils tail
 #' @importFrom grDevices boxplot.stats
 #' @importFrom data.tree Aggregate
@@ -704,7 +715,7 @@ ec.data <- function(df, format='dataset', header=FALSE, ...) {
   }
   
   rownames(df) <- NULL
-  n <- seq_along(df[[1]])       # assuming all lists in df have the same length
+  n <- seq_along(df[[1]])       #  all df columns have the same length
   tmp <- lapply(n, \(i) lapply(df, "[[", i))  # preserve column types
   
   if (format=='dataset') {
@@ -864,8 +875,28 @@ ec.data <- function(df, format='dataset', header=FALSE, ...) {
     return(list(dataset= dataset, series= series, xAxis=xaxis, yAxis=yaxis))
   } 
   else { # format=='names'
-    datset <- tmp
-  }  # format=='names'
+    args <- list(...)
+    if ('nasep' %in% names(args)) {
+      stopifnot("data('names'): nasep should be 1 char"= nchar(args$nasep)==1)
+      # names separator is present, replace compound names with nested lists
+      tmp <- lapply(tmp, \(rr) {
+        for(cc in names(rr)) {
+          if (grepl(args$nasep, cc, fixed=T)) {
+            nlis <- strsplit(cc, args$nasep, fixed=T)
+            out <- rr[[cc]]; 
+            for(nn in rev(nlis[[1]][-1])) {
+              cur <- list(); cur[[nn]] <- out;
+              out <- cur
+            }
+            rr[[cc]] <- NULL
+            rr[[ nlis[[1]][1] ]] <- out
+          }
+        }
+        rr
+      })
+    }
+    datset <- tmp;
+  }
   
   return(datset)
 } 
@@ -1094,7 +1125,7 @@ ec.paxis <- function(dfwt=NULL, cols=NULL, minmax=TRUE, ...) {
 #'
 #' Apply a pre-built or custom coded theme to a chart
 #'
-#' @param wt An \code{echarty} widget as returned by [ec.init]
+#' @param wt Required \code{echarty} widget as returned by [ec.init]
 #' @param name Name of existing theme file (without extension), or name of custom theme defined in \code{code}.
 #' @param code Custom theme as JSON formatted string, default NULL.
 #' @return An \code{echarty} widget.
@@ -1111,9 +1142,10 @@ ec.paxis <- function(dfwt=NULL, cols=NULL, minmax=TRUE, ...) {
 #'     "backgroundColor": "lemonchiffon"}')
 #' 
 #' @export
-ec.theme <- function (wt, name, code= NULL) 
+ec.theme <- function (wt, name='custom', code= NULL) 
 {
-  stopifnot('ec.theme: name required'= !missing(name))
+  #stopifnot('ec.theme: name required'= !missing(name))
+  stopifnot('ec.theme: wt should be echarty object'= inherits(wt, 'echarty'))
 
   wt$x$theme <- name
   if (!is.null(code))

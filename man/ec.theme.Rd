@@ -4,10 +4,10 @@
 \alias{ec.theme}
 \title{Themes}
 \usage{
-ec.theme(wt, name, code = NULL)
+ec.theme(wt, name = "custom", code = NULL)
 }
 \arguments{
-\item{wt}{An \code{echarty} widget as returned by \link{ec.init}}
+\item{wt}{Required \code{echarty} widget as returned by \link{ec.init}}
 
 \item{name}{Name of existing theme file (without extension), or name of custom theme defined in \code{code}.}
 

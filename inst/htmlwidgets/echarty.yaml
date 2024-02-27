@@ -1,6 +1,6 @@
 dependencies:
  - name: echarty
-   version: 1.6.2
+   version: 1.6.3
    src: js
    script: 
       - echarts.min.js

@@ -28,6 +28,9 @@ Optional parameters for \strong{boxplot} are:\cr
 \item \emph{layout} = 'h' for horizontal(default) or 'v' for vertical layout\cr
 \item \emph{outliers} boolean to add outlier points (default FALSE)\cr
 \item \emph{jitter} value for \link[base]{jitter} of numerical values in second column, default 0 (no scatter). Adds scatter series on top of boxplot.\cr
+Optional parameter for \strong{names}:\cr
+\item \emph{nasep} = single character name separator for nested lists, see Examples. \cr
+Purpose is to facilitate conversion from \emph{data.frame} to nested named lists.\cr
 }}
 }
 \value{
@@ -81,6 +84,14 @@ ec.init(
 	  )),
 	  tooltip= list(formatter= ec.clmn('\%@<br>\%@\%','value','pct'))
 )
+
+# column itemStyle_color will become itemStyle= list(color=...) in data list
+# attribute names separator (nasep) is "_"
+df <- data.frame(name= c('A','B','C'), value= c(1,2,3), 
+     itemStyle_color= c('chartreuse','lightblue','pink'),
+     emphasis_itemStyle_color= c('darkgreen','blue','red')
+)
+ec.init(series.param= list(type='pie', data= ec.data(df, 'names', nasep='_')))
 
 }
 \seealso{

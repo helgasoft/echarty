@@ -1,6 +1,12 @@
 # history of package _echarty_
 
-## v.1.6.3
+## v.1.6.3.01  latest in development
+
+- upgrade ECharts to v.5.5.0, built with R v.4.3.2
+- added _nasep_ parameter to ec.data('names') for easier setting of nested lists from a _data.frame_
+- tested web freedom [with WebR](https://helgasoft.github.io/echarty/test/coder.html)
+
+## v.1.6.3  on CRAN
 
 - added coder.R demo
 - correct gridIndex numbering for xAxis/yAxis
@@ -20,7 +26,7 @@
 - removed width/height from 'tabset', handled by _ec.init_
 - _ecr.band_ replaced default type from 'stack' to 'polygon'
 
-## v.1.6.2  on CRAN
+## v.1.6.2
 
 - allow axis rename (fix)
 - _ec.data_ grouped boxplots: outliers are custom series

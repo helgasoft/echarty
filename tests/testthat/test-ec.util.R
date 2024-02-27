@@ -365,6 +365,15 @@ test_that("ec.data treeTK", {
   expect_equal(p$x$opts$series[[1]]$data[[1]]$value, 2201)
 })
 
+test_that("ec.data 'names' + nasep", {
+  df <- data.frame(name= c('A','B','C'), value= c(1,2,3), 
+        emphasis_itemStyle_color= c('green','blue','red')
+  )
+  p <- ec.init(series.param= list(
+    type='pie', data= ec.data(df, 'names', nasep='_')))
+  expect_equal(p$x$opts$series[[1]]$data[[1]]$emphasis$itemStyle$color, 'green')
+})
+
 test_that("ec.inspect and ec.fromJson", {
   p <- mtcars |> group_by(gear) |> ec.init() |> ec.inspect('data')
   expect_match(p[1], "rows= 33", fixed=TRUE)
