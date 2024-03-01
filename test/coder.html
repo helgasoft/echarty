@@ -1,16 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>WebR + echarty</title>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width" />
-    <link rel="shortcut icon" href="../img/logo.ico" type="image/x-icon">
-
-	<!--  React    -->
+	<title>WebR + echarty</title>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width" />
+	<link rel="shortcut icon" href="../img/logo.ico" type="image/x-icon">
+	<!-- uncomment scripts below if needed -->
+<!--
 	<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-	<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-	
+	<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>	
 	<script src="https://cdn.jsdelivr.net/gh/react-R/reactR@v0.5.0/inst/www/react-tools/react-tools.js"></script>
+-->
 	<script src="https://cdn.jsdelivr.net/gh/ramnathv/htmlwidgets@v1.6.2/inst/www/htmlwidgets.js"></script>
 	
 	<!--  echarty dependencies    -->
@@ -50,7 +50,7 @@ label {
   margin-right: 6px;
 }
 .lefto { margin-left: 30px; }
-.bton {font-size: 14px; background-color: Thistle; border-radius: 6px;}
+.bton {font-size: 14px; background-color: PaleTurquoise; border-radius: 6px;}
 .err {color: red;}
 
 /* The Modal (background) */
@@ -107,13 +107,16 @@ label {
     <span class="close">&times;</span>
 	<p>
 <h4><a href='https://helgasoft.github.io/echarty' target=_blank>echarty</a> Coder on <a href='https://docs.r-wasm.org/webr/latest/' target=_blank>WebR</a></h4>
-Live R-code execution inside a single web page. No Rmd files. No server. At last!
-<p>Experiment by setting attributes from <a href='https://echarts.apache.org/en/option.html' target=_blank>ECharts API</a>, for instance adding a title. All ECharts attributes are defined as named lists in R.</p>
+Live R-code execution inside a single web page. No Rmd files. No server. No installation. At last!
+<p>Experiment by setting attributes from <a href='https://echarts.apache.org/en/option.html' target=_blank>ECharts API</a>, for instance adding a title. 
+ECharts attributes are defined as named lists in R.
+</p>
 This page has coding limitations: <ul>
-  <li>parameter <i>load</i> for loading extensions like <i>3D</i> or <i>world</i> doesn't work. However these same JS extensions could be loaded in page's <i>head</i> section and necessary attributes set manually - see examples <i>surface</i> and <i>map</i>.</li>
+  <li>parameter <i>load</i> for loading extensions like <i>3D</i> or <i>world</i> doesn't work yet. However these same JS extensions could be loaded in page's <i>head</i> section and necessary attributes set manually, see examples <i>surface</i> and <i>map</i>.</li>
   <li>the echarty widget name has to be <i>plot</i>.</li>
 </ul>
-The <i>shiny</i> version of the Coder has many more examples and covers almost all chart types. Run in R environment with commands: <pre>library(echarty); demo(coder)</pre>.
+The <i>shiny</i> version of the Coder has many more examples and <b>covers almost all chart types</b>. Run in R environment with commands: <pre>library(echarty); demo(coder)</pre>
+See also the <b>real-time data</b> processing <a href='realTime.html' target="_blank">Demo</a>.
 	</p>
   </div>
 </div>

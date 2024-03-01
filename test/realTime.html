@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>WebR + echarty</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta http-equiv="cache-control" content="public">
+    <link rel="shortcut icon" href="img/logo.ico" type="image/x-icon">
+
+	<!--  echarty dependencies  -->
+	<script src="https://cdn.jsdelivr.net/gh/ramnathv/htmlwidgets@v1.6.2/inst/www/htmlwidgets.js"></script>	
+	<script src="https://cdn.jsdelivr.net/gh/helgasoft/echarty@v.1.6.3/inst/js/echarts.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/gh/helgasoft/echarty@v.1.6.3/inst/htmlwidgets/echarty.js"></script>
+   <!--  optional:
+	<script src="https://cdn.jsdelivr.net/gh/helgasoft/echarty@v.1.6.3/inst/js/world.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/echarts-gl@2.0.9/dist/echarts-gl.min.js"></script>
+   -->
+
+	<style>
+body { font-family: Arial, sans-serif; background-color: Linen; }
+a:link { text-decoration: none; color: blue}
+a:visited { color: purple; }
+.titl {font-size: 130%; }
+.fontu {font-size: 130%;}
+.wrapper { width: 100%; text-align: center; } 
+.ccenter { text-align: center;}
+.inblock { display: inline-block; width: 50%}
+.w80 {width: 80%; padding-top: 8px; margin: auto;}
+.lefto { margin-left: 30px; }
+.bton {font-size: 14px; background-color: thistle; border-radius: 6px;}
+.err {color: red;}
+
+/* The Modal (background) */
+.cmodal {
+  display: none; /* Hidden by default */
+  position: fixed; /* Stay in place */
+  z-index: 1; /* Sit on top */
+  padding-top: 100px; /* Location of the box */
+  left: 0;
+  top: 0;
+  width: 100%; /* Full width */
+  height: 100%; /* Full height */
+  overflow: auto; /* Enable scroll if needed */
+  background-color: rgb(0,0,0); /* Fallback color */
+  background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+}
+
+/* Modal Content */
+.cmodal-content {
+  background-color: Linen;
+  margin: auto;
+  padding: 20px;
+  border: 1px solid #888;
+  width: 80%;
+}
+
+/* The Close Button */
+.close {
+  color: #aaaaaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+}
+.close:hover,
+.close:focus {
+  color: #000;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+	</style>
+</head>
+
+<body>
+<div class="wrapper">
+   <div class='ccenter inblock'>
+      <a href='https://github.com/helgasoft/echarty'><img src='../img/logo.png' width=40 /> <span class='titl'>Echarty</span></a> <span class='fontu'>Real-Time Data</span>
+   </div>
+   <input type='button' id='btnModal' value='Info &#x1F4D3' class='lefto bton' />
+
+   <div id="app" class='w80'>Loading WebR magic... <img src='../img/rubikon.gif' /></div>
+</div>
+
+<div id="myModal" class="cmodal">
+   <div class="cmodal-content">   <span class="close">&times;</span>
+   <p>
+   <h4>Real-time data with <a href='https://helgasoft.github.io/echarty' target=_blank>echarty</a></h4>
+   Live R-code execution inside a single web page. No Rmd. No server. No installation. Thanks to <a href='https://docs.r-wasm.org/webr/latest/' target=_blank>WebR</a> 🏆
+   </p>
+   This page does data polling for Bitcoin price every 10 seconds using <i>jsonlite::fromJSON</i>. <br>
+   Response is a timestamp and a value in $US. Additional data processing could be achieved in R - moving averages(MA), prediction, etc.<br>
+   This chart displays Bollinger Bands - two standard deviations on simple moving average for a ~2 minutes rolling interval. <br>
+   Maximum number of points is limited to 500 (FIFO stack).  <br>
+   Chrome browser timer throttling is bypassed through a background web worker. So data is collected even when the browser tab is not in focus.<br>
+   See also the <a href='coder.html' target="_blank">coder demo</a> for interactive R-code chart editing.<br>
+   <br>
+   💖 If you like this solution, please consider granting a Github star ⭐ 
+   </div>
+</div>
+
+<script>
+var webR;
+import('https://webr.r-wasm.org/latest/webr.mjs').then(async ({ WebR }) => {
+   webR = new WebR();
+   await webR.init();
+   await webR.evalRString(`
+      webr::shim_install()
+      install.packages('echarty', repos= c('https://repo.r-wasm.org'))
+      'some string'
+   `)
+   document.getElementById('app').innerHTML = 'Ready to plot &#x1f44d';
+   doChart();
+});
+
+// R code for chart
+chartCode = `library(echarty); library(dplyr); library(zoo);
+tbox <- list(right='20%', feature= ec.util(cmd='fullscreen'))
+data <- list(list(as.character(Sys.time()), NA));
+lobb <- hibb <- sma <- list()
+plot <- ec.init(elementId='ch1', backgroundColor='#110b29', darkMode=T,
+   title= list(text='Bitcoin Price Live', left='center', subtext=''), 
+   xAxis= list(type='time', splitLine= list(show=FALSE), name='Local time', nameLocation='center', nameGap=24),
+   yAxis= list(name='₿ in USD', splitLine= list(lineStyle= list(opacity=0.5)), scale=T, max='dataMax', z=6),
+   tooltip= list(type='cross', trigger='axis', axisPointer= list(axis='x')), toolbox= tbox,
+   series= list(
+      list(type= 'line', showSymbol=F, data= data, lineStyle= list(width=2, color='gold'), z=7,
+         endLabel= list(show=T, color='yellow', offset=c(9,0),
+            formatter= ec.clmn('(p) => { return p.data[1].toLocaleString(undefined, {maximumFractionDigits:2});}')) ),
+      list(type= 'line', name='+BB', showSymbol=F, data= hibb, areaStyle= list(color='navy',opacity=0.7), smooth=T, lineStyle=list(width=1,color='lightblue')),
+      list(type= 'line', name='-BB', showSymbol=F, data= lobb, areaStyle= list(color='#110b29',opacity=1), smooth=T, lineStyle=list(width=1,color='lightblue')),
+      list(type= 'line', name='SMA', showSymbol=F, data= sma, smooth=T, lineStyle= list(width=1, color='lightblue')),
+      list(type= 'effectScatter', rippleEffect= list(period= 3, scale= 3, brushType= 'stroke'), z=7,
+         data= list(last(data)), clip=F, symbolSize= 11, itemStyle= list(borderWidth=3, borderColor='red'))
+   ),
+   dataZoom= list(type='inside')
+) |> ec.theme('dark')`
+
+// R code for live data grab
+dataCode= `json <- jsonlite::fromJSON('https://min-api.cryptocompare.com/data/generateAvg?fsym=BTC&tsym=USD&e=coinbase')
+      # remote data refreshed every 10 secs
+
+   price <- round(json$RAW$PRICE, 2)
+   newData <- list(as.character(as.POSIXct(json$RAW$LASTUPDATE)), price )
+   data <- append(data, list(newData));  # gather same data in R too
+   # calc st.deviation of price,  12* 10sec= 2min rolling stdev
+   ww <- 12; 
+   if (length(data) >= ww) {
+      dd <- tail(sapply(data, '[[', 2), ww)
+      stdev <- rollapply(dd, width=ww, FUN=sd, fill=0, align='r')[ww]
+      sma <- rollmean(dd, k=ww, fill=NA, align='right')[ww]
+      newData <- c(newData, round(stdev,2), round(sma,2))
+   }
+   if (length(data) > 500) 
+      data <- data[2:length(data)]
+   newData
+`
+
+async function doChart() {
+  document.getElementById('app').innerHTML= 'Wait...';
+  chartCode += '\n as.character(htmlwidgets:::as.tags.htmlwidget(plot))'
+  tags_plot = '';
+  try {
+    tags_plot = await webR.evalRString(chartCode);
+  } catch ({ name, message }) {
+    tags_plot = "<div class='err'>Error<br/>" + message + '</div>';
+  } finally {
+	// add reactable tags from webR into DOM
+	document.getElementById('app').innerHTML = tags_plot;
+  }
+  // render with HTMLWidgets
+  HTMLWidgets.staticRender();
+}
+
+// Get the modal
+var modl = document.getElementById("myModal");
+// Get the button that opens the modal
+var btnInfo = document.getElementById("btnModal");
+// When the user clicks the button, open the modal 
+btnInfo.onclick = function() {
+   modl.style.display = "block";
+}
+// Get the <span> element that closes the modal
+var span = document.getElementsByClassName("close")[0];
+// When the user clicks on <span> (x), close the modal
+span.onclick = function() {
+   modl.style.display = "none";
+}
+// When the user clicks anywhere outside of the modal, close it
+window.onclick = function(event) {
+   if (event.target == modl) {
+      modl.style.display = "none";
+   }
+}
+
+function recurs2(object) {
+   //  recursion to build ECharts options
+   if (object.type=="list") {
+      var nob = {};
+      if (object.names) {
+         for (var i= 0; i < object.names.length; i++) {
+            value = recurs2(object.values[i]);
+            nob[object.names[i]]= value;
+         }
+      } 
+      else {  // array
+         nob = [];
+         for (var i= 0; i < object.values.length; i++) {
+            value = recurs2(object.values[i]);
+            nob[i]= value;
+         }
+      }
+      return nob;
+   } else   // object.type in [character,double,...]
+      return object.values[0];
+}
+
+let worker = new Worker("rt.worker.js");
+worker.onmessage = function(e) {
+   updChart();
+}
+worker.postMessage(10000);  //  msec for refresh
+
+prevPrice = 0;
+async function updChart() {
+   const rlist = await webR.evalR(dataCode)
+   const tmp = await rlist.toJs(); 
+   darr = recurs2(tmp);
+
+   if (prevPrice == darr[1]) return;  // dont add identical price
+   prevPrice = darr[1];
+
+   // Bollinger Bands
+   hibb = null;
+   if (darr.length>2 && darr[2]>0) {
+      hibb = [darr[0], (darr[3]+darr[2]*2).toFixed(2)]; 
+      lobb = [darr[0], (darr[3]-darr[2]*2).toFixed(2)]; 
+      sma = [darr[0], darr[3]]; 
+      darr.pop(); darr.pop();
+   }
+
+   chart = get_e_charts('ch1');
+   opt1 = chart.getOption();
+   pts = opt1.series[0].data.length;
+   if (pts>500) {
+      opt1.series[0].data.shift();
+      opt1.series[1].data.shift();
+      opt1.series[2].data.shift();
+   }
+   pts = opt1.series[0].data.length;
+   opt1.title[0].subtext = pts + ' points';
+   opt1.series[0].data.push(darr);
+   if (hibb) {
+      opt1.series[1].data.push(hibb);
+      opt1.series[2].data.push(lobb);
+      opt1.series[3].data.push(sma);
+   }
+   opt1.series[4].data = [darr];  // effectscatter
+   chart.setOption(opt1);
+};
+
+	</script>
+  </body>
+</html>
