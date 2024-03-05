@@ -6,7 +6,20 @@ Various charts and their **source code** showing *echarty* usage. Some have Live
 This page is searchable if you are interested in a specific keyword.  
 The package itself has two dozen more code examples - type ```?ec.examples``` to see them.
    
-<br />  
+<br />
+
+## Single-page web hosting
+Edit R-code and run charts inside a web page -
+[<span style="color:magenta">Live Demo</span>](https://helgasoft.github.io/echarty/test/coder.html)  
+
+Real-Time Data charts with echarty - [<span style="color:magenta">Live Demo</span>](https://helgasoft.github.io/echarty/test/realTime.html)
+<br><br>
+
+## Data models 
+how to store data in echarty - 
+[<span style="color:magenta">Live Demo</span>](https://rpubs.com/echarty/data-models) with code  
+<a href='https://rpubs.com/echarty/data-models' target=_blank> <img src='img/cb-datam.png' alt='data models' /></a>
+<br><br>
 
 ## Simple bar  
 demo for presets  
@@ -15,9 +28,7 @@ demo for presets
 
 ```r
 library(echarty); library(dplyr)
-library(lubridate)
-df <- data.frame(date= as.character(as.Date('2019-12-31') %m+% months(1:13)), 
-                 num= runif(13))
+df <- data.frame(date= seq(as.Date('2019-12-25'), as.Date('2020-01-07'), by='day'), num= runif(14))
 
 #  with presets and df chained
 df |> ec.init(ctype= 'bar') |> ec.theme('dark')
@@ -26,23 +37,14 @@ df |> ec.init(ctype= 'bar') |> ec.theme('dark')
 ec.init(preset= FALSE,
   yAxis= list(show= TRUE),
   xAxis= list(type= 'category', 
-               axisLabel= list(interval= 0, rotate= 45)
-               #, axisTick= list(alignWithLabel= TRUE)
-          ),
-  series= list(list(
-    type= 'bar', data= ec.data(df, 'values')))
+         axisLabel= list(interval= 0, rotate= 45) ),
+  series= list(list(type= 'bar', data= ec.data(df)))
 ) |> ec.theme('dark')
 
 
 ```
 </details>
 <br />  
-
-## Data models 
-how to store data in echarty - 
-[<span style="color:magenta">Live Demo</span>](https://rpubs.com/echarty/data-models) with code  
-<a href='https://rpubs.com/echarty/data-models' target=_blank> <img src='img/cb-datam.png' alt='data models' /></a>
-<br><br>
 
 ## Horizontal bars
 with grouping  
