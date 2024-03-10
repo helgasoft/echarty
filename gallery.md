@@ -246,7 +246,12 @@ ec.upd({
 <br />
 
 ## Triple gauge with animation
-<img src='img/cb-5.png' alt='gauge3' />
+with two layout examples - dials and rings
+<div >
+<div style="display:inline-block"><img src='img/cb-5.png' alt='gauge3' /></div>
+<div style="display:inline-block"><img src='img/gauge.ring.png' alt='gauge2' /></div>
+</div>
+<!-- <img src='img/cb-5.png' alt='gauge3' /> -->
 <details><summary>🔻 View code</summary>
 
 ```r
@@ -273,6 +278,125 @@ ec.init(js= jcode,
 		title= list(fontSize= 14), 
 		detail= list(width= 40, height= 14, fontSize= 14, color= "#fff", backgroundColor= "auto", borderRadius= 3, formatter= "{value}%")
 ))) |> ec.theme('dark')
+
+
+# from https://echarts.apache.org/examples/en/editor.html?c=gauge-ring
+gaugeData = list(
+	list(name='Val1', title=list(offsetCenter=list('0%', '-30%')),
+		  detail=list(valueAnimation=TRUE,offsetCenter=list('0%', '-20%'))),
+	list(name='Val2', title=list(offsetCenter=list('0%', '0%')),
+		  detail=list(valueAnimation=TRUE,offsetCenter=list('0%', '10%'))),
+	list(name='Val3', title=list(offsetCenter=list('0%', '30%')),
+		  detail=list(valueAnimation=TRUE,offsetCenter=list('0%', '40%'))))
+options = lapply(1:3, \(i) { 
+	gdata = gaugeData;
+	for(j in 1:3) {gdata[[j]]$value = round(runif(1) *100) }
+	list( 
+	series= list(list(type='gauge',
+	 	startAngle=90, endAngle=-200, pointer=list(show=FALSE),
+	 	progress= list(show=TRUE,overlap=FALSE,roundCap=TRUE,clip=FALSE,
+	 					  itemStyle=list(borderWidth=1, borderColor='#464646')),
+	 	axisLine= list(lineStyle= list(width=40, opacity=0)),
+	 	splitLine=list(show=FALSE,distance=0,length=10),
+	 	axisTick= list(show=FALSE),axisLabel=list(show=FALSE,distance=50),
+	 	data= gdata,
+	 	title= list(fontSize=14, color='cornsilk'),
+	 	detail= list(width=50,height=14, fontSize=14, color='inherit',
+	 		borderColor='inherit',borderRadius=20,borderWidth=1, formatter='{value}%')
+	)) )
+} )
+ec.init(preset= F,
+	options= options,
+	timeline= list(axisType='category', data=c(1:3), autoPlay=T)
+) |> ec.theme('dark-mushroom')
+
+```
+</details>
+<br />
+
+<a id='race'></a>
+
+## Bar Race
+two alternatives - with timeline or with Javascript
+<img src='img/race.gif' alt='bar race' />
+<details><summary>🔻 View code</summary>
+
+```r
+# https://echarts.apache.org/examples/en/editor.html?c=bar-race-country
+library(echarty); library(dplyr)
+ROOT_PATH = 'https://echarts.apache.org/examples/data/asset/data/life-expectancy-table.json'
+tmp <- jsonlite::fromJSON(ROOT_PATH)
+tmp <- tmp[-1,]
+countries <- tmp[,4]
+tmp <- tmp[,-4]
+tmp <- apply(tmp, 2, as.numeric)
+df <- as.data.frame(tmp)
+df <- df |> mutate(Country=countries)
+colnames(df) <- c("Income","Life Expectancy","Population","Year","Country")
+
+# with Javascript
+endYear <- max(df$Year)
+startYear <- 1950
+updateFrequency <- 2000  # msec
+jcode <- c('', "option1 = opts;", paste("
+updateFrequency = ",updateFrequency,";
+startYear = ",startYear,";
+for (let i = startYear; i <= ",endYear,"; ++i) {
+	(function (i) {
+	 setTimeout(function () {
+	  updateYear(i);
+	}, (i - startYear) * updateFrequency);
+	})(i);
+}
+function updateYear(year) {
+	option1.dataset[1].transform.config['='] = year;
+	console.log('y='+option1.dataset[1].transform.config['=']);
+	option1.series[0].name = year;
+	chart.setOption(option1);
+}"))
+
+df |> filter(Year >= startYear) |> 
+ec.init( js= jcode,
+	grid= list(containLabel=T),
+	xAxis= list(max='dataMax'),
+	yAxis= list(type='category', inverse=TRUE, max=10, name='',
+		axisLabel=list(show=TRUE, fontSize=14),
+		animationDuration=300,animationDurationUpdate=300),
+	series.param= list(
+		type= 'bar', colorBy='data', realtimeSort=TRUE,
+		datasetIndex = 2,   # filter
+		encode= list(x= 1, y= 5),
+		label= list(show=TRUE,precision=1,position='right',valueAnimation=TRUE,fontFamily='monospace'),
+		animationDuration=0, animationDurationUpdate= updateFrequency,
+		animationEasing= 'linear',
+		animationEasingUpdate='linear'
+	),
+	legend= list(textStyle= list(fontSize= 30), icon='none')
+) |> ec.upd({   # add filter
+	dataset <- append(dataset, list(
+		list(transform= list(type= 'filter', config= list(dimension= 3, '='= startYear )))))
+})
+
+# with timeline, no Javascript
+updateFrequency <- 2100  # msec
+df |> filter(Year >= startYear) |> group_by(Year) |>
+ec.init(
+	grid= list(containLabel=T),
+	xAxis= list(max='dataMax'),
+	yAxis= list(type='category', inverse=TRUE, max=10, name='',
+		axisLabel=list(show=TRUE, fontSize=12),
+		animationDuration=300, animationDurationUpdate=300),
+	series.param= list(
+		type= 'bar', colorBy='data', realtimeSort=TRUE,
+		encode= list(x= 1, y= 5),
+		label= list(show=TRUE,precision=1,position='right',valueAnimation=TRUE,fontFamily='monospace'),
+		animationDuration=0, animationDurationUpdate= updateFrequency,
+		animationEasing= 'linear',
+		animationEasingUpdate='linear'
+	),
+	timeline= list(autoPlay=T, playInterval= updateFrequency/3)
+)  |> ec.theme('dark')
+
 ```
 </details>
 <br />
@@ -280,7 +404,7 @@ ec.init(js= jcode,
 <a id='crosstalk'></a>
 
 ## Crosstalk 2D
-play with the [Live Demo](https://rpubs.com/echarty/crosstalk) with code  
+play with the [Live Demo](https://rpubs.com/echarty/crosstalk), code included  
 <br />
 
 

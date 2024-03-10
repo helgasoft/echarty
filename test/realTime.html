@@ -87,10 +87,10 @@ a:visited { color: purple; }
    <h4>Real-time data with <a href='https://helgasoft.github.io/echarty' target=_blank>echarty</a></h4>
    Live R-code execution inside a single web page. No Rmd. No server. No installation. Thanks to <a href='https://docs.r-wasm.org/webr/latest/' target=_blank>WebR</a> 🏆
    </p>
-   This page does data polling for Bitcoin price every 10 seconds using <i>jsonlite::fromJSON</i>. <br>
+   This page does data polling for crypto price every <b>10 seconds</b> using <i>jsonlite::fromJSON</i>. <br>
    Response is a timestamp and a value in $US. Additional data processing could be achieved in R - moving averages(MA), prediction, etc.<br>
-   The chart displays Bollinger Bands - two standard deviations on simple moving average of a rolling window. <br>
-   You can select <b>rolling window width</b> here: <span>
+   The chart displays Bollinger Bands - two standard deviations on simple moving average of a rolling window. <br><br>
+   Select <b>rolling window width</b> here: <span>
    <select id='rwidth' onchange="updww()">
       <option value='6'>6</option>
       <option value='12' selected>12</option>
@@ -100,6 +100,17 @@ a:visited { color: purple; }
       <option value='48'>48</option>
       <option value='60'>60</option>
     </select> </span> points (ex: 12 pts * ~10 secs = ~2 minutes window) <br>
+   <b>Select crypto</b> here: <span>
+   <select id='icrypto' onchange="updCrypto()">
+      <option value='BTC' selected>BTC</option>
+      <option value='ETH'>ETH</option>
+      <option value='SOL'>SOL</option>
+      <option value='BCH'>BCH</option>
+      <option value='LTC'>LTC</option>
+      <option value='ADA'>ADA</option>
+      <option value='DOT'>DOT</option>
+      <option value='DOGE'>DOGE</option>
+   </select> </span> <br><br>
    Maximum number of points is limited to 500 (FIFO stack).  <br>
    Chrome browser timer throttling is bypassed through a background web worker. So data is collected even when the browser tab is not in focus.<br>
    See also the <a href='coder.html' target="_blank">coder demo</a> for interactive R-code chart editing.<br>
@@ -109,76 +120,78 @@ a:visited { color: purple; }
 </div>
 
 <script>
-var webR;
-import('https://webr.r-wasm.org/latest/webr.mjs').then(async ({ WebR }) => {
-   webR = new WebR();
-   await webR.init();
-   await webR.evalRString(`
-      webr::shim_install()
-      install.packages('echarty', repos= c('https://repo.r-wasm.org'))
-      'some string'
-   `)
-   document.getElementById('app').innerHTML = 'Ready to plot &#x1f44d';
-   doChart();
-});
+cryptt = 'BTC'; curww = '12'; 
 
 // R code for chart
 chartCode = `library(echarty); library(dplyr); library(zoo);
 tbox <- list(right='20%', feature= ec.util(cmd='fullscreen'))
-data <- list(list(as.character(Sys.time()), NA));
+rdata <- list(list(as.character(Sys.time()), NA));
 lobb <- hibb <- sma <- list()
 prevPrice <- 0    # to compare prices
 plot <- ec.init(elementId='ch1', backgroundColor='#110b29', darkMode=T,
-   title= list(text='Bitcoin Price Live', left='center', subtext=''), 
-   xAxis= list(type='time', splitLine= list(show=FALSE), name='Local time', nameLocation='center', nameGap=24),
-   yAxis= list(name='₿ in USD', splitLine= list(lineStyle= list(opacity=0.5)), scale=T, max='dataMax', z=6),
+   title= list(text='`+ cryptt +` Price Live', left='center', subtext=''), 
+   xAxis= list(type='time', splitLine= list(show=FALSE), name='Local time', nameLocation='center', nameGap=24, axisLabel=list(hideOverlap=T)),
+   yAxis= list(name='USD', splitLine= list(lineStyle= list(opacity=0.5)), scale=T, max='dataMax', z=6),
    tooltip= list(type='cross', trigger='axis', axisPointer= list(axis='x')), toolbox= tbox,
    series= list(
-      list(type= 'line', name='price', showSymbol=F, data= data, lineStyle= list(width=2, color='gold'), z=7,
+      list(type= 'line', name='price', showSymbol=F, data= rdata, lineStyle= list(width=2, color='gold'), z=7,
          endLabel= list(show=T, color='yellow', offset=c(9,0),
-            formatter= ec.clmn('(p) => { return p.data[1].toLocaleString(undefined, {maximumFractionDigits:2});}')) ),
+            formatter= ec.clmn('(p) => { dd= p.data[1]<10 ? 4 :2; return p.data[1].toLocaleString(undefined, {maximumFractionDigits:dd});}')) ),
       list(type= 'line', name='+BB', showSymbol=F, data= hibb, areaStyle= list(color='navy',opacity=0.7), smooth=T, lineStyle=list(width=1,color='lightblue')),
       list(type= 'line', name='-BB', showSymbol=F, data= lobb, areaStyle= list(color='#110b29',opacity=1), smooth=T, lineStyle=list(width=1,color='lightblue')),
       list(type= 'line', name='SMA', showSymbol=F, data= sma, smooth=T, lineStyle= list(width=1, color='lightblue')),
       list(type= 'effectScatter', rippleEffect= list(period= 3, scale= 3, brushType= 'stroke'), z=7,
-         data= list(last(data)), clip=F, symbolSize= 11, itemStyle= list(borderWidth=3, borderColor='red'))
+         data= list(last(rdata)), clip=F, symbolSize= 11, itemStyle= list(borderWidth=3, borderColor='red'))
    ),
    dataZoom= list(type='inside')
 ) |> ec.theme('dark')`
 
 // R code for live data grab
 dataCode= `json <- jsonlite::fromJSON('https://min-api.cryptocompare.com/data/generateAvg?fsym=BTC&tsym=USD&e=coinbase')
-      # remote data refreshed every 10 secs
-
-   price <- round(json$RAW$PRICE, 2)
-   if (prevPrice == price) return(list());  # dont add identical price
+      # remote data refresh is every 10 secs
+   price <- json$RAW$PRICE
+   ro <- ifelse(price<20, 4, 2)
+   price <- round(price, ro)
+   if (!exists('prevPrice') || #) prevPrice <- 0
+       prevPrice == price) return(list());  # dont add identical price
    prevPrice <- price;
    newData <- list(as.character(as.POSIXct(json$RAW$LASTUPDATE)), price )
-   data <- append(data, list(newData));  # gather same data in R too
-   # calc st.deviation of price,  12* 10sec= 2min rolling stdev
+   rdata <- append(rdata, list(newData));  # gather same data in R too
+   # calc st.deviation of price,  12pts * 10sec= 2min rolling window
    ww <- 12; 
-   if (length(data) >= ww) {
-      dd <- tail(sapply(data, '[[', 2), ww)
+   if (length(rdata) >= ww) {
+      dd <- tail(sapply(rdata, '[[', 2), ww)
       stdev <- rollapply(dd, width=ww, FUN=sd, fill=0, align='r')[ww]
       sma <- rollmean(dd, k=ww, fill=NA, align='right')[ww]
-      hibb = round(sma + stdev * 2, 2); 
-      lobb = round(sma - stdev * 2, 2); 
-      newData <- c(newData, round(sma,2), hibb, lobb) 
+      hibb = round(sma + stdev * 2, ro); 
+      lobb = round(sma - stdev * 2, ro); 
+      newData <- c(newData, round(sma,ro), hibb, lobb)  #round(stdev,ro), 
    }
-   if (length(data) > 500) 
-      data <- data[2:length(data)]
+   if (length(rdata) > 500) 
+      rdata <- rdata[2:length(rdata)]
    newData
 `
-curww = '12';
+
 function updww() {   // update rolling window width
    newrw = document.getElementById("rwidth").value;
    dataCode = dataCode.replace('ww <- '+ curww, 'ww <- '+ newrw);
    curww = newrw;
 };
+async function updCrypto() {
+   newc = document.getElementById("icrypto").value;
+   dataCode = dataCode.replace('?fsym='+ cryptt, '?fsym='+ newc);
+   tmp = await webR.evalRString("rdata <- list(); paste('len:',length(rdata))");
+   chart = get_e_charts('ch1');
+   opt1 = chart.getOption(); 
+   opt1.title[0].text = opt1.title[0].text.replace(cryptt, newc);
+   opt1.title[0].subtext = '';
+   for(i=0; i<opt1.series.length; i++) opt1.series[i].data = [];
+   chart.setOption(opt1);  
+   cryptt = newc;
+};
 
 async function doChart() {
   document.getElementById('app').innerHTML= 'Wait...';
-  chartCode += '\n as.character(htmlwidgets:::as.tags.htmlwidget(plot))'
   tags_plot = '';
   try {
     tags_plot = await webR.evalRString(chartCode);
@@ -191,6 +204,19 @@ async function doChart() {
   // render with HTMLWidgets
   HTMLWidgets.staticRender();
 }
+
+var webR;
+import('https://webr.r-wasm.org/latest/webr.mjs').then(async ({ WebR }) => {
+   webR = new WebR();
+   await webR.init();
+   await webR.evalRString(`
+      webr::shim_install()
+      install.packages('echarty', repos= c('https://repo.r-wasm.org'))
+      'some string'
+   `)
+   chartCode += '\n as.character(htmlwidgets:::as.tags.htmlwidget(plot))'
+   doChart();
+});
 
 // Get the modal
 var modl = document.getElementById("myModal");
