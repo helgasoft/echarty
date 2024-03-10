@@ -1,4 +1,3 @@
-<title>echarty gallery</title>
 
 # Gallery
 
@@ -244,6 +243,8 @@ ec.upd({
 ```
 </details>
 <br />
+
+<a id='gauge'></a>
 
 ## Triple gauge with animation
 with two layout examples - dials and rings
