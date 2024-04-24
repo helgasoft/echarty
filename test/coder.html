@@ -210,10 +210,10 @@ cns <- data.frame(
   name = c('China','Canada','Australia','Brazil'),
   value = runif(4, 1, 100) 
 )
-plot <- ec.init( preset=F,   # dont load='world',
+plot <- ec.init(   # dont load='world', already loaded by webpage
   color= c('violet','green'), 
-  geo=list(map= 'world', roam= T),
-  series= list(list(type= 'map', geoIndex= 0,
+  geo= list(map= 'world', roam= T),
+  series= list(list(type= 'map', 
   	 data= ec.data(cns, 'names'))),
   visualMap= list(calculable= TRUE, max= 100)
 )`
