@@ -211,33 +211,6 @@ option = {
 <br />
 &nbsp; <br />&nbsp; <br />
 
-<script type="text/javascript">
-	// video control 
-	function createObserver(videoElement) {
-	  let observer;
-	  let options = {
-	    root: null,
-	    rootMargin: "0px",
-	    threshold: [0.25, 0.6]
-	  };
-	  observer = new IntersectionObserver(handleIntersect, options);
-	  observer.observe(videoElement);
-	}
-	function handleIntersect(entries, observer) {
-	  entries.forEach((entry) => {
-		if (entry.intersectionRatio >= 0.6) { 
-			entry.target.play(); 
-		} 
-		if (entry.intersectionRatio <= 0.25) {
-			entry.target.pause(); 
-		}
-	  });
-	}
-  ['vidshp','keys','regres','loess','morph','vternary','vquadrant','axgrp'].map( (x) => {
-	createObserver(document.querySelector("#"+x));
-  });
-</script>
-
 <!--
 ## Panoramas and maps  
 
