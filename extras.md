@@ -211,7 +211,7 @@ option = {
 <br />
 &nbsp; <br />&nbsp; <br />
 
-<script>
+<script type="text/javascript">
 	// video control 
 	function createObserver(videoElement) {
 	  let observer;
