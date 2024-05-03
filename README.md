@@ -38,6 +38,7 @@ lines of code | 1,202,623 [![link](man/figs/external-link-16.png)](https://api.c
 API design <sup>(1)</sup>| own commands with parameters | mostly [ECharts option](https://echarts.apache.org/en/option.html) lists
 number of commands | over [200](https://echarts4r.john-coene.com/reference/) | **one** command + optional utilities
 data storage support | series data | **[datasets](https://echarts.apache.org/en/option.html#dataset)**, series data
+dependencies | 175 | 48
 [crosstalk](https://rstudio.github.io/crosstalk/) support | no	 | **yes**
 [WebR](https://docs.r-wasm.org/webr/latest/) support | no	 | **yes**
 utilities | bezier, correlations, histogram, density, loess, flip, nesting, more | extended boxplots, tabsets, layouts, shapefiles, lotties, more
@@ -53,7 +54,7 @@ Please consider granting a Github star ⭐ to show your support.
 ## Installation
 
 <!-- [![Github version](https://img.shields.io/github/v/release/helgasoft/echarty?label=github)](https://github.com/helgasoft/echarty/releases)  <sup>.02</sup>  -->
-Latest development build <strong>1.6.3.01</strong>
+Latest development build <strong>1.6.3.02</strong>
 
 ``` r
 if (!requireNamespace('remotes')) install.packages('remotes')
@@ -93,7 +94,7 @@ ec.init(
   )
 )
 
-# show a remote chart
+# show a remote map chart, needs leaflet package (>=v.2.2) installed
 echarty::ec.fromJson('https://helgasoft.github.io/echarty/test/pfull.json')
 
 ```

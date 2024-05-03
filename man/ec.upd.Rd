@@ -9,26 +9,29 @@ ec.upd(wt, ...)
 \arguments{
 \item{wt}{An echarty widget}
 
-\item{...}{R commands to update chart option lists}
+\item{...}{R commands to add/update chart option lists}
 }
 \description{
-And improve readability by chaining commands after ec.init
+Chain commands after ec.init to add or update chart items
 }
 \details{
-ec.upd makes changes to chart elements already set by ec.init.\cr
-It should be always piped after ec.init.\cr
-All numerical indexes for series,visualMap,etc. are JS-counted (start at 0)\cr
-Replaces syntax\cr
-\verb{   }p <- ec.init(...)\cr
-\verb{   }p$x$opts$series <- ...\cr
-with\cr
-\verb{   }ec.init(...) |> \verb{   } # set or preset chart params\cr
-\verb{   }ec.upd(\{series <- ...\}) # update params thru R commands
+\emph{ec.upd} makes changes to a chart already set by \link{ec.init}.\cr
+It should be always piped(chained) after \link{ec.init}.\cr
+All numerical indexes for series,visualMap,etc. are JS-counted and start at 0.\cr
 }
 \examples{
-Orange |> dplyr::group_by(Tree) |> 
-ec.init(series.param= list(universalTransition= list(enabled=TRUE))) |>
-ec.upd({ 
- series <- lapply(series, function(ss) { ss$groupId <- ss$name; ss })
+library(dplyr)
+df <- data.frame(x= 1:30, y= runif(30, 5, 10), cat= sample(LETTERS[1:3],size=30,replace=TRUE)) |>
+  		mutate(lwr= y-runif(30, 1, 3), upr= y+runif(30, 2, 4))
+band.df <- df  |> group_by(cat) |> group_split()
+
+df |> group_by(cat) |> 
+ec.init(load='custom', ctype='line', 
+        xAxis=list(data=c(0,unique(df$x)), boundaryGap=FALSE) ) |> 
+ec.upd({
+  for(ii in 1:length(band.df))   # add bands to their respective groups
+    series <- append(series,   
+      ecr.band(band.df[[ii]], 'lwr', 'upr', type='stack', smooth=FALSE,
+         name= unique(band.df[[ii]]$cat), areaStyle= list(color=c('blue','green','yellow')[ii])) )
 })
 }

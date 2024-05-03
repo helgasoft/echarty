@@ -554,6 +554,7 @@ body { padding: 10px; }
 #' * _layout_ = 'h' for horizontal(default) or 'v' for vertical layout\cr
 #' * _outliers_ boolean to add outlier points (default FALSE)\cr
 #' * _jitter_ value for \link[base]{jitter} of numerical values in second column, default 0 (no scatter). Adds scatter series on top of boxplot.\cr
+#' 
 #' Optional parameter for **names**:\cr
 #' * _nasep_ = single character name separator for nested lists, see Examples. \cr
 #' Purpose is to facilitate conversion from _data.frame_ to nested named lists.\cr
@@ -1307,7 +1308,7 @@ ec.fromJson <- function(txt, ...) {
 
 #' ------------- Licence -----------------
 #'
-#' Original work Copyright 2023 Larry Helgason
+#' Original work Copyright 2021-2024 Larry Helgason
 #' 
 #' Licensed under the Apache License, Version 2.0 (the "License");
 #' you may not use this file except in compliance with the License.

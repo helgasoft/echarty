@@ -153,6 +153,7 @@
         },
 
         gauge: {
+            title: { color: '#aaa'},
             axisLine: {
                 lineStyle: {
                     color: [

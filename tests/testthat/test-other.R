@@ -69,45 +69,43 @@ test_that("leaflet with ec.clmn and timeline", {
   p <- tmp |> ec.init(load= 'leaflet',
                       tooltip = list(formatter=ec.clmn('magnitude %@', 'mag')),
     series.param= list(
-      symbolSize = ec.clmn(6, scale=2)
+      symbolSize = ec.clmn(6, scale=3)
       )
-  #	timeline= list(autoPlay=TRUE, controlStyle= list(borderColor='brown')),
   )
   expect_equal(p$x$opts$leaflet$zoom, 6)
   expect_s3_class(p$x$opts$tooltip$formatter, 'JS_EVAL')
 
   p <- tmp |> group_by(stations) |> ec.init(load='leaflet', 
-    tooltip = list(formatter=ec.clmn('magnitude %@', 'mag')),
-  	leaflet= list(center= c(179.462,-20), zoom= 2,
-  	              tiles= list(
-      list(
-        label= 'Stamen',
-        urlTemplate= 'https://stamen-tiles-{s}.a.ssl.fastly.net/terrain/{z}/{x}/{y}{r}.{ext}',
-        options= list(attribution= 'Map tiles by <a href="http://stamen.com">Stamen Design</a>, <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>',
+    legend= list(show=T), tooltip = list(formatter=ec.clmn('magnitude %@', 'mag')),
+  	leaflet= list(center= c(179.462,-20), zoom= 5, tiles= list(
+      list( label= 'OpenTopoMap',
+        urlTemplate= 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
+        options= list(attribution= 'Map tiles by <a href="https://opentopomap.org">OpenTopoMap</a>',
                       subdomains= 'abcd',	maxZoom= 18, ext= 'png')
       )
-     					    )
-    ),
-  	timeline= list(autoPlay=TRUE, controlStyle= list(borderColor='brown')),
-  	options= list(legend= list(show=T)), 
-    tl.series= list( 
+    )),
+  	timeline= list(autoPlay=F, axisType='value', 
+  	               data= unique(sort(tmp$stations)),
+  	               controlStyle= list(borderColor='brown')),
+    series.param= list(
         type='scatter', name='quake',
-        symbolSize = ec.clmn(6, scale=2),
-        encode= list(lng='long', lat='lat', tooltip=c(4,5))
+        symbolSize = ec.clmn(6, scale=3),
+        encode= list(lng='long', lat='lat')
     ),
     visualMap= list(
         show= FALSE, top= 'top', dimension=4,
         calculable= TRUE, inRange= list(color= c('blue','red'))
     )
   )
-  expect_equal(p$x$opts$leaflet$zoom, 2)
+  expect_equal(p$x$opts$leaflet$zoom, 5)
   expect_s3_class(p$x$opts$tooltip$formatter, 'JS_EVAL')
-  #expect_equal(p$dependencies[[9]]$name, 'echarts-leaflet')  # loads slow?
+  expect_equal(p$dependencies[[1]]$name, 'leaflet')
   #expect_equal(p$x$opts$options[[10]]$title$text, '19')
   expect_equal(p$x$opts$options[[10]]$series[[1]]$name, 'quake')
-  expect_true (p$x$opts$options[[10]]$legend$show)
-  expect_equal(p$x$opts$options[[41]]$series[[1]]$coordinateSystem, 'leaflet')
-  expect_equal(p$x$opts$timeline$data[[10]], '19')
+  expect_true (p$x$opts$legend$show)
+  expect_equal(p$x$opts$options[[1]]$series[[1]]$coordinateSystem, 'leaflet')
+  expect_equal(p$x$opts$timeline$data[[1]], 10)
+  expect_equal(p$x$opts$dataset[[2]]$transform$config$dimension, 'stations')
   expect_equal(p$x$opts$dataset[[2]]$transform$config$`=`, 10)
 })
   

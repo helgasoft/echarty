@@ -29,37 +29,32 @@ A 'custom' serie with lower and upper boundaries
 }
 \details{
 \itemize{
-\item type='polygon': coordinates of the two boundaries are chained into one polygon. Tooltips do not show upper band values.\cr
-\emph{xAxis type} could be 'category' or 'value'.\cr
-Set fill color with attribute \emph{color}.\cr
+\item type='polygon': coordinates of the two boundaries are chained into one polygon.\cr
+\verb{     }\emph{xAxis type} could be 'category' or 'value'.\cr
+\verb{     }Set fill color with attribute \emph{color}.
 \item type='stack': two \emph{stacked} lines are drawn, the lower with customizable areaStyle.\cr
-\emph{xAxis type} should be 'category'! Tooltips could include upper band values.\cr
-Set fill color with attribute \emph{areaStyle$color}.\cr
+\verb{     }\emph{xAxis type} should be 'category' ! \cr
+\verb{     }Set fill color with attribute \emph{areaStyle$color}.\cr
+\verb{     }Optional tooltip formatter available in \emph{band[[1]]$tipFmt}.
 }
 Optional parameter \emph{name}, if given, will show up in legend. Legend merges all series with same name into one item.
 }
 \examples{
-df <- airquality |> dplyr::mutate(
-    lwr= round(Temp-Wind*2),
-    upr= round(Temp+Wind*2),
-      x= paste0(Month,'-',Day) ) |>
-  dplyr::relocate(x, Temp)
-bands <- ecr.band(df, 'lwr', 'upr', type='stack',
-                  name= 'stak', areaStyle= list(opacity=0.4))
-df |> ec.init( load= 'custom',
-   legend= list(show= TRUE),
-   dataZoom= list(type= 'slider'),
-   toolbox= list(feature= list(dataZoom= list(show= TRUE))),
-   xAxis= list(type= 'category', boundaryGap= FALSE),
-   series= list(
-     list(type='line', color='blue', name='line'),
-     bands[[1]], bands[[2]]
-   ),
-   tooltip= list( trigger= 'axis',
-     formatter= ec.clmn(
-        'high <b>\%@</b><br>line <b>\%@</b><br>low <b>\%@</b>',
-                  3.3, 1.2, 2.2)
-   )  # 3.3= upper_serie_index +.+ index_of_column_inside
+set.seed(222)
+df <- data.frame( x = 1:10, y = round(runif(10, 5, 10),2)) |>
+  dplyr::mutate(lwr= round(y-runif(10, 1, 3),2), upr= round(y+runif(10, 2, 4),2) )
+banda <- ecr.band(df, 'lwr', 'upr', type='stack', name='stak', areaStyle= list(color='green'))
+#banda <- ecr.band(df, 'lwr', 'upr', type='polygon', name='poly1')
+
+df |> ec.init( load='custom', # polygon only
+  legend= list(show= TRUE),
+  xAxis= list(type='category', boundaryGap=FALSE), # stack
+  #xAxis= list(scale=T, min='dataMin'),            # polygon 
+  series= append(
+    list(list(type='line', color='blue', name='line1')),
+    banda
+  ),
+  tooltip= list(trigger='axis', formatter= banda[[1]]$tipFmt)
 )
 
 }

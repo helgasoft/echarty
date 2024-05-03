@@ -533,7 +533,7 @@ if (HTMLWidgets.shinyMode) {
 ---------------------------------------
 Original work Copyright 2018 John Coene
 
-Modified work Copyright 2021 Larry Helgason
+Modified work Copyright 2021-2024 Larry Helgason
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

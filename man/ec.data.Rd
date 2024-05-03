@@ -28,7 +28,10 @@ Optional parameters for \strong{boxplot} are:\cr
 \item \emph{layout} = 'h' for horizontal(default) or 'v' for vertical layout\cr
 \item \emph{outliers} boolean to add outlier points (default FALSE)\cr
 \item \emph{jitter} value for \link[base]{jitter} of numerical values in second column, default 0 (no scatter). Adds scatter series on top of boxplot.\cr
+}
+
 Optional parameter for \strong{names}:\cr
+\itemize{
 \item \emph{nasep} = single character name separator for nested lists, see Examples. \cr
 Purpose is to facilitate conversion from \emph{data.frame} to nested named lists.\cr
 }}

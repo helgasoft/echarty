@@ -541,11 +541,14 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
       
     }
     
+    #wt$dependencies <- append(wt$dependencies, htmlwidgets::getDependency('leaflet'))  # working with leaflet <=v.2.1.0
+    wt$dependencies <- append(wt$dependencies, list( htmltools::htmlDependency(
+      name= "leaflet", version= "1.3.1", package= "leaflet", src= "htmlwidgets/lib/leaflet",
+      script= "leaflet.js", stylesheet= "leaflet.css") )
+    )
     dep <- htmltools::htmlDependency(
-      name = 'echarts-leaflet', 
-      version = '1.0.0', src = c(file = path), 
-      script='echarts-leaflet.js')
-    wt$dependencies <- append(wt$dependencies, htmlwidgets::getDependency('leaflet'))
+      name= 'echarts-leaflet', version= '1.0.0', src= c(file= path), 
+      script= 'echarts-leaflet.js')
     wt$dependencies <- append(wt$dependencies, list(dep))
   }
   if ('custom' %in% load) {
@@ -625,17 +628,19 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
   }
   
   
-  # ------------- timeline  -----------------
+  # ------------- timeline is last -----------------
   if (is.null(tl.series) && is.null(opt1$timeline)) return(wt)
   if (!preset) return(wt)
-  # timeline is evaluated last
+  if (!is.null(opt1$options) && !is.null(opt1$timeline))
+    return(wt)    # both set manually
+
   if (is.null(tl.series) && 
       !is.null(opt1$timeline) && 
       !is.null(series.param))
     tl.series <- series.param
   
   if (is.null(df) || !is.grouped_df(df))
-      stop('ec.init: tl.series requires a grouped data.frame df')
+    stop('ec.init: timeline requires a grouped data.frame df')
 
   if (is.null(tl.series$encode))
     tl.series$encode <- list(x=1, y=2, z=3)  # set default for non-map series
@@ -706,7 +711,6 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
   
   #wt$x$opts$xAxis <- list(type='category')  # geo,leaf do not like
   wt$x$opts$series <- NULL   # otherwise legend + scatter series may stay behind
-  # wt$x$opts$legend <- NULL
   wt$x$opts$options <- .merlis(optl, wt$x$opts$options)
   
   if (!is.null(tl.series$groupBy)) {
@@ -759,25 +763,28 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
 
 #' Update option lists
 #' 
-#' And improve readability by chaining commands after ec.init
+#' Chain commands after ec.init to add or update chart items
 #' 
 #' @param wt An echarty widget
-#' @param ... R commands to update chart option lists
+#' @param ... R commands to add/update chart option lists
 #'
-#' @details ec.upd makes changes to chart elements already set by ec.init.\cr
-#' It should be always piped after ec.init.\cr
-#' All numerical indexes for series,visualMap,etc. are JS-counted (start at 0)\cr
-#' Replaces syntax\cr
-#'   \verb{   }p <- ec.init(...)\cr
-#'   \verb{   }p$x$opts$series <- ...\cr
-#' with\cr
-#'   \verb{   }ec.init(...) |> \verb{   } # set or preset chart params\cr
-#'   \verb{   }ec.upd(\{series <- ...\}) # update params thru R commands
+#' @details \emph{ec.upd} makes changes to a chart already set by [ec.init].\cr
+#' It should be always piped(chained) after [ec.init].\cr
+#' All numerical indexes for series,visualMap,etc. are JS-counted and start at 0.\cr
 #' @examples
-#' Orange |> dplyr::group_by(Tree) |> 
-#' ec.init(series.param= list(universalTransition= list(enabled=TRUE))) |>
-#' ec.upd({ 
-#'  series <- lapply(series, function(ss) { ss$groupId <- ss$name; ss })
+#' library(dplyr)
+#' df <- data.frame(x= 1:30, y= runif(30, 5, 10), cat= sample(LETTERS[1:3],size=30,replace=TRUE)) |>
+#'   		mutate(lwr= y-runif(30, 1, 3), upr= y+runif(30, 2, 4))
+#' band.df <- df  |> group_by(cat) |> group_split()
+#' 
+#' df |> group_by(cat) |> 
+#' ec.init(load='custom', ctype='line', 
+#'         xAxis=list(data=c(0,unique(df$x)), boundaryGap=FALSE) ) |> 
+#' ec.upd({
+#'   for(ii in 1:length(band.df))   # add bands to their respective groups
+#'     series <- append(series,   
+#'       ecr.band(band.df[[ii]], 'lwr', 'upr', type='stack', smooth=FALSE,
+#'          name= unique(band.df[[ii]]$cat), areaStyle= list(color=c('blue','green','yellow')[ii])) )
 #' })
 #' @export
 ec.upd <- function(wt, ...) {
@@ -805,37 +812,32 @@ ec.upd <- function(wt, ...) {
 #'
 #' @details
 #' \itemize{
-#'  \item type='polygon': coordinates of the two boundaries are chained into one polygon. Tooltips do not show upper band values.\cr
-#'      _xAxis type_ could be 'category' or 'value'.\cr
-#'      Set fill color with attribute _color_.\cr
-#'  \item type='stack': two _stacked_ lines are drawn, the lower with customizable areaStyle.\cr
-#'      _xAxis type_ should be 'category'! Tooltips could include upper band values.\cr
-#'      Set fill color with attribute _areaStyle$color_.\cr
+#' \item type='polygon': coordinates of the two boundaries are chained into one polygon.\cr
+#' \verb{     }_xAxis type_ could be 'category' or 'value'.\cr
+#' \verb{     }Set fill color with attribute _color_.
+#' \item type='stack': two _stacked_ lines are drawn, the lower with customizable areaStyle.\cr
+#' \verb{     }_xAxis type_ should be 'category' ! \cr
+#' \verb{     }Set fill color with attribute _areaStyle$color_.\cr
+#' \verb{     }Optional tooltip formatter available in _band\[\[1\]\]$tipFmt_.
 #' }
 #' Optional parameter _name_, if given, will show up in legend. Legend merges all series with same name into one item.
 #' 
 #' @examples 
-#' df <- airquality |> dplyr::mutate(
-#'     lwr= round(Temp-Wind*2),
-#'     upr= round(Temp+Wind*2),
-#'       x= paste0(Month,'-',Day) ) |>
-#'   dplyr::relocate(x, Temp)
-#' bands <- ecr.band(df, 'lwr', 'upr', type='stack',
-#'                   name= 'stak', areaStyle= list(opacity=0.4))
-#' df |> ec.init( load= 'custom',
-#'    legend= list(show= TRUE),
-#'    dataZoom= list(type= 'slider'),
-#'    toolbox= list(feature= list(dataZoom= list(show= TRUE))),
-#'    xAxis= list(type= 'category', boundaryGap= FALSE),
-#'    series= list(
-#'      list(type='line', color='blue', name='line'),
-#'      bands[[1]], bands[[2]]
-#'    ),
-#'    tooltip= list( trigger= 'axis',
-#'      formatter= ec.clmn(
-#'         'high <b>%@</b><br>line <b>%@</b><br>low <b>%@</b>',
-#'                   3.3, 1.2, 2.2)
-#'    )  # 3.3= upper_serie_index +.+ index_of_column_inside
+#' set.seed(222)
+#' df <- data.frame( x = 1:10, y = round(runif(10, 5, 10),2)) |>
+#'   dplyr::mutate(lwr= round(y-runif(10, 1, 3),2), upr= round(y+runif(10, 2, 4),2) )
+#' banda <- ecr.band(df, 'lwr', 'upr', type='stack', name='stak', areaStyle= list(color='green'))
+#' #banda <- ecr.band(df, 'lwr', 'upr', type='polygon', name='poly1')
+#' 
+#' df |> ec.init( load='custom', # polygon only
+#'   legend= list(show= TRUE),
+#'   xAxis= list(type='category', boundaryGap=FALSE), # stack
+#'   #xAxis= list(scale=T, min='dataMin'),            # polygon 
+#'   series= append(
+#'     list(list(type='line', color='blue', name='line1')),
+#'     banda
+#'   ),
+#'   tooltip= list(trigger='axis', formatter= banda[[1]]$tipFmt)
 #' )
 #' 
 #' @importFrom stats na.omit
@@ -851,9 +853,15 @@ ecr.band <- function(df=NULL, lower=NULL, upper=NULL, type='polygon', ...) {
   df <- na.omit(df)
   
   if (type=='stack') {
+    tipFmt <- "(ss) => { lo=''; hi=''; lin='';
+ss.map(o => { nn = o.dimensionNames[1]; vv= o.value[1];
+if (nn==='.s.lo') lo= vv; 
+else if (nn==='.s.hi') hi= vv;
+else lin= '<br>line <b>'+vv+'</b>'; });
+str='high <b>'+(lo+hi)+'</b>'+lin+'<br>low <b>'+lo+'</b>'; return str;}"  # stack only
     colr <- paste("new echarts.graphic.LinearGradient(0, 0, 0, 1, [", 
-                  "{offset: 0, color: 'rgba(255, 0, 135)'},", 
-                  "{offset: 1, color: 'rgba(135, 0, 157)'}]);")
+              "{offset: 0, color: 'rgba(255, 0, 135)'},", 
+              "{offset: 1, color: 'rgba(135, 0, 157)'}]);")
     defStyle <- list(opacity = 0.8, color = htmlwidgets::JS(colr))
     
     slow <- list(type='line', ...)
@@ -867,10 +875,13 @@ ecr.band <- function(df=NULL, lower=NULL, upper=NULL, type='polygon', ...) {
     if (is.null(supr$areaStyle))  supr$areaStyle <- defStyle
     # save upper data for tooltip, 'hi' values are just differences
     tmp <- data.frame(x = df[fstc][[1]], lo=df[lower][[1]], 
-                      hi = df[upper][[1]] - df[lower][[1]], 
+                      hi = df[upper][[1]] - df[lower][[1]], # for stacked line
                       ttip = df[upper][[1]] )
     slow$data <- ec.data(tmp[,c('x','lo')])
     supr$data <- ec.data(tmp[,c('x','hi','ttip')])
+    supr$dimensions <- c('x','.s.hi','.s.tip')
+    slow$tipFmt <- ec.clmn(tipFmt)    # simple optional tooltip 
+    slow$dimensions <- c('x','.s.lo')
     serios <- list(slow, supr)
   }
   else {   # polygon
@@ -885,6 +896,7 @@ ecr.band <- function(df=NULL, lower=NULL, upper=NULL, type='polygon', ...) {
     if (is.null(serios$itemStyle)) serios$itemStyle <- list(borderWidth = 0.5)
     if (is.null(serios$boundaryGap)) serios$boundaryGap <- FALSE
     serios <- list(serios)  # keep consistent with stack type
+    serios$tipFmt <- NULL
   }
   serios
 }
@@ -1307,7 +1319,7 @@ ec.plugjs <- function(wt=NULL, source=NULL, ask=FALSE) {
 #'
 #' Original work Copyright 2018 John Coene
 #' 
-#' Modified work Copyright 2021 Larry Helgason
+#' Modified work Copyright 2021-2024 Larry Helgason
 #' 
 #' Licensed under the Apache License, Version 2.0 (the "License");
 #' you may not use this file except in compliance with the License.
