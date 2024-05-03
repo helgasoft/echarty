@@ -55,12 +55,22 @@ Keys with functions implemented, many more possible:
 The familiar _quakes_ R dataset is visualized in 3D environment (lat,long,depth) over an area map with tectonic plate boundaries. 
 User can show/hide 3D regression planes(s) built from selected 3D points.  
 <br />
-<video id="3dreg" preload="auto" 
+<video id="regres" preload="auto" 
    src="img/quake.mp4" type="video/mp4" muted="muted" controls>
    Your browser does not support the video tag.
 </video>
 
 See also 3D regression planes in [iris dataset](img/iris3d.mp4).
+<br /><br />
+
+## Local Polynomial Regression Fitting (LOESS)
+
+Display regression surfaces built from 3D points.  
+<br />
+<video id="loess" preload="auto" 
+   src="img/loessSurf.mp4" type="video/mp4" muted="muted" controls>
+   Your browser does not support the video tag.
+</video>
 <br /><br />
 
 ## Morphing drilldown
@@ -99,7 +109,7 @@ The plot depicts the ratios of the three variables as positions in an equilatera
 
 Demo [example data](https://gist.githubusercontent.com/toja/811f0ddc765c59c26de544fd0e0ba46f/raw/eef11e930f6c05700faca47711b173f795a84181/sectors.csv) is for world countries GDP by economic sectors.
 <br /><br />
-<video id="ternary" preload="auto" 
+<video id="vternary" preload="auto" 
    src="img/ternary.mp4" type="video/mp4" muted="muted" controls>
    Your browser does not support the video tag.
 </video>
@@ -121,7 +131,7 @@ Offers the following options:
 Only <span style="color:black; background:orange">&nbsp;Javascript&nbsp;</span> version currently available.
 
 <br /> 
-<video id="quadrant" preload="auto" 
+<video id="vquadrant" preload="auto" 
    src="img/quadrant.mp4" type="video/mp4" muted="muted" controls>
    Your browser does not support the video tag.
 </video>
@@ -199,6 +209,34 @@ option = {
    Your browser does not support the video tag.
 </video>
 <br />
+&nbsp; <br />&nbsp; <br />
+
+<script>
+	// video control 
+	function createObserver(videoElement) {
+	  let observer;
+	  let options = {
+	    root: null,
+	    rootMargin: "0px",
+	    threshold: [0.25, 0.6]
+	  };
+	  observer = new IntersectionObserver(handleIntersect, options);
+	  observer.observe(videoElement);
+	}
+	function handleIntersect(entries, observer) {
+	  entries.forEach((entry) => {
+		if (entry.intersectionRatio >= 0.6) { 
+			entry.target.play(); 
+		} 
+		if (entry.intersectionRatio <= 0.25) {
+			entry.target.pause(); 
+		}
+	  });
+	}
+  ['vidshp','keys','regres','loess','morph','vternary','vquadrant','axgrp'].map( (x) => {
+	createObserver(document.querySelector("#"+x));
+  });
+</script>
 
 <!--
 ## Panoramas and maps  
