@@ -16,7 +16,7 @@ ec.init(
 )
 }
 \arguments{
-\item{df}{A data.frame to be preset as \href{https://echarts.apache.org/en/option.html#dataset}{dataset}, default NULL \cr
+\item{df}{Optional data.frame to be preset as \href{https://echarts.apache.org/en/option.html#dataset}{dataset}, default NULL \cr
 By default the first column is for X values, second column is for Y, and third is for Z when in 3D.\cr
 Best practice is to have the grouping column placed last. Grouping column cannot be used as axis.\cr
 Timeline requires a \emph{grouped data.frame} to build its \href{https://echarts.apache.org/en/option.html#options}{options}.\cr
@@ -49,10 +49,10 @@ Command \emph{ec.init} creates a widget with \link[htmlwidgets]{createWidget}, t
 Numerical indexes for series,visualMap,etc. are R-counted (1,2...)\cr
 
 \strong{Presets}: \cr
-When a data.frame is chained to \emph{ec.init}, a \href{https://echarts.apache.org/en/option.html#dataset}{dataset} is preset. \cr
+When data.frame df is chained to \emph{ec.init}, a \href{https://echarts.apache.org/en/option.html#dataset}{dataset} is preset. \cr
 When the data.frame is grouped and \emph{ctype} is not null, more datasets with legend and series are also preset. \cr
 Plugin '3D' is required for 2D series 'scatterGL'. Use \emph{preset=FALSE} and set explicitly \emph{xAxis} and \emph{yAxis}. \cr
-Plugins 'leaflet' and 'world' preset \emph{zoom=6} and \emph{center} to the mean of all coordinates. \cr
+Plugins 'leaflet' and 'world' preset \emph{center} to the mean of all coordinates from df. \cr
 Users can delete or overwrite any presets as needed. \cr
 
 \strong{Widget attributes}: \cr

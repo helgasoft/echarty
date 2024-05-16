@@ -1,7 +1,7 @@
 Package: echarty
 Title: Minimal R/Shiny Interface to JavaScript Library 'ECharts'
-Date: 2024-02-24
-Version: 1.6.3.02
+Date: 2024-05-16
+Version: 1.6.3.03
 Author: Larry Helgason, with initial code from John Coene's library echarts4r
 Maintainer: Larry Helgason <larry@helgasoft.com>
 Description: Deliver the full functionality of 'ECharts' with minimal overhead. 'echarty' users build R lists for 'ECharts' API. Lean set of powerful commands.
@@ -16,7 +16,8 @@ Suggests:
     jsonlite,
     crosstalk,
     testthat (>= 3.0.0),
-    sf,
+    sf, 
+    leaflet (>= 2.2.0),
     knitr,
     rmarkdown
 RoxygenNote: 7.3.1

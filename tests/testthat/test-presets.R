@@ -54,15 +54,15 @@ test_that("ec.init presets for timeline", {
     quarter = as.factor(rep(1:4, 4)),
     year = unlist(lapply(2018:2021, function(x) {rep(x, 4)}))
   )
-  barTL <- function(data, timeline_var) {  #}, x_var, bar_var) {
+  barTL <- function(data, timeline_var) {
     bt <- data |> dplyr::group_by(!!dplyr::sym(timeline_var)) |> 
-      ec.init(series.param = list(type='bar'), #,encode=list(x=x_var, y=bar_var)),
+      ec.init(series.param = list(no_type='bar'), 
               xAxis= list(name='xval'),
               timeline= list(s=T) # data= c(1,2,3,4), axisType='value') #ok
       )
     bt
   }
-  p <- barTL(dftl, timeline_var= "year") #, x_var= "value", bar_var= "quarter")
+  p <- barTL(dftl, timeline_var= "year")
   o <- p$x$opts
   expect_equal(length(o$dataset[[1]]$source), 17)
   expect_equal(length(o$dataset), 5)
@@ -71,6 +71,7 @@ test_that("ec.init presets for timeline", {
   expect_equal(o$yAxis$name, 'quarter')
   expect_equal(o$xAxis$name, 'xval')
   expect_equal(o$options[[1]]$series[[1]]$encode, list(x=0, y=1, z=2))
+  expect_equal(o$options[[1]]$series[[1]]$type, 'scatter')
 })
 
 test_that("ec.init presets for timeline groupBy", {
@@ -83,16 +84,15 @@ test_that("ec.init presets for timeline groupBy", {
     y = abs(runif(16)), z= runif(16)
   ) 
   p <- dat |> group_by(x1) |> ec.init(
-    legend= list(show=TRUE),
-    tl.series= list(encode= list(x= 'x', y= 'y'), 
-                    symbolSize= ec.clmn('x4', scale=30),
-                    groupBy= 'x2') 
+    legend= list(show=TRUE), timeline= list(show=T),
+    series.param= list(encode= list(x= 'x', y= 'y'), 
+        symbolSize= ec.clmn('x4', scale=30), groupBy= 'x2') 
   )
   expect_equal(p$x$opts$options[[4]]$series[[1]]$type, 'scatter')
   expect_equal(p$x$opts$options[[4]]$series[[1]]$encode$y, 'y')
   expect_equal(p$x$opts$yAxis$name, 'y')
 
-  p <- dat |> group_by(x1) |> ec.init(#load='3D',
+  p <- dat |> group_by(x1) |> ec.init( #load='3D',
     xAxis3D=list(s=T),yAxis3D=list(s=T),zAxis3D=list(s=T),grid3D=list(s=T),
     timeline=list(s=T), legend= list(show=TRUE), 
     series.param= list(type='scatter3D', groupBy= 'x2',
@@ -105,30 +105,43 @@ test_that("ec.init presets for timeline groupBy", {
   expect_equal(p$x$opts$options[[4]]$series[[2]]$name, 'B')
   
   cns <- data.frame(
-    val = c(22, 99, 33),
-    dim = c(11, 88, 44),
-    nam = c('Brazil','China','India')
+    value = c(22, 99, 33),
+    name = c('Brazil','China','India'),
+    dim = c(11, 88, 44)  # last clmn is value if there is no column 'value'
   )
-  p <- cns |> group_by(nam) |> 
-  ec.init(load= 'world', tooltip= list(show=T),
-    tl.series= list(type='map', encode= list(name='nam', value='val')), 
-    visualMap= list(calculable=TRUE, dimension=2)
+  p <- cns |> group_by(name) |> 
+  ec.init(load= 'world', tooltip= list(show=T),   # geo
+    timeline= list(show=T),
+    series.param= list(type='map'), #encode= list(name='nam', value='val')), 
+    visualMap= list()
   )
+
   # name & value are required column names for tl.series
   expect_equal(p$x$opts$options[[3]]$series[[1]]$geoIndex,0)  # decremented
   #expect_equal(p$x$opts$options[[1]]$series[[1]]$data[[1]]$name, 'Brazil')
   expect_equal(p$x$opts$options[[1]]$series[[1]]$datasetIndex, 1)
   expect_equal(p$x$opts$geo$map, 'world')
-  expect_equal(p$x$opts$visualMap$max, 88)
+  expect_equal(p$x$opts$visualMap$max, 99)
   
-  p <- cns |> relocate(dim, .after = last_col()) |>
-    ec.init(load= 'world', series.param= list(type='map'), visualMap= list(s=T))
-  # defaults:
-  # 1. map series will pick up the first num column for values, first char col for name
-  # 2. visualMap will pick up the last column for max/min
-  expect_equal(p$x$opts$dataset[[1]]$source[[1]], c("val","nam","dim"))
+  # map defaults:
+  # 1. map serie picks up first num clmn for value, first char clmn for name
+  # 2. visualMap picks up last numeric clmn for max/min, but 'name' as last clmn doesn't work
+  p <- cns |> rename(val=value) |>
+    ec.init(load= 'world', series.param= list(type='map'), 
+            visualMap= list(seriesIndex=1))
+  expect_equal(p$x$opts$dataset[[1]]$source[[1]], c("val","name","dim"))
   expect_equal(p$x$opts$series[[1]]$geoIndex, 0)
   expect_equal(p$x$opts$visualMap$max, 88)
+  
+  p <- quakes |> head(11) |> group_by(stations) |> 
+  ec.init(load='world', timeline= list(show=T),
+	  series.param= list(type='scatter', itemStyle= list(color='brown'),
+	    encode= list(lng=2, lat=1, value=3)
+		  #encode= list(lng='long', lat='lat', value='mag')  #ok
+	) )
+  expect_equal(length(p$x$opts$options), 8)
+  expect_equal(p$x$opts$options[[2]]$series[[1]]$datasetIndex, 2)
+  expect_equal(p$x$opts$options[[2]]$series[[1]]$coordinateSystem, 'geo')
 })
 
 test_that("presets for parallel chart", {
@@ -190,7 +203,7 @@ lng,lat,name,date,place
   expect_equal(p$x$opts$series[[1]]$coordinateSystem, 'leaflet')
   expect_equal(p$x$opts$series[[1]]$encode$tooltip, c(2,3,4))
   
-  p <- ec.init(quakes |> head(11), load='world', ctype= 'scatter',
+  p <- ec.init(quakes |> head(11), load='world',
 	  series.param= list( encode= list(lng=2, lat=1, value=3),
 		#encode= list(lng='long', lat='lat', value='mag'),
 		itemStyle= list(color='brown')) )
@@ -211,6 +224,9 @@ test_that("presets with series.param", {
   p <- df |> relocate(symbol) |> group_by(symbol) |> 
     ec.init(series.param= list(encode= list(x=3, y=2)))
   expect_equal(p$x$opts$yAxis$name, 'name')
+  p <- data.frame(name=c('Brazil','Australia'), value=c(111,222)) |>
+    ec.init(load='world', series.param= list(type='map'), visualMap=list())
+  expect_equal(p$x$opts$visualMap$max, 222)
 })
 
 test_that("presets for visualMap", {
@@ -222,7 +238,7 @@ test_that("presets for visualMap", {
 test_that('axis names from preset encode', {
   tmp <- cars |> mutate(group = sample( c(1,2), 50, replace = TRUE)) |> 
     relocate(group) |> group_by(group)    # group is 1st col
-  p <- tmp |> ec.init()
+  p <- tmp |> ec.init(xAxis= list(gridIndex=1)) |> ec.plugjs()  # 4 coveralls
   expect_equal(p$x$opts$xAxis$name, 'speed')
   expect_equal(p$x$opts$yAxis$name, 'dist')
   p <- tmp |> ec.init(series.param= list(encode= list(x='dist', y='speed')))

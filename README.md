@@ -1,15 +1,13 @@
 
-<!-- README.md is generated from README.Rmd. Please edit that file -->
-
-# <img src="man/figs/logo.png" width='70px' alt="" /> echarty
+# <img src='man/figs/logo.png' width='70px' alt='' /> echarty
 
 <!-- badges: start -->
 
 [![R-CMD-check](https://github.com/helgasoft/echarty/workflows/R-CMD-check/badge.svg)](https://github.com/helgasoft/echarty/actions)
-[![Coveralls test coverage](https://coveralls.io/repos/github/helgasoft/echarty/badge.svg)](https://coveralls.io/r/helgasoft/echarty?branch=main)
+[![coverage](https://coveralls.io/repos/github/helgasoft/echarty/badge.svg)](https://coveralls.io/r/helgasoft/echarty?branch=main)
 [![size](https://img.shields.io/github/languages/code-size/helgasoft/echarty)](https://github.com/helgasoft/echarty/releases/)
 [![website](https://img.shields.io/badge/Website-Visit-blue)](https://helgasoft.github.io/echarty)
-[![website](https://img.shields.io/twitter/follow/echarty.svg?style=social&label=Follow)](https://twitter.com/echarty_R)
+[![twitter](https://img.shields.io/twitter/follow/echarty.svg?style=social&label=Follow)](https://twitter.com/echarty_R)
 
 <!--
 [![CRAN
@@ -25,36 +23,37 @@ This package is a thin R wrapper around Javascript library
 Benefit from ECharts **full functionality** and build
 interactive charts in R and Shiny with minimal overhead.  
 
-Wider connectivity and deployment potential through [crosstalk](https://rpubs.com/echarty/crosstalk) and [WebR](https://helgasoft.github.io/echarty/test/coder.html).  
+Wider connectivity and deployment potential through [crosstalk](https://rpubs.com/echarty/crosstalk) and .  
 
-<details> <summary><strong>Compare to echarts4r 📌</strong></summary>
+<details> <summary>**Compare to echarts4r 📌**</summary>
 
 R package | echarts4r | echarty
 --- | --- | ---
 initial commit | Mar 12, 2018 | Feb 5, 2021
 library size | ![878 KB](https://img.shields.io/github/languages/code-size/JohnCoene/echarts4r.svg) | ![224KB](https://img.shields.io/github/languages/code-size/helgasoft/echarty)
 test coverage | ![32%](https://coveralls.io/repos/github/JohnCoene/echarts4r/badge.svg) [![link](man/figs/external-link-16.png)](https://coveralls.io/github/JohnCoene/echarts4r) | ![93%](https://coveralls.io/repos/github/helgasoft/echarty/badge.svg) [![link](man/figs/external-link-16.png)](https://coveralls.io/github/helgasoft/echarty)
-lines of code | 1,202,623 [![link](man/figs/external-link-16.png)](https://api.codetabs.com/v1/loc/?github=JohnCoene/echarts4r)| 5,517 [![link](man/figs/external-link-16.png)](https://api.codetabs.com/v1/loc?github=helgasoft/echarty)
-API design <sup>(1)</sup>| own commands with parameters | mostly [ECharts option](https://echarts.apache.org/en/option.html) lists
-number of commands | over [200](https://echarts4r.john-coene.com/reference/) | **one** command + optional utilities
+lines of code | 1,202,623 [![link](man/figs/external-link-16.png)](https://api.codetabs.com/v1/loc/?github=JohnCoene/echarts4r) | 5,517 [![link](man/figs/external-link-16.png)](https://api.codetabs.com/v1/loc?github=helgasoft/echarty)
+API design <sup>(1)</sup> | own commands with parameters | mostly [ECharts option](https://echarts.apache.org/en/option.html) lists
+number of commands | over [200](https://echarts4r.john-coene.com/reference/) | **one** command + optional utility commands
 data storage support | series data | **[datasets](https://echarts.apache.org/en/option.html#dataset)**, series data
-dependencies | 175 | 48
-[crosstalk](https://rstudio.github.io/crosstalk/) support | no	 | **yes**
-[WebR](https://docs.r-wasm.org/webr/latest/) support | no	 | **yes**
+dependencies ([packrat](https://rdrr.io/cran/packrat/src/R/recursive-package-dependencies.R#sym-recursivePackageDependencies)) | 65 | 40 
+dependencies ([WebR](https://repo.r-wasm.org)) | 188 | 46 
+[WebR](https://docs.r-wasm.org/webr/latest/) support | no	| **yes**
+[crosstalk](https://rstudio.github.io/crosstalk/) support | no | **yes**
 utilities | bezier, correlations, histogram, density, loess, flip, nesting, more | extended boxplots, tabsets, layouts, shapefiles, lotties, more
 
-This review done Feb 2024 for current versions of echarts4R and echarty.
-
-(1) We encourage users to follow the original ECharts API to construct charts with echarty. 
+<sup>(1)</sup> We encourage users to follow the original ECharts API to construct charts with echarty. 
 	This differs from echarts4r which uses own commands for most chart options.   
+
+Comparison review done Feb 2024 for current versions of echarts4R and echarty.
 </details>
-  <br />
+  <br>
 Please consider granting a Github star ⭐ to show your support.  
 
 ## Installation
 
 <!-- [![Github version](https://img.shields.io/github/v/release/helgasoft/echarty?label=github)](https://github.com/helgasoft/echarty/releases)  <sup>.02</sup>  -->
-Latest development build <strong>1.6.3.02</strong>
+Latest development build **1.6.3.03**
 
 ``` r
 if (!requireNamespace('remotes')) install.packages('remotes')
@@ -94,7 +93,7 @@ ec.init(
   )
 )
 
-# show a remote map chart, needs leaflet package (>=v.2.2) installed
+# show a remote map chart, needs package leaflet installed
 echarty::ec.fromJson('https://helgasoft.github.io/echarty/test/pfull.json')
 
 ```
@@ -112,17 +111,17 @@ Now you can start building [**beautiful
 ECharts**](https://echarts.apache.org/examples/en/index.html) (and
 [**more**](https://www.makeapie.cn/echarts)) with R and Shiny!
 
-<br />
+<br>
 <p align="center">
 <a href='https://helgasoft.github.io/echarty/gallery.html' target='_blank'>
-<img src="man/figs/ssPolarStack.png" alt="Polar Stack" width="180"/>
-<img src="man/figs/ssBars.gif"/>
-<img src="man/figs/ssThemeRiver.png" width="180"/>
-<img src="man/figs/ssBunny.gif"/> <br />
-<!-- img src="man/figs/ssMorph.gif" width="180"/ -->
-<img src="man/figs/ssRose.png" width="180"/>
-<img src="man/figs/ssSpeed.png" width="180"/>
-<img src="man/figs/ssStackBar.png" width="180"/>
+  <img src="man/figs/ssPolarStack.png" alt="Polar Stack" width="180"/>
+  <img src="man/figs/ssBars.gif"/>
+  <img src="man/figs/ssThemeRiver.png" width="180"/>
+  <img src="man/figs/ssBunny.gif"/> <br>
+  <!-- img src="man/figs/ssMorph.gif" width="180"/ -->
+  <img src="man/figs/ssRose.png" width="180"/>
+  <img src="man/figs/ssSpeed.png" width="180"/>
+  <img src="man/figs/ssStackBar.png" width="180"/>
 </a> 
-<br />Made with echarty. Powered by ECharts.
+<br>Made with echarty. Powered by ECharts.
 </p>

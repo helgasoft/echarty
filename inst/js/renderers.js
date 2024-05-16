@@ -19,46 +19,47 @@
 
 function riErrBars(params, api) {
   const group = { type: 'group', children: [] };
-  chart = get_e_charts(echwid);
-  halfWidth = api.style().lineDashOffset;
+  let chart = get_e_charts(echwid);
+  let halfWidth = api.style().lineDashOffset;
   let encode = params.encode;
-  isHor = encode['x'].length > encode['y'].length;
-  baseDimIdx = isHor ? 1 : 0
+  let isHor = encode['x'].length > encode['y'].length;
+  let baseDimIdx = isHor ? 1 : 0
   let coordDims = ['x', 'y'];
 
-    let otherDimIdx = 1 - baseDimIdx;
-    let baseValue = api.value(encode[coordDims[baseDimIdx]][0]);
-    let param = [];
-    param[baseDimIdx] = baseValue;
-    param[otherDimIdx] = api.value(encode[coordDims[otherDimIdx]][1]);
-    let highPoint = api.coord(param);
-    param[otherDimIdx] = api.value(encode[coordDims[otherDimIdx]][2]);
-    let lowPoint = api.coord(param);
-    var style = api.style({
+  let otherDimIdx = 1 - baseDimIdx;
+  let baseValue = api.value(encode[coordDims[baseDimIdx]][0]);
+  let param = [];
+  param[baseDimIdx] = baseValue;
+  param[otherDimIdx] = api.value(encode[coordDims[otherDimIdx]][1]);
+  let highPoint = api.coord(param);
+  param[otherDimIdx] = api.value(encode[coordDims[otherDimIdx]][2]);
+  let lowPoint = api.coord(param);
+  var style = api.style({
       stroke: api.visual('color'),
       fill: undefined
-    });
+  });
     
-    offset = 0;  // calc bar offset
-    xx = isHor ? 0 : 1; yy = 1 - xx;
-    sers = chart.getModel().getSeries().filter(o => o.subType!='custom');
+    let offset = 0;  // calc bar offset
+    let xx = isHor ? 0 : 1;
+    let yy = 1 - xx;
+    let sers = chart.getModel().getSeries().filter(o => o.subType!='custom');
     if (sers.length > 0) {
-      tmp = sers.filter(o => o.subType=='bar')
+      let tmp = sers.filter(o => o.subType=='bar')
       if (tmp.length > 0) {
         tmp = tmp.find(o => o.name === params.seriesName);
         if (tmp) {
           // idx is index of related bar (by name)
-          idx = tmp.seriesIndex;
-        	bgm = bcgm = null;
+          let idx = tmp.seriesIndex;
+          let bgm = null; let bcgm = null;
           tmp = sers.findLast(o => o.option && o.option.barCategoryGap != undefined);
           if (tmp) {
             bgm = tmp.option.barGap;
             bcgm = tmp.option.barCategoryGap;
           }
-        	olay = { count: sers.length };
-        	if (bgm) olay.barGap = bgm //!=='' ? bgm : '30%' is default for bar
-        	if (bcgm) olay.barCategoryGap = bcgm //!=='' ? bcgm : '20%';
-        	barLayouts = api.barLayout(olay);
+          let olay = { count: sers.length };
+          if (bgm) olay.barGap = bgm //!=='' ? bgm : '30%' is default for bar
+          if (bcgm) olay.barCategoryGap = bcgm //!=='' ? bcgm : '20%';
+          let barLayouts = api.barLayout(olay);
       	  offset = barLayouts[idx].offsetCenter;
         }
       }
@@ -103,7 +104,7 @@ function riErrBars(params, api) {
     );
 
   function makeShape(baseDimIdx, base1, value1, base2, value2) {
-    var shape = {};
+    let shape = {};
     shape[coordDims[baseDimIdx] + '1'] = base1;
     shape[coordDims[1 - baseDimIdx] + '1'] = value1;
     shape[coordDims[baseDimIdx] + '2'] = base2;
@@ -119,12 +120,12 @@ riErrorBar = riErrBars  // legacy name
   usage: renderItem= htmlwidgets::JS("riErrBarSimple")
 */
 function riErrBarSimple(params, api) {
-    var xValue = api.value(0);
-    var highPoint = api.coord([xValue, api.value(1)]);
-    var lowPoint = api.coord([xValue, api.value(2)]);
-    //var halfWidth = api.size([1, 0])[0] * 0.1;
-    var halfWidth = (api.value(1)-api.value(2)) * 0.2;
-    var style = api.style({
+    let xValue = api.value(0);
+    let highPoint = api.coord([xValue, api.value(1)]);
+    let lowPoint = api.coord([xValue, api.value(2)]);
+    //let halfWidth = api.size([1, 0])[0] * 0.1;
+    let halfWidth = (api.value(1)-api.value(2)) * 0.2;
+    let style = api.style({
         stroke: api.visual('color'),
         fill: null
     });
@@ -171,7 +172,7 @@ function riPolygon(params, api) {
     	points.push(api.coord([api.value(0,i), api.value(1,i)]));
     	i++;
     }
-    var color = api.visual('color');
+    let color = api.visual('color');
 
     return {
         type: 'polygon',
@@ -191,49 +192,49 @@ function riPolygon(params, api) {
 }
 
 /*
-  renderItem function for geoJSON objects
+  renderItem function for geoJSON objects, used in ec.util(cmd='geojson')
   supports Point, MultiPoint, LineString, MultiLineString, Polygon, MultiPolygon
-  see test-renderers.R for code example
   usage: 
-    myGeojson <- gsub('\n', '', '{...}')
-    ec.init(load= c('leaflet','custom'), 
-      js= paste('ecf.geojson=',myGeojson),
-      series= list(list(
-        type= 'custom',
-        coordinateSystem= 'leaflet',  # or 'gmap',etc.
-        renderItem= htmlwidgets::JS("riGeoJson") ...
+  	myGeojson <- "{"type": "FeatureCollection", ...}"
+	ec.init(load= c('world','custom'), 
+	  geo= list(type='map', map='world', center= c(-116.35, 35.5), zoom= 17, roam= T), 
+	  series= list( 
+	    ec.util(cmd= 'geojson', geojson= jsonlite::fromJSON(myGeojson), cs='geo',
+	            itemStyle= list(opacity= 0.5), ppfill= 'red' )
+	  )
+	)
+  See test-renderers.R for full leaflet example
 */
 function riGeoJson(params, api) {
-  gj = ecf.geojson.features[params.dataIndex];
-  type = gj.geometry.type.toLowerCase();
-  ccc = gj.geometry.coordinates;
-  colr = gj.properties.color;
+  let gj = ecf.geojson.features[params.dataIndex];
+  let type = gj.geometry.type.toLowerCase();
+  let ccc = gj.geometry.coordinates;
+  let colr = gj.properties.color;
   if (colr==undefined) colr = api.visual('color');
-  fill = gj.properties.ppfill;
+  let fill = gj.properties.ppfill;
   if (fill==undefined) {
 	  fill = ecf.geofill;
 	  if (fill==0) fill = colr;
   }
-  lwi = gj.properties.lwidth;
+  let lwi = gj.properties.lwidth;
   if (lwi==undefined) lwi = 3;
-	ldash = gj.properties.ldash;
-	if (ldash)
-		if (Array.isArray(ldash.match(/\[.*?\]/g))) eval('ldash = '+ldash);
-	if (!isNaN(ldash)) ldash = Number(ldash);
-	if (ldash==undefined) ldash = null;
-  points = [];
-  //z2 = 1;
+  let ldash = gj.properties.ldash;
+  if (ldash)
+  	if (Array.isArray(ldash.match(/\[.*?\]/g))) eval('ldash = '+ldash);
+  if (!isNaN(ldash)) ldash = Number(ldash);
+  if (ldash==undefined) ldash = null;
+  var points = [];
   
   switch(type) {
-	case 'linestring':
-		type = 'polyline';
-		break;
-	case 'point':
-		type = 'circle';
-		rad = gj.properties.radius;
-      		if (rad==undefined) rad = 5;
-		break;
-	}
+    case 'linestring':
+	type = 'polyline';
+	break;
+    case 'point':
+	type = 'circle';
+	rad = gj.properties.radius;
+	if (rad==undefined) rad = 5;
+	break;
+  }
   if (type == 'circle') ccc = [ccc];
   return {
    type: 'group',
@@ -246,19 +247,17 @@ function riGeoJson(params, api) {
       case 'circle':
 	points.push(api.coord(coords));
 	out = {
-		type: 'circle',
-		shape: {cx: points[0][0], cy: points[0][1], r:rad },
-		style: api.style({
-			lineWidth: lwi, stroke: colr, fill: fill })
+	  type: 'circle',
+	  shape: {cx: points[0][0], cy: points[0][1], r:rad },
+	  style: api.style({ lineWidth: lwi, stroke: colr, fill: fill })
 	}
 	break;
       case 'polyline':
 	points.push(api.coord(coords));
 	out = {
-		type: type,
-        	shape: { points: points },
-		style: api.style({
-  			stroke: colr, lineWidth: lwi, fill: null, lineDash: ldash })
+	  type: type,
+          shape: { points: points },
+	  style: api.style({ stroke: colr, lineWidth: lwi, fill: null, lineDash: ldash })
 	}
 	break;
       case 'multilinestring':
@@ -286,44 +285,47 @@ function riGeoJson(params, api) {
         if (type=='multipolygon') 
           out.type= 'polygon'; 
     	if (type=='multilinestring') {
-    		out.type= 'polyline';  
-		    out.style.fill = null;
+    	  out.type= 'polyline';  
+	  out.style.fill = null;
     	}
         break;
       }
-      ecf.geoz2++; //z2++;
+      ecf.geoz2++;
       out.z2 = ecf.geoz2;
       return out;
       })
   }
 }
 
-//  outliers for grouped boxplots
+/*
+  outliers for grouped boxplots
+  used in ec.data(df, format='boxplot')
+*/
 function riOutliers(params, api) {
-  chart = get_e_charts(echwid);
-  rady = api.style().lineDashOffset; if (!rady) rady = 5;  // ol.radius
-  encode = params.encode;
-  isHor = encode['x']>encode['y']
-  baseDimIdx = isHor ? 1 : 0
-  otherDimIdx = 1 - baseDimIdx;
+  let chart = get_e_charts(echwid);
+  let rady = api.style().lineDashOffset; if (!rady) rady = 5;  // ol.radius
+  let encode = params.encode;
+  let isHor = encode['x'] > encode['y']
+  let baseDimIdx = isHor ? 1 : 0
+  let otherDimIdx = 1 - baseDimIdx;
   let coordDims = ['x', 'y'];
 
-  prm = [];
+  let prm = [];
   prm[baseDimIdx] = api.value(encode[coordDims[baseDimIdx]][0]);
   prm[otherDimIdx] = api.value(encode[coordDims[otherDimIdx]][0]);
 
-  thePoint = api.coord(prm);
+  let thePoint = api.coord(prm);
   if (isHor) thePoint.reverse();
   var style = api.style({
      //stroke: api.visual('color'), lineWidth: 2,
      fill: api.visual('color')
   });
  
-  offset = 0;  // calc boxplot offset
+  let offset = 0;  // calc boxplot offset
   xx = isHor ? 0 : 1; yy = 1 - xx;
-  sers = chart.getModel().getSeries().filter(o => o.subType=='boxplot');
+  let sers = chart.getModel().getSeries().filter(o => o.subType=='boxplot');
   if (sers.length > 0) {
-     tmp = sers.find(o => o.name === params.seriesName);
+     let tmp = sers.find(o => o.name === params.seriesName);
      if (tmp) {
         // idx is index of related boxplot (by name)
         idx = tmp.seriesIndex;

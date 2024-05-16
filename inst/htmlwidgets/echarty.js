@@ -1,3 +1,102 @@
+/*global HTMLWidgets, echarts, Shiny*/
+/*eslint no-undef: "error"*/
+
+// extra functions
+ecf = {
+  
+  geojson: null,
+  geofill: 0,
+  geoz2: 0,
+  zoom: {s: 0, e: 100 },  // dataZoom values
+  fs: false,              // fullscreen flag Y/N
+  
+  IsFullScreen: function() {
+    	var full_screen_element = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement || null;
+    	if (full_screen_element === null)
+    	  return false;
+    	else
+    	  return true;
+  },
+
+  fscreen: function(chid) {
+    // see also window.onresize
+    function GoInFullscreen(element) {
+       if (element.requestFullscreen)
+           element.requestFullscreen();
+       else if (element.mozRequestFullScreen)
+           element.mozRequestFullScreen();
+       else if (element.webkitRequestFullscreen)
+           element.webkitRequestFullscreen();
+       else if (element.msRequestFullscreen)
+           element.msRequestFullscreen();
+    }
+    function GoOutFullscreen() {
+       if (document.exitFullscreen)
+           document.exitFullscreen();
+       else if (document.mozCancelFullScreen)
+           document.mozCancelFullScreen();
+       else if (document.webkitExitFullscreen)
+           document.webkitExitFullscreen();
+       else if (document.msExitFullscreen)
+           document.msExitFullscreen();
+    }
+
+    if (this.fs) {
+      if (this.IsFullScreen())
+        GoOutFullscreen();
+    }
+    else {
+      let tmp = document.getElementById(chid);
+      GoInFullscreen(tmp)
+    }
+    this.fs = !this.fs;
+  },
+  
+  lottieGraphic: function(vv) {
+    // transform lottie graphic element
+    if (vv==undefined) return vv;
+    if (vv.length) return vv;
+    if (!vv.elements) return vv;
+    vv.elements.forEach((elem) => {
+      let loty = elem; 
+      let data = loty.info; 
+      if (!data) return;
+      delete loty.info;
+      if (!data.v || data.v.search('\\d\\.\\d\\.\\d')<0) return;  // not a lottie
+      if (lottieParser==undefined) return;
+      lottieParser.install(echarts);
+      let loop= loty.loop; if (loop==undefined) loop = true;
+      const { elements, width, height } = lottieParser.parse(data, {loop: loop});
+      let scale= loty.scale; 
+      if (scale) {
+        delete loty.scale; 
+        const sfactor = scale / Math.min(width, height);
+        loty.scaleX= sfactor; loty.scaleY= sfactor;
+      }
+      loty.type= 'group';  loty.children= elements;
+      elem = loty; 
+    });
+    return vv;
+  },
+
+  labelsInside: function(params) {
+    // labelLayout= htmlwidgets::JS("(params) => ecf.labelsInside(params)")) 
+    // https://github.com/apache/echarts/issues/17828   thanks to @plainheart
+    if (echwid=='') return null;   // single chart only (TODO: many)
+    dchart = get_e_charts(echwid);
+    const chartWidth = dchart.getWidth();
+    const labelRect = params.labelRect;
+    const labelX = labelRect.x;
+    const labelWidth = labelRect.width;
+    const overflow = labelWidth + labelX > chartWidth;
+    return {
+      x: overflow ? chartWidth - labelWidth : labelX,
+      verticalAlign: overflow ? 'top' : 'middle',
+      dy: overflow ? -3 : 0
+    }
+  }
+
+};
 
 HTMLWidgets.widget({
 
@@ -23,18 +122,24 @@ HTMLWidgets.widget({
         }
       }
       
-      if(x.hasOwnProperty('registerMap')){
-        for( let map = 0; map < x.registerMap.length; map++){
+      if (x.hasOwnProperty('registerMap')) {
+        /*  for( let map = 0; map < x.registerMap.length; map++){
           if (x.registerMap[map].geoJSON)
             echarts.registerMap(x.registerMap[map].mapName, 
                                 x.registerMap[map].geoJSON);
           else if (x.registerMap[map].svg)
             echarts.registerMap(x.registerMap[map].mapName, 
               { svg: x.registerMap[map].svg });
+        } */
+        for (const map of x.registerMap) {
+          if (map.geoJSON)
+            echarts.registerMap(map.mapName, map.geoJSON);
+          else if (map.svg)
+            echarts.registerMap(map.mapName, { svg: map.svg });
         }
       }
         
-      let eva2 = eva3 = null;
+      var eva2 = null, eva3 = null;
       if (x.hasOwnProperty('jcode')) {
         if (x.jcode) {
           let tmp = null;
@@ -79,8 +184,8 @@ HTMLWidgets.widget({
         } catch(err) { console.log('eva3: ' + err.message) }
       }
       
-      if (opts.graphic && typeof lottieParser!=undefined) {
-        tmp = ecf.lottieGraphic(opts.graphic);
+      if (opts.graphic && typeof lottieParser!='undefined') {
+        let tmp = ecf.lottieGraphic(opts.graphic);
         chart.setOption({graphic: tmp}, { replaceMerge: 'graphic'});
       }
       
@@ -138,7 +243,7 @@ HTMLWidgets.widget({
       
       if(x.hasOwnProperty('connect')){
         if (Array.isArray(x.connect)) {
-          connections = [];
+          let connections = [];
           x.connect.forEach(cc => connections.push(get_e_charts(cc)) )
           connections.push(chart);
           echarts.connect(connections);  
@@ -162,7 +267,7 @@ HTMLWidgets.widget({
     	    x.settings.crosstalk_key !=null && 
     	    x.settings.crosstalk_group !=null) {
 
-        tmp = opts.series.findIndex(x => x.datasetId === 'Xtalk');
+        var tmp = opts.series.findIndex(x => x.datasetId === 'Xtalk');
         if (tmp==undefined) 
           console.log('no series found preset for crosstalk')
       	console.log(' echarty crosstalk on');
@@ -283,103 +388,6 @@ function get_e_charts_opts(id){
 function distinct(value, index, self) { 
   return self.indexOf(value) === index;
 }
-      
-// extra functions
-ecf = {
-  
-  geojson: null,
-  geofill: 0,
-  geoz2: 0,
-  zoom: {s: 0, e: 100 },  // dataZoom values
-  fs: false,              // fullscreen flag Y/N
-  
-  IsFullScreen: function() {
-    	var full_screen_element = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement || null;
-    	if (full_screen_element === null)
-    	  return false;
-    	else
-    	  return true;
-  },
-
-  fscreen: function(chid) {
-    // see also window.onresize
-    function GoInFullscreen(element) {
-       if (element.requestFullscreen)
-           element.requestFullscreen();
-       else if (element.mozRequestFullScreen)
-           element.mozRequestFullScreen();
-       else if (element.webkitRequestFullscreen)
-           element.webkitRequestFullscreen();
-       else if (element.msRequestFullscreen)
-           element.msRequestFullscreen();
-    }
-    function GoOutFullscreen() {
-       if (document.exitFullscreen)
-           document.exitFullscreen();
-       else if (document.mozCancelFullScreen)
-           document.mozCancelFullScreen();
-       else if (document.webkitExitFullscreen)
-           document.webkitExitFullscreen();
-       else if (document.msExitFullscreen)
-           document.msExitFullscreen();
-    }
-
-    if (this.fs) {
-      if (this.IsFullScreen())
-        GoOutFullscreen();
-    }
-    else {
-      tmp = document.getElementById(chid);
-      GoInFullscreen(tmp)
-    }
-    this.fs = !this.fs;
-  },
-  
-  lottieGraphic: function(vv) {
-    // transform lottie graphic element
-    if (vv==undefined) return vv;
-    if (vv.length) return vv;
-    if (!vv.elements) return vv;
-    vv.elements.forEach((elem) => {
-      loty = elem; 
-      data = loty.info; 
-      if (!data) return;
-      delete loty.info;
-      if (!data.v || data.v.search('\\d\\.\\d\\.\\d')<0) return;  // not a lottie
-      if (lottieParser==undefined) return;
-      lottieParser.install(echarts);
-      loop= loty.loop; if (loop==undefined) loop = true;
-      const { elements, width, height } = lottieParser.parse(data, {loop: loop});
-      scale= loty.scale; 
-      if (scale) {
-        delete loty.scale; 
-        const sfactor = scale / Math.min(width, height);
-        loty.scaleX= sfactor; loty.scaleY= sfactor;
-      }
-      loty.type= 'group';  loty.children= elements;
-      elem = loty; 
-    });
-    return vv;
-  },
-
-  labelsInside: function(params) {
-    // labelLayout= htmlwidgets::JS("(params) => ecf.labelsInside(params)")) 
-    // https://github.com/apache/echarts/issues/17828   thanks to @plainheart
-    if (echwid=='') return null;   // single chart only (TODO: many)
-    dchart = get_e_charts(echwid);
-    const chartWidth = dchart.getWidth();
-    const labelRect = params.labelRect;
-    const labelX = labelRect.x;
-    const labelWidth = labelRect.width;
-    const overflow = labelWidth + labelX > chartWidth;
-    return {
-      x: overflow ? chartWidth - labelWidth : labelX,
-      verticalAlign: overflow ? 'top' : 'middle',
-      dy: overflow ? -3 : 0
-    }
-  }
-
-};
 
 if (HTMLWidgets.shinyMode) {
 

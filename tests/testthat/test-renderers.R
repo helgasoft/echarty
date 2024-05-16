@@ -266,5 +266,14 @@ test_that("leaflet with geoJson", {
 #   )
 # )
 # p 
+  
+  p <- ec.init(load= c('world','custom'), 
+	  geo= list(type='map', map='world', center= c(-116.35, 35.5), zoom= 17, roam=TRUE), 
+	  series= list( 
+	    ec.util(cmd= 'geojson', geojson= jsonlite::fromJSON(myGeojson), cs='geo',
+	            itemStyle= list(opacity= 0.5), ppfill= 'red' )
+	  )
+	)
+  expect_equal(p$x$opts$series[[1]]$coordinateSystem, 'geo')
 })
 

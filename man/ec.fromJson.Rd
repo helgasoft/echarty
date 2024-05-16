@@ -30,7 +30,10 @@ The latter imports all JavaScript functions defined by the user.
 txt <- '{
    "xAxis": { "data": ["Mon", "Tue", "Wed"]}, "yAxis": { },
    "series": { "type": "line", "data": [150, 230, 224] } }'
-ec.fromJson(txt)
-
-# ec.fromJson('https://helgasoft.github.io/echarty/test/pfull.json')
+ec.fromJson(txt)  # text json
+# outFile <- 'c:/temp/cars.json'
+# cars |> ec.init() |> ec.inspect(target='full', file=outFile)
+# ec.fromJson(file(outFile, 'rb'))
+# ec.fromJson(url('http://localhost/echarty/cars.json'))
+ec.fromJson('https://helgasoft.github.io/echarty/test/pfull.json')
 }

@@ -11,60 +11,61 @@
 #'      for \emph{tabset} parameters should be in format \emph{name1=chart1, name2=chart2}, see example\cr
 #' @details 
 #' **cmd = 'sf.series'**\cr
-#' \verb{   }Build _leaflet_ or \href{https://echarts.apache.org/en/option.html#geo.map}{geo} map series from shapefiles.\cr
-#' \verb{   }Supported types: POINT, MULTIPOINT, LINESTRING, MULTILINESTRING, POLYGON, MULTIPOLYGON \cr
-#' \verb{   }Coordinate system is _leaflet_(default), _geo_ or _cartesian3D_ (for POINT(xyz))\cr
-#' \verb{   }Limitations:\cr 
+#' \verb{ }Build _leaflet_ or \href{https://echarts.apache.org/en/option.html#geo.map}{geo} map series from shapefiles.\cr
+#' \verb{ }Supported types: POINT, MULTIPOINT, LINESTRING, MULTILINESTRING, POLYGON, MULTIPOLYGON \cr
+#' \verb{ }Coordinate system is _leaflet_(default), _geo_ or _cartesian3D_ (for POINT(xyz))\cr
+#' \verb{ }Limitations:\cr 
 #' \verb{     }polygons can have only their name in tooltip,  \cr
 #' \verb{     }assumes Geodetic CRS is WGS 84, for conversion use \link[sf]{st_transform} with _crs=4326_.\cr
-#' \verb{   }Parameters:\cr 
+#' \verb{ }Parameters:\cr 
 #' \verb{   }df - value from \link[sf]{st_read}\cr
-#' \verb{   }cs - optional _coordinateSystem_ value\cr
 #' \verb{   }nid - optional column name for name-id used in tooltips\cr
+#' \verb{   }cs - optional _coordinateSystem_ value, default 'leaflet'\cr
 #' \verb{   }verbose - optional, print shapefile item names in console\cr
-#' \verb{   }Returns a list of chart series\cr
+#' \verb{ }Returns a list of chart series\cr
 #' **cmd = 'sf.bbox'**\cr
-#' \verb{   }Returns JavaScript code to position a map inside a bounding box from \link[sf]{st_bbox}, for leaflet only.\cr
+#' \verb{ }Returns JavaScript code to position a map inside a bounding box from \link[sf]{st_bbox}, for leaflet only.\cr
 #' **cmd = 'sf.unzip'**\cr
-#' \verb{   }unzips a remote file and returns local file name of the unzipped .shp file\cr
+#' \verb{ }Unzips a remote file and returns local file name of the unzipped .shp file\cr
 #' \verb{   }url - URL of remote zipped shapefile\cr
 #' \verb{   }shp - optional name of .shp file inside ZIP file if multiple exist. Do not add file extension. \cr
 #' **cmd = 'geojson'** \cr
-#' \verb{   }custom series list with geoJson objects\cr
+#' \verb{ }Custom series list from geoJson objects\cr
 #' \verb{   }geojson - object from \link[jsonlite]{fromJSON}\cr
-#' \verb{   }... - optional custom series attributes like _itemStyle_\cr
+#' \verb{   }cs - optional _coordinateSystem_ value, default 'leaflet'\cr
 #' \verb{   }ppfill - optional fill color like '#F00', OR NULL for no-fill, for all Points and Polygons\cr
 #' \verb{   }nid - optional feature property for item name used in tooltips\cr
-#' \verb{   }optional geoJson _feature properties_: color, ppfill, lwidth, ldash, radius(for points)\cr
+#' \verb{   }... - optional custom series attributes like _itemStyle_\cr
+#' \verb{ }Can display also geoJson _feature properties_: color; lwidth, ldash (lines); ppfill, radius (points)\cr
 #' **cmd = 'layout'** \cr
-#' \verb{   }multiple charts in table-like rows/columns format\cr
+#' \verb{ }Multiple charts in table-like rows/columns format\cr
 #' \verb{   }... - List of charts\cr
 #' \verb{   }title - optional title for the set, rows= Number of rows, cols= Number of columns\cr
-#' \verb{   }Returns a container \link[htmltools]{div} in rmarkdown, otherwise \link[htmltools]{browsable}.\cr
-#' \verb{   }For 3-4 charts one would use multiple series within a \href{https://echarts.apache.org/en/option.html#grid}{grid}. \cr
-#' \verb{   }For greater number of charts _ec.util(cmd='layout')_ comes in handy\cr
+#' \verb{ }Returns a container \link[htmltools]{div} in rmarkdown, otherwise \link[htmltools]{browsable}.\cr
+#' \verb{ }For 3-4 charts one would use multiple series within a \href{https://echarts.apache.org/en/option.html#grid}{grid}. \cr
+#' \verb{ }For greater number of charts _ec.util(cmd='layout')_ comes in handy\cr
 #' **cmd = 'tabset'** \cr
 #' \verb{   }... - a list name/chart pairs like \emph{n1=chart1, n2=chart2}, each tab may contain a chart.\cr
 #' \verb{   }tabStyle - tab style string, see default \emph{tabStyle} variable in the code\cr
-#' \verb{   }Returns A) \link[htmltools]{tagList} of tabs when in a pipe without '...' params, see example\cr
-#' \verb{   }Returns B) \link[htmltools]{browsable} when '...' params are provided by user\cr
+#' \verb{ }Returns A) \link[htmltools]{tagList} of tabs when in a pipe without '...' params, see example\cr
+#' \verb{ }Returns B) \link[htmltools]{browsable} when '...' params are provided by user\cr
 #' **cmd = 'button'** \cr
-#' \verb{   }UI button to execute a JS function,\cr
+#' \verb{ }UI button to execute a JS function,\cr
 #' \verb{   }text - the button label\cr
 #' \verb{   }js - the JS function string\cr
 #' \verb{   }... - optional parameters for the \href{https://echarts.apache.org/en/option.html#graphic.elements-rect.type}{rect} element\cr
-#' \verb{   }Returns a graphic.elements-\href{https://echarts.apache.org/en/option.html#graphic.elements-rect.type}{rect} element.\cr
+#' \verb{ }Returns a graphic.elements-\href{https://echarts.apache.org/en/option.html#graphic.elements-rect.type}{rect} element.\cr
 #' **cmd = 'morph'** \cr
 #' \verb{   }... - a list of charts or chart options\cr
 #' \verb{   }js - optional JS function for switching charts. Default function is on \emph{mouseover}. Disable with FALSE.\cr
-#' \verb{   }Returns a chart with ability to morph into other charts\cr
+#' \verb{ }Returns a chart with ability to morph into other charts\cr
 #' **cmd = 'fullscreen'** \cr
-#' \verb{   }a toolbox feature to toggle fullscreen on/off. Works in a browser, not in RStudio.\cr
+#' \verb{ }A toolbox feature to toggle fullscreen on/off. Works in a browser, not in RStudio.\cr
 #' **cmd = 'rescale'** \cr
 #' \verb{   }v - input vector of numeric values to rescale\cr
 #' \verb{   }t - target range c(min,max), numeric vector of two\cr
 #' **cmd = 'level'** \cr
-#' \verb{   }calculate vertical levels for timeline \emph{line} charts, returns a numeric vector\cr
+#' \verb{ }Calculate vertical levels for timeline \emph{line} charts, returns a numeric vector\cr
 #' \verb{   }df - data.frame with _from_ and _to_ columns\cr
 #' \verb{   }from - name of 'from' column\cr
 #' \verb{   }to - name of 'to' column\cr
@@ -76,7 +77,7 @@
 #'   nc <- as.data.frame(st_read(fname))
 #'   ec.init(load= c('leaflet', 'custom'),  # load custom for polygons
 #'      js= ec.util(cmd= 'sf.bbox', bbox= st_bbox(nc$geometry)),
-#'      series= ec.util(df= nc, nid= 'NAME', itemStyle= list(opacity= 0.3)),
+#'      series= ec.util(cmd= 'sf.series', df= nc, nid= 'NAME', itemStyle= list(opacity=0.3)),
 #'      tooltip= list(formatter= '{a}')
 #'   )
 #' 
@@ -144,7 +145,7 @@ ec.util <- function( ..., cmd='sf.series', js=NULL) {
                   renderItem= htmlwidgets::JS('riPolygon'),
                   name= dname, 
                   data= coords), 
-                opts) #...
+                opts)
               ))
             } else polig(geom[[k]])  # recursive
           }
@@ -244,8 +245,8 @@ ec.util <- function( ..., cmd='sf.series', js=NULL) {
       tmp <- opts$bbox
       rng <- paste0('[[',tmp$ymin,',',tmp$xmin,'],[',tmp$ymax,',',tmp$xmax,']]')
       out <- c('','', 
-               paste("var map= chart.getModel().getComponent('leaflet').__map;", 
-                     "map.fitBounds(",rng,");"))
+          paste("var map= chart.getModel().getComponent('leaflet').__map;", 
+                "map.fitBounds(",rng,");"))
     },
     'sf.unzip'= {
       stopifnot('ec.util: expecting url of zipped shapefile'= !is.null(opts$url))
@@ -267,21 +268,22 @@ ec.util <- function( ..., cmd='sf.series', js=NULL) {
       opts$geojson <- NULL
       cat('\ngeoJSON has',nrow(geojson$features),'features')
       myGeojson <- toString(jsonlite::toJSON(geojson))
+      cs <- NULL
+      do.opties(c('cs'), list('leaflet'))
       dfill <- ''
       if ('ppfill' %in% names(opts)) {
         dfill <- ifelse(is.null(opts$ppfill), 'null', paste0('"',opts$ppfill,'"'))
         dfill <- paste0('ecf.geofill=',dfill,';')
       }
       out <- c( list(type= 'custom',
-        coordinateSystem= 'leaflet',
+        coordinateSystem= cs,   # 'geo' or 'leaflet'
         # set JS variables for riGeoJson() to work with
         renderItem= htmlwidgets::JS(paste("(params, api) => {",dfill,
           " ecf.geojson=",myGeojson,"; return riGeoJson(params, api); }")),
         data= if (is.null(opts$nid)) 
-                lapply(1:nrow(geojson$features), list)
-              else 
-                lapply(unlist(tmp$features$properties[opts$nid],
-                              use.names=FALSE), \(n) { list(name=n)})
+          lapply(1:nrow(geojson$features), list)
+        else 
+          lapply(unlist(tmp$features$properties[opts$nid], use.names=FALSE), \(n){list(name=n)})
       ), opts)
     },
     
@@ -749,10 +751,6 @@ ec.data <- function(df, format='dataset', header=FALSE, ...) {
       axe <- paste(levels(df[[colas]]), collapse="','")
     else
 	    axe <- paste(sort(as.character(unique(df[[colas]]))), collapse="','")
-#     tbox <- "(p) => { d=p.data; out= '<b>'+p.seriesName+'</b>'+
-# '<br>min '+d[1].toFixed(3)+ '<br>Q1 '+d[2].toFixed(3)+
-# '<br>median '+d[3].toFixed(3)+ '<br>Q3 '+d[4].toFixed(3)+
-# '<br>max '+d[5].toFixed(3); return out; }"
     ttip <- c('Low', 'Q1', 'Q2', 'Q3', 'High')
 
     if (!is.null(grpcol)) {   # grouped
@@ -811,8 +809,8 @@ ec.data <- function(df, format='dataset', header=FALSE, ...) {
         )))
       )
       series <- list(list(type='boxplot', name= 'boxplot', 
-        datasetIndex= 1,
-			  encode= list(y= 1, x= c(2,3,4,5,6), tooltip=ttip)
+        datasetIndex= 2,  # R-cnt
+			  encode= list(tooltip=ttip) #y= 1, x= c(2,3,4,5,6))
 		  ))
       # default is horizontal, for vertical swap xAxis/yAxis category type
       if (layout=='v') {
@@ -825,7 +823,7 @@ ec.data <- function(df, format='dataset', header=FALSE, ...) {
         # new dataset with outliers and serie for it
         dsotl <- list(list( fromDatasetIndex=1, fromTransformResult=1 ))
         serol <- list(list(type='scatter', 
-        		datasetIndex=2, name=series[[1]]$name, z=4, 
+        		datasetIndex=3, name=series[[1]]$name, z=4, 
         		itemStyle= list(borderDashOffset= rady) ))
         if (jitter==0) {
           serol[[1]] <-  .merlis(serol[[1]], args)
@@ -1232,7 +1230,7 @@ ec.inspect <- function(wt, target='opts', ...) {
   }
   
   params <- list(...)
-  if ('pretty' %in% names(params) && !params$pretty) 
+  if ('pretty' %in% names(params)) 
     tmp <- jsonlite::toJSON(opts, force=TRUE, auto_unbox=TRUE, 
                              null='null', ...)
   else  # pretty by default
@@ -1263,9 +1261,12 @@ ec.inspect <- function(wt, target='opts', ...) {
 #' txt <- '{
 #'    "xAxis": { "data": ["Mon", "Tue", "Wed"]}, "yAxis": { },
 #'    "series": { "type": "line", "data": [150, 230, 224] } }'
-#' ec.fromJson(txt)
-#' 
-#' # ec.fromJson('https://helgasoft.github.io/echarty/test/pfull.json')
+#' ec.fromJson(txt)  # text json
+#' # outFile <- 'c:/temp/cars.json'
+#' # cars |> ec.init() |> ec.inspect(target='full', file=outFile)
+#' # ec.fromJson(file(outFile, 'rb'))
+#' # ec.fromJson(url('http://localhost/echarty/cars.json'))
+#' ec.fromJson('https://helgasoft.github.io/echarty/test/pfull.json')
 #' @export
 ec.fromJson <- function(txt, ...) {
 	recur <- \(opts) {

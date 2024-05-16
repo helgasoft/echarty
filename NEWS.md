@@ -1,20 +1,21 @@
 # history of package _echarty_
 
-## v.1.6.3.02  latest in development
+## v. 1.6.3.03  latest in development
 
 - upgrade ECharts to v.5.5.0, built with R v.4.4.0
 - added _nasep_ parameter to ec.data('names') for easier setting of nested lists from a _data.frame_
 - tested web freedom [with WebR](https://helgasoft.github.io/echarty/test/coder.html)
 - added explicit _leaflet_ dependency, not provided since leaflet v.2.2.0
 - added optional tooltip formatter (tipFmt) in _ecr.band_
+- refactoring (leaflet, geo, geoJson, tests)
 
-## v.1.6.3  on CRAN
+## v. 1.6.3  on CRAN
 
 - added coder.R demo
 - correct gridIndex numbering for xAxis/yAxis
 - deprecate _tl.series_, replace with _timeline_ and _series.param_
 
-## v.1.6.2.01
+## v. 1.6.2.01
 
 - make crosstalk work with improved _ec.clmn_
 - add _ecStat_ to built-in plugins
@@ -28,19 +29,19 @@
 - removed width/height from 'tabset', handled by _ec.init_
 - _ecr.band_ replaced default type from 'stack' to 'polygon'
 
-## v.1.6.2
+## v. 1.6.2
 
 - allow axis rename (fix)
 - _ec.data_ grouped boxplots: outliers are custom series
 - _ec.clmn_ expanded usage of column names
 
-## v.1.6.0
+## v. 1.6.0
 
 - _ec.paxis_ could be chained now
 - _ec.data_ format='boxplot' with optional outliers
 - _ecr.bars_ with better alignment and horizontal layout
 
-## v.1.5.4.03
+## v. 1.5.4.03
 
 - upgrade ECharts to v.5.4.3, built with R v.4.3.1
 - breaking change in _ec.init_ signature
@@ -48,13 +49,13 @@
 - fixed small bugs and improved code
 - added more tests
 
-## v.1.5.4
+## v. 1.5.4
 
 - _ec.util_ command 'layout' updated 
 - changes in axis names preset, _ec.clmn_ for empty values
 - problem running Shiny in R console: _No handler registered for mouseover_
 
-## v.1.5.3
+## v. 1.5.3
 
 - upgrade ECharts to v.5.4.2
 - _ec.util_ support for map GeoJSON objects, see test-renderers.R
@@ -62,14 +63,14 @@
 - code cleanup in _ecr.band_
 - expand auto-generated axes names to multiple
 
-## v.1.5.2
+## v. 1.5.2
 
 - _ec.init_ to set default xAxis/yAxis names from _df_
 - _ec.clmn_ accepts JS functions in parameter _col_
 - _ec.util_ new command 'button' to run JS function
 - fix _tabset_ bug introduced in v.1.5.1
 
-## v.1.5.1 
+## v. 1.5.1 
 
 - upgrade ECharts to v.5.4.1
 - remove redundant dependencies, only 3 used now
@@ -81,7 +82,7 @@
 - set _visualMap_ default min/max values from df
 - _echarty.js_: add built-in 'mouseout' event
 
-## v.1.5.0  on CRAN
+## v. 1.5.0  on CRAN
 
 - upgrade ECharts to v.5.4.0
 - built with R v.4.2.2
@@ -96,7 +97,7 @@
 - new _load='lottie'_, lotties support now built-in 
 - reorganize crosstalk code
 
-## v.1.4.7
+## v. 1.4.7
 
 - _ec.util_: add POLYGON/MULTIPOINT, rename param 'type' to 'cmd', new _sf.unzip_
 - _ec.util_: new cmd='tabset' to show multiple charts in tabs
@@ -106,7 +107,7 @@
 - support for _lotties_ in _graphic_, see web gallery for sample
 - grouping column in 2D charts now could be at any position
 
-## v.1.4.6
+## v. 1.4.6
 
 - upgrade ECharts to v.5.3.3
 - expand docs for _ec.init_
@@ -118,7 +119,7 @@
 - fixes in _ec.clmn_ and allow empty _col_ parameter for pie,sunburst,etc.
 - add _ec.util_ to support map shapefiles thru library 'sf'
 
-## v.1.4.5
+## v. 1.4.5
 
 - upgrade ECharts to v.5.3.1, GL to v.2.0.9
 - _ec.init_ timeline (_tl.series_) to support 3D
@@ -133,11 +134,11 @@
 - added new brush/click events to demo(_eshiny_)
 - cleanup `echarty.js` code for events
 
-## v.1.4.3
+## v. 1.4.3
 
 - upgrade ECharts to v.5.2.2, graph-modularity to v.2.1.0
 
-## v.1.4.2
+## v. 1.4.2
 
 - replaced magrittr %>% dependency with R native pipe |>
 - added _ec.snip_ as option for better code readability
@@ -145,7 +146,7 @@
 - added _shiny_ dependency to avoid CRAN warnings
 - added more unit tests
 
-## v.1.4.0
+## v. 1.4.0
 
 - _ec.init_: renamed 'group1' to 'ctype', add presets for parallel chart, improved presets for xAxis
 - _ec.paxis_ new helper for parallelAxis
@@ -240,3 +241,5 @@
 
 ## v. 0.1.0
 - initial release, approved by CRAN Feb 16, 2021
+
+
