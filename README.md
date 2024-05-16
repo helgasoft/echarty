@@ -23,7 +23,7 @@ This package is a thin R wrapper around Javascript library
 Benefit from ECharts **full functionality** and build
 interactive charts in R and Shiny with minimal overhead.  
 
-Wider connectivity and deployment potential through [crosstalk](https://rpubs.com/echarty/crosstalk) and .  
+Wider connectivity and deployment potential through [WebR](https://helgasoft.github.io/echarty/test/coder.html) and  [crosstalk](https://rpubs.com/echarty/crosstalk).  
 
 <details> <summary><b>Compare to echarts4r</b> 📌</summary>
 
@@ -46,8 +46,9 @@ utilities | bezier, correlations, histogram, density, loess, flip, nesting, more
 	This differs from echarts4r which uses own commands for most chart options.   
 
 Comparison review done Feb 2024 for current versions of echarts4R and echarty.
+___
 </details>
-  <br>
+
 Please consider granting a Github star ⭐ to show your support.  
 
 ## Installation
