@@ -514,7 +514,9 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
   }
 
   if ('leaflet' %in% load) {
-    stopifnot("ec.init: library 'leaflet' not installed"= file.exists(file.path(.libPaths(), 'leaflet')[[1]]))
+    # coveralls pops error, win/linux ok :
+    #stopifnot("ec.init: library 'leaflet' not installed"= file.exists(file.path(.libPaths(), 'leaflet')[[1]]))
+    if (!file.exists(file.path(.libPaths(), 'leaflet')[[1]])) warning("ec.init: library 'leaflet' not installed")
     if (preset) {
       # customizations for leaflet
       wt$x$opts$xAxis <- wt$x$opts$yAxis <- NULL

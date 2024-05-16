@@ -25,7 +25,7 @@ interactive charts in R and Shiny with minimal overhead.
 
 Wider connectivity and deployment potential through [crosstalk](https://rpubs.com/echarty/crosstalk) and .  
 
-<details> <summary>**Compare to echarts4r 📌**</summary>
+<details> <summary><b>Compare to echarts4r</b> 📌</summary>
 
 R package | echarts4r | echarty
 --- | --- | ---
