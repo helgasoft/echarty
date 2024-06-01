@@ -17,6 +17,7 @@
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.css">
 	<script src="https://cdn.jsdelivr.net/gh/helgasoft/echarty@v.1.6.3/inst/js/echarts-leaflet.min.js"></script>
 	<script src="https://cdn.jsdelivr.net/gh/helgasoft/echarty@v.1.6.3/inst/js/world.js"></script>
+	<script src="https://unpkg.com/@lyket/widget@latest/dist/lyket.js?apiKey=pt_ae052129c8f1d6031b6215080d228e"></script>
 
 	<style>
 body { font-family: Arial, sans-serif; background-color: Linen; }
@@ -140,10 +141,12 @@ See also the <b>real-time data</b> processing <a href='realTime.html' target="_b
 	<label for="volcano">volcano</label>
 	<input type='button' id='btnInfo' value='Info &#x1F4D3' class='lefto bton' />
 	&nbsp; &nbsp; &nbsp; &nbsp; 
-<!-- LikeBtn.com BEGIN -->
-<span class="likebtn-wrapper" data-ef_voting="bounce" data-identifier="item_1" data-dislike_enabled="false"></span>
-<script>(function(d,e,s){if(d.getElementById("likebtn_wjs"))return;a=d.createElement(e);m=d.getElementsByTagName(e)[0];a.async=1;a.id="likebtn_wjs";a.src=s;m.parentNode.insertBefore(a, m)})(document,"script","//w.likebtn.com/js/w/widget.js");</script>
-<!-- LikeBtn.com END -->
+	<div style="font-size: 10px"
+		data-lyket-type="like" 
+		data-lyket-id="my-first-post"
+		data-lyket-color-primary='gold'
+		data-lyket-color-background='PaleTurquoise'
+	></div>
 
    </div>
    <textarea id='code' class='textarea' cols=50 rows=7 contenteditable>plot <- cars |> ec.init()</textarea>
@@ -164,7 +167,7 @@ import('https://webr.r-wasm.org/latest/webr.mjs').then(async ({ WebR }) => {
 	install.packages('echarty', repos= c('https://repo.r-wasm.org'))
 	'some string'
   `)
-  document.getElementById('app').innerHTML = 'Ready to plot &#x1f44d';
+  document.getElementById('app').innerHTML = 'Ready to plot &#x1f4ca';   //&#x1f44d  
 });
 
 async function rbHandler(v) {
