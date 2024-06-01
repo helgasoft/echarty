@@ -5,18 +5,17 @@
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width" />
 	<link rel="shortcut icon" href="../img/logo.ico" type="image/x-icon">
-	<!-- uncomment scripts below if needed -->
-<!--
-	<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-	<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>	
-	<script src="https://cdn.jsdelivr.net/gh/react-R/reactR@v0.5.0/inst/www/react-tools/react-tools.js"></script>
--->
+
 	<script src="https://cdn.jsdelivr.net/gh/ramnathv/htmlwidgets@v1.6.2/inst/www/htmlwidgets.js"></script>
 	
-	<!--  echarty dependencies    -->
+	<!--  echarty dependencies  -->
 	<script src="https://cdn.jsdelivr.net/gh/helgasoft/echarty@v.1.6.3/inst/js/echarts.min.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/echarts-gl@2.0.9/dist/echarts-gl.min.js"></script>
-	<script src="https://cdn.jsdelivr.net/gh/helgasoft/echarty@v.1.6.3/inst/htmlwidgets/echarty.js"></script>
+	<script src="https://cdn.jsdelivr.net/gh/helgasoft/echarty@v.1.6.3/inst/htmlwidgets/echarty.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/gh/helgasoft/echarty@v.1.6.3/inst/js/renderers.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js"></script>
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.css">
+	<script src="https://cdn.jsdelivr.net/gh/helgasoft/echarty@v.1.6.3/inst/js/echarts-leaflet.min.js"></script>
 	<script src="https://cdn.jsdelivr.net/gh/helgasoft/echarty@v.1.6.3/inst/js/world.js"></script>
 
 	<style>
@@ -124,11 +123,15 @@ See also the <b>real-time data</b> processing <a href='realTime.html' target="_b
 <p><div class='wrapper'>
 	<strong>Edit R code</strong> &nbsp; &nbsp; 
 	<input type='button' id='btnCode' value='Plot &#x1F4CA' class='lefto bton'/> 
-	<span class='lefto'>Examples</span> &nbsp; &nbsp; 
+<span class='lefto'>Examples</span> &nbsp; &nbsp; 
+<span class='lefto'>2D</span>  &nbsp;
 	<input type="radio" id="bar" name="rchart" value="bar" onclick= 'rbHandler()'>
 	<label for="bar">bar</label><br>
 	<input type="radio" id="map" name="rchart" value="map" onclick= 'rbHandler()'>
 	<label for="map">map</label><br>
+<span class='lefto'>3D</span>  &nbsp;
+	<input type="radio" id="xyz" name="rchart" value="xyz" onclick= 'rbHandler()'>
+	<label for="xyz">xyz</label><br>
 	<input type="radio" id="surface" name="rchart" value="surface" onclick= 'rbHandler()'>
 	<label for="surface">surface</label><br>
 	<input type="radio" id="globe" name="rchart" value="globe" onclick= 'rbHandler()'>
@@ -136,6 +139,12 @@ See also the <b>real-time data</b> processing <a href='realTime.html' target="_b
 	<input type="radio" id="volcano" name="rchart" value="volcano" onclick= 'rbHandler()'>
 	<label for="volcano">volcano</label>
 	<input type='button' id='btnInfo' value='Info &#x1F4D3' class='lefto bton' />
+	&nbsp; &nbsp; &nbsp; &nbsp; 
+<!-- LikeBtn.com BEGIN -->
+<span class="likebtn-wrapper" data-ef_voting="bounce" data-identifier="item_1" data-dislike_enabled="false"></span>
+<script>(function(d,e,s){if(d.getElementById("likebtn_wjs"))return;a=d.createElement(e);m=d.getElementsByTagName(e)[0];a.async=1;a.id="likebtn_wjs";a.src=s;m.parentNode.insertBefore(a, m)})(document,"script","//w.likebtn.com/js/w/widget.js");</script>
+<!-- LikeBtn.com END -->
+
    </div>
    <textarea id='code' class='textarea' cols=50 rows=7 contenteditable>plot <- cars |> ec.init()</textarea>
 	
@@ -143,6 +152,9 @@ See also the <b>real-time data</b> processing <a href='realTime.html' target="_b
 </p>
 
 	<script>
+/*	does not work:
+	load,  ec.plugjs (FS error)
+*/
 var webR;
 import('https://webr.r-wasm.org/latest/webr.mjs').then(async ({ WebR }) => {
   webR = new WebR();
@@ -167,6 +179,18 @@ plot <- df |> ec.init(ctype= 'bar',
   xAxis= list(type='category', axisLabel=list(interval=0, rotate=45))
 ) |> ec.theme('dark')`
 		    break;
+
+	  	  case 'xyz':
+		code= `df <- mtcars |> mutate(name=rownames(mtcars)) |> relocate(mpg,wt,hp) |> group_by(cyl) 
+series <- lapply(seq_along(df |> group_split()), function(ii,arr) { 
+       list(type= 'scatter3D', datasetIndex=ii+1, name=unique(arr[[ii]]$cyl) ) }, arr=df |> group_split()) 
+plot <- df |> ec.init( preset=F,  
+  backgroundColor= '#777', width='70%', tooltip=list(show=T), legend= list(show=T),
+  grid3D= list(list(show=T)), xAxis3D= list(show=T), yAxis3D= list(show=T), zAxis3D= list(show=T), 
+  title= list(text='mtcars'), series =series 
+)` 
+		    break;
+
 	  	  case 'surface':
 		code= `data <- expand.grid(
   x = seq(0, 2, by = 0.1),
@@ -210,7 +234,7 @@ cns <- data.frame(
   name = c('China','Canada','Australia','Brazil'),
   value = runif(4, 1, 100) 
 )
-plot <- ec.init(   # dont load='world', already loaded by webpage
+plot <- ec.init(load='world',
   color= c('violet','green'), 
   geo= list(map= 'world', roam= T),
   series= list(list(type= 'map', 
