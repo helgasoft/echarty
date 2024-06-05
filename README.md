@@ -54,7 +54,7 @@ Please consider granting a Github star ⭐ to show your support.
 ## Installation
 
 <!-- [![Github version](https://img.shields.io/github/v/release/helgasoft/echarty?label=github)](https://github.com/helgasoft/echarty/releases)  <sup>.02</sup>  -->
-Latest development build **1.6.3.03**
+Latest development build **1.6.4**
 
 ``` r
 if (!requireNamespace('remotes')) install.packages('remotes')

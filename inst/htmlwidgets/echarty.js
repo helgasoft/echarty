@@ -1,5 +1,5 @@
 /*global HTMLWidgets, echarts, Shiny*/
-/*eslint no-undef: "error"*/
+/* eslint no-undef: "error" */
 
 // extra functions
 ecf = {
@@ -9,6 +9,7 @@ ecf = {
   geoz2: 0,
   zoom: {s: 0, e: 100 },  // dataZoom values
   fs: false,              // fullscreen flag Y/N
+  dbg: false,             // debug flag: if (ecf.dbg) console.log(' change s:'+v)
   
   IsFullScreen: function() {
     	var full_screen_element = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement || null;
@@ -154,6 +155,7 @@ HTMLWidgets.widget({
             eva3 = x.jcode;
         }
       }
+      if (x.hasOwnProperty('dbg')) { ecf.dbg= x.dbg; }
       
       chart = echarts.init(document.getElementById(el.id), x.theme, 
       	{ renderer: x.renderer, locale: x.locale, useDirtyRect: x.useDirtyRect }
@@ -323,15 +325,14 @@ HTMLWidgets.widget({
     	  
       	ct_filter.on('change', function(e) {    // external keys to filter
       		if (e.sender == ct_filter) return;
-      		if (e.value == undefined) e.value = [];  // sent by filter_checkbox ?!
+      		if (e.value == undefined) e.value = chart.akeys; // sent by filter_checkbox
           
-          rexp = (e.value.length == chart.akeys.length) //|| e.value.length == 0) 
+          rexp = (e.value.length == chart.akeys.length)
                   ? '^' : '^('+ e.value.join('|') +')$';
           opt = chart.getOption();
           dtf = opt.dataset.find(x => x.id === 'Xtalk');
           //dtf.transform = {type:'filter', config: {dimension: 'XkeyX', reg: rexp } }
           dtf.transform.config.reg = rexp;
-          // chart.filk = e.value.map(x=>Number(x)).sort((a, b) => a - b);
           chart.filk = e.value.sort((a, b) => a - b);
           chart.setOption(opt, false);
       	});

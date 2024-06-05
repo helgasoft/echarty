@@ -17,13 +17,21 @@ test_that("options preset", {
   expect_equal(p$x$theme, 'mine')
   
   options(echarty.theme=NULL)
-  p <- cars |> ec.init()
+  p <- cars |> ec.init(dbg=T)
   expect_equal(p$x$theme, '')
   
   options(echarty.font='monospace')
   p <- cars |> ec.init()
   expect_equal(p$x$opts$textStyle$fontFamily, 'monospace')
   options(echarty.font=NULL)
+})
+
+test_that("webR works with plugins", {
+  lif <- paste0(system.file('js', package='echarty'), '/echarts-liquidfill.min.js')
+  ec.webR <<- TRUE
+  tmp <- ec.init(load= 'liquid')
+  expect_false(file.exists(lif))
+  rm(ec.webR, envir=globalenv())
 })
 
 test_that("ec.init presets for non-grouped data.frame", {
@@ -195,13 +203,14 @@ lng,lat,name,date,place
 '
   df <- read.csv(text=tmp, header=TRUE)
   p <- df |> ec.init(
-    load='leaflet', tooltip= list(ey=''),
+    load='leaflet', tooltip= list(show=TRUE),
     series= list(list(
       encode= list(tooltip=c(3,4,5))
     ))
   )
   expect_equal(p$x$opts$series[[1]]$coordinateSystem, 'leaflet')
   expect_equal(p$x$opts$series[[1]]$encode$tooltip, c(2,3,4))
+  expect_equal(p$dependencies[[1]]$name, 'leaflet')
   
   p <- ec.init(quakes |> head(11), load='world',
 	  series.param= list( encode= list(lng=2, lat=1, value=3),

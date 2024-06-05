@@ -29,8 +29,8 @@ If grouping is on multiple columns, only the first one is used to determine sett
 \item{...}{Optional widget attributes. See Details. \cr}
 
 \item{series.param}{Additional attributes for preset series, default is NULL.\cr
-Can be used for non-timeline and timeline series (instead of \emph{tl.series}). A single list defines one series type only.\cr
-One could also define all series directly with \emph{series=list(list(...),list...)} instead.}
+Defines a single series type. Can be used for both non-timeline and timeline series. \cr
+Multiple series types need to be defined directly with \emph{series=list(list(...),list...)} or added with \link{ec.upd}.}
 
 \item{tl.series}{Deprecated, use \emph{timeline} and \emph{series.param} instead.\cr}
 

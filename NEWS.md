@@ -1,13 +1,15 @@
 # history of package _echarty_
 
-## v. 1.6.3.03  latest in development
+## v. 1.6.4  latest in development
 
 - upgrade ECharts to v.5.5.0, built with R v.4.4.0
-- added _nasep_ parameter to ec.data('names') for easier setting of nested lists from a _data.frame_
-- tested web freedom [with WebR](https://helgasoft.github.io/echarty/test/coder.html)
-- added explicit _leaflet_ dependency, not provided since leaflet v.2.2.0
-- added optional tooltip formatter (tipFmt) in _ecr.band_
+- add _nasep_ parameter to _ec.data('names')_ - easily set nested lists from a _data.frame_
+- add [WebR](https://docs.r-wasm.org/webr/latest/) support and [test](https://helgasoft.github.io/echarty/test/coder.html)
+- add explicit _leaflet_ dependency since dependencies changed in leaflet v.2.2.0
+- add optional tooltip formatter (tipFmt) in _ecr.band_
 - refactoring (leaflet, geo, geoJson, tests)
+- add debug flags for messages in JS and R
+- fix _crosstalk_ bug for checkboxes unselect
 
 ## v. 1.6.3  on CRAN
 

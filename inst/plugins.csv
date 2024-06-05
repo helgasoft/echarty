@@ -1,0 +1,5 @@
+name,url
+3D,https://cdn.jsdelivr.net/npm/echarts-gl@2.0.9/dist/echarts-gl.min.js
+liquid,https://cdn.jsdelivr.net/npm/echarts-liquidfill@latest/dist/echarts-liquidfill.min.js
+gmodular,https://cdn.jsdelivr.net/npm/echarts-graph-modularity@latest/dist/echarts-graph-modularity.min.js
+wordcloud,https://cdn.jsdelivr.net/npm/echarts-wordcloud@latest/dist/echarts-wordcloud.min.js

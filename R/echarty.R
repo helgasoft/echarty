@@ -30,8 +30,8 @@ noCoord <- c('polar','radar','singleAxis','parallelAxis','calendar')
 #' @param ctype Chart type, default is 'scatter'.
 #' @param preset Boolean (default TRUE). Build preset attributes like dataset, series, xAxis, yAxis, etc.
 #' @param series.param  Additional attributes for preset series, default is NULL.\cr
-#'  Can be used for non-timeline and timeline series (instead of _tl.series_). A single list defines one series type only.\cr
-#'  One could also define all series directly with _series=list(list(...),list...)_ instead.
+#'  Defines a single series type. Can be used for both non-timeline and timeline series. \cr
+#'  Multiple series types need to be defined directly with _series=list(list(...),list...)_ or added with [ec.upd].
 #' @param tl.series Deprecated, use _timeline_ and _series.param_ instead.\cr
 #' @param ...  Optional widget attributes. See Details. \cr
 #' @param width,height Optional valid CSS unit (like \code{'100\%'},
@@ -120,6 +120,7 @@ noCoord <- c('polar','radar','singleAxis','parallelAxis','calendar')
 #' )
 #' 
 #' @importFrom htmlwidgets createWidget sizingPolicy getDependency JS shinyWidgetOutput shinyRenderWidget
+#' @importFrom utils read.csv
 #' @import dplyr
 #' 
 #' @export
@@ -156,9 +157,11 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
   useDirtyRect <- if (is.null(opt1$useDirtyRect)) FALSE else opt1$useDirtyRect
   xtKey <- if (is.null(opt1$xtKey)) 'XkeyX' else opt1$xtKey
   if (xtKey=='XkeyX') df$XkeyX <- dfKey   # add new column for Xtalk filtering, if needed
+  # allow debug feedback thru cat() in JS and R code:
+  dbg <- if (is.null(opt1$dbg)) FALSE else opt1$dbg   
   # remove the above attributes since they are not valid ECharts options
   opt1$ask <- opt1$js <- opt1$renderer <- opt1$locale <- NULL
-  opt1$useDirtyRect <- opt1$elementId <- opt1$xtKey <- NULL
+  opt1$useDirtyRect <- opt1$elementId <- opt1$xtKey <- opt1$dbg <- NULL
   axis2d <- c('pictorialBar','candlestick','boxplot','scatterGL') #'custom',
   
   # forward widget options using x
@@ -168,7 +171,7 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
     renderer = renderer,
     locale = locale,
     useDirtyRect = useDirtyRect,
-    jcode = js,
+    jcode = js, dbg = dbg,
     opts = opt1,
     settings = list(
       crosstalk_key = key,
@@ -285,11 +288,11 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
     return(list(x=xtem, y=ytem, z='z', c=ser$coordinateSystem))
   }
   doVMap <- function(wid) {
-    # visualMap assist
+    # visualMap assist: auto add min/max/calculable   (categories==piecewise)
     vm <- wid$opts$visualMap
     out <- NULL
     if (!is.null(df) && !is.null(vm) &&
-        is.null(vm$min) && is.null(vm$max) &&
+        is.null(vm$min) && is.null(vm$max) && is.null(vm$categories) &&
         (is.null(vm$type) || (vm$type == 'continuous')) ) {
       
         xx <- length(colnames(df))   # last numeric column by default
@@ -300,7 +303,6 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
         ) xx <- 'value'
         if (!is.null(vm$dimension)) xx <- vm$dimension
         out <- list(
-          #dimension= xx,
           min= min(na.omit(df[,xx])),
           max= max(na.omit(df[,xx])),
           calculable= TRUE
@@ -471,6 +473,7 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
     ),
     dependencies = deps
   )
+  #if (dbg) cat('\naxis2d=',axis2d)
   
   tmp <- getOption('echarty.font')
   if (!is.null(tmp))
@@ -482,8 +485,7 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
   
   # ------------- plugins loading -----------------------------
   opt1 <- wt$x$opts
-  load <- opt1$load;
-  wt$x$opts$load <- NULL
+  load <- opt1$load;  wt$x$opts$load <- NULL
   if (length(load)==1 && grepl(',', load, fixed=TRUE))
       load <- unlist(strsplit(load, ','))
       
@@ -491,11 +493,6 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
   dep <- NULL
   
   if ('world' %in% load) {
-    dep <- htmltools::htmlDependency(
-      name = 'world', version = '1.0.0', 
-      src = c(file = path), script= 'world.js')
-    wt$dependencies <- append(wt$dependencies, list(dep))
-    
     if (preset) {
       wt$x$opts$xAxis <- wt$x$opts$yAxis <- NULL
       if (!is.null(df)) {   # coordinateSystem='geo' needed for all series
@@ -511,11 +508,14 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
       # if (!is.null(df))  # cancelled: don't know if df first 2 cols are 'lng','lat'
       #   wt$x$opts$geo$center= c(mean(unlist(df[,1])), mean(unlist(df[,2])))
     }
+    dep <- htmltools::htmlDependency(
+      name = 'world', version = '1.0.0', 
+      src = c(file = path), script= 'world.js')
+    wt$dependencies <- append(wt$dependencies, list(dep))
   }
-
   if ('leaflet' %in% load) {
-    # coveralls pops error, win/linux ok :
-    #stopifnot("ec.init: library 'leaflet' not installed"= file.exists(file.path(.libPaths(), 'leaflet')[[1]]))
+      # coveralls pops error, win/linux ok :
+      #stopifnot("ec.init: library 'leaflet' not installed"= file.exists(file.path(.libPaths(), 'leaflet')[[1]]))
     if (!file.exists(file.path(.libPaths(), 'leaflet')[[1]])) warning("ec.init: library 'leaflet' not installed")
     if (preset) {
       # customizations for leaflet
@@ -572,9 +572,10 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
   }
   
   # Plugins implemented as dynamic load on-demand
-  cdn <- 'https://cdn.jsdelivr.net/npm/'
-  if ('3D' %in% load) {
-    if (preset) {       # replace 2D presets with 3D
+  if (any(load %in% c('3D','liquid','gmodular','wordcloud'))) {
+    plf <- read.csv(system.file('plugins.csv', package='echarty'), header=TRUE, stringsAsFactors=FALSE)
+    if ('3D' %in% load) {
+      if (preset) {       # replace 2D presets with 3D
       isScatGL <- 'scatterGL' %in% unlist(lapply(opt1$series, \(k){k$type}))  # scatterGL is 2D
       if (!isScatGL && is.null(opt1$globe) && is.null(opt1$geo3D) ) {  
         wt$x$opts$xAxis <- wt$x$opts$yAxis <- NULL
@@ -593,21 +594,12 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
           \(s) { s$type= if (s$type=='scatter') 'scatter3D' else s$type; s })
       }
     }
-    wt <- ec.plugjs(wt, 
-      paste0(cdn,'echarts-gl@2.0.9/dist/echarts-gl.min.js'), ask)
-  }
-  if ('liquid' %in% load) 
-    wt <- ec.plugjs(wt, 
-      paste0(cdn,'echarts-liquidfill@latest/dist/echarts-liquidfill.min.js'), ask)
-  
-  if ('gmodular' %in% load) 
-    wt <- ec.plugjs(wt, 
-      paste0(cdn,'echarts-graph-modularity@latest/dist/echarts-graph-modularity.min.js'), ask)
-  
-  if ('wordcloud' %in% load) 
-    wt <- ec.plugjs(wt, 
-      paste0(cdn,'echarts-wordcloud@latest/dist/echarts-wordcloud.min.js'), ask)
-  
+      wt <- ec.plugjs(wt, plf[plf$name=='3D',]$url, ask)
+    }
+    if ('liquid' %in% load) wt <- ec.plugjs(wt, plf[plf$name=='liquid',]$url, ask)
+    if ('gmodular' %in% load) wt <- ec.plugjs(wt, plf[plf$name=='gmodular',]$url, ask)
+    if ('wordcloud' %in% load) wt <- ec.plugjs(wt, plf[plf$name=='wordcloud',]$url, ask)
+  }  
   # load unknown plugins
   unk <- load[! load %in% c('leaflet','custom','world','lottie','ecStat',
                             '3D','liquid','gmodular','wordcloud')]
@@ -653,6 +645,7 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
   tmp <- xyNamesCS(tl.series)
   xtem <- tmp$x; ytem <- tmp$y
   if (!is.null(tmp$c)) tl.series$coordinateSystem <- tmp$c
+  #if (dbg) cat('\ntl=',tmp$x,' ',tmp$y,' ',tmp$c)
   
   if (any(c('geo','leaflet') %in% tl.series$coordinateSystem)) {
       klo <- 'lng'; kla <- 'lat'
@@ -670,7 +663,7 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
         if (tl.series$coordinateSystem=='leaflet') 
           wt$x$opts$leaflet$center <- center
       }
-  } 
+  }
   
   if (tl.series$type == 'map') {
     xtem <- 'name'; ytem <- 'value'
@@ -1209,9 +1202,9 @@ ec.plugjs <- function(wt=NULL, source=NULL, ask=FALSE) {
               startsWith(source, 'http') || startsWith(source, 'file://'))
   fname <- basename(source)
   fname <- unlist(strsplit(fname, '?', fixed=TRUE))[1]  # when 'X.js?key=Y'
-  # if (!endsWith(fname, '.js'))
-  #   stop('ec.plugjs expecting .js suffix', call. = FALSE)
+  # if (!endsWith(fname, '.js')) stop('ec.plugjs expecting .js suffix', call. = FALSE)
   path <- system.file('js', package = 'echarty')
+  
   ffull <- paste0(path,'/',fname)
   if (!file.exists(ffull)) {
     if (ask) {
@@ -1223,19 +1216,20 @@ ec.plugjs <- function(wt=NULL, source=NULL, ask=FALSE) {
       if (is.na(ans)) ans <- FALSE  # was cancelled
     } else
       ans <- TRUE
-    if (ans) {
-      try(withCallingHandlers(
-        download.file(source, ffull, quiet=TRUE), # method = "libcurl"),
-        error = function(w) { ans <- FALSE },
-        warning = function(w) { ans <- FALSE }
-        #cat('ec.plugjs Error:', sub(".+HTTP status was ", "", w, source))
-      ))  #,silent=TRUE)
+    if (ans && !exists('ec.webR')) {  # WebR dislikes download.file
+      #try(withCallingHandlers(    # function(w) { ans <- FALSE }
+      errw <- function(w) { ans <- FALSE
+        cat('ec.plugjs:', sub(".+HTTP status was ", "", w, source)) }
+      tryCatch({
+        download.file(source, ffull, quiet=TRUE) }, # method = "libcurl"),
+        error = errw, warning = errw
+      )
     } 
     if (!ans) return(wt)    # error
   }
   dep <- htmltools::htmlDependency(
-    name = fname, version = '1.0.0', src = c(file = path),
-    script = fname
+    name= fname, version= '1.1.1', src= c(file = path),
+    script= fname
   )
   wt$dependencies <- append(wt$dependencies, list(dep))
   return(wt)

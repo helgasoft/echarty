@@ -367,12 +367,16 @@ test_that("ec.data treeTK", {
 })
 
 test_that("ec.data 'names' + nasep", {
-  df <- data.frame(name= c('A','B','C'), value= c(1,2,3), 
+  df <- data.frame(name= c('A','B','C'), value= c(1,2,3),
+        itemStyle_color= c('chartreuse','lightblue','pink'),
+        itemStyle_decal_symbol= c('rect','diamond','none'),                   
         emphasis_itemStyle_color= c('green','blue','red')
   )
   p <- ec.init(series.param= list(
     type='pie', data= ec.data(df, 'names', nasep='_')))
   expect_equal(p$x$opts$series[[1]]$data[[1]]$emphasis$itemStyle$color, 'green')
+  expect_equal(p$x$opts$series[[1]]$data[[2]]$itemStyle$decal$symbol, 'diamond')
+  expect_equal(p$x$opts$series[[1]]$data[[3]]$itemStyle$color, 'pink')
 })
 
 test_that("ec.inspect and ec.fromJson", {

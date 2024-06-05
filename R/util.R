@@ -614,6 +614,7 @@ body { padding: 10px; }
 #' # attribute names separator (nasep) is "_"
 #' df <- data.frame(name= c('A','B','C'), value= c(1,2,3), 
 #'      itemStyle_color= c('chartreuse','lightblue','pink'),
+#'      itemStyle_decal_symbol= c('rect','diamond','none'),
 #'      emphasis_itemStyle_color= c('darkgreen','blue','red')
 #' )
 #' ec.init(series.param= list(type='pie', data= ec.data(df, 'names', nasep='_')))
@@ -879,19 +880,23 @@ ec.data <- function(df, format='dataset', header=FALSE, ...) {
       stopifnot("data('names'): nasep should be 1 char"= nchar(args$nasep)==1)
       # names separator is present, replace compound names with nested lists
       tmp <- lapply(tmp, \(rr) {
+        lst <- rr
         for(cc in names(rr)) {
           if (grepl(args$nasep, cc, fixed=T)) {
+            lst[[cc]] <- NULL
             nlis <- strsplit(cc, args$nasep, fixed=T)
             out <- rr[[cc]]; 
             for(nn in rev(nlis[[1]][-1])) {
-              cur <- list(); cur[[nn]] <- out;
-              out <- cur
+              cur <- list();  cur[[nn]] <- out;  out <- cur
             }
-            rr[[cc]] <- NULL
-            rr[[ nlis[[1]][1] ]] <- out
+            col <- nlis[[1]][1]
+            if ( col %in% names(lst) )
+              lst[[col]] <- .merlis(lst[[col]], out)
+            else
+              lst[[col]] <- out
           }
         }
-        rr
+        lst
       })
     }
     datset <- tmp;

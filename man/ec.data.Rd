@@ -92,6 +92,7 @@ ec.init(
 # attribute names separator (nasep) is "_"
 df <- data.frame(name= c('A','B','C'), value= c(1,2,3), 
      itemStyle_color= c('chartreuse','lightblue','pink'),
+     itemStyle_decal_symbol= c('rect','diamond','none'),
      emphasis_itemStyle_color= c('darkgreen','blue','red')
 )
 ec.init(series.param= list(type='pie', data= ec.data(df, 'names', nasep='_')))
