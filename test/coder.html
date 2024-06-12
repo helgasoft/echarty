@@ -5,18 +5,20 @@
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width" />
 	<link rel="shortcut icon" href="../img/logo.ico" type="image/x-icon">
-
-	<script src="https://cdn.jsdelivr.net/gh/ramnathv/htmlwidgets@v1.6.2/inst/www/htmlwidgets.js"></script>
 	
-	<!--  echarty dependencies  -->
-	<script src="https://cdn.jsdelivr.net/gh/helgasoft/echarty@v.1.6.3/inst/js/echarts.min.js"></script>
+	<!--  ECharts sources  -->
+	<script src="https://cdn.jsdelivr.net/npm/echarts@latest/dist/echarts.min.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/echarts-gl@2.0.9/dist/echarts-gl.min.js"></script>
-	<script src="https://cdn.jsdelivr.net/gh/helgasoft/echarty@v.1.6.3/inst/htmlwidgets/echarty.min.js"></script>
-	<script src="https://cdn.jsdelivr.net/gh/helgasoft/echarty@v.1.6.3/inst/js/renderers.min.js"></script>
+	<!--  echarty dependencies  -->
+	<script src="https://cdn.jsdelivr.net/gh/ramnathv/htmlwidgets@v1.6.4/inst/www/htmlwidgets.js"></script>
+	<script src="https://cdn.jsdelivr.net/gh/helgasoft/echarty@v.1.6.4/inst/htmlwidgets/echarty.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/gh/helgasoft/echarty@v.1.6.4/inst/js/renderers.min.js"></script>
+
+	<!--  echarty plugins  -->
 	<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js"></script>
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.css">
-	<script src="https://cdn.jsdelivr.net/gh/helgasoft/echarty@v.1.6.3/inst/js/echarts-leaflet.min.js"></script>
-	<script src="https://cdn.jsdelivr.net/gh/helgasoft/echarty@v.1.6.3/inst/js/world.js"></script>
+	<script src="https://cdn.jsdelivr.net/gh/helgasoft/echarty@v.1.6.4/inst/js/echarts-leaflet.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/gh/helgasoft/echarty@v.1.6.4/inst/js/world.js"></script>
 
 	<style>
 body { font-family: Arial, sans-serif; background-color: Linen; }
@@ -31,8 +33,8 @@ a:link { text-decoration: none; }
 .textarea {
   border: 1px solid #ccc;
   padding: 1px 6px; margin: 5px;
-  display: block;
-  width: 80%;
+  /*display: block;*/
+  width: 70%;
   overflow: hidden;
   overflow-y: auto;
   resize: both;
@@ -90,13 +92,138 @@ label {
   text-decoration: none;
   cursor: pointer;
 }
-
+.nowrap { text-wrap: nowrap;}
+.inblock { display:inline-block; }
 	</style>
+
+	<script>
+/*	TODO:  1. how to dnld from r-universe.dev without ".rds. error
+		2. upd liveData too
+https://github.com/r-wasm/webr/issues/435
+3. echarty - compile to Webass + mount from github.io
+https://github.com/georgestagg/shiny-standalone-webr-demo/blob/main/shiny.js
+   await webR.evalRVoid(`webr::mount("/shiny", "${window.location.href}/image/library.data")`);
+*/
+var webR, fjson;
+import('https://webr.r-wasm.org/latest/webr.mjs').then(async ({ WebR }) => {
+  webR = new WebR(); msg = document.getElementById('wver');
+  await webR.init(); 
+  wver= 'WebR v.'+ webR.version; console.log(wver);    
+/*	// older versions from repo.r-wasm.org, separate == slower?
+  await Promise.all(["htmlwidgets","dplyr","data.tree"].map(async (nn) => {
+	msg.innerHTML = wver+ ', loading '+nn+'...'; webR.installPackages([nn]);
+  }) ); */
+msg.innerHTML = wver+ ', loading htmlwidgets...'; await webR.installPackages(['htmlwidgets'], repos='https://ramnathv.r-universe.dev')
+msg.innerHTML = wver+ ', loading dplyr...'; await webR.installPackages(['data.tree'], repos='https://gluc.r-universe.dev')
+msg.innerHTML = wver+ ', loading data.tree...'; await webR.installPackages(['dplyr'], repos='https://tidyverse.r-universe.dev')
+
+  msg.innerHTML = wver+ ', loading echarty...'; await webR.installPackages(["echarty"], {repos:'https://helgasoft.r-universe.dev'});  // latest
+  await webR.objs.globalEnv.bind('ec.webR', true);   // inform R about web environment
+  document.getElementById('app').innerHTML = 'Ready to plot &#x1f4ca' ;   //&#x1f44d  
+});
+
+function rbHandler() {
+	var ele = document.getElementById('rchart');
+		switch(ele.value) {
+		  case 'remote':
+		code= `chart <- ec.fromJson(url('https://helgasoft.github.io/echarty/test/pfull.json'))`;
+		    break;
+	  	  case 'bar':
+		code= `dates <- seq(as.Date('2019-12-30'), as.Date('2020-01-12'), by='days')
+df <- data.frame(date= dates,  num=runif(length(dates)))
+chart <- df |> ec.init(ctype= 'bar',
+  xAxis= list(type='category', axisLabel=list(interval=0, rotate=45))
+) |> ec.theme('dark')`;
+		    break;
+		  case 'map':
+		code= `set.seed(222)
+cns <- data.frame(   
+  visualMap = c(T,T,T,F),
+  name = c('China','Canada','Australia','Brazil'),
+  value = runif(4, 1, 100) 
+)
+chart <- ec.init(load='world',
+  color= c('violet','green'), 
+  series.param= list(type= 'map', data= ec.data(cns, 'names')),
+  visualMap= list(calculable= TRUE, max= 100)
+)`
+		    break;
+		  case 'leaflet':
+		code= `chart <- mtcars |> ec.init(load='leaflet', tooltip=list(s=T))`
+		    break;
+
+	  	  case 'xyz':
+		code= `df <- mtcars |> mutate(name=rownames(mtcars)) |> relocate(mpg,wt,hp) |> group_by(cyl) 
+chart <- df |> ec.init( load='3D',
+  backgroundColor= '#777', width='70%', tooltip=list(show=T), legend= list(show=T), 
+  title= list(text='mtcars')
+)` 
+		    break;
+
+	  	  case 'surface':
+		code= `df <- expand.grid(
+  x = seq(0, 2, by = 0.1),
+  y = seq(0, 1, by = 0.1)
+) |> mutate(z = x * (y ^ 2)) |> select(x,y,z)
+chart <- ec.init(load='3D', series.param= list(type= 'surface', data= ec.data(df,'values')) )`
+		    break;
+		  case 'globe':
+		code= `chart <- ec.init(load='3D',
+  globe= list(
+    baseTexture='https://cdn.jsdelivr.net/gh/ecomfe/echarts-gl@master/test/asset/world.topo.bathy.200401.jpg',
+    light= list(ambient= list(intensity=0.6)),
+    viewControl= list(autoRotate=F)),
+  series.param= list(type= 'scatter3D',
+    data= list(list(value=c(0,0,111), symbolSize=0), c(-117,-13,33), list(name='h2', value= c(-77,11,24))),
+    symbolSize= 40, itemStyle= list(color= 'red')
+  ), tooltip= list(show=T) )`
+		    break;
+		  case 'volcano':
+		code= `data(volcano)
+df <- as.data.frame(as.table(volcano)) |> mutate(across(0:2, as.numeric))
+chart <- ec.init(load='3D',  # grid3D= list(viewControl= list(autoRotate= TRUE)),
+  series.param= list( type= 'surface', data= ec.data(df),
+    wireframe= list(show= FALSE),
+    shading= 'realistic', realisticMaterial= list( metalness= 0.5, roughness= 0.6)
+  ),
+  visualMap= list(calculable=TRUE, dimension=3, inRange=list(color= rev(rainbow(10))) )
+)`
+		    break;
+
+		  default:
+		}
+	//}
+	document.getElementById('code').value = code;
+}
+
+async function updCode() {
+  document.getElementById('app').innerHTML= 'Wait...';
+  exec = 'library(echarty);library(dplyr); \n' + document.getElementById('code').value +
+  	    '\n as.character(htmlwidgets:::as.tags.htmlwidget(chart))'
+  tags_plot = '';
+  try {
+	tags_plot = await webR.evalRString(exec);
+  } catch ({ name, message }) {
+	tags_plot = "<div class='err'>Error<br/>" + message + '</div>';
+  } finally {
+	// add tags from webR into DOM
+	document.getElementById('app').innerHTML = tags_plot;
+	fjson = await webR.evalRString("chart |> ec.inspect(target='full')");
+	var blob = new Blob([fjson], {type: "text/plain"});
+	var dlink = document.getElementById('dlink');
+	dlink.href = window.URL.createObjectURL(blob);
+	dlink.innerHTML = 'Export';
+  }
+  // render with HTMLWidgets
+  HTMLWidgets.staticRender();
+}
+
+	</script>
 </head>
 
 <body>
   <div class='center'>
-	<a href='https://github.com/helgasoft/echarty'><span class='titl'>Echarty</span> <img src='../img/logo.png' width=40 /></a> <span class='fontu'>WebR Coder</span>
+	<a href='https://github.com/helgasoft/echarty'><img src='../img/logo.png' width=40 /> <span class='titl'>Echarty</span></a> <span class='fontu'>WebR Coder</span>
   </div>
 
   <!-- The Modal -->
@@ -107,177 +234,68 @@ label {
 	<p>
 <h4><a href='https://helgasoft.github.io/echarty' target=_blank>echarty</a> Coder on <a href='https://docs.r-wasm.org/webr/latest/' target=_blank>WebR</a></h4>
 Live R-code execution inside a single web page. No Rmd files. No server. No installation. At last!
-<p>Experiment by setting attributes from <a href='https://echarts.apache.org/en/option.html' target=_blank>ECharts API</a>, for instance adding a title. 
-ECharts attributes are defined as named lists in R.
+<p>You can experiment by setting chart attributes from <a href='https://echarts.apache.org/en/option.html' target=_blank>ECharts API</a>, for instance adding a <a href='https://echarts.apache.org/en/option.html#title' target=_blank>title</a>. 
+ECharts attributes are defined as named lists in R.<br>
+<b>Export</b> chart: plot and click hyperlink 'Export'. A file <i>fullChart.json</i> will be saved in browser's download folder.<br>
+<b>Import</b> and plot code: <i>chart <- ec.fromJson(url('https://localhost/.../fullChart.json'))</i>
 </p>
-This page has coding limitations: <ul>
-  <li>parameter <i>load</i> for loading extensions like <i>3D</i> or <i>world</i> doesn't work yet. However these same JS extensions could be loaded in page's <i>head</i> section and necessary attributes set manually, see examples <i>surface</i> and <i>map</i>.</li>
-  <li>the echarty widget name has to be <i>plot</i>.</li>
+This page has coding singularities: <ul>
+  <li>all JS plugins should be preloaded in the page <i>head</i> section. Parameter <i>load</i> in ec.init() will build presets, but will not load plugins.</li>
+  <li>name of echarty widget has to be <i>chart</i>.</li>
+  <li>currently echarty dependencies are loaded from a slow repo, improving the speed is in our ToDo list.</li>
 </ul>
-The <i>shiny</i> version of the Coder has many more examples and <b>covers almost all chart types</b>. Run in R environment with commands: <pre>library(echarty); demo(coder)</pre>
+The <i>Shiny</i> version of the Coder has many more examples and <b>covers almost all chart types</b>. Run in R environment with commands: <pre>library(echarty); demo(coder)</pre>
 See also the <b>real-time data</b> processing <a href='realTime.html' target="_blank">Demo</a>.
 	</p>
   </div>
 </div>
 
-<p><div class='wrapper'>
-	<strong>Edit R code</strong> &nbsp; &nbsp; 
-	<input type='button' id='btnCode' value='Plot &#x1F4CA' class='lefto bton'/> 
+<p><div class='wrapper nowrap'>
+	<span><strong>Edit R code</strong></span> &nbsp; &nbsp; 
+	<input type='button' id='btnCode' value='Plot &#x1F4CA' class='lefto bton'/>  <!--  onclick='updCode()' -->
 <span class='lefto'>Examples</span> &nbsp; &nbsp; 
-<span class='lefto'>2D</span>  &nbsp;
-	<input type="radio" id="bar" name="rchart" value="bar" onclick= 'rbHandler()'>
-	<label for="bar">bar</label><br>
-	<input type="radio" id="map" name="rchart" value="map" onclick= 'rbHandler()'>
-	<label for="map">map</label><br>
-<span class='lefto'>3D</span>  &nbsp;
-	<input type="radio" id="xyz" name="rchart" value="xyz" onclick= 'rbHandler()'>
-	<label for="xyz">xyz</label><br>
-	<input type="radio" id="surface" name="rchart" value="surface" onclick= 'rbHandler()'>
-	<label for="surface">surface</label><br>
-	<input type="radio" id="globe" name="rchart" value="globe" onclick= 'rbHandler()'>
-	<label for="globe">globe</label>
-	<input type="radio" id="volcano" name="rchart" value="volcano" onclick= 'rbHandler()'>
-	<label for="volcano">volcano</label>
+<select name="rchart" id="rchart" onchange= 'rbHandler()'>
+  <option value="">-- choose a chart --</option>
+  <option value="remote">remote chart import</option>
+<optgroup label="2D">
+  <option value="bar">bar</option>
+  <option value="map">world map</option>
+  <option value="leaflet">leaflet map</option> </optgroup>
+<optgroup label="3D">
+  <option value="xyz">scatter3D</option>
+  <option value="surface">simple surface</option>
+  <option value="volcano">volcano surface</option>
+  <option value="globe">globe</option>  </optgroup>
+</select>
 	<input type='button' id='btnInfo' value='Info &#x1F4D3' class='lefto bton' />
 	&nbsp; &nbsp; &nbsp; &nbsp; 
 <!-- LikeBtn.com BEGIN -->
 <span class="likebtn-wrapper" data-ef_voting="bounce" data-identifier="item_1" data-dislike_enabled="false"></span>
 <script>(function(d,e,s){if(d.getElementById("likebtn_wjs"))return;a=d.createElement(e);m=d.getElementsByTagName(e)[0];a.async=1;a.id="likebtn_wjs";a.src=s;m.parentNode.insertBefore(a, m)})(document,"script","//w.likebtn.com/js/w/widget.js");</script>
 <!-- LikeBtn.com END -->
-<!--  https://app.lyket.dev/  LIKE BTN	
-		<script src="https://unpkg.com/@lyket/widget@latest/dist/lyket.js?apiKey=pt_ae052129c8f1d6031b6215080d228e"></script>
-	<div style="font-size: 10px"
-		data-lyket-type="like" 
-		data-lyket-id="my-first-post"
-		data-lyket-color-primary='gold'
-		data-lyket-color-background='PaleTurquoise'
-	></div>
--->
 
    </div>
-   <textarea id='code' class='textarea' cols=50 rows=7 contenteditable>plot <- cars |> ec.init()</textarea>
+   <textarea id='code' class='textarea inblock' cols=20 rows=7 contenteditable>
+tmp <- help(package="echarty", help_type='text')
+title <- list(text= paste('echarty', gsub(' ','',tmp$info[[1]][4])), left='center')
+chart <- cars |> ec.init(title= title)
+   </textarea>
+   <a id='dlink' class='inblock' download='fullChart.json' onclick='dclick()'></a>
 	
-   <div id="app" class='center'>Loading WebR magic... <img src='../img/rubikon.gif' /></div>
+   <div id="app" class='center'><div id='wver'>Loading WebR magic... </div><img src='../img/rubikon.gif' /></div>
 </p>
 
 	<script>
-/*	does not work:
-	load,  ec.plugjs (FS error)
-*/
-var webR;
-import('https://webr.r-wasm.org/latest/webr.mjs').then(async ({ WebR }) => {
-  webR = new WebR();
-  await webR.init();
-  await webR.evalRString(`
-	webr::shim_install()
-	install.packages('echarty', repos= c('https://repo.r-wasm.org'))
-	'some string'
-  `)
-  document.getElementById('app').innerHTML = 'Ready to plot &#x1f4ca';   //&#x1f44d  
-});
-
-async function rbHandler(v) {
-	var ele = document.getElementsByName('rchart');
-	for (i = 0; i < ele.length; i++) {
-	    if (ele[i].checked)
-		switch(ele[i].value) {
-	  	  case 'bar':
-		code= `dates <- seq(as.Date('2019-12-30'), as.Date('2020-01-12'), by='days')
-df <- data.frame(date= dates,  num=runif(length(dates)))
-plot <- df |> ec.init(ctype= 'bar',
-  xAxis= list(type='category', axisLabel=list(interval=0, rotate=45))
-) |> ec.theme('dark')`
-		    break;
-
-	  	  case 'xyz':
-		code= `df <- mtcars |> mutate(name=rownames(mtcars)) |> relocate(mpg,wt,hp) |> group_by(cyl) 
-series <- lapply(seq_along(df |> group_split()), function(ii,arr) { 
-       list(type= 'scatter3D', datasetIndex=ii+1, name=unique(arr[[ii]]$cyl) ) }, arr=df |> group_split()) 
-plot <- df |> ec.init( preset=F,  
-  backgroundColor= '#777', width='70%', tooltip=list(show=T), legend= list(show=T),
-  grid3D= list(list(show=T)), xAxis3D= list(show=T), yAxis3D= list(show=T), zAxis3D= list(show=T), 
-  title= list(text='mtcars'), series =series 
-)` 
-		    break;
-
-	  	  case 'surface':
-		code= `data <- expand.grid(
-  x = seq(0, 2, by = 0.1),
-  y = seq(0, 1, by = 0.1)
-) |> mutate(z = x * (y ^ 2)) |> select(x,y,z)
-plot <- ec.init(preset=F,  # dont load='3D',
-  xAxis3D= list(scale=T), yAxis3D= list(scale=T), zAxis3D= list(scale=T), grid3D= list(list(s=T)),
-  series= list(list(
-  type= 'surface', data= ec.data(data,'values'))) )`
-		    break;
-		  case 'globe':
-		code= `plot <- ec.init(preset=F,
-  globe= list(
-    baseTexture='https://cdn.jsdelivr.net/gh/ecomfe/echarts-gl@master/test/asset/world.topo.bathy.200401.jpg',
-    light= list(ambient= list(intensity=0.6)),
-    shading= 'realistic', viewControl= list(autoRotate=F)),
-  series= list(list(type= 'scatter3D', coordinateSystem='globe', 
-    data= list(c(111,55,5), c(-117,33,1), list(name='h2', value= c(-77,11,2))), 
-    symbolSize= 40, itemStyle= list(color= 'red')
-  )), tooltip= list(show=T) )`
-		    break;
-		  case 'volcano':
-		code= `data(volcano)
-df <- as.data.frame(ec.data(as.data.frame(as.table(volcano)), TRUE)); colnames(df)<-NULL
-plot <- ec.init( preset=F, 
-  xAxis3D= list(scale=T), yAxis3D= list(scale=T), zAxis3D= list(scale=T),
-  grid3D= list(viewControl= list(autoRotate= TRUE)),
-  series= list(list(
-    type = 'surface'
-    ,data = ec.data(as.data.frame(as.table(volcano)), 'values')
-    ,wireframe= list(show= FALSE)
-    ,shading= 'realistic', realisticMaterial= list( metalness= 0.5, roughness= 0.6)
-  )),
-  visualMap= list(calculable=TRUE, dimension=3, inRange=list(color= rev(rainbow(10))) )
-)`
-		    break;
-		  case 'map':
-		code= `set.seed(222)
-cns <- data.frame(   
-  visualMap = c(T,T,T,F),
-  name = c('China','Canada','Australia','Brazil'),
-  value = runif(4, 1, 100) 
-)
-plot <- ec.init(load='world',
-  color= c('violet','green'), 
-  geo= list(map= 'world', roam= T),
-  series= list(list(type= 'map', 
-  	 data= ec.data(cns, 'names'))),
-  visualMap= list(calculable= TRUE, max= 100)
-)`
-		    break;
-		  default:
-		}
-	}
-	document.getElementById('code').value = code;
-}
-
 const btnCode = document.getElementById("btnCode");
 btnCode.addEventListener("click", updCode);
 
-async function updCode() {
-  document.getElementById('app').innerHTML= 'Wait...';
-  code = 'library(echarty);library(dplyr); \n' + document.getElementById('code').value;
-	//console.log(code);
-  code += '\n as.character(htmlwidgets:::as.tags.htmlwidget(plot))'
-  tags_plot = '';
-  try {
-    tags_plot = await webR.evalRString(code);
-  } catch ({ name, message }) {
-    tags_plot = "<div class='err'>Error<br/>" + message + '</div>';
-  } finally {
-	// add reactable tags from webR into DOM
-	document.getElementById('app').innerHTML = tags_plot;
-  }
-  // render with HTMLWidgets
-  HTMLWidgets.staticRender();
-}
-
+function dclick(e) {
+  // revokeObjectURL needs a delay to work properly
+  var that = this;
+  setTimeout(function() {
+      window.URL.revokeObjectURL(that.href);
+  }, 1500);
+};
 // Get the modal
 var modal = document.getElementById("myModal");
 
