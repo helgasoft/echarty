@@ -97,27 +97,22 @@ label {
 	</style>
 
 	<script>
-/*	TODO:  1. how to dnld from r-universe.dev without ".rds. error
-		2. upd liveData too
+/*	TODO: 
+	1. upd liveData too
 https://github.com/r-wasm/webr/issues/435
-3. echarty - compile to Webass + mount from github.io
+	2. echarty - compile to Webassembly + mount from github.io; dont rely on repos
 https://github.com/georgestagg/shiny-standalone-webr-demo/blob/main/shiny.js
    await webR.evalRVoid(`webr::mount("/shiny", "${window.location.href}/image/library.data")`);
 */
 var webR, fjson;
 import('https://webr.r-wasm.org/latest/webr.mjs').then(async ({ WebR }) => {
   webR = new WebR(); msg = document.getElementById('wver');
-  await webR.init(); 
-  wver= 'WebR v.'+ webR.version; console.log(wver);    
-/*	// older versions from repo.r-wasm.org, separate == slower?
-  await Promise.all(["htmlwidgets","dplyr","data.tree"].map(async (nn) => {
-	msg.innerHTML = wver+ ', loading '+nn+'...'; webR.installPackages([nn]);
-  }) ); */
-msg.innerHTML = wver+ ', loading htmlwidgets...'; await webR.installPackages(['htmlwidgets'], repos='https://ramnathv.r-universe.dev')
-msg.innerHTML = wver+ ', loading dplyr...'; await webR.installPackages(['data.tree'], repos='https://gluc.r-universe.dev')
-msg.innerHTML = wver+ ', loading data.tree...'; await webR.installPackages(['dplyr'], repos='https://tidyverse.r-universe.dev')
+  await webR.init();
+  wver= 'WebR v.'+ webR.version; console.log(wver); 
+   
+  msg.innerHTML = wver+ ', loading echarty...'; 
+  await webR.installPackages(["echarty"]); //, {repos:'https://helgasoft.r-universe.dev'}); 
 
-  msg.innerHTML = wver+ ', loading echarty...'; await webR.installPackages(["echarty"], {repos:'https://helgasoft.r-universe.dev'});  // latest
   await webR.objs.globalEnv.bind('ec.webR', true);   // inform R about web environment
   document.getElementById('app').innerHTML = 'Ready to plot &#x1f4ca' ;   //&#x1f44d  
 });

@@ -221,23 +221,19 @@ ec.init(ctype='bar', title= list(text='lollypop chart')
     ,xAxis= list(axisLabel= list(rotate= 66), scale=TRUE,
              axisTick= list(alignWithLabel= TRUE))
     ,yAxis= list(name='mpg_z', nameLocation='center', nameRotate=90, nameGap=20)
+    ,barWidth= 3, barGap= '-100%'    # center the bar
 ) |> 
 ec.upd({
-   scat <- list()
-   series <- lapply(series, function(bar) { 
-      ss <- bar      # set matching scatter serie
-      ss <- within(ss, {
+   scats <- lapply(series, function(bar) {   # set matching scatter serie
+      within(bar, {
          type <- 'scatter'
          encode <- list(x='model', y='mpg_z')
          label <- list(show=TRUE, formatter= '{@mpg_z}')
          symbolSize <- 25
          itemStyle <- list(opacity= 1, borderWidth=2, borderColor= 'cornsilk')
       })
-      scat <<- append(scat, list(ss))
-      bar$barWidth <- 3
-      bar$barGap <- '-100%'    # center it
-      bar })
-   series <- append(series, scat)
+   })
+   series <- append(series, scats)
 }) |> ec.theme('dark-mushroom')
 
 ```
