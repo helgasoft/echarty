@@ -115,28 +115,6 @@ Demo [example data](https://gist.githubusercontent.com/toja/811f0ddc765c59c26de5
 </video>
 <br/><br/>
 
-<a id='quadrant'></a>
-
-## Quadrant chart
-
-Offers the following options:
-
-- cutomizable axes with or without labels
-- points with constant or variable size
-- automatic coloring of points and/or point labels by quadrant
-- interactivity: tooltip, drag and drop points across the chart
-- toolbox button to save chart as PNG
-- responsive auto-resize
-
-Only <span style="color:black; background:orange">&nbsp;Javascript&nbsp;</span> version currently available.
-
-<br /> 
-<video id="vquadrant" preload="auto" 
-   src="img/quadrant.mp4" type="video/mp4" muted="muted" controls>
-   Your browser does not support the video tag.
-</video>
-<br />
-
 <a id='trimZero'></a>
 
 ## Compressed bars
@@ -166,6 +144,28 @@ ec.init(
 ```
 </details>  
 <img src='img/trimZero.png' alt='trimZero' />
+
+<a id='quadrant'></a>
+
+## Quadrant chart
+
+Offers the following options:
+
+- cutomizable axes with or without labels
+- points with constant or variable size
+- automatic coloring of points and/or point labels by quadrant
+- interactivity: tooltip, drag and drop points across the chart
+- toolbox button to save chart as PNG
+- responsive auto-resize
+
+Only <span style="color:black; background:orange">&nbsp;Javascript&nbsp;</span> version currently available.
+
+<br /> 
+<video id="vquadrant" preload="auto" 
+   src="img/quadrant.mp4" type="video/mp4" muted="muted" controls>
+   Your browser does not support the video tag.
+</video>
+<br><br>
 
 <a id='axisGroups'></a>
 
@@ -203,9 +203,23 @@ option = {
 ```
 </details>
 
-<br /> 
+<br> <br>
 <video id="axgrp" preload="auto" 
    src="img/barGroups.mp4" type="video/mp4" muted="muted" controls>
+   Your browser does not support the video tag.
+</video>
+<br><br>
+
+<a id='zpan'></a>
+
+## Zoom pan as data selector
+
+Slide a predefined window on time axis with _dataZoom_ control. Each pan reposition will read the window start/end values and search for data in that range. If found, data will be displayed as a series (line,candlestick,etc.). Demo generates random data.  
+Only <span style="color:black; background:orange">&nbsp;Javascript&nbsp;</span> version currently available, but could be used with _ec.init_. Individual price is <b>$66</b>.
+
+<br /> 
+<video id="zpan" preload="auto" 
+   src="img/zpan.mp4" type="video/mp4" muted="muted" controls>
    Your browser does not support the video tag.
 </video>
 <br />
