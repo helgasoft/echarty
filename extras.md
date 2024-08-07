@@ -231,12 +231,12 @@ Present hierarchies in style with highly customizable and interactive trees.
 
 ```
 data <- list(name='Animals', value='Biological Hierarchy',
-	label= list(width=160,height=60,backgroundColor='lightgreen', formatter='   {username|{b}}     \n        {c}'),
-	children= list(
-	  list(name='Vertebrates',value='with backbone',type='v', pic='https://picsum.photos/50/50/',
-		children= list(list(name='Birds',value='warm-blooded',type='v', pic='https://picsum.photos/50/50/'),list(name='Mammals',value='warm-blooded',type='v', pic='https://picsum.photos/50/50/'),list(name='Fish',value='cold-blooded',type='v', pic='https://picsum.photos/50/50/'))),
-	  list(name='Non-vertebrates',value='without backbone',type='nonv', pic='https://picsum.photos/50/50/',
-		children= list(list(name='Arthropods',value='exoskeleton',type='nonv', pic='https://picsum.photos/50/50/', 
+  label= list(width=160,height=60,backgroundColor='lightgreen', formatter='{b}\n{c}'),
+  children= list(
+    list(name='Vertebrates',value='with backbone',type='v', pic='https://picsum.photos/50/50/',
+      children= list(list(name='Birds',value='warm-blooded',type='v', pic='https://picsum.photos/50/50/'),list(name='Mammals',value='warm-blooded',type='v', pic='https://picsum.photos/50/50/'),list(name='Fish',value='cold-blooded',type='v', pic='https://picsum.photos/50/50/'))),
+    list(name='Non-vertebrates',value='without backbone',type='nonv', pic='https://picsum.photos/50/50/',
+      children= list(list(name='Arthropods',value='exoskeleton',type='nonv', pic='https://picsum.photos/50/50/', 
 			children= list(list(name='Insects',value='three body parts',type='nonv', pic='https://picsum.photos/50/50/'))),list(name='Mollusks',value='soft bodies',type='nonv', pic='https://picsum.photos/50/50/')
 ))))
 ```
