@@ -202,8 +202,7 @@ option = {
 };
 ```
 </details>
-
-<br> <br>
+<br>
 <video id="axgrp" preload="auto" 
    src="img/barGroups.mp4" type="video/mp4" muted="muted" controls>
    Your browser does not support the video tag.
@@ -216,13 +215,38 @@ option = {
 
 Slide a predefined window on time axis with _dataZoom_ control. Each pan reposition will read the window start/end values and search for data in that range. If found, data will be displayed as a series (line,candlestick,etc.). Demo generates random data.  
 Only <span style="color:black; background:orange">&nbsp;Javascript&nbsp;</span> version currently available, but could be used with _ec.init_. Individual price is <b>$66</b>.
-
-<br /> 
+<br><br>
 <video id="zpan" preload="auto" 
    src="img/zpan.mp4" type="video/mp4" muted="muted" controls>
    Your browser does not support the video tag.
 </video>
-<br />
+<br><br>
+
+<a id='customTree'></a>
+
+## Tree with custom labels
+
+Present hierarchies in style with highly customizable and interactive trees.
+<details><summary>🔻 View data</summary> 
+
+```
+data <- list(name='Animals', value='Biological Hierarchy',
+	label= list(width=160,height=60,backgroundColor='lightgreen', formatter='   {username|{b}}     \n        {c}'),
+	children= list(
+	  list(name='Vertebrates',value='with backbone',type='v', pic='https://picsum.photos/50/50/',
+		children= list(list(name='Birds',value='warm-blooded',type='v', pic='https://picsum.photos/50/50/'),list(name='Mammals',value='warm-blooded',type='v', pic='https://picsum.photos/50/50/'),list(name='Fish',value='cold-blooded',type='v', pic='https://picsum.photos/50/50/'))),
+	  list(name='Non-vertebrates',value='without backbone',type='nonv', pic='https://picsum.photos/50/50/',
+		children= list(list(name='Arthropods',value='exoskeleton',type='nonv', pic='https://picsum.photos/50/50/', 
+			children= list(list(name='Insects',value='three body parts',type='nonv', pic='https://picsum.photos/50/50/'))),list(name='Mollusks',value='soft bodies',type='nonv', pic='https://picsum.photos/50/50/')
+))))
+```
+</details>
+
+<video id="ctree" preload="auto" 
+   src="img/tree.custom.mp4" type="video/mp4" muted="muted" controls>
+   Your browser does not support the video tag.
+</video>
+<br><br>
 &nbsp; <br />&nbsp; <br />
 
 <!--
