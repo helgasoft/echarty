@@ -1,14 +1,10 @@
-# echarty extras 💲
+# Echarty Extras 💲
 
 Utilities and small applications built with open-source library _echarty_. They accomplish very specific and uncommon tasks.
 Considerable amount of time was spent in design, development and testing of these modules.  
 <br>
 They are fairly priced at **$30 each** and payable through [**Paypal**](https://www.paypal.com/paypalme/helgasoft).  
 Please include module description when ordering under "_What is this payment for ?_". Delivery and support by email. Future versions could be sent on demand. For questions please [contact us](mailto:contact@helgasoft.com?subject=echarty.extras).
-
-<div style="display:none;"> 
-https://helgasoft.com/#contact-section
-</div>
 
 ## Violin chart  
  
@@ -214,7 +210,7 @@ option = {
 ## Zoom pan as data selector
 
 Slide a predefined window on time axis with _dataZoom_ control. Each pan reposition will read the window start/end values and search for data in that range. If found, data will be displayed as a series (line,candlestick,etc.). Demo generates random data.  
-Only <span style="color:black; background:orange">&nbsp;Javascript&nbsp;</span> version currently available, but could be used with _ec.init_. Individual price is <b>$66</b>.
+Only <span style="color:black; background:orange">&nbsp;Javascript&nbsp;</span> version currently available, but could be used with _ec.init_. 
 <br><br>
 <video id="zpan" preload="auto" 
    src="img/zpan.mp4" type="video/mp4" muted="muted" controls>
@@ -247,6 +243,32 @@ data <- list(name='Animals', value='Biological Hierarchy',
    Your browser does not support the video tag.
 </video>
 <br><br>
+
+<a id='penguins'></a>
+
+## Prepare hierarchical data 
+
+For sunburst, tree, sankey charts.  
+Transforms _data.frame_ with a record for each leaf to a hierarchical list (parent/children).  
+Useful also to build Krona charts from a variety of CSV sources - [example](https://codepen.io/helgasoft/pen/rNPYbxx).  
+See also [hierarchies](https://helgasoft.github.io/echarty/uc3.html) for an overview. 
+<span style="color:black; background:orange">&nbsp;Javascript&nbsp;</span> and <span style="color:black; background:lightblue">&nbsp;R&nbsp;</span> versions.
+<details><summary>🔻 View simulated code</summary> 
+
+```
+df <- read.csv('https://cdn.jsdelivr.net/gh/mwaskom/seaborn-data@refs/heads/master/penguins.csv')
+data <- setHierarchy(df)   # utility
+ec.init( 
+  tooltip= list(formatter= ec.clmn(jfmt), position= c('5%','55%')),
+  series.param= list(type= 'sunburst', radius= list(0, 200), 
+    emphasis= list(focus= 'none', itemStyle= list(color= 'magenta')),
+    data= data, labelLayout= list(hideOverlap= TRUE) )
+)
+```
+</details>
+
+<img src='img/pengu.png' alt='penguins' />
+<br><br>
 &nbsp; <br />&nbsp; <br />
 
 <!--
@@ -254,5 +276,10 @@ data <- list(name='Animals', value='Biological Hierarchy',
 
 Leaflet map with POI markers. Clicking on a marker switches to an interactive custom 360° panorama of the location. Each pano could also have POI as clickable hyperlinks inside.  
 video  ech.tmp.R
+
+<div style="display:none;"> 
+https://helgasoft.com/#contact-section   Individual price is <b>$66</b>.
+</div>
+
 -->
 
