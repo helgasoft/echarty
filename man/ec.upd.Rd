@@ -17,7 +17,7 @@ Chain commands after ec.init to add or update chart items
 \details{
 \emph{ec.upd} makes changes to a chart already set by \link{ec.init}.\cr
 It should be always piped(chained) after \link{ec.init}.\cr
-All numerical indexes for series,visualMap,etc. are JS-counted and start at 0.\cr
+All numerical indexes for series,visualMap,etc. are JS-counted starting at 0.\cr
 }
 \examples{
 library(dplyr)

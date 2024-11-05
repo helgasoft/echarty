@@ -22,15 +22,16 @@ Best practice is to have the grouping column placed last. Grouping column cannot
 Timeline requires a \emph{grouped data.frame} to build its \href{https://echarts.apache.org/en/option.html#options}{options}.\cr
 If grouping is on multiple columns, only the first one is used to determine settings.}
 
-\item{preset}{Boolean (default TRUE). Build preset attributes like dataset, series, xAxis, yAxis, etc.}
+\item{preset}{Boolean (default TRUE). Build preset attributes like dataset, series, xAxis, yAxis, etc.\cr
+When preset is FALSE, these attributes need to be set explicitly.\cr}
 
-\item{ctype}{Chart type, default is 'scatter'.}
+\item{ctype}{Chart type, default is 'scatter'. Could be set in \emph{series.param} instead.}
 
 \item{...}{Optional widget attributes. See Details. \cr}
 
-\item{series.param}{Additional attributes for preset series, default is NULL.\cr
-Defines a single series type. Can be used for both non-timeline and timeline series. \cr
-Multiple series types need to be defined directly with \emph{series=list(list(...),list...)} or added with \link{ec.upd}.}
+\item{series.param}{Additional attributes for single preset series, default is NULL.\cr
+Defines a \strong{single} series for both non-timeline and timeline charts. \cr
+\strong{Multiple} series should be defined directly with \emph{series=list(list(type=...),list(type=...))} or added with \link{ec.upd}.}
 
 \item{tl.series}{Deprecated, use \emph{timeline} and \emph{series.param} instead.\cr}
 
@@ -49,10 +50,10 @@ Command \emph{ec.init} creates a widget with \link[htmlwidgets]{createWidget}, t
 Numerical indexes for series,visualMap,etc. are R-counted (1,2...)\cr
 
 \strong{Presets}: \cr
-When data.frame df is chained to \emph{ec.init}, a \href{https://echarts.apache.org/en/option.html#dataset}{dataset} is preset. \cr
-When the data.frame is grouped and \emph{ctype} is not null, more datasets with legend and series are also preset. \cr
-Plugin '3D' is required for 2D series 'scatterGL'. Use \emph{preset=FALSE} and set explicitly \emph{xAxis} and \emph{yAxis}. \cr
-Plugins 'leaflet' and 'world' preset \emph{center} to the mean of all coordinates from df. \cr
+When data.frame \strong{df} is present, a \href{https://echarts.apache.org/en/option.html#dataset}{dataset} is preset. \cr
+When \strong{df} is grouped and \emph{ctype} is not NULL, more datasets with legend and series are also preset. \cr
+Plugin '3D' (load='3D') is required for GL series like \emph{scatterGL, linesGL}, etc. \cr
+Plugins 'leaflet' and 'world' preset \emph{center} to the mean of all coordinates from \strong{df}. \cr
 Users can delete or overwrite any presets as needed. \cr
 
 \strong{Widget attributes}: \cr
@@ -63,8 +64,8 @@ Optional echarty widget attributes include: \cr
 \item ask - prompt user before downloading plugins when \emph{load} is present, FALSE by default
 \item js - single string or a vector with JavaScript expressions to evaluate.\cr
 single: exposed \emph{chart} object (most common)\cr
-vector:\cr
-\verb{     }First expression is evaluated before chart initialization. \cr
+vector: \verb{     }see demo code in \link{ec.examples}\cr
+\verb{     }First expression evaluated before initialization, exposed object \emph{window} \cr
 \verb{     }Second is evaluated with exposed object \emph{opts}. \cr
 \verb{     }Third is evaluated with exposed \emph{chart} object after \emph{opts} set.
 \item renderer - 'canvas'(default) or 'svg'
@@ -80,7 +81,8 @@ vector:\cr
 \item ecStat - statistical tools, see\href{https://github.com/ecomfe/echarts-stat}{echarts-stat}\cr
 \item custom - renderers for \link{ecr.band} and \link{ecr.ebars} \cr
 Plugins with one-time installation: \cr
-\item 3D - 3D charts and WebGL acceleration, see \href{https://github.com/ecomfe/echarts-gl}{source} and \href{https://echarts.apache.org/en/option-gl.html#series}{docs} \cr
+\item 3D - support for 3D charts and WebGL acceleration, see \href{https://github.com/ecomfe/echarts-gl}{source} and \href{https://echarts.apache.org/en/option-gl.html#series}{docs} \cr
+\verb{     }This plugin is auto-loaded when 3D/GL axes/series are detected.\cr
 \item liquid - liquid fill, see \href{https://github.com/ecomfe/echarts-liquidfill}{source}  \cr
 \item gmodular - graph modularity, see \href{https://github.com/ecomfe/echarts-graph-modularity}{source}  \cr
 \item wordcloud - cloud of words, see \href{https://github.com/ecomfe/echarts-wordcloud}{source} \cr

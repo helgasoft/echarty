@@ -1,9 +1,17 @@
 # history of package _echarty_
 
-## v. 1.6.4  latest in development
+## v. 1.6.4.1  latest in development
+
+- upgrade ECharts to v.5.5.1, built with R v.4.4.1
+- auto-load 3D plugin when 3D attributes present (xAxis3D, bar3D, etc.)
+- auto-set 3D axes from data (name, type)
+- change in dataset: store column names in _dimensions_ instead of _source_
+- fixed bug in ecr.ebars for single series
+
+## v. 1.6.4  on CRAN
 
 - upgrade ECharts to v.5.5.0, built with R v.4.4.0
-- add _nasep_ parameter to _ec.data('names')_ - easily set nested lists from a _data.frame_
+- add _nasep_ parameter to _ec.data('names')_ to easily set nested lists from a _data.frame_
 - add [WebR](https://docs.r-wasm.org/webr/latest/) support and [test](https://helgasoft.github.io/echarty/test/coder.html)
 - add explicit _leaflet_ dependency since dependencies changed in leaflet v.2.2.0
 - add optional tooltip formatter (tipFmt) in _ecr.band_
@@ -11,7 +19,7 @@
 - add debug flags for messages in JS and R
 - fix _crosstalk_ bug for checkboxes unselect
 
-## v. 1.6.3  on CRAN
+## v. 1.6.3
 
 - added coder.R demo
 - correct gridIndex numbering for xAxis/yAxis

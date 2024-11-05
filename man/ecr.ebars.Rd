@@ -24,12 +24,12 @@ Custom series to display error-bars for scatter, bar or line series
 \details{
 Command should be called after \emph{ec.init} where main series are set.\cr
 \emph{ecr.ebars} are custom series, so \emph{ec.init(load='custom')} is required. \cr
-Horizontal and vertical layouts supported, only switch \emph{encode} values 'x' and 'y', both for series and ecr.ebars.\cr
-Grouped bar series are supported.\cr
+Horizontal and vertical layouts supported, just switch \emph{encode} values \emph{x} and \emph{y} for both for series and ecr.ebars.\cr
 Have own default tooltip format showing \emph{value, high & low}.\cr
-Non-grouped series could be shown with formatter \emph{riErrBarSimple} instead of \emph{ecr.ebars}. See example below.\cr
-Limitations:\cr
-\verb{     }manually add axis type='category' if needed\cr
+Grouped bar series are supported.\cr
+Non-grouped series could be shown with formatter \emph{riErrBarSimple} instead of \emph{ecr.ebars}. This is limited to vertical only, see example below.\cr
+Other limitations:\cr
+\verb{     }manually add axis type='category' when needed\cr
 \verb{     }error bars cannot have own name when data is grouped\cr
 \verb{     }legend select/deselect will not re-position grouped error bars\cr
 }

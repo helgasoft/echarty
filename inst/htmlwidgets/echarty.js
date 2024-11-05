@@ -145,7 +145,8 @@ HTMLWidgets.widget({
         if (x.jcode) {
           let tmp = null;
           if (Array.isArray(x.jcode)) {
-            tmp = x.jcode[0];   // #1 run before init
+            // #1 run before init, can set window.vars
+            tmp = x.jcode[0];
             try {
               eval(tmp);
             } catch(err) { console.log('eva1: ' + err.message) }
@@ -385,6 +386,9 @@ function get_e_charts_opts(id){
 
   return(opts);
 }
+
+function ec_chart(id) { return(get_e_charts(id)); }
+function ec_option(id) { return(get_e_charts_opts(id)); }
 
 function distinct(value, index, self) { 
   return self.indexOf(value) === index;

@@ -486,7 +486,34 @@
 #' #}
 #' 
 #' 
-#' #------ Events in Shiny
+#' #------ Javascript execution: ec.init 'js' parameter demo
+#' # in single item scenario (js=jcode), execution is same as j3 below
+#' if (interactive()) {
+#'  j1 <- "winvar= 'j1';" # set window variables
+#'  j2 <- "opts.title.text= 'changed';"   # opts exposed
+#'  j3 <- "ww= chart.getWidth(); alert('width:'+ww);"  # chart exposed
+#'  ec.init(js= c(j1, j2, j3), title= list(text= 'Title'), 
+#'    series.param= list(name='sname'),
+#'    legend= list(formatter= ec.clmn("function(name) {
+#'      return name +' - '+ this.winvar; }"))
+#'  )
+#' }
+#' 
+#' #------ echarty Javascript built-in functions
+#' jtgl <- "() => { 
+#'   ch1 = ec_chart(echwid);   // takes the auto-assigned id
+#' //ch1 = ec_chart('myTree'); // manual id is OK too
+#'   opts = ch1.getOption();
+#' //opts = ec_option(echwid);  // for reading, without setOption
+#'   opts.series[0].orient= opts.series[0].orient=='TB' ? 'LR':'TB';
+#'   ch1.setOption(opts); }"
+#' dbut <- ec.util(cmd='button', text='toggle', js=jtgl)
+#' data <- list(list(name='root', children=list(list(name='A',value=1),list(name='B',value=3))))
+#' ec.init( # elementId='myTree',
+#'   series.param= list(type='tree', data=data), graphic= list(dbut)
+#' )
+#' 
+#' #------ Events in Shiny ----------
 #' if (interactive()) {
 #'   library(shiny); library(dplyr); library(echarty)
 #' 

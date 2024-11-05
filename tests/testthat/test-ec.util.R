@@ -6,15 +6,15 @@ test_that("serie from ec.util with cartesian3D", {
 
   # usage for LIDAR data
   library(sf)
-  tmp <- st_as_sf(data.frame(x=c(-70,-70,-70), y=c(45, 46, 47), z=c(1,2,3)), 
-                  coords= c('x','y','z'), crs= st_crs(4326))
-  p <- ec.init(load= c('3D'),
-               series= ec.util(df= tmp, cs= 'cartesian3D')
-               ,tooltip= list(formatter= '{b}')
+  tmp <- st_as_sf(data.frame(
+      x=c(-60,-40,-20), y=c(45, 35, 25), z=c(1,2,3), name=c('p1','p2','p3')), 
+    coords= c('x','y','z'), crs= st_crs(4326))
+  p <- ec.init(load='3D', tooltip= list(formatter='{c}'),
+    series= ec.util(df= tmp, cs='cartesian3D')
   )
   expect_s3_class(p$x$opts$series[[1]]$data[[2]]$value, 'sfg')
-  expect_equal(as.numeric(p$x$opts$series[[1]]$data[[2]]$value), c(-70,46,2))
-  expect_type( p$x$opts$xAxis3D[[1]],'list')
+  expect_equal(as.numeric(p$x$opts$series[[1]]$data[[2]]$value), c(-40,35,2))
+  expect_type( p$x$opts$xAxis3D, 'list')
 })
 
 test_that("shapefiles with multi-POLYGONS", {
@@ -35,7 +35,7 @@ test_that("shapefile LINES from ZIP", {
   if (interactive()) {  # creates a subfolder 'railways'
     library(sf)
     fname <- ec.util(cmd= 'sf.unzip', 
-                     url= 'https://mapcruzin.com/sierra-leone-shapefiles/railways.zip')
+          url= 'https://helgasoft.github.io/echarty/test/sl.shape.railways.zip')
     nc <- as.data.frame(st_read(fname, quiet=TRUE))
     p <- ec.init(load= 'leaflet',
        js= ec.util(cmd= 'sf.bbox', bbox= st_bbox(nc$geometry)), 
@@ -71,13 +71,13 @@ test_that("shapefile LINESTRING and MULTILINESTRING", {
 
 test_that("shapefile POINTS from ZIP", {
   fn <- ec.util(cmd= 'sf.unzip', 
-          url= 'https://mapcruzin.com/sierra-leone-shapefiles/points.zip')
+          url= 'https://helgasoft.github.io/echarty/test/sl.shape.points.zip')
   expect_true(endsWith(fn, 'points.shp'))
 
   if (interactive()) {  # creates a subfolder 'points'
     library(sf)
     fn <- ec.util(cmd= 'sf.unzip', 
-                  url= 'https://mapcruzin.com/sierra-leone-shapefiles/points.zip')
+                  url= 'https://helgasoft.github.io/echarty/test/sl.shape.points.zip')
     nc <- as.data.frame(st_read(fn, quiet=TRUE)) |> head(10)
     p <- ec.init(load= c('leaflet'),
        js= ec.util(cmd= 'sf.bbox', bbox= st_bbox(nc$geometry)), 
@@ -104,7 +104,7 @@ test_that("tabset with pairs", {
   p1 <- cars |> ec.init(grid= list(top= 20))
   p2 <- mtcars |> ec.init()
   r <- ec.util(cmd='tabset', cars=p1, mtcars=p2)
-  expect_equal(r[[2]]$children[[5]]$children[[1]]$children[[1]][[1]]$x$opts$dataset[[1]]$source[[1]], c("speed", "dist"))
+  expect_equal(r[[2]]$children[[5]]$children[[1]]$children[[1]][[1]]$x$opts$dataset[[1]]$dimensions, c("speed", "dist"))
   expect_equal(r[[2]]$children[[5]]$children[[1]]$name, "section")
   expect_equal(r[[2]]$children[[2]]$children[[1]], "cars")
   expect_s3_class(r[[2]]$children[[5]]$children[[2]]$children[[1]][[1]], 'echarty')
@@ -262,6 +262,22 @@ test_that("button as graphic element", {
   expect_s3_class(p$onclick, 'JS_EVAL')
 })
 
+test_that("ec.paxis - parallel axis", {
+  df <- as.data.frame(state.x77) |> head(10)
+  p <- df |> ec.init(ctype= 'parallel',
+      parallelAxis= ec.paxis(df, cols= c('Illiteracy','Population','Income'), inverse=T),
+      series.param= list(lineStyle= list(width=3))
+  )
+  expect_equal(length(p$x$opts$dataset[[1]]$source[[1]]), 8)
+  expect_equal(p$x$opts$parallelAxis[[3]]$name, 'Income')
+  expect_true(p$x$opts$parallelAxis[[3]]$inverse)
+  
+  p <- df |> ec.init(ctype= 'parallel') |>     # chained ec.paxis
+    ec.paxis(cols= c('Illiteracy','Population','Income'))
+  expect_equal(p$x$opts$parallelAxis[[1]]$dim, 2)
+
+})
+
 test_that("ec.data dendrogram", {
   hc <- hclust(dist(USArrests), "average")
   p <- ec.init(preset= FALSE,
@@ -381,10 +397,10 @@ test_that("ec.data 'names' + nasep", {
 
 test_that("ec.inspect and ec.fromJson", {
   p <- mtcars |> group_by(gear) |> 
-    # param to increase coverage, no sense otherwise
+    # param to increase Test Coverage, no sense otherwise
     ec.init(series.param= list(dimensions= c('m','c','d'), encode= list(y='qsec'))) |> 
     ec.inspect('data')
-  expect_match(p[1], "rows= 33", fixed=TRUE)
+  expect_match(p[1], "rows= 32", fixed=TRUE)
   expect_match(p[2], "filter", fixed=TRUE)
 
   txt <- '{

@@ -2,20 +2,18 @@
 % Please edit documentation in R/echarty.R
 \name{-- Introduction --}
 \alias{-- Introduction --}
-\title{Introduction}
+\title{echarty}
 \description{
-echarty provides a lean interface between R and Javascript library ECharts.\cr
-With only two major commands (\emph{ec.init} and \emph{ec.upd}), it can trigger multiple native ECharts options to build a chart. \cr
-The benefits - learn a very limited set of commands, and enjoy the \strong{full functionality} of ECharts.
+echarty
 }
 \details{
 \subsection{Description}{
 
 \strong{echarty} provides a lean interface between R and Javascript library
-\href{https://echarts.apache.org/en/index.html}{ECharts}. We encourage users
-to follow the original ECharts \href{https://echarts.apache.org/en/option.html}{API documentation} to construct
+\href{https://echarts.apache.org/en/index.html}{ECharts}.
+We encourage users to follow the original ECharts \href{https://echarts.apache.org/en/option.html}{API documentation} to construct
 charts with echarty.
-The main command \strong{ec.init} can set multiple native ECharts options to
+Main command \strong{ec.init} can set multiple native ECharts options to
 build a chart.
 The benefits - learn a very limited set of commands, and enjoy the
 \strong{full functionality} of ECharts.
@@ -34,10 +32,10 @@ commands have three prefixes to help with auto-completion:
 
 \subsection{Events}{
 
-Event handling is usually necessary only in Shiny. See code in
+For event handling in Shiny see sample code in
 \href{https://github.com/helgasoft/echarty/blob/main/demo/eshiny.R}{eshiny.R},
 run as \code{demo(eshiny)}.
-echarty has three built-in event callbacks - \emph{click}, \emph{mouseover},
+Echarty has three built-in event callbacks - \emph{click}, \emph{mouseover},
 \emph{mouseout}. All other ECharts
 \href{https://echarts.apache.org/en/api.html#events}{events} could be
 initialized through \code{p$x$capture}. Another option is to use \code{p$x$on}
@@ -72,12 +70,22 @@ see \href{https://echarts.apache.org/en/api.html#echarts.init}{ECharts}.
 
 \subsection{R vs Javascript numbering}{
 
-R indexes are counted starting from 1.
-JS indexes are counted starting from 0.
-echarty supports R-counting in series-encode \strong{x,y,tooltip} and
-visualMap-continuous \strong{dimension} when set through \emph{ec.init}.
-All other indexes like \emph{xAxisIndex}, \emph{gridIndex}, etc. need to be set in
-JS-counting (for now).
+R language counting starts from 1.
+Javascript (JS) counting starts from 0.
+\emph{ec.init} supports R-counting of indexes (ex. encode) and dimension (ex.
+visualMap).
+\emph{ec.upd} requires indexes and dimensions to be set with JS-counting.
+}
+
+\subsection{Javascript built-in functions}{
+
+To allow access to charts from JS.
+\emph{ec_chart(id)} - get the chart object by id (former get_e_charts)
+\emph{ec_option(id)} - get the chart’s option object by id (former
+get_e_charts_opt)
+Parameter ‘id’ could be the internal variable \emph{echwid}, or the value set
+through \emph{ec.init} parameter \emph{elementId}. See demo code in
+\href{https://github.com/helgasoft/echarty/blob/main/R/examples.R}{ec.examples}
 }
 
 \subsection{Code examples}{
@@ -109,5 +117,12 @@ Echarty uses the following options:
 \item echarty.font = font family name
 \item echarty.urlTiles = tiles URL template for leaflet maps
 }
+
+\if{html}{\out{<div class="sourceCode r">}}\preformatted{# set/get global options
+options('echarty.theme'='jazz') # set
+getOption('echarty.theme')      # get
+#> [1] "jazz"
+options('echarty.theme'=NULL)   # remove
+}\if{html}{\out{</div>}}
 }
 }

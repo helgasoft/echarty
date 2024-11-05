@@ -11,9 +11,9 @@ ec.util(..., cmd = "sf.series", js = NULL)
 for \emph{sf.series} - see \href{https://echarts.apache.org/en/option.html#series-scatter.type}{points}, \href{https://echarts.apache.org/en/option.html#series-lines.type}{polylines}, polygons(itemStyle).\cr
 for \emph{tabset} parameters should be in format \emph{name1=chart1, name2=chart2}, see example\cr}
 
-\item{cmd}{utility command, see Details\cr}
+\item{cmd}{utility command, see Details}
 
-\item{js}{optional JavaScript function, default is NULL.\cr}
+\item{js}{optional JavaScript function, default is NULL.}
 }
 \description{
 tabset, table layout, support for GIS shapefiles through library 'sf'

@@ -23,3 +23,5 @@ README.md
 ^tic\.R$
 ^codecov\.yml$
 cleanup.bat
+^doc$
+^Meta$

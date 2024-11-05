@@ -8,11 +8,11 @@ ec.clmn(col = NULL, ..., scale = 1)
 }
 \arguments{
 \item{col}{A single column index(number) or column name(quoted string), \cr
-or a \link[base]{sprintf} string template for multiple indexes.\cr
+or a \link[base]{sprintf} string template for multiple columns.\cr
 NULL(default) for charts with single values like tree, pie.\cr
 'json' to display tooltip with all available values to choose from.\cr
 'log' to write all values in the JS console (F12) for debugging.\cr
-Can contain JS function starting with \emph{'function('} (or format \emph{'(x) => {}'}).\cr}
+Can contain JS function starting with \emph{'function('} or \emph{'(x) => \{'}.\cr}
 
 \item{...}{Comma separated column indexes or names, only when \emph{col} is \emph{sprintf}. This allows formatting of multiple columns, as for a tooltip.\cr}
 
@@ -38,19 +38,29 @@ Template placeholders with formatting:\cr
 \item \emph{\%LR@} rounded number in locale format, like '12,345'.\cr
 \item \emph{\%R@} rounded number, like '12345'.\cr
 \item \emph{\%R2@} rounded number, two digits after decimal point.\cr
-\item \emph{\%M@} marker in serie's color.\cr
-Notice that tooltip \emph{formatter} will work for \emph{trigger='item'}, but not for \emph{trigger='axis'} when there are multiple value sets.
+\item \emph{\%M@} marker in series' color.\cr
+For \emph{trigger='axis'} (multiple series) one can use decimal column indexes.\cr
+See definition above and example below.
 }
 }
 \examples{
+library(dplyr)
 tmp <- data.frame(Species = as.vector(unique(iris$Species)),
                   emoji = c('A','B','C'))
-df <- iris |> dplyr::inner_join(tmp)      # add 6th column emoji
-df |> dplyr::group_by(Species) |> ec.init(
+df <- iris |> inner_join(tmp)      # add 6th column emoji
+df |> group_by(Species) |> ec.init(
   series.param= list(label= list(show= TRUE, formatter= ec.clmn('emoji'))),
   tooltip= list(formatter=
     # with sprintf template + multiple column indexes
     ec.clmn('\%M@ species <b>\%@</b><br>s.len <b>\%@</b><br>s.wid <b>\%@</b>', 5,1,2))
 )
 
+# tooltip decimal indexes work with full data sets (no missing/partial data)
+ChickWeight |> mutate(Chick=as.numeric(Chick)) |> filter(Chick>47) |> group_by(Chick) |>
+ec.init(
+  tooltip= list(trigger='axis', 
+                formatter= ec.clmn("48: \%@<br>49: \%@<br>50: \%@", 1.1, 2.1, 3.1)),
+  xAxis= list(type='category'), legend= list(formatter= 'Ch.{name}'),
+  series.param= list(type='line', encode= list(x='Time', y='weight')),
+)
 }

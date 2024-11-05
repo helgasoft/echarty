@@ -1,10 +1,6 @@
 # ----------- Core --------------
 
-#' Introduction
-#' 
-#' echarty provides a lean interface between R and Javascript library ECharts.\cr
-#' With only two major commands (_ec.init_ and _ec.upd_), it can trigger multiple native ECharts options to build a chart. \cr
-#' The benefits - learn a very limited set of commands, and enjoy the **full functionality** of ECharts.
+#' echarty
 #'
 #' @includeRmd vignettes/echarty.Rmd
 #' 
@@ -27,11 +23,12 @@ noCoord <- c('polar','radar','singleAxis','parallelAxis','calendar')
 #'   Best practice is to have the grouping column placed last. Grouping column cannot be used as axis.\cr
 #'   Timeline requires a _grouped data.frame_ to build its \href{https://echarts.apache.org/en/option.html#options}{options}.\cr
 #'   If grouping is on multiple columns, only the first one is used to determine settings.
-#' @param ctype Chart type, default is 'scatter'.
-#' @param preset Boolean (default TRUE). Build preset attributes like dataset, series, xAxis, yAxis, etc.
-#' @param series.param  Additional attributes for preset series, default is NULL.\cr
-#'  Defines a single series type. Can be used for both non-timeline and timeline series. \cr
-#'  Multiple series types need to be defined directly with _series=list(list(...),list...)_ or added with [ec.upd].
+#' @param ctype Chart type, default is 'scatter'. Could be set in _series.param_ instead.
+#' @param preset Boolean (default TRUE). Build preset attributes like dataset, series, xAxis, yAxis, etc.\cr
+#'   When preset is FALSE, these attributes need to be set explicitly.\cr
+#' @param series.param  Additional attributes for single preset series, default is NULL.\cr
+#'  Defines a **single** series for both non-timeline and timeline charts. \cr
+#'  **Multiple** series should be defined directly with _series=list(list(type=...),list(type=...))_ or added with [ec.upd].
 #' @param tl.series Deprecated, use _timeline_ and _series.param_ instead.\cr
 #' @param ...  Optional widget attributes. See Details. \cr
 #' @param width,height Optional valid CSS unit (like \code{'100\%'},
@@ -42,10 +39,10 @@ noCoord <- c('polar','radar','singleAxis','parallelAxis','calendar')
 #'  Numerical indexes for series,visualMap,etc. are R-counted (1,2...)\cr
 #' 
 #'  **Presets**: \cr 
-#'  When data.frame df is chained to _ec.init_, a \href{https://echarts.apache.org/en/option.html#dataset}{dataset} is preset. \cr
-#'  When the data.frame is grouped and _ctype_ is not null, more datasets with legend and series are also preset. \cr
-#'  Plugin '3D' is required for 2D series 'scatterGL'. Use _preset=FALSE_ and set explicitly _xAxis_ and _yAxis_. \cr
-#'  Plugins 'leaflet' and 'world' preset _center_ to the mean of all coordinates from df. \cr
+#'  When data.frame **df** is present, a \href{https://echarts.apache.org/en/option.html#dataset}{dataset} is preset. \cr
+#'  When **df** is grouped and _ctype_ is not NULL, more datasets with legend and series are also preset. \cr
+#'  Plugin '3D' (load='3D') is required for GL series like _scatterGL, linesGL_, etc. \cr
+#'  Plugins 'leaflet' and 'world' preset _center_ to the mean of all coordinates from **df**. \cr
 #'  Users can delete or overwrite any presets as needed. \cr
 #'  
 #'  **Widget attributes**: \cr
@@ -55,8 +52,8 @@ noCoord <- c('polar','radar','singleAxis','parallelAxis','calendar')
 #'  * ask - prompt user before downloading plugins when _load_ is present, FALSE by default
 #'  * js - single string or a vector with JavaScript expressions to evaluate.\cr 
 #'    single: exposed _chart_ object (most common)\cr
-#'    vector:\cr
-#'  \verb{     }First expression is evaluated before chart initialization. \cr
+#'    vector: \verb{     }see demo code in [ec.examples]\cr
+#'  \verb{     }First expression evaluated before initialization, exposed object _window_ \cr
 #'  \verb{     }Second is evaluated with exposed object _opts_. \cr
 #'  \verb{     }Third is evaluated with exposed _chart_ object after _opts_ set.
 #'  * renderer - 'canvas'(default) or 'svg'
@@ -70,7 +67,8 @@ noCoord <- c('polar','radar','singleAxis','parallelAxis','calendar')
 #'  * ecStat - statistical tools, see\href{https://github.com/ecomfe/echarts-stat}{echarts-stat}\cr
 #'  * custom - renderers for [ecr.band] and [ecr.ebars] \cr 
 #'  Plugins with one-time installation: \cr
-#'  * 3D - 3D charts and WebGL acceleration, see \href{https://github.com/ecomfe/echarts-gl}{source} and \href{https://echarts.apache.org/en/option-gl.html#series}{docs} \cr
+#'  * 3D - support for 3D charts and WebGL acceleration, see \href{https://github.com/ecomfe/echarts-gl}{source} and \href{https://echarts.apache.org/en/option-gl.html#series}{docs} \cr
+#'  \verb{     }This plugin is auto-loaded when 3D/GL axes/series are detected.\cr
 #'  * liquid - liquid fill, see \href{https://github.com/ecomfe/echarts-liquidfill}{source}  \cr
 #'  * gmodular - graph modularity, see \href{https://github.com/ecomfe/echarts-graph-modularity}{source}  \cr
 #'  * wordcloud - cloud of words, see \href{https://github.com/ecomfe/echarts-wordcloud}{source} \cr
@@ -128,24 +126,6 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
                      series.param= NULL, tl.series= NULL, 
                      width= NULL, height= NULL) {
   
-  key <- group <- deps <- dfKey <- NULL; isCrosstalk <- FALSE
-  if (requireNamespace("crosstalk", quietly= TRUE)) {
-    if (crosstalk::is.SharedData(df)) {
-      isCrosstalk <- TRUE
-      key <- as.list(df$key())
-      group <- df$groupName()
-      deps <- crosstalk::crosstalkLibs()
-      dfKey <- df$key()
-      df <- df$origData()
-    }
-  }
-  
-  if (!is.null(df)) {
-    stopifnot('ec.init: df must be a data.frame'= inherits(df, 'data.frame'))
-    .setColnm(colnames(df))
-  } 
-  #else .setColnm()  # do not reset, ec.data could've done it
-  
   opt1 <- list(...)  
   # treacherous R does "partial matching of argument names" (like a bug): 
   #   if 'series.param' is before ... and 'series' is added, the latter is ignored!
@@ -156,13 +136,13 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
   locale <- if (is.null(opt1$locale)) 'EN' else toupper(opt1$locale)
   useDirtyRect <- if (is.null(opt1$useDirtyRect)) FALSE else opt1$useDirtyRect
   xtKey <- if (is.null(opt1$xtKey)) 'XkeyX' else opt1$xtKey
-  if (xtKey=='XkeyX') df$XkeyX <- dfKey   # add new column for Xtalk filtering, if needed
   # allow debug feedback thru cat() in JS and R code:
   dbg <- if (is.null(opt1$dbg)) FALSE else opt1$dbg   
   # remove the above attributes since they are not valid ECharts options
   opt1$ask <- opt1$js <- opt1$renderer <- opt1$locale <- NULL
   opt1$useDirtyRect <- opt1$elementId <- opt1$xtKey <- opt1$dbg <- NULL
   axis2d <- c('pictorialBar','candlestick','boxplot','scatterGL') #'custom',
+  isCrosstalk <- FALSE; deps <- NULL
   
   # forward widget options using x
   x <- list(
@@ -172,11 +152,8 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
     locale = locale,
     useDirtyRect = useDirtyRect,
     jcode = js, dbg = dbg,
-    opts = opt1,
-    settings = list(
-      crosstalk_key = key,
-      crosstalk_group = group
-    )
+    opts = opt1
+    # settings= list( crosstalk_key= key, crosstalk_group= group )
   )
 
   doType <- function(idx, axx) {
@@ -189,7 +166,7 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
         .nm <- axx$name
         if (is.null(.ty)) {
           if (!is.null(axx$data)) 
-            .ty <- 'category'  # always when data
+            .ty <- 'category'  # default when data without type
           else {
             clss <- unname(sapply(df, class))
             if (length(clss)>0) {
@@ -215,7 +192,7 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
     return(axx)
   }
   axNamesEnc <- function(series) {
-    # set axes names from encode
+    # set axes names from encode or df-columns
     tmp <- list(x=NULL, y=NULL)
     lapply(series, \(ss) {
       if (any(names(ss)=='encode')) {
@@ -316,39 +293,60 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
   colY <- 2
   grnm <- NULL
   if (!is.null(df)) {
+    stopifnot('ec.init: df should be data.frame or SharedData'= 
+                any(class(df) %in% c("SharedData", "data.frame")))
+    .setColnm(colnames(df))
+    if (dbg) cat('\n coln=', .getColnm())
+    
+    ct.key <- ct.group <- ct.dfKey <- NULL
+    if (requireNamespace("crosstalk", quietly= TRUE)) {
+      if (crosstalk::is.SharedData(df)) {
+        isCrosstalk <- TRUE
+        ct.key <- as.list(df$key())
+        ct.group <- df$groupName()
+        deps <- crosstalk::crosstalkLibs()
+        ct.dfKey <- df$key()
+        df <- df$origData()
+      }
+    }
+    if (xtKey=='XkeyX') df$XkeyX <- ct.dfKey   # add new column for Xtalk filtering, if needed
+    x$settings = list(
+      crosstalk_key = ct.key,
+      crosstalk_group = ct.group
+    )
+    
     # if data.frame given, build dataset regardless of 'preset' or 'dataset'
     
     # grouping uses transform
     if (!is.null(ctype) && dplyr::is.grouped_df(df)) {
       #grnm <- dplyr::group_vars(df)[[1]]   # name of 1st grouping column 
       grnm <- df |> group_vars() |> first() |> as.character()  # convert if factor
-      x$opts$dataset <- list(list(source = ec.data(df, header=TRUE)))
-      grvals <- unname(unlist(dplyr::group_data(df)[grnm]))
+      x$opts$dataset <- list(list(dimensions= colnames(df), source= ec.data(df)))
+      grvals <- unlist(dplyr::group_data(df)[grnm], use.names=FALSE)
       txfm <- sers <- list()
       legd = list(data= list())
       k <- 0
       for(nm in grvals) { 
         k <- k+1
-        txfm <- append(txfm, list(list(transform = list(
-          type='filter', config=list(dimension=grnm, '='=nm)))))
+        txfm <- append(txfm, list(list(transform= list(
+          type= 'filter', config= list(dimension= grnm, '='=nm), id= nm))))
         sers <- append(sers, list(list(  # datasetIndex will be decremented later
           type= ctype, datasetIndex= k+1, name= as.character(nm))))
         # if (colnames(df)[1]==grnm)  # grouping by 1st column - breaks prll,map,etc.
         legd$data <- append(legd$data, list(list(name=as.character(nm))))
       }
       if (preset) {
-        #if (is.null(tl.series) && is.null(x$opts$options))
-        x$opts$series <- sers
+        if (is.null(opt1$series)) x$opts$series <- sers
         if (is.null(opt1$legend)) x$opts$legend <- legd
       }
       x$opts$dataset <- append(x$opts$dataset, txfm)
     } 
     else 
-      x$opts$dataset <- list(list(source = ec.data(df, header=TRUE)))
+      x$opts$dataset <- list(list(dimensions= colnames(df), source= ec.data(df)))
     
     if (preset) {
       # group by any column, prevent group columns from becoming X/Y axis
-      if (!is.null(grnm)) {  # find pos of grp column
+      if (!is.null(grnm)) {  # find position of group column
         pos <- which(colnames(df)==grnm)
         if (!is.null(tl.series) && !is.null(tl.series$groupBy))
           pos <- c(pos, which(colnames(df)==tl.series$groupBy))
@@ -374,6 +372,7 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
       #if (is.null(opt1$visualMap)) x$opts$visualMap <- tmp
     }  # colX,colY, visualMap
   }
+  #else .setColnm()  # do not reset, ec.data could've done it
 
   # presets are default settings, user can ignore or replace them
   if (preset) {
@@ -488,7 +487,14 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
   load <- opt1$load;  wt$x$opts$load <- NULL
   if (length(load)==1 && grepl(',', load, fixed=TRUE))
       load <- unlist(strsplit(load, ','))
-      
+  # autoload 3D 
+  cnd1 <- any(c('xAxis3D','yAxis3D','zAxis3D','grid3D','globe','geo3D') %in% names(opt1))
+  styp <- ctype
+  if ('series.param' %in% names(opt1) && !is.null(opt1$series.param$type))
+    styp <- opt1$series.param$type
+  cnd2 <- any(endsWith(styp, c('3D','GL')))
+  if ((cnd1 || cnd2) && !'3D' %in% load) load <- c(load, '3D')
+  
   path <- system.file('js', package= 'echarty')
   dep <- NULL
   
@@ -576,22 +582,22 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
     plf <- read.csv(system.file('plugins.csv', package='echarty'), header=TRUE, stringsAsFactors=FALSE)
     if ('3D' %in% load) {
       if (preset) {       # replace 2D presets with 3D
-      isScatGL <- 'scatterGL' %in% unlist(lapply(opt1$series, \(k){k$type}))  # scatterGL is 2D
-      if (!isScatGL && is.null(opt1$globe) && is.null(opt1$geo3D) ) {  
+      isGL <- any(unlist(lapply(opt1$series, \(k){ endsWith(k$type, 'GL') })))  # all GL are 2D
+      if (!is.null(opt1$series.param)) isGL <- endsWith(opt1$series.param$type, 'GL')
+      if (!is.null(opt1$globe) || !is.null(opt1$geo3D) ) isGL <- FALSE
+      if (!isGL) {  
+        # check for series types ending in 3D or GL
+        stypes <- ifelse(!is.null(opt1$series.param), opt1$series.param$type, 
+                         unlist(lapply(opt1$series, \(k){k$type})) )
+        stypes <- stypes[stypes!='surface']
+        if (!is.null(stypes)) stopifnot("Non-3D series type detected"= all(endsWith(stypes, '3D')) )
+
+        nops <- names(opt1)   # add defaults 3D
+        for(x in c('xAxis3D','yAxis3D','zAxis3D','grid3D')) {
+          a2d <- sub('3D','',x)
+          if (!(x %in% nops)) wt$x$opts[[x]] <- if (!is.null(wt$x$opts[[a2d]])) wt$x$opts[[a2d]] else list(show=T)
+        }
         wt$x$opts$xAxis <- wt$x$opts$yAxis <- NULL
-        nops <- names(opt1)
-        if (!('xAxis3D' %in% nops)) wt$x$opts$xAxis3D <- list(list(s=T))
-        if (!('yAxis3D' %in% nops)) wt$x$opts$yAxis3D <- list(list(s=T))
-        if (!('zAxis3D' %in% nops)) wt$x$opts$zAxis3D <- list(list(s=T))
-        if (!('grid3D'  %in% nops)) wt$x$opts$grid3D <- list(list(s=T))
-      }
-      if (!is.null(opt1$globe) || !is.null(opt1$geo3D) ) {  
-        wt$x$opts$xAxis <- wt$x$opts$yAxis <- NULL
-      }
-      # valid 3D types: scatter3D, bar3D, surface, etc.
-      if ('series' %in% names(opt1)) {  # if default 2D, change it
-        wt$x$opts$series <- lapply(wt$x$opts$series,
-          \(s) { s$type= if (s$type=='scatter') 'scatter3D' else s$type; s })
       }
     }
       wt <- ec.plugjs(wt, plf[plf$name=='3D',]$url, ask)
@@ -635,9 +641,10 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
   if (is.null(df) || !is.grouped_df(df))
     stop('ec.init: timeline requires a grouped data.frame df')
 
-  if (is.null(tl.series$encode))
-    tl.series$encode <- list(x=1, y=2, z=3)  # set default for non-map series
-  
+  if (is.null(tl.series$encode)) {
+    tl.series$encode <- list(x=1, y=2)  # set default for non-map series
+    if ('3D' %in% load) tl.series$encode$z <- 3
+  }
   # add missing defaults
   if (is.null(tl.series$type)) tl.series$type <- 'scatter'
   
@@ -697,7 +704,7 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
       #if (!is.null(xcol)) gp <- gp |> arrange(across(all_of(xcol)))
       
       # multiple series for each Y, like y=c('col1', 'col3')
-      series <- lapply(unname(unlist(tl.series$encode[ytem])), 
+      series <- lapply(unlist(tl.series$encode[ytem], use.names=FALSE), 
         \(sname) {
           append(list(datasetIndex= di +1), tl.series)  # , name= sname
       })
@@ -716,13 +723,13 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
     stopifnot('ec.init: timeline `groupBy` column missing in df'= tl.series$groupBy %in% colnames(df))
     #gvar <- df |> group_vars() |> first() |> as.character()  # convert if factor
     tgrp <- tl.series$groupBy
-    # define additional filter transformations and option series based on groupBy
+    # define additional filter transforms and option series based on groupBy
     dsf <- list()  # new filters
     optm <- list() 
     filterIdx <- 0
     for (ii in 1:length(unlist(unique(df[grnm]))) ) {
       snames <- c()
-      for (x2 in unname(unlist(unique(df[tgrp]))) ) {
+      for (x2 in unlist(unique(df[tgrp]), use.names=FALSE) ) {
         dst <- opt1$dataset[[ii+1]]  # skip source-dataset 1st
         dst$transform$config <- list(and= list(
           dst$transform$config,
@@ -769,7 +776,7 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
 #'
 #' @details \emph{ec.upd} makes changes to a chart already set by [ec.init].\cr
 #' It should be always piped(chained) after [ec.init].\cr
-#' All numerical indexes for series,visualMap,etc. are JS-counted and start at 0.\cr
+#' All numerical indexes for series,visualMap,etc. are JS-counted starting at 0.\cr
 #' @examples
 #' library(dplyr)
 #' df <- data.frame(x= 1:30, y= runif(30, 5, 10), cat= sample(LETTERS[1:3],size=30,replace=TRUE)) |>
@@ -914,12 +921,12 @@ str='high <b>'+(lo+hi)+'</b>'+lin+'<br>low <b>'+lo+'</b>'; return str;}"  # stac
 #' @details
 #' Command should be called after _ec.init_ where main series are set.\cr
 #' _ecr.ebars_ are custom series, so _ec.init(load='custom')_ is required. \cr
-#' Horizontal and vertical layouts supported, only switch _encode_ values 'x' and 'y', both for series and ecr.ebars.\cr
-#' Grouped bar series are supported.\cr
+#' Horizontal and vertical layouts supported, just switch _encode_ values _x_ and _y_ for both for series and ecr.ebars.\cr
 #' Have own default tooltip format showing _value, high & low_.\cr
-#' Non-grouped series could be shown with formatter _riErrBarSimple_ instead of _ecr.ebars_. See example below.\cr
-#' Limitations:\cr
-#' \verb{     }manually add axis type='category' if needed\cr
+#' Grouped bar series are supported.\cr
+#' Non-grouped series could be shown with formatter _riErrBarSimple_ instead of _ecr.ebars_. This is limited to vertical only, see example below.\cr
+#' Other limitations:\cr
+#' \verb{     }manually add axis type='category' when needed\cr
 #' \verb{     }error bars cannot have own name when data is grouped\cr
 #' \verb{     }legend select/deselect will not re-position grouped error bars\cr
 #' 
@@ -1014,12 +1021,12 @@ ecr.ebars <- function(wt, encode=list(x=1, y=c(2,3,4)), hwidth=6, ...) {
   # }
   
   rim <- if (!is.null(args$renderItem)) args$renderItem else 'riErrBars'
+  decds <- ifelse(length(tmp)>1, 0, 1)   # single or grouped
   oneSerie <- function(liss, ...) {
-    cc <- list(type='custom', datasetIndex= liss$ds, encode= encode,
+    cc <- list(type='custom', datasetIndex= liss$ds-decds, encode= encode,
     			 renderItem= htmlwidgets::JS(rim), ...)
 	  if (is.null(cc$name)) cc$name <- liss$nm
 	  if (!is.null(liss$dd)) cc$data <- liss$dd
-	  #if (is.null(c$data) && is.null(c$datasetIndex)) c$datasetIndex <- 0
     if (is.null(cc$z)) cc$z <- 3   # over bar
     if (is.null(cc$itemStyle$borderWidth)) cc$itemStyle$borderWidth <- 1.5
     if (is.null(cc$color) && is.null(cc$itemStyle$color)) {
@@ -1266,7 +1273,7 @@ ec.plugjs <- function(wt=NULL, source=NULL, ask=FALSE) {
   if (!is.null(opa$series))
     opa$series <- lapply(opa$series, r2jsEncode)
   
-  decr <- function(x) {
+  decro <- function(x) {
     if (!is.null(x$dimension) && is.numeric(x$dimension)) x$dimension <- x$dimension -1
     if (!is.null(x$seriesIndex)) x$seriesIndex <- x$seriesIndex -1   # vMap
     if (!is.null(x$gridIndex)) x$gridIndex <- x$gridIndex -1  # x/y Axis
@@ -1276,9 +1283,9 @@ ec.plugjs <- function(wt=NULL, source=NULL, ask=FALSE) {
     item <- opa[[typ]]
     if (!is.null(item)) {
       if (all(sapply(item, is.list)))
-        opa[[typ]] <<- lapply(item, decr)
+        opa[[typ]] <<- lapply(item, decro)
       else
-        opa[[typ]] <<- decr(item)
+        opa[[typ]] <<- decro(item)
     }
   }
   decType('xAxis')
@@ -1302,7 +1309,7 @@ ec.plugjs <- function(wt=NULL, source=NULL, ask=FALSE) {
 		c(l1, l2)[!duplicated(c(names(l1), names(l2)), fromLast= TRUE)]
 }
 
-# manage colnames for ec.clmn
+# manage colnames for ec.clmn (not used)
 .getColnm <- function() { the$.ecv.colnames }
 .setColnm <- function(vv=NULL) {
   old <- the$.ecv.colnames

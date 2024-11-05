@@ -56,7 +56,7 @@ test_that("tl.series, timeline options, groupBy", {  # also in test-presets
   p <- dat |> group_by(x1) |> ec.init(
     tl.series= list(encode= list(x= 'x3', y= 'x5'), groupBy='x2',
                     symbolSize= ec.clmn(4, scale=30)),
-    legend= list(s=T)
+    legend= list(show=T)
   )
   expect_equal(p$x$opts$options[[4]]$series[[2]]$name, 'B')
   expect_true(p$x$opts$dataset[[9]]$transform$config$and[[2]]$dimension=='x2')
@@ -67,12 +67,11 @@ test_that("leaflet with ec.clmn and timeline", {
   tmp <- quakes |> dplyr::relocate('long') |>  # set order to lon,lat
       dplyr::mutate(size= exp(mag)/20) |> head(100)  # add accented size
   p <- tmp |> ec.init(load= 'leaflet',
-                      tooltip = list(formatter=ec.clmn('magnitude %@', 'mag')),
-    series.param= list(
-      symbolSize = ec.clmn(6, scale=3)
-      )
+                      tooltip = list(formatter= ec.clmn('magnitude %@', 'mag')),
+    series.param= list(datasetIndex= 1, symbolSize= ec.clmn(6, scale=3) )
   )
   expect_equal(p$x$opts$leaflet$zoom, 6)
+  expect_equal(p$x$opts$series[[1]]$datasetIndex, 0)  # decremented
   expect_s3_class(p$x$opts$tooltip$formatter, 'JS_EVAL')
 
   p <- tmp |> group_by(stations) |> ec.init(load='leaflet', 
@@ -155,29 +154,31 @@ test_that("load 3D surface", {
   data <- list()
   for(y in 1:dim(volcano)[2]) for(x in 1:dim(volcano)[1])
     data <- append(data, list(c(x, y, volcano[x,y])))
-  p <- ec.init(load= '3D', series= list(list(type= 'surface',	data= data)) )
+  p <- ec.init(load= '3D', series.param= list(type= 'surface',	data= data) )
   
   expect_equal(length(p$x$opts$series[[1]]$data), 5307)
 })
 
-test_that("3D globe", {
-  p <- ec.init(load='3D',
+test_that("3D globe & autoload 3D", {
+  p <- ec.init( #load='3D',  # test autoload
     globe= list(viewControl= list(autoRotate= FALSE)),
-    series= list(
-      list(type= 'scatter3D',
+    series.param= list(type= 'scatter3D',
         data= list(c(32,-117,11), c(2,44,22)) ,
         symbolSize= 40, itemStyle= list(color= 'red')
-    ))
+    )
   )
+  lif <- paste0(system.file('js', package='echarty'), '/echarts-gl.min.js')
+  expect_true(file.exists(lif))
   expect_equal(p$x$opts$series[[1]]$coordinateSystem, 'globe')
 })
 
 test_that("calendar", {
+
   df <- data.frame(d= seq(as.Date("2023-01-01"), by="day", length.out=360), v=runif(360,1,100))
-  p <- df |> ec.init(
+  p <- df |> ec.init( 
     visualMap= list(show= FALSE, min= 0, max= 100), 
     calendar = list(range= c('2023-01','2023-04')),
-    series = list(list(type = 'scatter'))
+    series.param= list(type= 'scatter', name='scat', symbolSize=11)
   )
   expect_equal(p$x$opts$series[[1]]$coordinateSystem, "calendar")
 })

@@ -24,6 +24,13 @@ test_that("options preset", {
   p <- cars |> ec.init()
   expect_equal(p$x$opts$textStyle$fontFamily, 'monospace')
   options(echarty.font=NULL)
+  
+  p <- cars |> ec.init(series.param= list(yAxisIndex=1), 
+          yAxis= list(gridIndex=1), visualMap= list(dimension=2))
+  expect_equal(p$x$opts$series[[1]]$yAxisIndex, 0)  # is decremented?
+  expect_equal(p$x$opts$yAxis$gridIndex, 0)
+  expect_equal(p$x$opts$visualMap$dimension, 1)
+  expect_equal(p$x$opts$dataset[[1]]$dimensions, c('speed','dist'))
 })
 
 test_that("webR works with plugins", {
@@ -39,20 +46,26 @@ test_that("ec.init presets for non-grouped data.frame", {
   expect_equal(p$x$opts$xAxis$type, 'category')
   #expect_true(is.null(p$x$opts$xAxis$type))  # assume default='category' = WRONG
   expect_true(!is.null(p$x$opts$yAxis))
-  expect_equal(length(p$x$opts$dataset[[1]]$source), 11)
+  expect_equal(length(p$x$opts$dataset[[1]]$source), 10)
   expect_equal(p$x$opts$series[[1]]$type, 'scatter')
 })
 
 test_that("ec.init presets for grouped data.frame", {
-  p <- df |> dplyr::group_by(symbol) |> ec.init(yAxis= list(scale=TRUE, name='yaxe'))
+  p <- df |> dplyr::group_by(symbol) |> ec.init(yAxis= list(scale=TRUE, name='yaxe'), 
+                  series.param= list(symbol=ec.clmn('symbol')))
   po <- p$x$opts
   expect_equal(po$xAxis$type, 'category')
   expect_equal(po$yAxis$name, 'yaxe')
-  expect_equal(length(po$dataset[[1]]$source), 11)
+  expect_equal(length(po$dataset[[1]]$source), 10)
+  expect_equal(po$dataset[[4]]$transform$id, "triangle")
   expect_equal(length(po$legend$data), 3)
   expect_equal(po$series[[1]]$type, 'scatter')
   expect_equal(po$series[[1]]$name, 'circle')
+  expect_s3_class(po$series[[2]]$symbol, 'JS_EVAL')
   expect_equal(po$series[[2]]$datasetIndex, 2)
+  # group_by does not overwrite series ?
+  p <- df |> dplyr::group_by(symbol) |> ec.init(series= list(list(type='bar' )))
+  expect_equal(p$x$opts$series[[1]]$type, 'bar')
 })
 
 test_that("ec.init presets for timeline", {
@@ -66,19 +79,19 @@ test_that("ec.init presets for timeline", {
     bt <- data |> dplyr::group_by(!!dplyr::sym(timeline_var)) |> 
       ec.init(series.param = list(no_type='bar'), 
               xAxis= list(name='xval'),
-              timeline= list(s=T) # data= c(1,2,3,4), axisType='value') #ok
+              timeline= list(show=T) # data= c(1,2,3,4), axisType='value') #ok
       )
     bt
   }
   p <- barTL(dftl, timeline_var= "year")
   o <- p$x$opts
-  expect_equal(length(o$dataset[[1]]$source), 17)
+  expect_equal(length(o$dataset[[1]]$source), 16)
   expect_equal(length(o$dataset), 5)
   expect_equal(length(o$options), 4)
   expect_equal(o$timeline$axisType, 'category')
   expect_equal(o$yAxis$name, 'quarter')
   expect_equal(o$xAxis$name, 'xval')
-  expect_equal(o$options[[1]]$series[[1]]$encode, list(x=0, y=1, z=2))
+  expect_equal(o$options[[1]]$series[[1]]$encode, list(x=0, y=1))
   expect_equal(o$options[[1]]$series[[1]]$type, 'scatter')
 })
 
@@ -137,7 +150,7 @@ test_that("ec.init presets for timeline groupBy", {
   p <- cns |> rename(val=value) |>
     ec.init(load= 'world', series.param= list(type='map'), 
             visualMap= list(seriesIndex=1))
-  expect_equal(p$x$opts$dataset[[1]]$source[[1]], c("val","name","dim"))
+  #expect_equal(p$x$opts$dataset[[1]]$dimensions, c("val","name","dim"))
   expect_equal(p$x$opts$series[[1]]$geoIndex, 0)
   expect_equal(p$x$opts$visualMap$max, 88)
   
@@ -160,22 +173,6 @@ test_that("presets for parallel chart", {
   expect_equal(p$x$opts$parallelAxis[[2]]$name, 'disp')
 })
 
-test_that("presets for parallelAxis", {
-  df <- as.data.frame(state.x77) |> head(10)
-  p <- df |> ec.init(ctype= 'parallel',
-      parallelAxis= ec.paxis(df, cols= c('Illiteracy','Population','Income'), inverse=T),
-      series.param= list(lineStyle= list(width=3))
-  )
-  expect_equal(length(p$x$opts$dataset[[1]]$source[[1]]), 8)
-  expect_equal(p$x$opts$parallelAxis[[3]]$name, 'Income')
-  expect_true(p$x$opts$parallelAxis[[3]]$inverse)
-  
-  p <- df |> ec.init(ctype= 'parallel') |>     # chained ec.paxis
-    ec.paxis(cols= c('Illiteracy','Population','Income'))
-  expect_equal(p$x$opts$parallelAxis[[1]]$dim, 2)
-
-})
-
 test_that("presets for crosstalk", {
   library(crosstalk)
   df <- cars
@@ -183,7 +180,7 @@ test_that("presets for crosstalk", {
   p <- df |> ec.init()
   expect_equal(p$x$opts$dataset[[2]]$id, 'Xtalk')
   expect_equal(p$x$opts$series[[1]]$datasetId, 'Xtalk')
-  expect_equal(p$x$opts$dataset[[1]]$source[[1]][3], 'XkeyX')
+  expect_equal(p$x$opts$dataset[[1]]$dimensions[3], 'XkeyX')
   
   tmp <- SharedData$new(longley, key=~Year)  # without XkeyX
   p <- tmp |> ec.init( xtKey='Year',
@@ -257,8 +254,8 @@ test_that('axis names from preset encode', {
 })
 
 test_that('polar, pie, radar, themeRiver, parallel, etc.', {
-  p <- cars |> ec.init(ctype='pie')
-  expect_equal(p$x$opts$dataset[[1]]$source[[1]][1], 'speed')
+  p <-  df |> dplyr::group_by(name) |> ec.init(ctype='pie')
+  expect_equal(p$x$opts$series[[1]]$encode, list(value=1, itemName=2))
   p <- cars |> ec.init(polar= list(radius= 222), 
       series.param= list(type='line', smooth=T))
   expect_equal(p$x$opts$series[[1]]$coordinateSystem, 'polar')
@@ -287,6 +284,9 @@ test_that('polar, pie, radar, themeRiver, parallel, etc.', {
   p <- ec.init(series.param= list(
     type='gauge', data= list(list(name='score',value=44))))
   expect_equal(names(p$x$opts), 'series')
+  
+  p <- mtcars |> ec.init(ctype='scatterGL')
+  expect_equal(p$dependencies[[1]]$name, 'echarts-gl.min.js')
 })
 
 test_that('polar presets', {

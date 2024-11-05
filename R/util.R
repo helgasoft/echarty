@@ -4,8 +4,8 @@
 #' 
 #' tabset, table layout, support for GIS shapefiles through library 'sf'
 #'  
-#' @param cmd utility command, see Details\cr
-#' @param js optional JavaScript function, default is NULL.\cr
+#' @param cmd utility command, see Details
+#' @param js optional JavaScript function, default is NULL.
 #' @param ... Optional parameters for the command \cr
 #'      for \emph{sf.series} - see \href{https://echarts.apache.org/en/option.html#series-scatter.type}{points}, \href{https://echarts.apache.org/en/option.html#series-lines.type}{polylines}, polygons(itemStyle).\cr
 #'      for \emph{tabset} parameters should be in format \emph{name1=chart1, name2=chart2}, see example\cr
@@ -120,7 +120,7 @@ ec.util <- function( ..., cmd='sf.series', js=NULL) {
       j <- j + 1
       val <- NULL
       if (!is.null(dflts)) val <- dflts[[j]]
-      tmp <- unname(unlist(opts[n]))
+      tmp <- unlist(opts[n], use.names=FALSE)
       if (!is.null(tmp)) {
         val <- tmp
         opts[n] <<- NULL
@@ -163,8 +163,9 @@ ec.util <- function( ..., cmd='sf.series', js=NULL) {
               tt <- c(paste(rep('%@', length(flds)), collapse='<br>'), flds)
             }
             pnts <- ec.data(dff, 'names')
+            styp <- ifelse(endsWith(cs, '3D'), 'scatter3D', 'scatter')
             sers <- list( c(
-              list(type= 'scatter', coordinateSystem= cs, data= pnts), opts))
+              list(type= styp, coordinateSystem= cs, data= pnts), opts))
             if (!is.null(tt)) 
               sers[[1]]$tooltip= list(formatter= do.call("ec.clmn", as.list(tt)))
           },
@@ -226,7 +227,7 @@ ec.util <- function( ..., cmd='sf.series', js=NULL) {
           if (len==1) len <- length(x$data[[1]])  #multiline
           len
         })))
-        cat('\n series:',cnt,'coords:',recs,'\n')
+        cat('\n series:',cnt,'records:',recs,'\n')
         sers
       }
       
@@ -667,7 +668,7 @@ ec.data <- function(df, format='dataset', header=FALSE, ...) {
   
   if (format=='treePC') {
     # for sunburst,tree,treemap
-    if (!all(unlist(unname(lapply(as.list(df[,1:3]), class))) == 
+    if (!all(unlist(lapply(as.list(df[,1:3]), class), use.names=FALSE) == 
              c('character','character','numeric')) )
       stop('ec.data: df columns need to be in order (parents, children, value), only value is numeric', call. = FALSE)
     
@@ -728,7 +729,7 @@ ec.data <- function(df, format='dataset', header=FALSE, ...) {
       datset <- c(list(colnames(df)), datset)
   } 
   else if (format=='values' || isTRUE(format)) {
-    datset <- lapply(tmp, \(x) list(value=unlist(unname(x))))
+    datset <- lapply(tmp, \(x) list(value=unlist(x, use.names=FALSE)))
   } 
   else if (format=='boxplot') {
     args <- list(...)
@@ -845,11 +846,11 @@ ec.data <- function(df, format='dataset', header=FALSE, ...) {
     if (jitter>0) {
   		tmp <- df |> arrange(.data[[colas]]) |> 
   		        group_by(.data[[colas]]) |> group_split()
-  		mcyl <- lapply(tmp, \(x) unname(unlist(x[[colb5]])))
+  		mcyl <- lapply(tmp, \(x) unlist(x[[colb5]], use.names=FALSE))
   		names(mcyl) <- sort(unique(df[[colas]]))
   		i <- 0.5
   		serj <- lapply(names(mcyl), \(nn) {  
-  			yy <- unname(unlist(mcyl[nn]))
+  			yy <- unlist(mcyl[nn], use.names=FALSE)
   			xx <- jitter(rep(i, length(yy)), amount= jitter)
   			out <- list(type= 'scatter', ...)
   			if (!'name' %in% names(args)) out$name <- nn
@@ -911,11 +912,11 @@ ec.data <- function(df, format='dataset', header=FALSE, ...) {
 #' Helper function to display/format data column(s) by index or name
 #' 
 #' @param col A single column index(number) or column name(quoted string), \cr
-#'    or a \link[base]{sprintf} string template for multiple indexes.\cr
+#'    or a \link[base]{sprintf} string template for multiple columns.\cr
 #'    NULL(default) for charts with single values like tree, pie.\cr
 #'    'json' to display tooltip with all available values to choose from.\cr 
 #'    'log' to write all values in the JS console (F12) for debugging.\cr
-#'    Can contain JS function starting with _'function('_ (or format _'(x) => {}'_).\cr
+#'    Can contain JS function starting with _'function('_ or _'(x) => \{'_.\cr
 #' @param ... Comma separated column indexes or names, only when \emph{col} is \emph{sprintf}. This allows formatting of multiple columns, as for a tooltip.\cr
 #' @param scale A positive number, multiplier for numeric columns. When scale is 0, all numeric values are rounded.
 #' @return A JavaScript code string (usually a function) marked as executable, see \link[htmlwidgets]{JS}.
@@ -932,23 +933,33 @@ ec.data <- function(df, format='dataset', header=FALSE, ...) {
 #' * \emph{%LR@} rounded number in locale format, like '12,345'.\cr
 #' * \emph{%R@} rounded number, like '12345'.\cr
 #' * \emph{%R2@} rounded number, two digits after decimal point.\cr
-#' * \emph{%M@} marker in serie's color.\cr
-#' Notice that tooltip _formatter_ will work for _trigger='item'_, but not for _trigger='axis'_ when there are multiple value sets.
+#' * \emph{%M@} marker in series' color.\cr
+#' For _trigger='axis'_ (multiple series) one can use decimal column indexes.\cr
+#' See definition above and example below.
 #' 
 #' @examples
+#' library(dplyr)
 #' tmp <- data.frame(Species = as.vector(unique(iris$Species)),
 #'                   emoji = c('A','B','C'))
-#' df <- iris |> dplyr::inner_join(tmp)      # add 6th column emoji
-#' df |> dplyr::group_by(Species) |> ec.init(
+#' df <- iris |> inner_join(tmp)      # add 6th column emoji
+#' df |> group_by(Species) |> ec.init(
 #'   series.param= list(label= list(show= TRUE, formatter= ec.clmn('emoji'))),
 #'   tooltip= list(formatter=
 #'     # with sprintf template + multiple column indexes
 #'     ec.clmn('%M@ species <b>%@</b><br>s.len <b>%@</b><br>s.wid <b>%@</b>', 5,1,2))
 #' )
 #' 
+#' # tooltip decimal indexes work with full data sets (no missing/partial data)
+#' ChickWeight |> mutate(Chick=as.numeric(Chick)) |> filter(Chick>47) |> group_by(Chick) |>
+#' ec.init(
+#'   tooltip= list(trigger='axis', 
+#'                 formatter= ec.clmn("48: %@<br>49: %@<br>50: %@", 1.1, 2.1, 3.1)),
+#'   xAxis= list(type='category'), legend= list(formatter= 'Ch.{name}'),
+#'   series.param= list(type='line', encode= list(x='Time', y='weight')),
+#' )
 #' @export
 ec.clmn <- function(col=NULL, ..., scale=1) {
-  if (is.null(scale)) scale=1
+  if (is.null(scale)) scale <- 1
   if (scale==1) scl <- 'return c;'
   else {
     if (scale==0) scl <- 'return Math.round(c);'
@@ -977,6 +988,7 @@ return template.replace(/%@|%L@|%LR@|%R@|%R2@|%M@/g, (m) => {
   if (m=='%R2@') return Number(vals[j++]).toFixed(2);
   if (m=='%M@') return x.marker;
 }); };"
+	
 	if (length(args)==0) {  # col is solitary name
 		args <- col; col <- '%@'   # replace
 	}
@@ -1088,13 +1100,15 @@ ec.paxis <- function(dfwt=NULL, cols=NULL, minmax=TRUE, ...) {
   } 
   else {
     stopifnot('ec.paxis: dfwt has to be class echarty'= inherits(dfwt, 'echarty'))
-    coln <- unlist(dfwt$x$opts$dataset[[1]]$source[1])
+    #coln <- unlist(dfwt$x$opts$dataset[[1]]$source[1])
+    coln <- unlist(dfwt$x$opts$dataset[[1]]$dimensions)
     cfilter <- 1:length(coln)
     if (length(dfwt$x$opts$dataset) > 1) {
       grnm <- dfwt$x$opts$dataset[[2]]$transform$config$dimension
       cfilter <- cfilter[!cfilter==match(grnm, coln)]
     }
-    idf <- as.data.frame(t(do.call(cbind, dfwt$x$opts$dataset[[1]]$source[(-1)])))
+    #idf <- as.data.frame(t(do.call(cbind, dfwt$x$opts$dataset[[1]]$source[(-1)])))
+    idf <- as.data.frame(t(do.call(cbind, dfwt$x$opts$dataset[[1]]$source)))
     colnames(idf) <- coln
     idf <- as.data.frame(apply(idf, 2, unlist, simplify=FALSE))
   }

@@ -107,7 +107,7 @@ test_that("ecr.ebars riErrBarSimple", {
   expect_equal(p$x$opts$series[[2]]$type, 'custom')
   expect_true( p$x$opts$series[[2]]$name == "error")
   expect_s3_class(p$x$opts$series[[2]]$renderItem, 'JS_EVAL')
-  expect_equal(length(p$x$opts$series[[2]]$data), 50)
+  expect_equal(length(p$x$opts$series[[2]]$data), 49)
 })
 
 test_that("ecr.band", {
