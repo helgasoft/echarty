@@ -222,7 +222,7 @@ Only <span style="color:black; background:orange">&nbsp;Javascript&nbsp;</span> 
 
 ## Tree with custom labels
 
-Present hierarchies in style with highly customizable and interactive trees.
+Present hierarchies in style with highly customizable and interactive trees. <span style="color:black; background:lightblue">&nbsp;R&nbsp;</span> version.
 <details><summary>🔻 View data</summary> 
 
 ```
