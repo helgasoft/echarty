@@ -48,6 +48,24 @@ test_that("ecr.ebars", {
   expect_equal(p$x$opts$series[[2]]$encode$y, c(2,3,4))
   expect_equal(p$x$opts$series[[2]]$itemStyle$borderDashOffset, 12)
 
+  df <- Orange |> arrange(Tree) |> mutate(up= circumference+runif(5)*6, 
+                                          lo= circumference-runif(5)*6 ) |> filter(age==1231)
+  tmp <- ec.init(df, load= 'custom', legend= list(show=T), tooltip= list(show=T), 
+                 xAxis=list(type='category'),
+      series= list(list(type='bar', name='data', encode= list(x='Tree',y='circumference')
+  )))
+  p <- ecr.ebars(tmp, encode= list(x='Tree', y=c('circumference','lo','up')), hwidth=12, name='err',
+        itemStyle= list(borderWidth= 2.5, color= "red")
+  )
+  expect_equal(p$x$opts$series[[2]]$encode$y, c(2,3,4))
+  expect_equal(p$x$opts$series[[2]]$itemStyle$borderDashOffset, 12)
+  p <- tmp |> ec.upd({   # for cov only
+    dataset[[1]]$source[[1]] <- dataset[[1]]$dimensions
+    dataset[[1]]$dimensions <- NULL
+    dataset[[1]]$sourceHeader <- T  # TODO: should work without it too
+  }) |> ecr.ebars( encode= list(x='Tree', y=c('circumference','lo','up')), hwidth=12 )
+  expect_equal(p$x$opts$dataset[[1]]$source[[1]][1], 'Tree')
+
   # grouped + non-categorical
   tmp <- round(rnorm(24, sin(1:24/2)*10, .5))
   df <- data.frame(x = 1:24, val = tmp,

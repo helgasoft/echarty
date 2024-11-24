@@ -57,7 +57,7 @@ test_that("ec.init presets for grouped data.frame", {
   expect_equal(po$xAxis$type, 'category')
   expect_equal(po$yAxis$name, 'yaxe')
   expect_equal(length(po$dataset[[1]]$source), 10)
-  expect_equal(po$dataset[[4]]$transform$id, "triangle")
+  expect_equal(po$dataset[[4]]$id, "triangle")
   expect_equal(length(po$legend$data), 3)
   expect_equal(po$series[[1]]$type, 'scatter')
   expect_equal(po$series[[1]]$name, 'circle')

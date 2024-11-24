@@ -83,9 +83,10 @@ noCoord <- c('polar','radar','singleAxis','parallelAxis','calendar')
 #'  Defined by _series.param_ for the \href{https://echarts.apache.org/en/option.html#series}{options series} and a _timeline_ list for the \href{https://echarts.apache.org/en/option.html#timeline}{actual control}.
 #'  A grouped _df_ is required, each group providing data for one option serie.
 #'  Timeline \href{https://echarts.apache.org/en/option.html#timeline.data}{data} and \href{https://echarts.apache.org/en/option.html#options}{options} will be preset for the chart.\cr
+#'  Each option title can include the current timeline item by adding a placeholder '%@' in title$text. See example below.\cr
 #'  Another preset is _encode(x=1,y=2,z=3)_, which are the first 3 columns of _df_. Parameter _z_ is ignored in 2D. See Details below.\cr
 #'  Optional attribute _groupBy_, a _df_ column name, can create series groups inside each timeline option.\cr
-#'  Timeline cannot be used for hierarchical charts like graph,tree,treemap,sankey. Chart options/timeline have to be built directly, see \href{https://helgasoft.github.io/echarty/uc4.html}{example}.
+#'  Options/timeline for hierarchical charts like graph,tree,treemap,sankey have to be built directly, see \href{https://helgasoft.github.io/echarty/uc4.html}{example}.
 #'  
 #'  **\href{https://echarts.apache.org/en/option.html#series-line.encode}{Encode}** \cr
 #'  A series attribute to define which columns to use for the axes, depending on chart type and coordinate system: \cr
@@ -113,6 +114,7 @@ noCoord <- c('polar','radar','singleAxis','parallelAxis','calendar')
 #' )
 #' 
 #' data.frame(n=1:5) |> dplyr::group_by(n) |> ec.init(
+#'   title= list(text= "gauge #%@"),
 #'   timeline= list(show=TRUE, autoPlay=TRUE),
 #'   series.param= list(type='gauge', max=5)
 #' )
@@ -329,7 +331,7 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
       for(nm in grvals) { 
         k <- k+1
         txfm <- append(txfm, list(list(transform= list(
-          type= 'filter', config= list(dimension= grnm, '='=nm), id= nm))))
+          type= 'filter', config= list(dimension= grnm, '='=nm)), id= nm)))
         sers <- append(sers, list(list(  # datasetIndex will be decremented later
           type= ctype, datasetIndex= k+1, name= as.character(nm))))
         # if (colnames(df)[1]==grnm)  # grouping by 1st column - breaks prll,map,etc.
@@ -490,8 +492,8 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
   # autoload 3D 
   cnd1 <- any(c('xAxis3D','yAxis3D','zAxis3D','grid3D','globe','geo3D') %in% names(opt1))
   styp <- ctype
-  if ('series.param' %in% names(opt1) && !is.null(opt1$series.param$type))
-    styp <- opt1$series.param$type
+  if (!is.null(series.param) && !is.null(series.param$type))
+    styp <- series.param$type
   cnd2 <- any(endsWith(styp, c('3D','GL')))
   if ((cnd1 || cnd2) && !'3D' %in% load) load <- c(load, '3D')
   
@@ -505,7 +507,7 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
         wt$x$opts$series <- .merlis(wt$x$opts$series, list(coordinateSystem='geo'))
       }
       # WARN: duplicate maps if series have map='world' too
-      if (!'geo' %in% names(opt1))
+      if (!'geo' %in% names(opt1) && !'3D' %in% load)
         wt$x$opts$geo = list(map='world', roam=TRUE)
       # else {
       #   wt$x$opts$geo = .merlis(wt$x$opts$geo, list(map='world'))
@@ -583,19 +585,23 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
     if ('3D' %in% load) {
       if (preset) {       # replace 2D presets with 3D
       isGL <- any(unlist(lapply(opt1$series, \(k){ endsWith(k$type, 'GL') })))  # all GL are 2D
-      if (!is.null(opt1$series.param)) isGL <- endsWith(opt1$series.param$type, 'GL')
-      if (!is.null(opt1$globe) || !is.null(opt1$geo3D) ) isGL <- FALSE
+      if (!isGL) isGL <- endsWith(styp, 'GL')
+      isMap3d <- !is.null(opt1$globe) || !is.null(opt1$geo3D)
+      if (isMap3d) isGL <- FALSE
       if (!isGL) {  
         # check for series types ending in 3D or GL
-        stypes <- ifelse(!is.null(opt1$series.param), opt1$series.param$type, 
+        stypes <- ifelse(!is.null(series.param), styp, 
                          unlist(lapply(opt1$series, \(k){k$type})) )
         stypes <- stypes[stypes!='surface']
         if (!is.null(stypes)) stopifnot("Non-3D series type detected"= all(endsWith(stypes, '3D')) )
-
-        nops <- names(opt1)   # add defaults 3D
-        for(x in c('xAxis3D','yAxis3D','zAxis3D','grid3D')) {
-          a2d <- sub('3D','',x)
-          if (!(x %in% nops)) wt$x$opts[[x]] <- if (!is.null(wt$x$opts[[a2d]])) wt$x$opts[[a2d]] else list(show=T)
+        if (!isMap3d) {
+          nops <- names(opt1)   # add defaults 3D
+          for(x in c('xAxis3D','yAxis3D','zAxis3D','grid3D')) {
+            a2d <- sub('3D','',x)
+            if (!(x %in% nops)) 
+              wt$x$opts[[x]] <- if (!is.null(wt$x$opts[[a2d]])) wt$x$opts[[a2d]]
+                                else list(show=TRUE)
+          }
         }
         wt$x$opts$xAxis <- wt$x$opts$yAxis <- NULL
       }
@@ -679,8 +685,9 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
       di <<- di+1
       steps <<- c(steps, unique(unlist(lapply(gp[grnm], as.character))))
       series <- list(list(type= 'map', geoIndex= 1, datasetIndex= di +1))
-      tmp <- list( #title= list(text= as.character(unique(gp[grnm]))),  
-                  series= series)
+      tmp <- list(series= series)
+      if (!is.null(opt1$title$text) && grepl('%@', opt1$title$text))
+        tmp$title= list(text= sub('%@', as.character(unique(gp[grnm])), opt1$title$text) )
       tmp <- .renumber(tmp)
     })
   } 
@@ -709,8 +716,9 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
           append(list(datasetIndex= di +1), tl.series)  # , name= sname
       })
       
-      tmp <- list( #title= list(text= unique(unlist(lapply(gp[grnm], as.character)))),
-                  series= unname(series))
+      tmp <- list(series= unname(series))
+      if (!is.null(opt1$title$text) && grepl('%@', opt1$title$text))
+        tmp$title= list(text= sub('%@', as.character(unique(gp[grnm])), opt1$title$text) )
       tmp <- .renumber(tmp)
     })
   }
@@ -932,20 +940,29 @@ str='high <b>'+(lo+hi)+'</b>'+lin+'<br>low <b>'+lo+'</b>'; return str;}"  # stac
 #' 
 #' @examples
 #' library(dplyr)
-#' df <- mtcars |> group_by(cyl,gear) |> summarise(yy= round(mean(mpg),2)) |>
-#'   mutate(low= round(yy-cyl*runif(1),2), high= round(yy+cyl*runif(1),2))
-#' ec.init(df, load= 'custom', ctype= 'bar', tooltip= list(show=TRUE), 
-#'       xAxis= list(type='category')) |> 
-#' ecr.ebars(encode= list(y=c(3,4,5), x=2))
-#'      
+#' df <- mtcars |> group_by(cyl,gear) |> summarise(avg.mpg= round(mean(mpg),2)) |>
+#'   mutate(low = round(avg.mpg-cyl*runif(1),2), 
+#'          high= round(avg.mpg+cyl*runif(1),2))
+#' ec.init(df, load= 'custom', ctype= 'bar',
+#'       xAxis= list(type='category'), tooltip= list(show=TRUE)) |>
+#' ecr.ebars(encode= list(y=c('avg.mpg','low','high'), x='gear'))
+#' #ecr.ebars(encode= list(y=c(3,4,5), x=2))  # ok: data indexes
+#'
+#' # same but horizontal
+#' ec.init(df, load= 'custom',
+#'   yAxis= list(type='category'), tooltip= list(show=TRUE),
+#'   series.param= list(type='bar', encode= list(x='avg.mpg', y='gear') )) |>
+#' ecr.ebars(encode= list(x=c('avg.mpg','low','high'), y='gear'))
+#' 
 #' # ----- riErrBarSimple ------
-#' df <- mtcars |> mutate(x=1:nrow(mtcars),hi=hp-drat*3, lo=hp+wt*3) |> select(x,hp,hi,lo)
-#' ec.init(df, load= 'custom', legend= list(show= TRUE)) |> 
+#' df <- mtcars |> mutate(name= row.names(mtcars), hi= hp-drat*3, lo= hp+wt*3) |> 
+#'   filter(cyl==4) |> select(name,hp,hi,lo)
+#' ec.init(df, load= 'custom', legend= list(show=TRUE)) |>
 #' ec.upd({ series <- append(series, list(
-#'     list(type= 'custom', name= 'error',
-#'          data= ec.data(df |> select(x,hi,lo)),
-#'          renderItem= htmlwidgets::JS('riErrBarSimple')
-#'     )))
+#'   list(type= 'custom', name= 'error',
+#'     data= ec.data(df |> select(name,hi,lo)),
+#'     renderItem= htmlwidgets::JS('riErrBarSimple')
+#'   )))
 #' })
 #' 
 #' @export
@@ -1008,17 +1025,6 @@ ecr.ebars <- function(wt, encode=list(x=1, y=c(2,3,4)), hwidth=6, ...) {
   # assuming all attached series from same dataset
   encode$y <- enc2num(encode$y, tmp[[1]])
   encode$x <- enc2num(encode$x, tmp[[1]])
-  # # set correct axis to type 'category' (char or factor)
-  # enc <- wt$x$opts$dataset[[1]]$source[[2]]$encode
-  # if (!is.null(enc)) {
-  #   if (length(encode$y)==1) {
-  #     if (is.character(enc$y) || is.factor(enc$y))
-  #       wt$x$opts$yAxis <- .merlis(wt$x$opts$yAxis, list(type='category'))
-  #   } else {
-  #     if (is.character(enc$x) || is.factor(enc$x))
-  #       wt$x$opts$xAxis <- .merlis(wt$x$opts$xAxis, list(type='category'))
-  #   }
-  # }
   
   rim <- if (!is.null(args$renderItem)) args$renderItem else 'riErrBars'
   decds <- ifelse(length(tmp)>1, 0, 1)   # single or grouped

@@ -33,14 +33,13 @@ test_that("registerMap", {
 
 test_that("tl.series, timeline options, groupBy", {  # also in test-presets
   p <- Orange |> dplyr::group_by(age) |> ec.init(
-    timeline= list(autoPlay=TRUE),
+    timeline= list(autoPlay=TRUE), title= list(text='age %@ days'),
     series.param= list(type='bar', encode=list(x='Tree', y='circumference'))
-  ) |> ec.upd({
-    options <- lapply(seq_along(options), 
-      \(i) { 
-        options[[i]]$title$text <- paste('age',timeline$data[[i]],'days'); 
-        options[[i]] })
-  })
+  ) # |> ec.upd({
+  #   options <- lapply(seq_along(options), \(i) { 
+  #       options[[i]]$title$text <- paste('age',timeline$data[[i]],'days'); 
+  #       options[[i]] })
+  # })
   expect_equal(p$x$opts$options[[5]]$title$text, "age 1231 days")
   expect_equal(p$x$opts$options[[5]]$series[[1]]$datasetIndex, 5)
   expect_equal(p$x$opts$options[[7]]$series[[1]]$encode$x, "Tree")
@@ -60,6 +59,13 @@ test_that("tl.series, timeline options, groupBy", {  # also in test-presets
   )
   expect_equal(p$x$opts$options[[4]]$series[[2]]$name, 'B')
   expect_true(p$x$opts$dataset[[9]]$transform$config$and[[2]]$dimension=='x2')
+  
+  p <- data.frame(name=c('Brazil','Australia'), value=c(111,222)) |> group_by(name) |>
+  ec.init(load= 'world', title= list(text='map %@'), visualMap=list(show=T), 
+        timeline= list(show=T), series.param= list(type='map') )
+  expect_equal(p$x$opts$options[[2]]$title$text, "map Brazil")
+  expect_equal(p$x$opts$visualMap$min, 111)
+
 })
 
 test_that("leaflet with ec.clmn and timeline", {
@@ -170,6 +176,25 @@ test_that("3D globe & autoload 3D", {
   lif <- paste0(system.file('js', package='echarty'), '/echarts-gl.min.js')
   expect_true(file.exists(lif))
   expect_equal(p$x$opts$series[[1]]$coordinateSystem, 'globe')
+  
+  p <- ec.init(load='world', geo3D= list(map= 'world', roam=T),
+    series.param= list(type= 'scatter3D', data=list(c(115, 22, 10), c(-116, 32, -11)))
+  ) 
+  expect_equal(p$x$opts$series[[1]]$coordinateSystem, 'geo3D')
+})
+
+test_that("radar and polar", {  # for coverage
+  p <- ec.init(
+  	radar= list(indicator= lapply(LETTERS[1:5], \(x) { list(name=x)} ) ),
+  	series= list(list(type='radar', radarIndex=1,
+  	                  data= list(c(10,22,5,9,11), c(12,18,15,15,7))))
+  )
+  expect_equal(p$x$opts$series[[1]]$radarIndex, 0)
+  
+  p <- data.frame(x = 1:10, y = seq(1, 20, by = 2)) |>
+  ec.init(polar= list(show=T), series.param= list(type='line', polarIndex=1))
+  expect_equal(p$x$opts$series[[1]]$polarIndex, 0)
+  
 })
 
 test_that("calendar", {
@@ -178,9 +203,10 @@ test_that("calendar", {
   p <- df |> ec.init( 
     visualMap= list(show= FALSE, min= 0, max= 100), 
     calendar = list(range= c('2023-01','2023-04')),
-    series.param= list(type= 'scatter', name='scat', symbolSize=11)
+    series.param= list(type= 'scatter', name='scat', symbolSize=11, calendarIndex=1)
   )
   expect_equal(p$x$opts$series[[1]]$coordinateSystem, "calendar")
+  expect_equal(p$x$opts$series[[1]]$calendarIndex, 0)
 })
 
 test_that("ec.plugjs", {
@@ -243,7 +269,7 @@ test_that('stops are working in echarty.R', {
   expect_silent(ec.init(mtcars |> group_by(gear), tl.series= list(type='map'))) # no name/value, can use encode
   expect_silent(ec.init(df |> group_by(y), series.param= list(type='bar')))
   expect_silent(ec.init(df |> group_by(y), series.param= list(type='bar'), 
-                        timeline= list(s=T)))
+                        timeline= list(show=T)))
   # expect_error(cars |> group_by(speed) |> ec.init()) # 3 cols min
   # expect_error(ec.init(data.frame(name='n',value=1) |> group_by(name), 
   #     tl.series= list(type='bar')))  # 3 cols min

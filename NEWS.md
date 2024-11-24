@@ -2,11 +2,12 @@
 
 ## v. 1.6.4.1  latest in development
 
-- upgrade ECharts to v.5.5.1, built with R v.4.4.1
+- upgrade ECharts to v.5.5.1, built with R v.4.4.2
 - auto-load 3D plugin when 3D attributes present (xAxis3D, bar3D, etc.)
 - auto-set 3D axes from data (name, type)
 - change in dataset: store column names in _dimensions_ instead of _source_
 - fixed bug in ecr.ebars for single series
+- add optional placeholder '%@' in title$text for timeline
 
 ## v. 1.6.4  on CRAN
 

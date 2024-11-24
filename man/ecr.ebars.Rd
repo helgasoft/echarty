@@ -35,20 +35,29 @@ Other limitations:\cr
 }
 \examples{
 library(dplyr)
-df <- mtcars |> group_by(cyl,gear) |> summarise(yy= round(mean(mpg),2)) |>
-  mutate(low= round(yy-cyl*runif(1),2), high= round(yy+cyl*runif(1),2))
-ec.init(df, load= 'custom', ctype= 'bar', tooltip= list(show=TRUE), 
-      xAxis= list(type='category')) |> 
-ecr.ebars(encode= list(y=c(3,4,5), x=2))
-     
+df <- mtcars |> group_by(cyl,gear) |> summarise(avg.mpg= round(mean(mpg),2)) |>
+  mutate(low = round(avg.mpg-cyl*runif(1),2), 
+         high= round(avg.mpg+cyl*runif(1),2))
+ec.init(df, load= 'custom', ctype= 'bar',
+      xAxis= list(type='category'), tooltip= list(show=TRUE)) |>
+ecr.ebars(encode= list(y=c('avg.mpg','low','high'), x='gear'))
+#ecr.ebars(encode= list(y=c(3,4,5), x=2))  # ok: data indexes
+
+# same but horizontal
+ec.init(df, load= 'custom',
+  yAxis= list(type='category'), tooltip= list(show=TRUE),
+  series.param= list(type='bar', encode= list(x='avg.mpg', y='gear') )) |>
+ecr.ebars(encode= list(x=c('avg.mpg','low','high'), y='gear'))
+
 # ----- riErrBarSimple ------
-df <- mtcars |> mutate(x=1:nrow(mtcars),hi=hp-drat*3, lo=hp+wt*3) |> select(x,hp,hi,lo)
-ec.init(df, load= 'custom', legend= list(show= TRUE)) |> 
+df <- mtcars |> mutate(name= row.names(mtcars), hi= hp-drat*3, lo= hp+wt*3) |> 
+  filter(cyl==4) |> select(name,hp,hi,lo)
+ec.init(df, load= 'custom', legend= list(show=TRUE)) |>
 ec.upd({ series <- append(series, list(
-    list(type= 'custom', name= 'error',
-         data= ec.data(df |> select(x,hi,lo)),
-         renderItem= htmlwidgets::JS('riErrBarSimple')
-    )))
+  list(type= 'custom', name= 'error',
+    data= ec.data(df |> select(name,hi,lo)),
+    renderItem= htmlwidgets::JS('riErrBarSimple')
+  )))
 })
 
 }

@@ -98,9 +98,10 @@ Enabling \emph{crosstalk} will also generate an additional dataset called \emph{
 Defined by \emph{series.param} for the \href{https://echarts.apache.org/en/option.html#series}{options series} and a \emph{timeline} list for the \href{https://echarts.apache.org/en/option.html#timeline}{actual control}.
 A grouped \emph{df} is required, each group providing data for one option serie.
 Timeline \href{https://echarts.apache.org/en/option.html#timeline.data}{data} and \href{https://echarts.apache.org/en/option.html#options}{options} will be preset for the chart.\cr
+Each option title can include the current timeline item by adding a placeholder '\%@' in title$text. See example below.\cr
 Another preset is \emph{encode(x=1,y=2,z=3)}, which are the first 3 columns of \emph{df}. Parameter \emph{z} is ignored in 2D. See Details below.\cr
 Optional attribute \emph{groupBy}, a \emph{df} column name, can create series groups inside each timeline option.\cr
-Timeline cannot be used for hierarchical charts like graph,tree,treemap,sankey. Chart options/timeline have to be built directly, see \href{https://helgasoft.github.io/echarty/uc4.html}{example}.
+Options/timeline for hierarchical charts like graph,tree,treemap,sankey have to be built directly, see \href{https://helgasoft.github.io/echarty/uc4.html}{example}.
 
 \strong{\href{https://echarts.apache.org/en/option.html#series-line.encode}{Encode}} \cr
 A series attribute to define which columns to use for the axes, depending on chart type and coordinate system: \cr
@@ -128,6 +129,7 @@ ec.init(        # init with presets
 )
 
 data.frame(n=1:5) |> dplyr::group_by(n) |> ec.init(
+  title= list(text= "gauge #\%@"),
   timeline= list(show=TRUE, autoPlay=TRUE),
   series.param= list(type='gauge', max=5)
 )
