@@ -719,8 +719,8 @@ ec.init(
       list(transform= list(type='boxplot')),
       list(fromDatasetIndex=1, fromTransformResult= 1)),
    series= list(
-      list(name= 'boxplot', type= 'boxplot', datasetIndex= 1),
-      list(name= 'outlier', type= 'scatter', encode= list(x=2, y=1), datasetIndex= 2)
+      list(name= 'boxplot', type= 'boxplot', datasetIndex= 2),
+      list(name= 'outlier', type= 'scatter', encode= list(x=2, y=1), datasetIndex= 3)
    ),
    yAxis= list(type= 'category', boundaryGap=TRUE),
    legend= list(show=TRUE)
