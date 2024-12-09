@@ -25,3 +25,4 @@ README.md
 cleanup.bat
 ^doc$
 ^Meta$
+^pkgdown$

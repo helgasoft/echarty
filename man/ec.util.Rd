@@ -4,7 +4,7 @@
 \alias{ec.util}
 \title{Utility functions}
 \usage{
-ec.util(..., cmd = "sf.series", js = NULL)
+ec.util(..., cmd = "sf.series", js = NULL, event = "click")
 }
 \arguments{
 \item{...}{Optional parameters for the command \cr
@@ -14,6 +14,8 @@ for \emph{tabset} parameters should be in format \emph{name1=chart1, name2=chart
 \item{cmd}{utility command, see Details}
 
 \item{js}{optional JavaScript function, default is NULL.}
+
+\item{event}{optional event name for cmd='morph'.}
 }
 \description{
 tabset, table layout, support for GIS shapefiles through library 'sf'
@@ -65,8 +67,8 @@ tabset, table layout, support for GIS shapefiles through library 'sf'
 \verb{   }... - optional parameters for the \href{https://echarts.apache.org/en/option.html#graphic.elements-rect.type}{rect} element\cr
 \verb{ }Returns a graphic.elements-\href{https://echarts.apache.org/en/option.html#graphic.elements-rect.type}{rect} element.\cr
 \strong{cmd = 'morph'} \cr
-\verb{   }... - a list of charts or chart options\cr
-\verb{   }js - optional JS function for switching charts. Default function is on \emph{mouseover}. Disable with FALSE.\cr
+\verb{   }... - a list of charts or chart option lists\cr
+\verb{   }event - name of event for switching charts. Default is \emph{click}.\cr
 \verb{ }Returns a chart with ability to morph into other charts\cr
 \strong{cmd = 'fullscreen'} \cr
 \verb{ }A toolbox feature to toggle fullscreen on/off. Works in a browser, not in RStudio.\cr
@@ -97,23 +99,31 @@ if (interactive()) {  # comm.out: Fedora errors about some 'browser'
            }) |> 
     ec.util(cmd= 'tabset')
   )
+}
 
-  p1 <- cars |> ec.init(grid= list(top= 20))  # move chart up
-  p2 <- mtcars |> ec.init()
-  ec.util(cmd= 'tabset', cars= p1, mtcars= p2, width= 333, height= 333)
+cars |> ec.init(
+ graphic = list(
+   ec.util(cmd='button', text='see type', right='center', top=20,
+     js="function(a) {op=ec_option(echwid); alert(op.series[0].type);}")
+ )
+)
 
-  lapply(list('dark','macarons','gray','jazz','dark-mushroom'),
-                \(x) cars |> ec.init() |> ec.theme(x) ) |>
+p1 <- cars |> ec.init(grid= list(top=20), height=333)  # move chart up
+p2 <- mtcars |> ec.init(height=333)
+ec.util(cmd= 'tabset', cars= p1, mtcars= p2)
+
+lapply(list('dark','macarons','gray','jazz','dark-mushroom'),
+       function(x) cars |> ec.init() |> ec.theme(x) ) |>
   ec.util(cmd='layout', cols= 2, title= 'my layout')
   
-  setd <- \(type) {
-	   mtcars |> group_by(cyl) |> 
-	 ec.init(ctype= type,
-		  title= list(subtext= 'mouseover points to morph'),
+setd <- function(type) {
+  mtcars |> dplyr::group_by(cyl) |> 
+  ec.init(ctype= type,
+		  title= list(subtext= 'click points to morph'),
 		  xAxis= list(scale= TRUE))
-  }
-  oscatter <- setd('scatter')
-  obar <- setd('bar')
-  ec.util(cmd='morph', oscatter, obar)
 }
+oscatter <- setd('scatter')
+obar <- setd('bar')
+ec.util(cmd='morph', oscatter, obar)
+  
 }

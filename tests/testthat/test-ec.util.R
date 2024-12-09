@@ -101,13 +101,14 @@ test_that("layout", {
 })
 
 test_that("tabset with pairs", {
-  p1 <- cars |> ec.init(grid= list(top= 20))
-  p2 <- mtcars |> ec.init()
+  p1 <- cars |> ec.init(grid= list(top= 20), height=333)
+  p2 <- mtcars |> ec.init(height=333)
   r <- ec.util(cmd='tabset', cars=p1, mtcars=p2)
+  expect_s3_class(r[[2]]$children[[5]]$children[[2]]$children[[1]][[1]], 'echarty')
+  expect_equal(r[[2]]$children[[2]]$children[[1]], "cars")
   expect_equal(r[[2]]$children[[5]]$children[[1]]$children[[1]][[1]]$x$opts$dataset[[1]]$dimensions, c("speed", "dist"))
   expect_equal(r[[2]]$children[[5]]$children[[1]]$name, "section")
-  expect_equal(r[[2]]$children[[2]]$children[[1]], "cars")
-  expect_s3_class(r[[2]]$children[[5]]$children[[2]]$children[[1]][[1]], 'echarty')
+  expect_equal(r[[2]]$children[[5]]$children[[1]]$children[[1]][[1]]$height, 333)
 })
 
 test_that("tabset with pipe", {
@@ -121,34 +122,35 @@ test_that("tabset with pipe", {
 })
 
 test_that("morph 1", {
+
+  colors <- c("blue","red")
   mc <- mtcars |> filter(cyl<8)
-  datt <- function(idx) { return(mc[mc$cyl==idx,]$hp) }
-  colors <- c("blue","red","green","yellow")
-  
+  cyls <- as.character(sort(unique(mc$cyl)))
+  sers <- lapply(mc |> group_by(cyl) |> group_split(), \(x) {
+    cyl <- as.character(unique(x$cyl))
+    list(type='scatter', id=cyl, dataGroupId=cyl, 
+         data= ec.data(x|>select(mpg,hp)),
+         universalTransition= list(enabled= TRUE))
+  })
+  dbar <- ec.data(mc |> group_by(cyl) |> summarize(value= mean(hp)) |>
+              mutate(groupId= as.character(cyl)),'names')
   oscatter <- list(
-    xAxis= list(scale=TRUE),
-    yAxis= list(scale=TRUE), color= colors,
-    series=list(
-      list(type='scatter', id=4, dataGroupId=4, data= datt(4),
-           universalTransition= list(enabled= TRUE)),
-      list(type='scatter', id=6, dataGroupId=6, data= datt(6),
-           universalTransition= list(enabled=TRUE)) 
-    )
+    title= list(subtext='click points to morph'), color= colors,
+    xAxis= list(scale=TRUE, name='mpg'),
+    yAxis= list(scale=TRUE, name='hp'),
+    series= sers
   )
   obar <- list(
-    title= list(text= 'Average'),
-    xAxis= list(type= 'category', data= list('cyl4', 'cyl6')),
-    yAxis= list(show= TRUE), color= colors,
+    title= list(text= 'Average'), color= colors,
+    xAxis= list(type= 'category', data= paste0('cyl',cyls)),
+    yAxis= list(show= TRUE),
     series= list(list(
       type= 'bar', id= 'average', colorBy= 'data',
-      data= list(
-        list(value= mean(datt(4)), groupId=4),
-        list(value= mean(datt(6)), groupId=6)),
-      universalTransition=list(enabled= TRUE, 
-                               seriesKey=c(4, 6))
+      data= dbar,
+      universalTransition=list(enabled= TRUE, seriesKey= cyls)
     ))
   )
-  
+
   auto <- " cnt = 0;
   setInterval(() => {
     cnt++;
@@ -169,7 +171,7 @@ test_that("morph 1", {
 test_that("morph 2", {
   setd <- function(type) {
     mtcars |> group_by(cyl) |> ec.init(ctype= type) |> ec.upd({
-      title <- list(subtext='mouseover points to morph')
+      title <- list(subtext='click points to morph')
       xAxis <- list(scale=TRUE)
       series <- lapply(series, function(ss) {
         ss$groupId <- ss$name

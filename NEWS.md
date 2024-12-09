@@ -8,6 +8,8 @@
 - change in dataset: store column names in _dimensions_ instead of _source_
 - fixed bug in ecr.ebars for single series
 - add optional placeholder '%@' in title$text for timeline
+- add _event_ parameter in _ec.util_ for cmd='morph'
+- integrate website with library using _pkgdown_
 
 ## v. 1.6.4  on CRAN
 
