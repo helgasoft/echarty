@@ -73,7 +73,8 @@
 #' &emsp; &emsp; from - name of 'from' column\cr
 #' &emsp; &emsp; to - name of 'to' column\cr
 #' 
-#' @examples 
+#' @examples
+#' library(dplyr)
 #' if (interactive()) {  # comm.out: Fedora errors about some 'browser'
 #'   library(sf)
 #'   fname <- system.file("shape/nc.shp", package="sf")
@@ -85,7 +86,7 @@
 #'   )
 #' 
 #'   htmltools::browsable(
-#'     lapply(iris |> dplyr::group_by(Species) |> dplyr::group_split(), 
+#'     lapply(iris |> group_by(Species) |> group_split(), 
 #'            function(x) {
 #'      x |> ec.init(ctype= 'scatter', title= list(text= unique(x$Species)))
 #'            }) |> 
@@ -93,7 +94,7 @@
 #'   )
 #' 
 #'   p1 <- cars |> ec.init(grid= list(top=26), height=333)  # move chart up
-#'   p2 <- mtcars |> dplyr::arrange(mpg) |> ec.init(height=333, ctype='line')
+#'   p2 <- mtcars |> arrange(mpg) |> ec.init(height=333, ctype='line')
 #'   ec.util(cmd= 'tabset', cars= p1, mtcars= p2)
 #' }
 #' 
@@ -113,7 +114,7 @@
 #' sers <- lapply(mtcars |> group_by(cyl) |> group_split(), \(x) {
 #'   cyl <- as.character(unique(x$cyl))
 #'   list(type='scatter', id=cyl, dataGroupId=cyl, 
-#'        data= ec.data(x|>select(mpg,hp)),
+#'        data= ec.data(x |> select(mpg,hp)),
 #'        universalTransition= TRUE)
 #' })
 #' oscatter <- list(
@@ -129,7 +130,7 @@
 #'     type= 'pie', label= list(show=TRUE), colorBy= 'data',
 #'     data= ec.data(mtcars |> group_by(cyl) |> summarize(value= mean(hp)) |>
 #'        mutate(groupId= as.character(cyl), name= as.character(cyl)),'names'),
-#'     universalTransition= list(enabled=T, seriesKey= cyls)
+#'     universalTransition= list(enabled=TRUE, seriesKey= cyls)
 #'   ))
 #' )
 #' ec.util(cmd='morph', oscatter, opie) 

@@ -144,10 +144,10 @@
 #' #------ Pie
 #' isl <- data.frame(name=names(islands), value=islands) |> filter(value>100) |> arrange(value)
 #' ec.init( preset= FALSE,
-#'    title= list(text = "Landmasses over 60,000 mi\u00B2", left = 'center'),
+#'    title= list(text = "Landmasses over 60,000 sq.mi", left = 'center'),
 #'    tooltip= list(trigger='item'),   #, formatter= ec.clmn()),
 #'    series= list(list(type= 'pie', radius= '50%', 
-#'                      data= ec.data(isl, 'names'), name='mi\u00B2'))
+#'                      data= ec.data(isl, 'names'), name='sq.mi'))
 #' )
 #' 
 #' 
@@ -350,9 +350,9 @@
 #'     list('Jasmin Krause', 52, 'Musician', 287, '2011-02-14'),
 #'     list('Li Lei', 37, 'Teacher', 219, '2011-02-18'),
 #'     list('Karle Neumann', 25, 'Engineer', 253, '2011-04-02'),
-#'     list('Adrian Groß', 19, 'Teacher', NULL, '2011-01-16'),
+#'     list('Adrian Gro?', 19, 'Teacher', NULL, '2011-01-16'),
 #'     list('Mia Neumann', 71, 'Engineer', 165, '2011-03-19'),
-#'     list('Böhm Fuchs', 36, 'Musician', 318, '2011-02-24'),
+#'     list('B?hm Fuchs', 36, 'Musician', 318, '2011-02-24'),
 #'     list('Han Meimei', 67, 'Engineer', 366, '2011-03-12'))),
 #'   list(transform = list(type= 'sort', config=list(
 #'     list(dimension='profession', order='desc'),
@@ -406,7 +406,7 @@
 #' ec.init(preset= FALSE,
 #'         series= list(list(
 #'           type = 'gauge', max = 160, min=40,
-#'           detail = list(formatter='\U1F9E0={value}'),
+#'           detail = list(formatter='{value}'),
 #'           data = list(list(value=85, name='IQ test')) )) )
 #' 
 #' 
