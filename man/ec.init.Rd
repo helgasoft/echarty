@@ -64,7 +64,7 @@ Optional echarty widget attributes include: \cr
 \item ask - prompt user before downloading plugins when \emph{load} is present, FALSE by default
 \item js - single string or a vector with JavaScript expressions to evaluate.\cr
 single: exposed \emph{chart} object (most common)\cr
-vector: \verb{     }see demo code in \link{ec.examples}\cr
+vector: \verb{     }see code in \href{https://github.com/helgasoft/echarty/blob/main/demo/examples.R}{examples}\cr
 \verb{     }First expression evaluated before initialization, exposed object \emph{window} \cr
 \verb{     }Second is evaluated with exposed object \emph{opts}. \cr
 \verb{     }Third is evaluated with exposed \emph{chart} object after \emph{opts} set.

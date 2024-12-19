@@ -10,9 +10,9 @@ ec.inspect(wt, target = "opts", ...)
 \item{wt}{An \code{echarty} widget as returned by \link{ec.init}}
 
 \item{target}{type of resulting value: \cr
-\verb{   }'opts' - the htmlwidget \emph{options} as JSON (default)\cr
-\verb{   }'full' - the \emph{entire} htmlwidget as JSON\cr
-\verb{   }'data' - info about chart's embedded data (char vector)}
+    'opts' - the htmlwidget \emph{options} as JSON (default)\cr
+    'full' - the \emph{entire} htmlwidget as JSON\cr
+    'data' - info about chart's embedded data (char vector)}
 
 \item{...}{Additional attributes to pass to \link[jsonlite]{toJSON}\cr
 'file' - optional file name to save to when target='full'\cr}

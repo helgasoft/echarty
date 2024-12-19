@@ -2,7 +2,6 @@
 
 export(ec.clmn)
 export(ec.data)
-export(ec.examples)
 export(ec.fromJson)
 export(ec.init)
 export(ec.inspect)

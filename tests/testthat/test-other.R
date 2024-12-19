@@ -276,6 +276,7 @@ test_that('stops are working in echarty.R', {
   # expect_silent(ec.init(data.frame(name='n',value=1) |> group_by(name), 
   #     tl.series= list(type='map')))  # 2 cols exception for map
   expect_error(ec.init(mtcars |> group_by(gear), tl.series= list(encode= list(x=1, y=2),groupBy='zzz'))) # groupBy
+  expect_error(ec.util(cmd='layout'))
   expect_error(ecr.band(cars))
   tmp <- cars; tmp <- tmp |> rename(lower=speed, upper=dist)
   expect_error(ecr.band(tmp, lower='lower', upper='upper')) # no first col

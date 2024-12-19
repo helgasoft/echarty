@@ -8,10 +8,10 @@ ec.fromJson(txt, ...)
 }
 \arguments{
 \item{txt}{Could be one of the following:\cr
-\verb{   }class \emph{url}, like \code{url('https://serv.us/cars.txt')}\cr
-\verb{   }class \emph{file}, like \code{file('c:/temp/cars.txt','rb')}\cr
-\verb{   }class \emph{json}, like \code{ec.inspect(p)}, for options or full\cr
-\verb{   }class \emph{character}, JSON string with options only, see example below\cr}
+    class \emph{url}, like \code{url('https://serv.us/cars.txt')}\cr
+    class \emph{file}, like \code{file('c:/temp/cars.txt','rb')}\cr
+    class \emph{json}, like \code{ec.inspect(p)}, for options or full\cr
+    class \emph{character}, JSON string with options only, see example below\cr}
 
 \item{...}{Any attributes to pass to internal \link{ec.init} when \emph{txt} is options only}
 }
@@ -35,5 +35,6 @@ ec.fromJson(txt)  # text json
 # cars |> ec.init() |> ec.inspect(target='full', file=outFile)
 # ec.fromJson(file(outFile, 'rb'))
 # ec.fromJson(url('http://localhost/echarty/cars.json'))
+
 ec.fromJson('https://helgasoft.github.io/echarty/test/pfull.json')
 }

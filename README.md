@@ -103,18 +103,13 @@ echarty::ec.fromJson('https://helgasoft.github.io/echarty/test/pfull.json')
 
 The **Coder** is a good introduction, type ```library(echarty); demo(coder)```.  
 The [**WEBSITE**](https://helgasoft.github.io/echarty) has a vast gallery with code and tutorials.  
-The package itself has also [**code examples**](https://github.com/helgasoft/echarty/blob/main/R/examples.R)
-included. Type
-**?ec.examples**, then copy/paste any code to
-see the chart.  
-
-Now you can start building [**beautiful
-ECharts**](https://echarts.apache.org/examples/en/index.html) (and
-[**more**](https://www.makeapie.cn/echarts)) with R and Shiny!
+The package itself has [code examples](https://github.com/helgasoft/echarty/blob/main/demo/examples.R)
+included.
+Now you can start building [**beautiful ECharts**](https://echarts.apache.org/examples/en/index.html) with R and Shiny!
 
 <br>
 <p align="center">
-<a href='https://helgasoft.github.io/echarty/gallery.html' target='_blank'>
+<a href='https://helgasoft.github.io/echarty/articles/gallery.html' target='_blank'>
   <img src="man/figures/ssPolarStack.png" alt="Polar Stack" width="180"/>
   <img src="man/figures/ssBars.gif"/>
   <img src="man/figures/ssThemeRiver.png" width="180"/>

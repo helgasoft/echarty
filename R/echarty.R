@@ -52,7 +52,7 @@ noCoord <- c('polar','radar','singleAxis','parallelAxis','calendar')
 #'  * ask - prompt user before downloading plugins when _load_ is present, FALSE by default
 #'  * js - single string or a vector with JavaScript expressions to evaluate.\cr 
 #'    single: exposed _chart_ object (most common)\cr
-#'    vector: \verb{     }see demo code in [ec.examples]\cr
+#'    vector: \verb{     }see code in \href{https://github.com/helgasoft/echarty/blob/main/demo/examples.R}{examples}\cr
 #'  \verb{     }First expression evaluated before initialization, exposed object _window_ \cr
 #'  \verb{     }Second is evaluated with exposed object _opts_. \cr
 #'  \verb{     }Third is evaluated with exposed _chart_ object after _opts_ set.
@@ -1142,7 +1142,7 @@ ecs.proxy <- function(id) {
 #' @return A proxy object to update the chart.
 #' 
 #' @seealso [ecs.proxy], [ecs.render], [ecs.output] \cr
-#' Read about event handling in [-- Introduction --], code in [ec.examples].
+#' Read about event handling in [-- Introduction --], or from \href{https://github.com/helgasoft/echarty/blob/main/demo/examples.R}{examples}.
 #' 
 #' @examples
 #' if (interactive()) {

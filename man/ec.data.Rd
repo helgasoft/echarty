@@ -46,8 +46,8 @@ Make data lists from a data.frame
 }
 \details{
 \code{format='boxplot'} requires the first two \emph{df} columns as: \cr
-\verb{   }column for the non-computational categorical axis\cr
-\verb{   }column with (numeric) data to compute the five boxplot values\cr
+    column for the non-computational categorical axis\cr
+    column with (numeric) data to compute the five boxplot values\cr
 Additional grouping is supported on a column after the second. Groups will show in the legend, if enabled.\cr
 Returns a \code{list(dataset, series, xAxis, yAxis)} to set params in \link{ec.init}.
 Make sure there is enough data for computation, 4+ values per boxplot.\cr
@@ -68,7 +68,7 @@ ec.init(preset= FALSE,
   series= list(list(
     type= 'tree', orient= 'TB', roam= TRUE, initialTreeDepth= -1,
     data= ec.data(hc, format='dendrogram'),
-    # layout= 'radial', symbolSize= ec.clmn(scale= 0.33),
+    layout= 'radial', # symbolSize= ec.clmn(scale= 0.33),
     ## exclude added labels like 'pXX', leaving only the originals
     label= list(formatter= htmlwidgets::JS(
       "function(n) { out= /p\\\\d+/.test(n.name) ? '' : n.name; return out;}"))

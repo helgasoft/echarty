@@ -1,4 +1,35 @@
 url: https://helgasoft.github.io/echarty/
 template:
   bootstrap: 5
+  bootswatch: darkly
+home:
+  sidebar:
+    structure:
+    - links
+    - license
+    - community
+    - dev
+navbar:
+  structure:
+    left:
+    - intro
+    - reference
+    - articles
+    - tutorials
+    - news
+    right:
+    - search
+    - twitter
+    - github
+  components:
+    twitter:
+      icon: fa-twitter
+      href: http://twitter.com/echarty_R
+      aria-label: Twitter
+footer:
+  structure:
+    left: legal
+    right: built_with
+  components:
+    legal: \(c\) Helgasoft
 

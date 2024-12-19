@@ -98,6 +98,8 @@ test_that("layout", {
   expect_equal(p$children[[2]]$children[[2]]$children[[2]]$children[[1]]$x$theme, 'macarons')
   # test for 2nd row
   expect_equal(p$children[[2]]$children[[4]]$children[[1]]$children[[1]]$x$theme, 'dark-mushroom')
+  list(cars |> ec.init()) |> ec.util(cmd='layout', rows=2, title= 'coveralls')
+  list(cars |> ec.init()) |> ec.util(cmd='layout', title= 'coveralls')
 })
 
 test_that("tabset with pairs", {
@@ -294,6 +296,12 @@ test_that("ec.data dendrogram", {
 
 test_that("ec.data boxlpot", {
   
+  # simple boxplot
+  ds <- mtcars |> select(cyl, drat) |>
+  ec.data(format='boxplot', outliers=TRUE, layout= 'v')
+  #ec.init(dataset= ds$dataset, series= ds$series, xAxis= ds$xAxis, yAxis= ds$yAxis)
+  expect_equal(ds$series[[1]]$type, 'boxplot')
+
   # without grouping -------------------
   p <- mtcars |> relocate(cyl,mpg) |> ec.data(format='boxplot', outliers=TRUE)
   expect_equal(p$series[[1]]$type, 'boxplot')
@@ -310,7 +318,6 @@ test_that("ec.data boxlpot", {
   	emphasis= list(itemStyle= list(color= 'chartreuse', borderWidth=4, opacity=1))
 	)
   p <- ec.init(
-    #colors= heat.colors(length(mcyl)),
     legend= list(show= TRUE), tooltip= list(show=TRUE),
     dataset= ds$dataset, series= ds$series, xAxis= ds$xAxis, yAxis= ds$yAxis
   ) |> 
@@ -384,7 +391,7 @@ test_that("ec.data treeTK", {
   expect_equal(p$x$opts$series[[1]]$data[[1]]$value, 2201)
 })
 
-test_that("ec.data 'names' + nasep", {
+test_that("ec.data 'names' + nasep, header", {
   df <- data.frame(name= c('A','B','C'), value= c(1,2,3),
         itemStyle_color= c('chartreuse','lightblue','pink'),
         itemStyle_decal_symbol= c('rect','diamond','none'),                   
@@ -395,6 +402,10 @@ test_that("ec.data 'names' + nasep", {
   expect_equal(p$x$opts$series[[1]]$data[[1]]$emphasis$itemStyle$color, 'green')
   expect_equal(p$x$opts$series[[1]]$data[[2]]$itemStyle$decal$symbol, 'diamond')
   expect_equal(p$x$opts$series[[1]]$data[[3]]$itemStyle$color, 'pink')
+  p <- cars |> ec.data(header=TRUE)
+  expect_equal(p[[1]][1], 'speed')
+  p <- mtcars |> ec.data(format='values')
+  expect_equal(p[[1]]$value[1], 21)
 })
 
 test_that("ec.inspect and ec.fromJson", {

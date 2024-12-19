@@ -40,14 +40,14 @@ Echarty has three built-in event callbacks - \emph{click}, \emph{mouseover},
 \href{https://echarts.apache.org/en/api.html#events}{events} could be
 initialized through \code{p$x$capture}. Another option is to use \code{p$x$on}
 with JavaScript handlers, see code in
-\href{https://github.com/helgasoft/echarty/blob/main/R/examples.R}{ec.examples}.
+\href{https://github.com/helgasoft/echarty/blob/main/demo/examples.R}{examples}.
 }
 
 \subsection{Widget \strong{x} parameters}{
 
 These are \emph{htmlwidget} and \emph{ECharts} initialization parameters supported
 by echarty. There are code samples for most of them in
-\href{https://github.com/helgasoft/echarty/blob/main/R/examples.R}{ec.examples}:
+\href{https://github.com/helgasoft/echarty/blob/main/demo/examples.R}{examples}:
 \itemize{
 \item capture = event name(s), to monitor events, usually in Shiny
 \item on = define JavaScript code for event handling, see
@@ -85,24 +85,24 @@ To allow access to charts from JS.
 get_e_charts_opt)
 Parameter ‘id’ could be the internal variable \emph{echwid}, or the value set
 through \emph{ec.init} parameter \emph{elementId}. See demo code in
-\href{https://github.com/helgasoft/echarty/blob/main/R/examples.R}{ec.examples}
+\href{https://github.com/helgasoft/echarty/blob/main/demo/examples.R}{examples}
 }
 
 \subsection{Code examples}{
 
 Here is the complete list of sample code \strong{locations}:
 \itemize{
-\item \href{https://github.com/helgasoft/echarty/blob/main/R/examples.R}{ec.examples}
-\item code in \href{https://github.com/helgasoft/echarty/tree/main/tests/testthat}{Github tests}
-\item command examples, like in \emph{ec.init}
+\item website
+\href{https://helgasoft.github.io/echarty/articles/gallery.html}{gallery}
+\item \href{https://github.com/helgasoft/echarty/blob/main/demo/examples.R}{demo examples}
 \item Shiny code is in
 \href{https://github.com/helgasoft/echarty/blob/main/demo/eshiny.R}{eshiny.R},
 run with \code{demo(eshiny)}
-\item website \href{https://helgasoft.github.io/echarty/gallery.html}{gallery}
-and \href{https://helgasoft.github.io/echarty/}{tutorials}
 \item demos on \href{https://rpubs.com/echarty}{RPubs}
 \item searchable \href{https://gist.github.com/helgasoft}{gists}
 \item answers to \href{https://github.com/helgasoft/echarty/issues}{Github issues}
+\item code in \href{https://github.com/helgasoft/echarty/tree/main/tests/testthat}{Github tests}
+\item command examples, like in \emph{?ec.init}
 }
 }
 

@@ -12,64 +12,66 @@
 #'      for \emph{tabset} parameters should be in format \emph{name1=chart1, name2=chart2}, see example\cr
 #' @details 
 #' **cmd = 'sf.series'**\cr
-#' \verb{ }Build _leaflet_ or \href{https://echarts.apache.org/en/option.html#geo.map}{geo} map series from shapefiles.\cr
-#' \verb{ }Supported types: POINT, MULTIPOINT, LINESTRING, MULTILINESTRING, POLYGON, MULTIPOLYGON \cr
-#' \verb{ }Coordinate system is _leaflet_(default), _geo_ or _cartesian3D_ (for POINT(xyz))\cr
-#' \verb{ }Limitations:\cr 
-#' \verb{     }polygons can have only their name in tooltip,  \cr
-#' \verb{     }assumes Geodetic CRS is WGS 84, for conversion use \link[sf]{st_transform} with _crs=4326_.\cr
-#' \verb{ }Parameters:\cr 
-#' \verb{   }df - value from \link[sf]{st_read}\cr
-#' \verb{   }nid - optional column name for name-id used in tooltips\cr
-#' \verb{   }cs - optional _coordinateSystem_ value, default 'leaflet'\cr
-#' \verb{   }verbose - optional, print shapefile item names in console\cr
-#' \verb{ }Returns a list of chart series\cr
+#' &emsp;Build _leaflet_ or \href{https://echarts.apache.org/en/option.html#geo.map}{geo} map series from shapefiles.\cr
+#' &emsp;Supported types: POINT, MULTIPOINT, LINESTRING, MULTILINESTRING, POLYGON, MULTIPOLYGON \cr
+#' &emsp;Coordinate system is _leaflet_(default), _geo_ or _cartesian3D_ (for POINT(xyz))\cr
+#' &emsp;Limitations:\cr 
+#' &emsp; &emsp; polygons can have only their name in tooltip,  \cr
+#' &emsp; &emsp; assumes Geodetic CRS is WGS 84, for conversion use \link[sf]{st_transform} with _crs=4326_.\cr
+#' &emsp;Parameters:\cr 
+#' &emsp; &emsp; df - value from \link[sf]{st_read}\cr
+#' &emsp; &emsp; nid - optional column name for name-id used in tooltips\cr
+#' &emsp; &emsp; cs - optional _coordinateSystem_ value, default 'leaflet'\cr
+#' &emsp; &emsp; verbose - optional, print shapefile item names in console\cr
+#' &emsp;Returns a list of chart series\cr
 #' **cmd = 'sf.bbox'**\cr
-#' \verb{ }Returns JavaScript code to position a map inside a bounding box from \link[sf]{st_bbox}, for leaflet only.\cr
+#' &emsp;Returns JavaScript code to position a map inside a bounding box from \link[sf]{st_bbox}, for leaflet only.\cr
 #' **cmd = 'sf.unzip'**\cr
-#' \verb{ }Unzips a remote file and returns local file name of the unzipped .shp file\cr
-#' \verb{   }url - URL of remote zipped shapefile\cr
-#' \verb{   }shp - optional name of .shp file inside ZIP file if multiple exist. Do not add file extension. \cr
+#' &emsp;Unzips a remote file and returns local file name of the unzipped .shp file\cr
+#' &emsp; &emsp; url - URL of remote zipped shapefile\cr
+#' &emsp; &emsp; shp - optional name of .shp file inside ZIP file if multiple exist. Do not add file extension. \cr
 #' **cmd = 'geojson'** \cr
-#' \verb{ }Custom series list from geoJson objects\cr
-#' \verb{   }geojson - object from \link[jsonlite]{fromJSON}\cr
-#' \verb{   }cs - optional _coordinateSystem_ value, default 'leaflet'\cr
-#' \verb{   }ppfill - optional fill color like '#F00', OR NULL for no-fill, for all Points and Polygons\cr
-#' \verb{   }nid - optional feature property for item name used in tooltips\cr
-#' \verb{   }... - optional custom series attributes like _itemStyle_\cr
-#' \verb{ }Can display also geoJson _feature properties_: color; lwidth, ldash (lines); ppfill, radius (points)\cr
+#' &emsp;Custom series list from geoJson objects\cr
+#' &emsp; &emsp; geojson - object from \link[jsonlite]{fromJSON}\cr
+#' &emsp; &emsp; cs - optional _coordinateSystem_ value, default 'leaflet'\cr
+#' &emsp; &emsp; ppfill - optional fill color like '#F00', OR NULL for no-fill, for all Points and Polygons\cr
+#' &emsp; &emsp; nid - optional feature property for item name used in tooltips\cr
+#' &emsp; &emsp; ... - optional custom series attributes like _itemStyle_\cr
+#' &emsp;Can display also geoJson _feature properties_: color; lwidth, ldash (lines); ppfill, radius (points)\cr
 #' **cmd = 'layout'** \cr
-#' \verb{ }Multiple charts in table-like rows/columns format\cr
-#' \verb{   }... - List of charts\cr
-#' \verb{   }title - optional title for the set, rows= Number of rows, cols= Number of columns\cr
-#' \verb{ }Returns a container \link[htmltools]{div} in rmarkdown, otherwise \link[htmltools]{browsable}.\cr
-#' \verb{ }For 3-4 charts one would use multiple series within a \href{https://echarts.apache.org/en/option.html#grid}{grid}. \cr
-#' \verb{ }For greater number of charts _ec.util(cmd='layout')_ comes in handy\cr
+#' &emsp;Multiple charts in table-like rows/columns format\cr
+#' &emsp; &emsp; ... - List of charts\cr
+#' &emsp; &emsp; title - optional title for the entire set\cr
+#' &emsp; &emsp; rows - optional number of rows\cr 
+#' &emsp; &emsp; cols - optional number of columns\cr
+#' &emsp;Returns a container \link[htmltools]{div} in rmarkdown, otherwise \link[htmltools]{browsable}.\cr
+#' &emsp;For 3-4 charts one would use multiple series within a \href{https://echarts.apache.org/en/option.html#grid}{grid}. \cr
+#' &emsp;For greater number of charts _ec.util(cmd='layout')_ comes in handy\cr
 #' **cmd = 'tabset'** \cr
-#' \verb{   }... - a list name/chart pairs like \emph{n1=chart1, n2=chart2}, each tab may contain a chart.\cr
-#' \verb{   }tabStyle - tab style string, see default \emph{tabStyle} variable in the code\cr
-#' \verb{ }Returns A) \link[htmltools]{tagList} of tabs when in a pipe without '...' params, see example\cr
-#' \verb{ }Returns B) \link[htmltools]{browsable} when '...' params are provided by user\cr
+#' &emsp; &emsp; ... - a list name/chart pairs like \emph{n1=chart1, n2=chart2}, each tab may contain a chart.\cr
+#' &emsp; &emsp; tabStyle - tab style string, see default \emph{tabStyle} variable in the code\cr
+#' &emsp;Returns A) \link[htmltools]{tagList} of tabs when in a pipe without '...' params, see example\cr
+#' &emsp;Returns B) \link[htmltools]{browsable} when '...' params are provided by user\cr
 #' **cmd = 'button'** \cr
-#' \verb{ }UI button to execute a JS function,\cr
-#' \verb{   }text - the button label\cr
-#' \verb{   }js - the JS function string\cr
-#' \verb{   }... - optional parameters for the \href{https://echarts.apache.org/en/option.html#graphic.elements-rect.type}{rect} element\cr
-#' \verb{ }Returns a graphic.elements-\href{https://echarts.apache.org/en/option.html#graphic.elements-rect.type}{rect} element.\cr
+#' &emsp;UI button to execute a JS function,\cr
+#' &emsp; &emsp; text - the button label\cr
+#' &emsp; &emsp; js - the JS function string\cr
+#' &emsp; &emsp; ... - optional parameters for the \href{https://echarts.apache.org/en/option.html#graphic.elements-rect.type}{rect} element\cr
+#' &emsp;Returns a graphic.elements-\href{https://echarts.apache.org/en/option.html#graphic.elements-rect.type}{rect} element.\cr
 #' **cmd = 'morph'** \cr
-#' \verb{   }... - a list of charts or chart option lists\cr
-#' \verb{   }event - name of event for switching charts. Default is \emph{click}.\cr
-#' \verb{ }Returns a chart with ability to morph into other charts\cr
+#' &emsp; &emsp; ... - a list of charts or chart option lists\cr
+#' &emsp; &emsp; event - name of event for switching charts. Default is \emph{click}.\cr
+#' &emsp;Returns a chart with ability to morph into other charts\cr
 #' **cmd = 'fullscreen'** \cr
-#' \verb{ }A toolbox feature to toggle fullscreen on/off. Works in a browser, not in RStudio.\cr
+#' &emsp;A toolbox feature to toggle fullscreen on/off. Works in a browser, not in RStudio.\cr
 #' **cmd = 'rescale'** \cr
-#' \verb{   }v - input vector of numeric values to rescale\cr
-#' \verb{   }t - target range c(min,max), numeric vector of two\cr
+#' &emsp; &emsp; v - input vector of numeric values to rescale\cr
+#' &emsp; &emsp; t - target range c(min,max), numeric vector of two\cr
 #' **cmd = 'level'** \cr
-#' \verb{ }Calculate vertical levels for timeline \emph{line} charts, returns a numeric vector\cr
-#' \verb{   }df - data.frame with _from_ and _to_ columns\cr
-#' \verb{   }from - name of 'from' column\cr
-#' \verb{   }to - name of 'to' column\cr
+#' &emsp;Calculate vertical levels for timeline \emph{line} charts, returns a numeric vector\cr
+#' &emsp; &emsp; df - data.frame with _from_ and _to_ columns\cr
+#' &emsp; &emsp; from - name of 'from' column\cr
+#' &emsp; &emsp; to - name of 'to' column\cr
 #' 
 #' @examples 
 #' if (interactive()) {  # comm.out: Fedora errors about some 'browser'
@@ -89,6 +91,10 @@
 #'            }) |> 
 #'     ec.util(cmd= 'tabset')
 #'   )
+#' 
+#'   p1 <- cars |> ec.init(grid= list(top=26), height=333)  # move chart up
+#'   p2 <- mtcars |> dplyr::arrange(mpg) |> ec.init(height=333, ctype='line')
+#'   ec.util(cmd= 'tabset', cars= p1, mtcars= p2)
 #' }
 #' 
 #' cars |> ec.init(
@@ -98,23 +104,35 @@
 #'  )
 #' )
 #' 
-#' p1 <- cars |> ec.init(grid= list(top=20), height=333)  # move chart up
-#' p2 <- mtcars |> ec.init(height=333)
-#' ec.util(cmd= 'tabset', cars= p1, mtcars= p2)
-#' 
 #' lapply(list('dark','macarons','gray','jazz','dark-mushroom'),
-#'        function(x) cars |> ec.init() |> ec.theme(x) ) |>
-#'   ec.util(cmd='layout', cols= 2, title= 'my layout')
+#'   function(x) cars |> ec.init(grid= list(bottom=0)) |> ec.theme(x) ) |>
+#' ec.util(cmd='layout', cols= 2, title= 'my layout')
 #'   
-#' setd <- function(type) {
-#'   mtcars |> dplyr::group_by(cyl) |> 
-#'   ec.init(ctype= type,
-#' 		  title= list(subtext= 'click points to morph'),
-#' 		  xAxis= list(scale= TRUE))
-#' }
-#' oscatter <- setd('scatter')
-#' obar <- setd('bar')
-#' ec.util(cmd='morph', oscatter, obar)
+#' colors <- c("blue","red","green")
+#' cyls <- as.character(sort(unique(mtcars$cyl)))
+#' sers <- lapply(mtcars |> group_by(cyl) |> group_split(), \(x) {
+#'   cyl <- as.character(unique(x$cyl))
+#'   list(type='scatter', id=cyl, dataGroupId=cyl, 
+#'        data= ec.data(x|>select(mpg,hp)),
+#'        universalTransition= TRUE)
+#' })
+#' oscatter <- list(
+#'   title= list(subtext='click points to morph'), 
+#'   color= colors, tooltip= list(show=TRUE),
+#'   xAxis= list(scale=TRUE, name='mpg'), yAxis= list(scale=TRUE, name='hp'),
+#'   series= sers
+#' )
+#' opie <- list(
+#'   title= list(text= 'Average hp'), 
+#'   color= colors, tooltip= list(show=TRUE),
+#'   series= list(list(
+#'     type= 'pie', label= list(show=TRUE), colorBy= 'data',
+#'     data= ec.data(mtcars |> group_by(cyl) |> summarize(value= mean(hp)) |>
+#'        mutate(groupId= as.character(cyl), name= as.character(cyl)),'names'),
+#'     universalTransition= list(enabled=T, seriesKey= cyls)
+#'   ))
+#' )
+#' ec.util(cmd='morph', oscatter, opie) 
 #'   
 #' @importFrom utils unzip
 #' @export
@@ -348,7 +366,7 @@ body {
  margin-bottom: -1px;
 }
 .tab-panel {
- padding: 10px 0;
+ padding: 10px 0; width: 100%;
  border-top: 1px solid #ccc;
 }
 body { padding: 10px; }
@@ -405,6 +423,7 @@ body { padding: 10px; }
       
       title <- NULL   # CRAN check fix
       do.opties(c('rows','cols','title'))
+      stopifnot("ec.util: list of charts is missing"= length(opts)>0)
       lplots <- length(opts[[1]])
       if (is.null(rows) & !is.null(cols)) rows <- ceiling(lplots/cols)
       if (!is.null(rows) & is.null(cols)) cols <- ceiling(lplots/rows)
@@ -573,8 +592,8 @@ body { padding: 10px; }
 #'   
 #' @details 
 #' `format='boxplot'` requires the first two _df_ columns as: \cr
-#' \verb{   }column for the non-computational categorical axis\cr
-#' \verb{   }column with (numeric) data to compute the five boxplot values\cr
+#' &emsp; &emsp; column for the non-computational categorical axis\cr
+#' &emsp; &emsp; column with (numeric) data to compute the five boxplot values\cr
 #'  Additional grouping is supported on a column after the second. Groups will show in the legend, if enabled.\cr
 #'  Returns a `list(dataset, series, xAxis, yAxis)` to set params in [ec.init]. 
 #'  Make sure there is enough data for computation, 4+ values per boxplot.\cr
@@ -596,7 +615,7 @@ body { padding: 10px; }
 #'   series= list(list(
 #'     type= 'tree', orient= 'TB', roam= TRUE, initialTreeDepth= -1,
 #'     data= ec.data(hc, format='dendrogram'),
-#'     # layout= 'radial', symbolSize= ec.clmn(scale= 0.33),
+#'     layout= 'radial', # symbolSize= ec.clmn(scale= 0.33),
 #'     ## exclude added labels like 'pXX', leaving only the originals
 #'     label= list(formatter= htmlwidgets::JS(
 #'       "function(n) { out= /p\\d+/.test(n.name) ? '' : n.name; return out;}"))
@@ -1191,9 +1210,9 @@ ec.theme <- function (wt, name='custom', code= NULL)
 #' 
 #' @param wt An \code{echarty} widget as returned by [ec.init]
 #' @param target type of resulting value: \cr
-#' \verb{   }'opts' - the htmlwidget _options_ as JSON (default)\cr
-#' \verb{   }'full' - the _entire_ htmlwidget as JSON\cr
-#' \verb{   }'data' - info about chart's embedded data (char vector)
+#' &emsp; &emsp; 'opts' - the htmlwidget _options_ as JSON (default)\cr
+#' &emsp; &emsp; 'full' - the _entire_ htmlwidget as JSON\cr
+#' &emsp; &emsp; 'data' - info about chart's embedded data (char vector)
 #' @param ... Additional attributes to pass to \link[jsonlite]{toJSON}\cr
 #' 'file' - optional file name to save to when target='full'\cr
 #' @return A JSON string, except when \code{target} is 'data' - then
@@ -1270,10 +1289,10 @@ ec.inspect <- function(wt, target='opts', ...) {
 #' Convert JSON string or file to chart
 #' 
 #' @param txt Could be one of the following:\cr
-#' \verb{   }class _url_, like \code{url('https://serv.us/cars.txt')}\cr
-#' \verb{   }class _file_, like \code{file('c:/temp/cars.txt','rb')}\cr
-#' \verb{   }class _json_, like \code{ec.inspect(p)}, for options or full\cr
-#' \verb{   }class _character_, JSON string with options only, see example below\cr
+#' &emsp; &emsp; class _url_, like \code{url('https://serv.us/cars.txt')}\cr
+#' &emsp; &emsp; class _file_, like \code{file('c:/temp/cars.txt','rb')}\cr
+#' &emsp; &emsp; class _json_, like \code{ec.inspect(p)}, for options or full\cr
+#' &emsp; &emsp; class _character_, JSON string with options only, see example below\cr
 #' @param ... Any attributes to pass to internal [ec.init] when _txt_ is options only
 #' @return An _echarty_ widget.
 #' 
@@ -1290,6 +1309,7 @@ ec.inspect <- function(wt, target='opts', ...) {
 #' # cars |> ec.init() |> ec.inspect(target='full', file=outFile)
 #' # ec.fromJson(file(outFile, 'rb'))
 #' # ec.fromJson(url('http://localhost/echarty/cars.json'))
+#' 
 #' ec.fromJson('https://helgasoft.github.io/echarty/test/pfull.json')
 #' @export
 ec.fromJson <- function(txt, ...) {
