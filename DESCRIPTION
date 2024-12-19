@@ -27,4 +27,4 @@ URL: https://helgasoft.github.io/echarty/
 BugReports: https://github.com/helgasoft/echarty/issues/
 Encoding: UTF-8
 Language: en-US
-VignetteBuilder: knitr
+VignetteBuilder: rmarkdown

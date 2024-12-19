@@ -1146,7 +1146,7 @@ ecs.proxy <- function(id) {
 #' 
 #' @examples
 #' if (interactive()) {
-#'    demo(eshiny, package='echarty')
+#'  # run with  demo(eshiny, package='echarty')
 #' }
 #' 
 #' @export

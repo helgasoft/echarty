@@ -18,7 +18,7 @@ pkgdown
 README.md
 ^README\.Rmd$
 ^CODE_OF_CONDUCT\.md$
-^man/figs$
+^man/figures$
 ^\.ccache$
 ^tic\.R$
 ^codecov\.yml$

@@ -27,7 +27,7 @@ Once chart changes had been made, they need to be sent back to the widget for di
 }
 \examples{
 if (interactive()) {
-   demo(eshiny, package='echarty')
+ # run with  demo(eshiny, package='echarty')
 }
 
 }
