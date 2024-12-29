@@ -38,14 +38,14 @@ noCoord <- c('polar','radar','singleAxis','parallelAxis','calendar')
 #' @details  Command _ec.init_ creates a widget with \link[htmlwidgets]{createWidget}, then adds some ECharts features to it.\cr
 #'  Numerical indexes for series,visualMap,etc. are R-counted (1,2...)\cr
 #' 
-#'  **Presets**: \cr 
+#'  **Presets** \cr 
 #'  When data.frame **df** is present, a \href{https://echarts.apache.org/en/option.html#dataset}{dataset} is preset. \cr
 #'  When **df** is grouped and _ctype_ is not NULL, more datasets with legend and series are also preset. \cr
 #'  Plugin '3D' (load='3D') is required for GL series like _scatterGL, linesGL_, etc. \cr
 #'  Plugins 'leaflet' and 'world' preset _center_ to the mean of all coordinates from **df**. \cr
 #'  Users can delete or overwrite any presets as needed. \cr
 #'  
-#'  **Widget attributes**: \cr
+#'  **Widget attributes** \cr
 #'  Optional echarty widget attributes include: \cr
 #'  * elementId - Id of the widget, default is NULL(auto-generated)
 #'  * load - name(s) of plugin(s) to load. A character vector or comma-delimited string. default NULL.
@@ -60,7 +60,7 @@ noCoord <- c('polar','radar','singleAxis','parallelAxis','calendar')
 #'  * locale - 'EN'(default) or 'ZH'. Use predefined or custom \href{https://gist.github.com/helgasoft/0618c6537c45bfd9e86d3f9e1da497b8}{like so}.
 #'  * useDirtyRect - enable dirty rectangle rendering or not, FALSE by default, see \href{https://echarts.apache.org/en/api.html#echarts.init}{here}\cr
 #'  
-#'  **Built-in plugins**: \cr 
+#'  **Built-in plugins** \cr 
 #'  * leaflet - Leaflet maps with customizable tiles, see \href{https://github.com/gnijuohz/echarts-leaflet#readme}{source}\cr
 #'  * world - world map with country boundaries, see \href{https://github.com/apache/echarts/tree/master/test/data/map/js}{source} \cr
 #'  * lottie - support for \href{https://lottiefiles.com}{lotties} \cr
@@ -74,12 +74,12 @@ noCoord <- c('polar','radar','singleAxis','parallelAxis','calendar')
 #'  * wordcloud - cloud of words, see \href{https://github.com/ecomfe/echarts-wordcloud}{source} \cr
 #'  or install your own third-party plugins.\cr
 #'  
-#'  **Crosstalk**:\cr
-#'  Parameter _df_ should be of type \link[crosstalk]{SharedData}, see \href{https://helgasoft.github.io/echarty/gallery.html#crosstalk-2d}{more info}.\cr
+#'  **Crosstalk** \cr
+#'  Parameter _df_ should be of type \link[crosstalk]{SharedData}, see \href{https://helgasoft.github.io/echarty/articles/gallery.html#crosstalk-2d}{more info}.\cr
 #'  Optional parameter _xtKey_: unique ID column name of data frame _df_. Must be same as _key_ parameter used in _SharedData$new()_. If missing, a new column _XkeyX_ will be appended to df.\cr
 #'  Enabling _crosstalk_ will also generate an additional dataset called _Xtalk_ and bind the **first series** to it.\cr
 #' 
-#'  **Timeline**:\cr
+#'  **Timeline** \cr
 #'  Defined by _series.param_ for the \href{https://echarts.apache.org/en/option.html#series}{options series} and a _timeline_ list for the \href{https://echarts.apache.org/en/option.html#timeline}{actual control}.
 #'  A grouped _df_ is required, each group providing data for one option serie.
 #'  Timeline \href{https://echarts.apache.org/en/option.html#timeline.data}{data} and \href{https://echarts.apache.org/en/option.html#options}{options} will be preset for the chart.\cr
@@ -88,13 +88,13 @@ noCoord <- c('polar','radar','singleAxis','parallelAxis','calendar')
 #'  Optional attribute _groupBy_, a _df_ column name, can create series groups inside each timeline option.\cr
 #'  Options/timeline for hierarchical charts like graph,tree,treemap,sankey have to be built directly, see \href{https://helgasoft.github.io/echarty/uc4.html}{example}.
 #'  
-#'  **\href{https://echarts.apache.org/en/option.html#series-line.encode}{Encode}** \cr
-#'  A series attribute to define which columns to use for the axes, depending on chart type and coordinate system: \cr
+#'  Optional series attribute \href{https://echarts.apache.org/en/option.html#series-line.encode}{encode} defines which columns to use for the axes, depending on chart type and coordinate system: \cr
 #'  * set _x_ and _y_ for coordinateSystem _cartesian2d_
 #'  * set _lng_ and _lat_ for coordinateSystem _geo_ and _scatter_ series
 #'  * set _value_ and _name_ for coordinateSystem _geo_ and _map_ series
 #'  * set _radius_ and _angle_ for coordinateSystem _polar_
-#'  * set _value_ and _itemName_ for _pie_ chart
+#'  * set _value_ and _itemName_ for _pie_ chart.
+#'  
 #'  Example: \code{encode(x='col3', y='col1')} binds xAxis to _df_ column 'col3'.
 #' 
 #' @return A widget to plot, or to save and expand with more features.
@@ -524,7 +524,8 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
   if ('leaflet' %in% load) {
       # coveralls pops error, win/linux ok :
       #stopifnot("ec.init: library 'leaflet' not installed"= file.exists(file.path(.libPaths(), 'leaflet')[[1]]))
-    if (!file.exists(file.path(.libPaths(), 'leaflet')[[1]])) warning("ec.init: library 'leaflet' not installed")
+    fldr <- sub('_build/','',file.path(.libPaths(), 'leaflet')[[1]])
+    if (!file.exists(fldr)) warning(paste("ec.init: library 'leaflet' problem in",fldr))
     if (preset) {
       # customizations for leaflet
       wt$x$opts$xAxis <- wt$x$opts$yAxis <- NULL
@@ -1190,20 +1191,22 @@ ecs.exec <- function(proxy, cmd= 'p_merge') {
 #'
 #' @details When \emph{source} is URL, the plugin file is installed with an optional popup prompt.\cr
 #'   When \emph{source} is a file name (file://xxx.js), it is assumed installed and only a dependency is added.\cr
+#'   When \emph{source} is invalid, an error message will be written in the chart's title.\cr
 #'   Called internally by [ec.init]. It is recommended to use \emph{ec.init(load=...)} instead of \emph{ec.plugjs}.
 #'   
 #' @examples
 #' # import map plugin and display two (lon,lat) locations
 #' if (interactive()) {
-#'   ec.init(preset= FALSE,
-#'           geo = list(map= 'china-contour', roam= TRUE),
-#'           series = list(list(
-#'             type= 'scatter', coordinateSystem= 'geo',
-#'             symbolSize= 9, itemStyle= list(color= 'red'),
-#'             data= list(list(value= c(113, 40)), list(value= c(118, 39))) ))
+#'   durl <- paste0('https://raw.githubusercontent.com/apache/echarts/',
+#'            'master/test/data/map/js/china-contour.js')
+#'   ec.init(  # load= durl,
+#'     geo = list(map= 'china-contour', roam= TRUE),
+#'     series.param = list(
+#'       type= 'scatter', coordinateSystem= 'geo',
+#'       symbolSize= 9, itemStyle= list(color= 'red'),
+#'       data= list(list(value= c(113, 40)), list(value= c(118, 39))) )
 #'   ) |> 
-#'   ec.plugjs( paste0('https://raw.githubusercontent.com/apache/echarts/',
-#'                     'master/test/data/map/js/china-contour.js') )
+#'   ec.plugjs(durl)
 #' }
 #' @importFrom utils askYesNo download.file
 #'
@@ -1213,6 +1216,10 @@ ec.plugjs <- function(wt=NULL, source=NULL, ask=FALSE) {
   if (is.null(source)) return(wt)
   stopifnot('ec.plugjs: expecting source as URL or file://'= 
               startsWith(source, 'http') || startsWith(source, 'file://'))
+  if (!.valid.url(source)) {   # CRAN does not like stopifnot errors
+    wt$x$opts$title <- list(text='ERROR ec.plugjs: source is invalid!')
+    return(wt)
+  }
   fname <- basename(source)
   fname <- unlist(strsplit(fname, '?', fixed=TRUE))[1]  # when 'X.js?key=Y'
   # if (!endsWith(fname, '.js')) stop('ec.plugjs expecting .js suffix', call. = FALSE)
@@ -1313,6 +1320,14 @@ ec.plugjs <- function(wt=NULL, source=NULL, ask=FALSE) {
 		})
 	else
 		c(l1, l2)[!duplicated(c(names(l1), names(l2)), fromLast= TRUE)]
+}
+
+# validate URL  (https:// or file://)
+.valid.url <- function(durl, tsec=2){
+  con <- url(durl)
+  check <- suppressWarnings(try(open.connection(con,open="rt",timeout=tsec),silent=TRUE)[1])
+  suppressWarnings(try(close.connection(con),silent=TRUE))
+  ifelse(is.null(check),TRUE,FALSE)
 }
 
 # manage colnames for ec.clmn (not used)

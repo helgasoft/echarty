@@ -62,12 +62,11 @@ test_that("ec.clmn with sprintf, column indexes and names", {
   # leaflet + mixed
   tmp <- quakes |> relocate('long') |>     # set order to lon,lat
     mutate(size= exp(mag)/20) |> head(100)  # add accented size
-  p <- tmp |> ec.init(load='leaflet',
-    tooltip= list(formatter= ec.clmn('magnitude %@', 4)) # 'mag' is 4th
-  ) |> ec.upd({ 
-    series[[1]]$symbolSize <- ec.clmn('size', scale=2)
-  })
-  expect_true(grepl("ss=[3]", p$x$opts$tooltip$formatter, fixed=TRUE ))
+  p <- tmp |> ec.init(load='leaflet', 
+    series.param= list(symbolSize= ec.clmn('size', scale=2)),
+    tooltip= list(formatter= ec.clmn('magnitude %@', 'mag')) # 'mag' is 4th col
+  )
+  expect_true(grepl("x.data['mag']", p$x$opts$tooltip$formatter, fixed=TRUE ))
   expect_true(grepl("[x.data['size']]", p$x$opts$series[[1]]$symbolSize, fixed=TRUE ))
   
   # data + mixed

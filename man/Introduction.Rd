@@ -83,7 +83,7 @@ To allow access to charts from JS.
 \emph{ec_chart(id)} - get the chart object by id (former get_e_charts)
 \emph{ec_option(id)} - get the chart’s option object by id (former
 get_e_charts_opt)
-Parameter ‘id’ could be the internal variable \emph{echwid}, or the value set
+Parameter \emph{id} could be the internal variable \emph{echwid}, or the value set
 through \emph{ec.init} parameter \emph{elementId}. See demo code in
 \href{https://github.com/helgasoft/echarty/blob/main/demo/examples.R}{examples}
 }

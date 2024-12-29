@@ -2,6 +2,7 @@ url: https://helgasoft.github.io/echarty/
 template:
   bootstrap: 5
   bootswatch: darkly
+  theme: arrow-dark
 home:
   sidebar:
     structure:
@@ -15,7 +16,6 @@ navbar:
     - intro
     - reference
     - articles
-    - tutorials
     - news
     right:
     - search
@@ -26,6 +26,18 @@ navbar:
       icon: fa-twitter
       href: http://twitter.com/echarty_R
       aria-label: Twitter
+  
+    articles:
+      text: Gallery+
+      menu:
+      - text: Gallery
+        href: articles/gallery.html
+      - text: Extras
+        href: articles/extras.html
+      - text: -------
+      - text: Tutor - mapping
+        href: articles/mapping.html
+
 footer:
   structure:
     left: legal

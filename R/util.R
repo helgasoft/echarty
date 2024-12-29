@@ -52,6 +52,7 @@
 #' &emsp; &emsp; tabStyle - tab style string, see default \emph{tabStyle} variable in the code\cr
 #' &emsp;Returns A) \link[htmltools]{tagList} of tabs when in a pipe without '...' params, see example\cr
 #' &emsp;Returns B) \link[htmltools]{browsable} when '...' params are provided by user\cr
+#' &emsp;Please note that sometimes those tabsets do not merge well inside advanced web pages.\cr
 #' **cmd = 'button'** \cr
 #' &emsp;UI button to execute a JS function,\cr
 #' &emsp; &emsp; text - the button label\cr
@@ -279,6 +280,7 @@ ec.util <- function( ..., cmd='sf.series', js=NULL, event='click') {
     },
     'sf.unzip'= {
       stopifnot('ec.util: expecting url of zipped shapefile'= !is.null(opts$url))
+      stopifnot('ec.util: invalid zip url'= .valid.url(opts$url))
       destfile <- tempfile('shapefile')
       download.file(opts$url, destfile, mode='wb') #, method='curl')
       # get name only, use as folder name to unzip to

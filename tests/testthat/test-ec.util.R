@@ -70,14 +70,11 @@ test_that("shapefile LINESTRING and MULTILINESTRING", {
 })
 
 test_that("shapefile POINTS from ZIP", {
-  fn <- ec.util(cmd= 'sf.unzip', 
-          url= 'https://helgasoft.github.io/echarty/test/sl.shape.points.zip')
-  expect_true(endsWith(fn, 'points.shp'))
-
   if (interactive()) {  # creates a subfolder 'points'
     library(sf)
     fn <- ec.util(cmd= 'sf.unzip', 
                   url= 'https://helgasoft.github.io/echarty/test/sl.shape.points.zip')
+    expect_true(endsWith(fn, 'points.shp'))
     nc <- as.data.frame(st_read(fn, quiet=TRUE)) |> head(10)
     p <- ec.init(load= c('leaflet'),
        js= ec.util(cmd= 'sf.bbox', bbox= st_bbox(nc$geometry)), 

@@ -62,6 +62,7 @@ tabset, table layout, support for GIS shapefiles through library 'sf'
     tabStyle - tab style string, see default \emph{tabStyle} variable in the code\cr
  Returns A) \link[htmltools]{tagList} of tabs when in a pipe without '...' params, see example\cr
  Returns B) \link[htmltools]{browsable} when '...' params are provided by user\cr
+ Please note that sometimes those tabsets do not merge well inside advanced web pages.\cr
 \strong{cmd = 'button'} \cr
  UI button to execute a JS function,\cr
     text - the button label\cr

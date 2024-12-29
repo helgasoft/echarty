@@ -95,7 +95,7 @@ test_that("ec.init presets for timeline", {
   expect_equal(o$options[[1]]$series[[1]]$type, 'scatter')
 })
 
-test_that("ec.init presets for timeline groupBy", {
+test_that("ec.init presets for timeline groupBy, geo", {
   set.seed(2022)
   dat <- data.frame(
     x1 = rep(2020:2023, each = 4),
@@ -148,8 +148,9 @@ test_that("ec.init presets for timeline groupBy", {
   # 1. map serie picks up first num clmn for value, first char clmn for name
   # 2. visualMap picks up last numeric clmn for max/min, but 'name' as last clmn doesn't work
   p <- cns |> rename(val=value) |>
-    ec.init(load= 'world', series.param= list(type='map'), 
-            visualMap= list(seriesIndex=1))
+    ec.init(load= 'world', visualMap= list(seriesIndex=1), 
+      geo= list(map='world', roam=TRUE), series= list(
+        list(type='map'), list(type='scatter', data=list(c(-117,32)))) )
   #expect_equal(p$x$opts$dataset[[1]]$dimensions, c("val","name","dim"))
   expect_equal(p$x$opts$series[[1]]$geoIndex, 0)
   expect_equal(p$x$opts$visualMap$max, 88)
@@ -167,7 +168,6 @@ test_that("ec.init presets for timeline groupBy", {
 
 test_that("presets for parallel chart", {
   p <- mtcars |> relocate(cyl, .after=last_col()) |> group_by(cyl) |> ec.init(ctype='parallel')
-
   expect_equal(length(p$x$opts$dataset), 4)
   expect_equal(p$x$opts$series[[3]]$datasetIndex, 3)
   expect_equal(p$x$opts$parallelAxis[[2]]$name, 'disp')

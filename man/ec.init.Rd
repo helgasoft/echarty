@@ -49,14 +49,14 @@ Required to build a chart. In most cases this will be the only command necessary
 Command \emph{ec.init} creates a widget with \link[htmlwidgets]{createWidget}, then adds some ECharts features to it.\cr
 Numerical indexes for series,visualMap,etc. are R-counted (1,2...)\cr
 
-\strong{Presets}: \cr
+\strong{Presets} \cr
 When data.frame \strong{df} is present, a \href{https://echarts.apache.org/en/option.html#dataset}{dataset} is preset. \cr
 When \strong{df} is grouped and \emph{ctype} is not NULL, more datasets with legend and series are also preset. \cr
 Plugin '3D' (load='3D') is required for GL series like \emph{scatterGL, linesGL}, etc. \cr
 Plugins 'leaflet' and 'world' preset \emph{center} to the mean of all coordinates from \strong{df}. \cr
 Users can delete or overwrite any presets as needed. \cr
 
-\strong{Widget attributes}: \cr
+\strong{Widget attributes} \cr
 Optional echarty widget attributes include: \cr
 \itemize{
 \item elementId - Id of the widget, default is NULL(auto-generated)
@@ -73,7 +73,7 @@ vector: \verb{     }see code in \href{https://github.com/helgasoft/echarty/blob/
 \item useDirtyRect - enable dirty rectangle rendering or not, FALSE by default, see \href{https://echarts.apache.org/en/api.html#echarts.init}{here}\cr
 }
 
-\strong{Built-in plugins}: \cr
+\strong{Built-in plugins} \cr
 \itemize{
 \item leaflet - Leaflet maps with customizable tiles, see \href{https://github.com/gnijuohz/echarts-leaflet#readme}{source}\cr
 \item world - world map with country boundaries, see \href{https://github.com/apache/echarts/tree/master/test/data/map/js}{source} \cr
@@ -89,12 +89,12 @@ Plugins with one-time installation: \cr
 or install your own third-party plugins.\cr
 }
 
-\strong{Crosstalk}:\cr
-Parameter \emph{df} should be of type \link[crosstalk]{SharedData}, see \href{https://helgasoft.github.io/echarty/gallery.html#crosstalk-2d}{more info}.\cr
+\strong{Crosstalk} \cr
+Parameter \emph{df} should be of type \link[crosstalk]{SharedData}, see \href{https://helgasoft.github.io/echarty/articles/gallery.html#crosstalk-2d}{more info}.\cr
 Optional parameter \emph{xtKey}: unique ID column name of data frame \emph{df}. Must be same as \emph{key} parameter used in \emph{SharedData$new()}. If missing, a new column \emph{XkeyX} will be appended to df.\cr
 Enabling \emph{crosstalk} will also generate an additional dataset called \emph{Xtalk} and bind the \strong{first series} to it.\cr
 
-\strong{Timeline}:\cr
+\strong{Timeline} \cr
 Defined by \emph{series.param} for the \href{https://echarts.apache.org/en/option.html#series}{options series} and a \emph{timeline} list for the \href{https://echarts.apache.org/en/option.html#timeline}{actual control}.
 A grouped \emph{df} is required, each group providing data for one option serie.
 Timeline \href{https://echarts.apache.org/en/option.html#timeline.data}{data} and \href{https://echarts.apache.org/en/option.html#options}{options} will be preset for the chart.\cr
@@ -103,16 +103,16 @@ Another preset is \emph{encode(x=1,y=2,z=3)}, which are the first 3 columns of \
 Optional attribute \emph{groupBy}, a \emph{df} column name, can create series groups inside each timeline option.\cr
 Options/timeline for hierarchical charts like graph,tree,treemap,sankey have to be built directly, see \href{https://helgasoft.github.io/echarty/uc4.html}{example}.
 
-\strong{\href{https://echarts.apache.org/en/option.html#series-line.encode}{Encode}} \cr
-A series attribute to define which columns to use for the axes, depending on chart type and coordinate system: \cr
+Optional series attribute \href{https://echarts.apache.org/en/option.html#series-line.encode}{encode} defines which columns to use for the axes, depending on chart type and coordinate system: \cr
 \itemize{
 \item set \emph{x} and \emph{y} for coordinateSystem \emph{cartesian2d}
 \item set \emph{lng} and \emph{lat} for coordinateSystem \emph{geo} and \emph{scatter} series
 \item set \emph{value} and \emph{name} for coordinateSystem \emph{geo} and \emph{map} series
 \item set \emph{radius} and \emph{angle} for coordinateSystem \emph{polar}
-\item set \emph{value} and \emph{itemName} for \emph{pie} chart
-Example: \code{encode(x='col3', y='col1')} binds xAxis to \emph{df} column 'col3'.
+\item set \emph{value} and \emph{itemName} for \emph{pie} chart.
 }
+
+Example: \code{encode(x='col3', y='col1')} binds xAxis to \emph{df} column 'col3'.
 }
 \examples{
  # basic scatter chart from a data.frame, using presets

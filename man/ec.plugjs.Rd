@@ -23,19 +23,21 @@ Install Javascript plugin from URL source
 \details{
 When \emph{source} is URL, the plugin file is installed with an optional popup prompt.\cr
 When \emph{source} is a file name (file://xxx.js), it is assumed installed and only a dependency is added.\cr
+When \emph{source} is invalid, an error message will be written in the chart's title.\cr
 Called internally by \link{ec.init}. It is recommended to use \emph{ec.init(load=...)} instead of \emph{ec.plugjs}.
 }
 \examples{
 # import map plugin and display two (lon,lat) locations
 if (interactive()) {
-  ec.init(preset= FALSE,
-          geo = list(map= 'china-contour', roam= TRUE),
-          series = list(list(
-            type= 'scatter', coordinateSystem= 'geo',
-            symbolSize= 9, itemStyle= list(color= 'red'),
-            data= list(list(value= c(113, 40)), list(value= c(118, 39))) ))
+  durl <- paste0('https://raw.githubusercontent.com/apache/echarts/',
+           'master/test/data/map/js/china-contour.js')
+  ec.init(  # load= durl,
+    geo = list(map= 'china-contour', roam= TRUE),
+    series.param = list(
+      type= 'scatter', coordinateSystem= 'geo',
+      symbolSize= 9, itemStyle= list(color= 'red'),
+      data= list(list(value= c(113, 40)), list(value= c(118, 39))) )
   ) |> 
-  ec.plugjs( paste0('https://raw.githubusercontent.com/apache/echarts/',
-                    'master/test/data/map/js/china-contour.js') )
+  ec.plugjs(durl)
 }
 }

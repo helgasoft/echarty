@@ -1,8 +1,8 @@
 # history of package _echarty_
 
-# echarty 1.6.4.1  latest in development
+# echarty 1.6.5  latest in development
 
-* upgrade ECharts to v.5.5.1, built with R v.4.4.2.
+* upgrade ECharts to v.5.6.0, built with R v.4.4.2.
 * auto-load 3D plugin when 3D attributes present (xAxis3D, bar3D, etc.).
 * auto-set 3D axes from data (name, type).
 * change in _dataset_: store column names in _dimensions_ instead of _source_.

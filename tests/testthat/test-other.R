@@ -213,6 +213,10 @@ test_that("ec.plugjs", {
   p <- ec.init() |> ec.plugjs(
     'https://raw.githubusercontent.com/apache/echarts/master/test/data/map/js/china-contour.js')
   expect_equal(p$dependencies[[1]]$name, "china-contour.js")
+  
+  # .valid.url exits gracefully
+  p <- ec.init() |> ec.plugjs('http://does.not.exist.com')
+  expect_true(startsWith(p$x$opts$title$text, 'ERROR'))
 })
 
 test_that("Shiny commands", {
@@ -250,6 +254,7 @@ test_that(".merlis", {
   aa = list(x= list(type= "1st.is.named.list"), geoIndex= 0)
   p <- echarty:::.merlis(aa, list(val= 13))
   expect_equal(p$val, 13)
+  expect_equal(echarty:::.valid.url('http://does.not.exist.com'), FALSE)
 })
 
 test_that('autoset axis type', {
@@ -292,5 +297,6 @@ test_that('stops are working in echarty.R', {
   #expect_silent(ec.init(load='liquid'))   # Debian throws warnings in CRAN check
   #expect_silent(ec.init(load='gmodular'))
   #expect_silent(ec.init(load='wordcloud'))
+  expect_error(mtcars |> group_by(cyl) |> ec.init(ctype='parallel'))
   
 })
