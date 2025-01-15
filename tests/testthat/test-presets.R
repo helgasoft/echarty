@@ -1,5 +1,5 @@
+isCovr <- Sys.getenv("R_COVR")!=''
 
-library(dplyr)
 set.seed(2021)
 df <- data.frame(
   name = sample(LETTERS, 10),
@@ -113,17 +113,19 @@ test_that("ec.init presets for timeline groupBy, geo", {
   expect_equal(p$x$opts$options[[4]]$series[[1]]$encode$y, 'y')
   expect_equal(p$x$opts$yAxis$name, 'y')
 
-  p <- dat |> group_by(x1) |> ec.init( #load='3D',
-    xAxis3D=list(s=T),yAxis3D=list(s=T),zAxis3D=list(s=T),grid3D=list(s=T),
-    timeline=list(s=T), legend= list(show=TRUE), 
-    series.param= list(type='scatter3D', groupBy= 'x2',
-      encode= list(x='x', y='y', z='z'), 
-      symbolSize= ec.clmn('x4', scale=30) )
-  )
-  expect_equal(p$x$opts$options[[1]]$series[[1]]$coordinateSystem, 'cartesian3D')
-  expect_equal(length(p$x$opts$options[[1]]$series), 2)
-  expect_equal(p$x$opts$options[[4]]$series[[2]]$datasetIndex, 8)
-  expect_equal(p$x$opts$options[[4]]$series[[2]]$name, 'B')
+  if (isCovr) {
+    p <- dat |> group_by(x1) |> ec.init( #load='3D',
+      xAxis3D=list(s=T),yAxis3D=list(s=T),zAxis3D=list(s=T),grid3D=list(s=T),
+      timeline=list(s=T), legend= list(show=TRUE), 
+      series.param= list(type='scatter3D', groupBy= 'x2',
+        encode= list(x='x', y='y', z='z'), 
+        symbolSize= ec.clmn('x4', scale=30) )
+    )
+    expect_equal(p$x$opts$options[[1]]$series[[1]]$coordinateSystem, 'cartesian3D')
+    expect_equal(length(p$x$opts$options[[1]]$series), 2)
+    expect_equal(p$x$opts$options[[4]]$series[[2]]$datasetIndex, 8)
+    expect_equal(p$x$opts$options[[4]]$series[[2]]$name, 'B')
+  }
   
   cns <- data.frame(
     value = c(22, 99, 33),
@@ -171,6 +173,11 @@ test_that("presets for parallel chart", {
   expect_equal(length(p$x$opts$dataset), 4)
   expect_equal(p$x$opts$series[[3]]$datasetIndex, 3)
   expect_equal(p$x$opts$parallelAxis[[2]]$name, 'disp')
+  
+  p <- iris |> dplyr::group_by(Species) |>    # chained
+  ec.init(ctype= 'parallel', series.param= list(lineStyle= list(width=3))) |>
+  ec.paxis(cols= c('Petal.Length','Petal.Width','Sepal.Width'))
+  expect_equal(p$x$opts$parallelAxis[[3]]$max, 4.4)
 })
 
 test_that("presets for crosstalk", {
@@ -285,8 +292,6 @@ test_that('polar, pie, radar, themeRiver, parallel, etc.', {
     type='gauge', data= list(list(name='score',value=44))))
   expect_equal(names(p$x$opts), 'series')
   
-  p <- mtcars |> ec.init(ctype='scatterGL')
-  expect_equal(p$dependencies[[1]]$name, 'echarts-gl.min.js')
 })
 
 test_that('polar presets', {

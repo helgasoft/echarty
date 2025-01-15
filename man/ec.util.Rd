@@ -22,71 +22,72 @@ tabset, table layout, support for GIS shapefiles through library 'sf'
 }
 \details{
 \strong{cmd = 'sf.series'}\cr
- Build \emph{leaflet} or \href{https://echarts.apache.org/en/option.html#geo.map}{geo} map series from shapefiles.\cr
- Supported types: POINT, MULTIPOINT, LINESTRING, MULTILINESTRING, POLYGON, MULTIPOLYGON \cr
- Coordinate system is \emph{leaflet}(default), \emph{geo} or \emph{cartesian3D} (for POINT(xyz))\cr
- Limitations:\cr
-    polygons can have only their name in tooltip,  \cr
-    assumes Geodetic CRS is WGS 84, for conversion use \link[sf]{st_transform} with \emph{crs=4326}.\cr
- Parameters:\cr
-    df - value from \link[sf]{st_read}\cr
-    nid - optional column name for name-id used in tooltips\cr
-    cs - optional \emph{coordinateSystem} value, default 'leaflet'\cr
-    verbose - optional, print shapefile item names in console\cr
- Returns a list of chart series\cr
+\verb{  }Build \emph{leaflet} or \href{https://echarts.apache.org/en/option.html#geo.map}{geo} map series from shapefiles.\cr
+\verb{  }Supported types: POINT, MULTIPOINT, LINESTRING, MULTILINESTRING, POLYGON, MULTIPOLYGON \cr
+\verb{  }Coordinate system is \emph{leaflet}(default), \emph{geo} or \emph{cartesian3D} (for POINT(xyz))\cr
+\verb{  }Limitations:\cr
+\verb{     }polygons can have only their name in tooltip,  \cr
+\verb{     }assumes Geodetic CRS is WGS 84, for conversion use \link[sf]{st_transform} with \emph{crs=4326}.\cr
+\verb{  }Parameters:\cr
+\verb{     }df - value from \link[sf]{st_read}\cr
+\verb{     }nid - optional column name for name-id used in tooltips\cr
+\verb{     }cs - optional \emph{coordinateSystem} value, default 'leaflet'\cr
+\verb{     }verbose - optional, print shapefile item names in console\cr
+\verb{  }Returns a list of chart series\cr
 \strong{cmd = 'sf.bbox'}\cr
- Returns JavaScript code to position a map inside a bounding box from \link[sf]{st_bbox}, for leaflet only.\cr
+\verb{  }Returns JavaScript code to position a map inside a bounding box from \link[sf]{st_bbox}, for leaflet only.\cr
 \strong{cmd = 'sf.unzip'}\cr
- Unzips a remote file and returns local file name of the unzipped .shp file\cr
-    url - URL of remote zipped shapefile\cr
-    shp - optional name of .shp file inside ZIP file if multiple exist. Do not add file extension. \cr
+\verb{  }Unzips a remote file and returns local file name of the unzipped .shp file\cr
+\verb{     }url - URL of remote zipped shapefile\cr
+\verb{     }shp - optional name of .shp file inside ZIP file if multiple exist. Do not add file extension. \cr
+\verb{  }Returns full name of unzipped .shp file, or error string starting with 'ERROR'\cr
 \strong{cmd = 'geojson'} \cr
- Custom series list from geoJson objects\cr
-    geojson - object from \link[jsonlite]{fromJSON}\cr
-    cs - optional \emph{coordinateSystem} value, default 'leaflet'\cr
-    ppfill - optional fill color like '#F00', OR NULL for no-fill, for all Points and Polygons\cr
-    nid - optional feature property for item name used in tooltips\cr
-    ... - optional custom series attributes like \emph{itemStyle}\cr
- Can display also geoJson \emph{feature properties}: color; lwidth, ldash (lines); ppfill, radius (points)\cr
+\verb{  }Custom series list from geoJson objects\cr
+\verb{     }geojson - object from \link[jsonlite]{fromJSON}\cr
+\verb{     }cs - optional \emph{coordinateSystem} value, default 'leaflet'\cr
+\verb{     }ppfill - optional fill color like '#F00', OR NULL for no-fill, for all Points and Polygons\cr
+\verb{     }nid - optional feature property for item name used in tooltips\cr
+\verb{     }... - optional custom series attributes like \emph{itemStyle}\cr
+\verb{  }Can display also geoJson \emph{feature properties}: color; lwidth, ldash (lines); ppfill, radius (points)\cr
 \strong{cmd = 'layout'} \cr
- Multiple charts in table-like rows/columns format\cr
-    ... - List of charts\cr
-    title - optional title for the entire set\cr
-    rows - optional number of rows\cr
-    cols - optional number of columns\cr
- Returns a container \link[htmltools]{div} in rmarkdown, otherwise \link[htmltools]{browsable}.\cr
- For 3-4 charts one would use multiple series within a \href{https://echarts.apache.org/en/option.html#grid}{grid}. \cr
- For greater number of charts \emph{ec.util(cmd='layout')} comes in handy\cr
+\verb{  }Multiple charts in table-like rows/columns format\cr
+\verb{     }... - List of charts\cr
+\verb{     }title - optional title for the entire set\cr
+\verb{     }rows - optional number of rows\cr
+\verb{     }cols - optional number of columns\cr
+\verb{  }Returns a container \link[htmltools]{div} in rmarkdown, otherwise \link[htmltools]{browsable}.\cr
+\verb{  }For 3-4 charts one would use multiple series within a \href{https://echarts.apache.org/en/option.html#grid}{grid}. \cr
+\verb{  }For greater number of charts \emph{ec.util(cmd='layout')} comes in handy\cr
 \strong{cmd = 'tabset'} \cr
-    ... - a list name/chart pairs like \emph{n1=chart1, n2=chart2}, each tab may contain a chart.\cr
-    tabStyle - tab style string, see default \emph{tabStyle} variable in the code\cr
- Returns A) \link[htmltools]{tagList} of tabs when in a pipe without '...' params, see example\cr
- Returns B) \link[htmltools]{browsable} when '...' params are provided by user\cr
- Please note that sometimes those tabsets do not merge well inside advanced web pages.\cr
+\verb{     }... - a list name/chart pairs like \emph{n1=chart1, n2=chart2}, each tab may contain a chart.\cr
+\verb{     }tabStyle - tab style string, see default \emph{tabStyle} variable in the code\cr
+\verb{  }Returns A) \link[htmltools]{tagList} of tabs when in a pipe without '...' params, see example\cr
+\verb{  }Returns B) \link[htmltools]{browsable} when '...' params are provided by user\cr
+\verb{  }Please note that sometimes those tabsets do not merge well inside advanced web pages.\cr
 \strong{cmd = 'button'} \cr
- UI button to execute a JS function,\cr
-    text - the button label\cr
-    js - the JS function string\cr
-    ... - optional parameters for the \href{https://echarts.apache.org/en/option.html#graphic.elements-rect.type}{rect} element\cr
- Returns a graphic.elements-\href{https://echarts.apache.org/en/option.html#graphic.elements-rect.type}{rect} element.\cr
+\verb{  }UI button to execute a JS function,\cr
+\verb{     }text - the button label\cr
+\verb{     }js - the JS function string\cr
+\verb{     }... - optional parameters for the \href{https://echarts.apache.org/en/option.html#graphic.elements-rect.type}{rect} element\cr
+\verb{  }Returns a graphic.elements-\href{https://echarts.apache.org/en/option.html#graphic.elements-rect.type}{rect} element.\cr
 \strong{cmd = 'morph'} \cr
-    ... - a list of charts or chart option lists\cr
-    event - name of event for switching charts. Default is \emph{click}.\cr
- Returns a chart with ability to morph into other charts\cr
+\verb{     }... - a list of charts or chart option lists\cr
+\verb{     }event - name of event for switching charts. Default is \emph{click}.\cr
+\verb{  }Returns a chart with ability to morph into other charts\cr
 \strong{cmd = 'fullscreen'} \cr
- A toolbox feature to toggle fullscreen on/off. Works in a browser, not in RStudio.\cr
+\verb{  }A toolbox feature to toggle fullscreen on/off. Works in a browser, not in RStudio.\cr
 \strong{cmd = 'rescale'} \cr
-    v - input vector of numeric values to rescale\cr
-    t - target range c(min,max), numeric vector of two\cr
+\verb{     }v - input vector of numeric values to rescale\cr
+\verb{     }t - target range c(min,max), numeric vector of two\cr
 \strong{cmd = 'level'} \cr
- Calculate vertical levels for timeline \emph{line} charts, returns a numeric vector\cr
-    df - data.frame with \emph{from} and \emph{to} columns\cr
-    from - name of 'from' column\cr
-    to - name of 'to' column\cr
+\verb{  }Calculate vertical levels for timeline \emph{line} charts, returns a numeric vector\cr
+\verb{     }df - data.frame with \emph{from} and \emph{to} columns\cr
+\verb{     }from - name of 'from' column\cr
+\verb{     }to - name of 'to' column\cr
 }
 \examples{
 library(dplyr)
-if (interactive()) {  # comm.out: Fedora errors about some 'browser'
+if (interactive()) {  # comm.out: Cran Fedora errors about some 'browser'
   library(sf)
   fname <- system.file("shape/nc.shp", package="sf")
   nc <- as.data.frame(st_read(fname))
@@ -107,19 +108,20 @@ if (interactive()) {  # comm.out: Fedora errors about some 'browser'
   p1 <- cars |> ec.init(grid= list(top=26), height=333)  # move chart up
   p2 <- mtcars |> arrange(mpg) |> ec.init(height=333, ctype='line')
   ec.util(cmd= 'tabset', cars= p1, mtcars= p2)
+
+
+  cars |> ec.init(
+    graphic = list(
+      ec.util(cmd='button', text='see type', right='center', top=20,
+        js="function(a) {op=ec_option(echwid); alert(op.series[0].type);}")
+    )
+  )
+
+  lapply(list('dark','macarons','gray','jazz','dark-mushroom'),
+    function(x) cars |> ec.init(grid= list(bottom=0)) |> ec.theme(x) ) |>
+  ec.util(cmd='layout', cols= 2, title= 'my layout')
 }
 
-cars |> ec.init(
- graphic = list(
-   ec.util(cmd='button', text='see type', right='center', top=20,
-     js="function(a) {op=ec_option(echwid); alert(op.series[0].type);}")
- )
-)
-
-lapply(list('dark','macarons','gray','jazz','dark-mushroom'),
-  function(x) cars |> ec.init(grid= list(bottom=0)) |> ec.theme(x) ) |>
-ec.util(cmd='layout', cols= 2, title= 'my layout')
-  
 colors <- c("blue","red","green")
 cyls <- as.character(sort(unique(mtcars$cyl)))
 sers <- lapply(mtcars |> group_by(cyl) |> group_split(), \(x) {

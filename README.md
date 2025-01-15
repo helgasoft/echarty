@@ -4,10 +4,10 @@
 <!-- badges: start -->
 
 [![R-CMD-check](https://github.com/helgasoft/echarty/workflows/R-CMD-check/badge.svg)](https://github.com/helgasoft/echarty/actions)
-[![coverage](https://coveralls.io/repos/github/helgasoft/echarty/badge.svg)](https://coveralls.io/r/helgasoft/echarty?branch=main)
+[![coverage](https://coveralls.io/repos/github/helgasoft/echarty/badge.svg)](https://coveralls.io/github/helgasoft/echarty)
 [![size](https://img.shields.io/github/languages/code-size/helgasoft/echarty)](https://github.com/helgasoft/echarty/releases/)
 [![website](https://img.shields.io/badge/Website-Visit-blue)](https://helgasoft.github.io/echarty)
-[![twitter](https://img.shields.io/twitter/follow/echarty.svg?style=social&label=Follow)](https://twitter.com/echarty_R)
+[![twitter](https://img.shields.io/twitter/follow/echarty.svg?style=social&label=Follow)](https://x.com/echarty_R)
 
 <!--
 [![CRAN
@@ -54,7 +54,7 @@ Please consider granting a Github star ⭐ to show your support.
 ## Installation
 
 <!-- [![Github version](https://img.shields.io/github/v/release/helgasoft/echarty?label=github)](https://github.com/helgasoft/echarty/releases)  <sup>.02</sup>  -->
-Latest development build **1.6.5**
+Latest development build **1.6.6**
 
 ``` r
 if (!requireNamespace('remotes')) install.packages('remotes')

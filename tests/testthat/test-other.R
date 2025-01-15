@@ -1,4 +1,7 @@
-# expect_silent()
+#isCovr <- interactive()
+#isCovr <- Sys.getenv("COVERALLS_TOKEN")!=''
+isCovr <- Sys.getenv("R_COVR")!=''
+cat('\n isCovr=',Sys.getenv("R_COVR"),'\n')
 
 test_that("registerMap", {
   # similar in ec.examples, with USA map
@@ -155,32 +158,40 @@ test_that("ec.data treeTK", {
   expect_equal(p$x$opts$series[[1]]$data[[1]]$children[[2]]$pct, 32.3)
 })
 
-test_that("load 3D surface", {
-  #if (interactive()) {  # first time will load echarts-gl.js in source folder 'js'
-  data <- list()
-  for(y in 1:dim(volcano)[2]) for(x in 1:dim(volcano)[1])
-    data <- append(data, list(c(x, y, volcano[x,y])))
-  p <- ec.init(load= '3D', series.param= list(type= 'surface',	data= data) )
-  
-  expect_equal(length(p$x$opts$series[[1]]$data), 5307)
-})
-
 test_that("3D globe & autoload 3D", {
-  p <- ec.init( #load='3D',  # test autoload
-    globe= list(viewControl= list(autoRotate= FALSE)),
-    series.param= list(type= 'scatter3D',
-        data= list(c(32,-117,11), c(2,44,22)) ,
-        symbolSize= 40, itemStyle= list(color= 'red')
-    )
-  )
-  lif <- paste0(system.file('js', package='echarty'), '/echarts-gl.min.js')
-  expect_true(file.exists(lif))
-  expect_equal(p$x$opts$series[[1]]$coordinateSystem, 'globe')
   
-  p <- ec.init(load='world', geo3D= list(map= 'world', roam=T),
-    series.param= list(type= 'scatter3D', data=list(c(115, 22, 10), c(-116, 32, -11)))
-  ) 
-  expect_equal(p$x$opts$series[[1]]$coordinateSystem, 'geo3D')
+  if (isCovr) {
+    # first time will load echarts-gl.js in source folder 'js'
+    p <- ec.init( #load='3D',  # test autoload
+      globe= list(viewControl= list(autoRotate= FALSE)),
+      series.param= list(type= 'scatter3D',
+          data= list(c(32,-117,11), c(2,44,22)) ,
+          symbolSize= 40, itemStyle= list(color= 'red')
+      )
+    )
+    lif <- paste0(system.file('js', package='echarty'), '/echarts-gl.min.js')
+    expect_true(file.exists(lif))
+    expect_equal(p$x$opts$series[[1]]$coordinateSystem, 'globe')
+    
+    data <- list()   # volcano is a lot of data ==slow
+    for(y in 1:dim(volcano)[2]) for(x in 1:dim(volcano)[1])
+      data <- append(data, list(c(x, y, volcano[x,y])))
+    p <- ec.init(load= '3D', series.param= list(type= 'surface',	data= data) )
+    expect_equal(length(p$x$opts$series[[1]]$data), 5307)
+    cat('\n load 3D + volcano')
+  
+    p <- ec.init(load='world', geo3D= list(map= 'world', roam=T),
+      series.param= list(type= 'scatter3D', data=list(c(115, 22, 10), c(-116, 32, -11)))
+    ) 
+    expect_equal(p$x$opts$series[[1]]$coordinateSystem, 'geo3D')
+    
+    p <- mtcars |> ec.init(ctype='scatterGL')
+    expect_equal(p$dependencies[[1]]$name, 'echarts-gl.min.js')
+  } 
+  else {
+    lif <- paste0(system.file('js', package='echarty'), '/echarts-gl.min.js')
+    expect_false(file.exists(lif))
+  }
 })
 
 test_that("radar and polar", {  # for coverage
@@ -190,11 +201,17 @@ test_that("radar and polar", {  # for coverage
   	                  data= list(c(10,22,5,9,11), c(12,18,15,15,7))))
   )
   expect_equal(p$x$opts$series[[1]]$radarIndex, 0)
-  
-  p <- data.frame(x = 1:10, y = seq(1, 20, by = 2)) |>
-  ec.init(polar= list(show=T), series.param= list(type='line', polarIndex=1))
+
+  args <- list( df= data.frame(x= 1:10, y= seq(1, 20, by=2)),
+    polar= list(show=TRUE), series.param= list(type='line', polarIndex=1) )
+  p <- do.call(ec.init, args)
   expect_equal(p$x$opts$series[[1]]$polarIndex, 0)
+  expect_equal(p$x$opts$series[[1]]$coordinateSystem, "polar")
   
+  args$series.param$polarIndex <- NULL
+  args$series.param$coordinateSystem <- "polar"
+  p <- do.call(ec.init, args)
+  expect_equal(p$x$opts$radiusAxis$type, 'category')
 })
 
 test_that("calendar", {
@@ -210,13 +227,26 @@ test_that("calendar", {
 })
 
 test_that("ec.plugjs", {
+  # .valid.url exits gracefully
+  p <- ec.init() |> ec.plugjs('http://does.not.exist.com')
+  expect_true(startsWith(p$x$opts$title$text, 'ERROR'))
+  
+  if (isCovr) {
   p <- ec.init() |> ec.plugjs(
     'https://raw.githubusercontent.com/apache/echarts/master/test/data/map/js/china-contour.js')
   expect_equal(p$dependencies[[1]]$name, "china-contour.js")
   
-  # .valid.url exits gracefully
-  p <- ec.init() |> ec.plugjs('http://does.not.exist.com')
-  expect_true(startsWith(p$x$opts$title$text, 'ERROR'))
+  p <- ec.init( preset=FALSE,    # for covr
+    load= c('https://maps.googleapis.com/maps/api/js',
+      'https://cdn.jsdelivr.net/npm/echarts-extension-gmap@latest/dist/echarts-extension-gmap.min.js'),
+    gmap= list( center= c(108.39, 39.9), zoom= 3),
+    series= list(list(type='scatter', coordinateSystem='gmap', data= list(
+      list(name='岳阳', value=c(113.09,29.37)),
+      list(name='吉林', value=c(126.57,43.87))
+    )))
+  )
+  expect_equal(p$x$opts$gmap$zoom, 3)
+  }
 })
 
 test_that("Shiny commands", {
@@ -238,11 +268,17 @@ test_that("Shiny commands", {
   expect_equal(attributes(p)$class, 'ecsProxy')
   
   # works in interactive only (+Shiny session), else "attempt to apply non-function"
-  #sendCustomMessage <- \(name,plist) {a <- 1}
+  # #sendCustomMessage <- \(name,plist) {a <- 1}
+  # p$session <- NULL   # disable p$session$sendCustomMessage
+  # p$x$opts$test <- 'sankey'
+  # tmp <- ecs.exec(p)
+  # expect_equal(tmp$x$opts$test, 'sankey')
+  tmp <- attributes(ecs.output('sash'))
   p$session <- NULL   # disable p$session$sendCustomMessage
-  p$x$opts$test <- 'sankey'
-  tmp <- ecs.exec(p)
-  expect_equal(tmp$x$opts$test, 'sankey')
+  p$x$opts$renderer <- 'canvas'
+  p$x$opts$series <- list(list(type='gauge'))
+  p$dependencies <- tmp$html_dependencies
+  ecs.exec(p)
 })
 
 test_that(".merlis", {
@@ -294,9 +330,29 @@ test_that('stops are working in echarty.R', {
   expect_silent(ecr.ebars(ec.init(load='custom'), cars, encode=list(x=1,y=c(2,3,4))))
   expect_silent(ec.init(load='lottie'))
   expect_silent(ec.init(load='ecStat'))
+  expect_silent(ec.init(load='lottie,ecStat'))
   #expect_silent(ec.init(load='liquid'))   # Debian throws warnings in CRAN check
   #expect_silent(ec.init(load='gmodular'))
   #expect_silent(ec.init(load='wordcloud'))
   expect_error(mtcars |> group_by(cyl) |> ec.init(ctype='parallel'))
-  
+  expect_error(data.frame(name= c('A','B','C','D'), value= c(1,2,3,1), cat=c(1,1,2,2)) |>
+    group_by(cat) |> ec.init(timeline= list(s=T), dbg=T, series.param= list(type='pie'))
+  )
+})
+
+test_that('for coverage only', {
+  args <- list( 
+    df= data.frame(name=c('Brazil','Australia'), value=c(111,222)) |> group_by(name),
+    load= 'world', visualMap=list(s=TRUE),
+    timeline= list(data= list("Australia", "Brazil"), axisType= "category"), 
+    geo= list(map='world'),
+    options= list(
+      list(series=list(type='map', datasetIndex=1, geoIndex=0)), 
+      list(series=list(type='map', datasetIndex=2, geoIndex=0))) 
+  )
+  p <- do.call(ec.init, args)
+  expect_false(is.null(p$x$opts$legend))
+  args$preset <- FALSE
+  p <- do.call(ec.init, args)
+  expect_true(is.null(p$x$opts$legend))
 })

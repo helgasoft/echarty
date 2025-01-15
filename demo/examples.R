@@ -98,38 +98,36 @@
 #'                     color = c("#387e78","#eeb422","#d9534f",'magenta'))
 #'   tmp <- head(flights,10) |> inner_join(tmp)    # add color by airport
 #'   ec.init(load= 'world',
-#'     geo= list(center= c(mean(flights$start_lon), mean(flights$start_lat)), 
-#'   	   		 zoom= 7, map='world' ),
-#'     series= list(list(
-#'       type= 'lines', coordinateSystem= 'geo',
+#'    geo= list(center= c(mean(flights$start_lon), mean(flights$start_lat)), zoom=7, map='world'),
+#'    series.param= list( type= 'lines',
 #'       data= lapply(ec.data(tmp, 'names'), function(x)
-#'         list(coords = list(c(x$start_lon,x$start_lat),
-#'                            c(x$end_lon,x$end_lat)),
+#'         list(coords = list(c(x$start_lon, x$start_lat),
+#'                            c(x$end_lon, x$end_lat)),
 #'              colr = x$color)
 #'       ),
 #'       lineStyle= list(curveness=0.3, width=3, color=ec.clmn('colr'))
-#'     ))
+#'     )
 #'   )
 #' } }
 #' 
 #' #------ registerMap JSON
 #' # registerMap supports also maps in SVG format, see website gallery
-#' #if (interactive()) {
-#'  json <- jsonlite::read_json("https://echarts.apache.org/examples/data/asset/geo/USA.json")
-#'  dusa <- USArrests
-#'  dusa$states <- row.names(dusa)
-#'  p <- ec.init(preset= FALSE,
-#'    series= list(list(type= 'map', map= 'USA', roam= TRUE, zoom= 3, left= -100, top= -30,
-#'        data= lapply(ec.data(dusa, 'names'), 
-#'            function(x) list(name=x$states, value=x$UrbanPop))
-#'    )),
-#'    visualMap= list(type='continuous', calculable=TRUE, 
-#'        inRange= list(color = rainbow(8)),
-#'        min= min(dusa$UrbanPop), max= max(dusa$UrbanPop))
-#'  )
-#'  p$x$registerMap <- list(list(mapName= 'USA', geoJSON= json))
-#'  p
-#' #}
+#' if (interactive()) {
+#' json <- jsonlite::read_json("https://echarts.apache.org/examples/data/asset/geo/USA.json")
+#' dusa <- USArrests
+#' dusa$states <- row.names(dusa)
+#' p <- ec.init(
+#'   series.param= list(type= 'map', map= 'USA', roam= TRUE, zoom= 3, left= -100, top= -30,
+#'     data= lapply(ec.data(dusa, 'names'),
+#'         function(x) list(name=x$states, value=x$UrbanPop))
+#'   ),
+#'   visualMap= list(type='continuous', calculable=TRUE,
+#'     inRange= list(color = rainbow(8)),
+#'     min= min(dusa$UrbanPop), max= max(dusa$UrbanPop))
+#' )
+#' p$x$registerMap <- list(list(mapName= 'USA', geoJSON= json))
+#' p
+#' }
 #'
 #' #------ locale
 #' mo <- seq.Date(Sys.Date() - 444, Sys.Date(), by= "month")
@@ -199,12 +197,12 @@
 #' if (interactive()) {
 #' iris |> group_by(Species) |>
 #'   mutate(size= log(Petal.Width*10)) |>  # add size as 6th column
-#'   ec.init(load= '3D',
-#'           xAxis3D= list(name= 'Petal.Length'),
-#'           yAxis3D= list(name= 'Sepal.Width'),
-#'           zAxis3D= list(name= 'Sepal.Length'),
-#'           legend= list(show= TRUE),
-#'     series.param= list(symbolSize= ec.clmn(6, scale=10))
+#'   ec.init(
+#'      xAxis3D= list(name= 'Petal.Length'),
+#'      yAxis3D= list(name= 'Sepal.Width'),
+#'      zAxis3D= list(name= 'Sepal.Length'),
+#'      legend= list(show= TRUE),
+#'      series.param= list(type='scatter3D', symbolSize= ec.clmn(6, scale=10))
 #'   )
 #' }
 #'

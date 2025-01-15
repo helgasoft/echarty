@@ -1,20 +1,22 @@
-#' tests for ec.util()
-library(dplyr)
+#' tests for ec.util() 
+isCovr <- Sys.getenv("R_COVR")!=''
 
 test_that("serie from ec.util with cartesian3D", {
   expect_error(ec.util(cmd= 'dummy'))
 
-  # usage for LIDAR data
-  library(sf)
-  tmp <- st_as_sf(data.frame(
-      x=c(-60,-40,-20), y=c(45, 35, 25), z=c(1,2,3), name=c('p1','p2','p3')), 
-    coords= c('x','y','z'), crs= st_crs(4326))
-  p <- ec.init(load='3D', tooltip= list(formatter='{c}'),
-    series= ec.util(df= tmp, cs='cartesian3D')
-  )
-  expect_s3_class(p$x$opts$series[[1]]$data[[2]]$value, 'sfg')
-  expect_equal(as.numeric(p$x$opts$series[[1]]$data[[2]]$value), c(-40,35,2))
-  expect_type( p$x$opts$xAxis3D, 'list')
+  if (isCovr) {
+    # usage for LIDAR data
+    library(sf)
+    tmp <- st_as_sf(data.frame(
+        x=c(-60,-40,-20), y=c(45, 35, 25), z=c(1,2,3), name=c('p1','p2','p3')), 
+      coords= c('x','y','z'), crs= st_crs(4326))
+    p <- ec.init(load='3D', tooltip= list(formatter='{c}'),
+      series= ec.util(df= tmp, cs='cartesian3D')
+    )
+    expect_s3_class(p$x$opts$series[[1]]$data[[2]]$value, 'sfg')
+    expect_equal(as.numeric(p$x$opts$series[[1]]$data[[2]]$value), c(-40,35,2))
+    expect_type( p$x$opts$xAxis3D, 'list')
+  }
 })
 
 test_that("shapefiles with multi-POLYGONS", {
@@ -22,9 +24,9 @@ test_that("shapefiles with multi-POLYGONS", {
   fname <- system.file("shape/nc.shp", package="sf")
   nc <- as.data.frame(st_read(fname, quiet=TRUE))
   p <- ec.init(load= c('leaflet', 'custom'),  # load custom for polygons
-               js= ec.util(cmd= 'sf.bbox', bbox= st_bbox(nc$geometry)),
-               series= ec.util(cmd= 'sf.series', df= nc, nid= 'NAME', itemStyle= list(opacity= 0.3)),
-               tooltip= list(formatter= '{a}')
+    js= ec.util(cmd= 'sf.bbox', bbox= st_bbox(nc$geometry)),
+    series= ec.util(cmd='sf.series', df=nc, nid= 'NAME', itemStyle= list(opacity= 0.3), verbose=T),
+    tooltip= list(formatter= '{a}')
   )
   expect_true(p$x$opts$leaflet$roam)
   expect_equal(p$x$opts$series[[108]]$name, 'Brunswick')
@@ -32,7 +34,7 @@ test_that("shapefiles with multi-POLYGONS", {
 })
 
 test_that("shapefile LINES from ZIP", {
-  if (interactive()) {  # creates a subfolder 'railways'
+  if (isCovr) {  # creates a subfolder 'railways'
     library(sf)
     fname <- ec.util(cmd= 'sf.unzip', 
           url= 'https://helgasoft.github.io/echarty/test/sl.shape.railways.zip')
@@ -53,28 +55,29 @@ test_that("shapefile LINES from ZIP", {
     expect_equal(p$x$opts$series[[6]]$lineStyle$color, 'red')
     
   }
-  else expect_equal(1,1) # bypass
+  else expect_false(interactive())  #expect_equal(1,1) # bypass
 })
 
 test_that("shapefile LINESTRING and MULTILINESTRING", {
   p <- ec.init(load= 'leaflet')  #js= ec.util(cmd= 'sf.bbox', bbox= st_bbox(nc$geometry)),
   ls <- st_linestring(rbind(c(0,0),c(1,1),c(2,1)))
   nc <- ls %>% st_sfc %>% st_sf %>% st_cast(to='LINESTRING')
-  p$x$opts$series= ec.util(cmd= 'sf.series', df= nc, lineStyle= list(width=5))
+  p$x$opts$series= ec.util(cmd= 'sf.series', df= nc, lineStyle= list(width=5), verbose=T)
   expect_equal(p$x$opts$series[[1]]$name, 1)
   
   mls <- st_multilinestring(list(rbind(c(2,2),c(1,3)), rbind(c(0,0),c(1,1),c(2,1))))
   nc <- mls %>% st_sfc %>% st_sf %>% st_cast(to='MULTILINESTRING')
-  p$x$opts$series= ec.util(cmd= 'sf.series', df= nc, lineStyle= list(width=5))
+  p$x$opts$series= ec.util(cmd= 'sf.series', df= nc, lineStyle= list(width=5), verbose=T)
   expect_equal(length(p$x$opts$series[[1]]$data[[2]]), 3)
 })
 
 test_that("shapefile POINTS from ZIP", {
-  if (interactive()) {  # creates a subfolder 'points'
+  fn <- ec.util(cmd= 'sf.unzip', 
+                url= 'https://helgasoft.github.io/echarty/test/sl.shape.points.zip')
+  if (!startsWith(fn, 'ERROR')) {
+    expect_true(endsWith(fn, 'points.shp'))     # creates a subfolder 'points'
+
     library(sf)
-    fn <- ec.util(cmd= 'sf.unzip', 
-                  url= 'https://helgasoft.github.io/echarty/test/sl.shape.points.zip')
-    expect_true(endsWith(fn, 'points.shp'))
     nc <- as.data.frame(st_read(fn, quiet=TRUE)) |> head(10)
     p <- ec.init(load= c('leaflet'),
        js= ec.util(cmd= 'sf.bbox', bbox= st_bbox(nc$geometry)), 
@@ -85,7 +88,8 @@ test_that("shapefile POINTS from ZIP", {
     expect_equal(round(as.numeric(p$x$opts$series[[1]]$data[[2]]$value),1), c(-13.3,8.5))
     expect_true( p$x$opts$leaflet$roam)
   }
-  else expect_equal(1,1)
+  fn <- ec.util(cmd= 'sf.unzip', url= 'https://nada.zip')
+  expect_equal(fn, 'ERROR invalid zip url')
 })
 
 test_that("layout", {
@@ -99,7 +103,7 @@ test_that("layout", {
   list(cars |> ec.init()) |> ec.util(cmd='layout', title= 'coveralls')
 })
 
-test_that("tabset with pairs", {
+test_that("tabset with pairs and with pipe", {
   p1 <- cars |> ec.init(grid= list(top= 20), height=333)
   p2 <- mtcars |> ec.init(height=333)
   r <- ec.util(cmd='tabset', cars=p1, mtcars=p2)
@@ -108,16 +112,13 @@ test_that("tabset with pairs", {
   expect_equal(r[[2]]$children[[5]]$children[[1]]$children[[1]][[1]]$x$opts$dataset[[1]]$dimensions, c("speed", "dist"))
   expect_equal(r[[2]]$children[[5]]$children[[1]]$name, "section")
   expect_equal(r[[2]]$children[[5]]$children[[1]]$children[[1]][[1]]$height, 333)
-})
 
-test_that("tabset with pipe", {
-  r <- htmltools::browsable(
-    lapply(iris |> group_by(Species) |> group_split(), function(x) { 
-      x |> ec.init(ctype= 'scatter', title= list(text= unique(x$Species)))
-    }) |> ec.util(cmd='tabset')
-  )
-  expect_equal(r[[2]]$children[[7]]$children[[2]]$children[[1]][[1]]$width, NULL)
-  expect_equal(as.character(r[[2]]$children[[6]]$children[[1]]), "virginica")
+  p <- lapply(iris |> group_by(Species) |> group_split(), function(x) { 
+        x |> ec.init(ctype= 'scatter', title= list(text= unique(x$Species)))
+  }) |> ec.util(cmd='tabset')
+  expect_equal(length(p[[2]]$children), 7)
+  expect_equal(p[[2]]$children[[7]]$children[[2]]$children[[1]][[1]]$width, NULL)
+  expect_equal(as.character(p[[2]]$children[[6]]$children[[1]]), "virginica")
 })
 
 test_that("morph 1", {
@@ -298,6 +299,7 @@ test_that("ec.data boxlpot", {
   ec.data(format='boxplot', outliers=TRUE, layout= 'v')
   #ec.init(dataset= ds$dataset, series= ds$series, xAxis= ds$xAxis, yAxis= ds$yAxis)
   expect_equal(ds$series[[1]]$type, 'boxplot')
+  ds <- mtcars |> select(cyl, drat) |> ec.data(format='boxplot', jitter=0.11)
 
   # without grouping -------------------
   p <- mtcars |> relocate(cyl,mpg) |> ec.data(format='boxplot', outliers=TRUE)
@@ -331,18 +333,18 @@ test_that("ec.data boxlpot", {
   # with grouping -------------------
   ds <- airquality |> mutate(Day=round(Day/10)) |> 
     relocate(Day,Wind,Month) |> group_by(Month) |> 
-  	ec.data(format='boxplot', jitter=0.1, outliers=TRUE)
+  	ec.data(format='boxplot', jitter=0.1, outliers=TRUE, layout= 'v')
   p <- ec.init(load='custom',  # for outliers
     dataset= ds$dataset, series= ds$series,xAxis= ds$xAxis, yAxis= ds$yAxis,
     legend= list(show= TRUE), tooltip= list(show=TRUE)
   )
   expect_equal(length(p$x$opts$dataset), 15)
-  expect_equal(p$x$opts$yAxis[[1]]$type, 'category')
+  expect_equal(p$x$opts$xAxis[[1]]$type, 'category')
   expect_equal(p$x$opts$series[[5]]$type, 'boxplot')
   expect_equal(p$x$opts$series[[5]]$datasetIndex, 9)
   expect_equal(p$x$opts$series[[10]]$type, 'custom')
   expect_equal(as.character(p$x$opts$series[[10]]$renderItem), 'riOutliers')
-  expect_equal(p$x$opts$series[[10]]$encode$x, 1)
+  expect_equal(p$x$opts$series[[10]]$encode$x, 0)
   expect_equal(p$x$opts$series[[14]]$type, 'scatter')
   expect_equal(p$x$opts$series[[14]]$name, '3')
 })

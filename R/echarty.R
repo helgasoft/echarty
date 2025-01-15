@@ -274,8 +274,8 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
         is.null(vm$min) && is.null(vm$max) && is.null(vm$categories) &&
         (is.null(vm$type) || (vm$type == 'continuous')) ) {
       
-        xx <- length(colnames(df))   # last numeric column by default
-        for(xx in xx:1) if (is.numeric(df[,xx])) break
+        xx <- length(colnames(df))   # last numeric column (by default)
+        for(xx in xx:1) if (is.numeric(unlist(df[,xx]))) break  # unlist for group_by
         if (any(names(df) == 'value') && (
           (!is.null(tl.series) && tl.series$type=='map') ||
           (!is.null(series.param) && series.param$type=='map'))
@@ -659,7 +659,7 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
   tmp <- xyNamesCS(tl.series)
   xtem <- tmp$x; ytem <- tmp$y
   if (!is.null(tmp$c)) tl.series$coordinateSystem <- tmp$c
-  #if (dbg) cat('\ntl=',tmp$x,' ',tmp$y,' ',tmp$c)
+  if (dbg) cat('\ntimeline: x=',xtem,' y=',ytem,' cs=',tmp$c)
   
   if (any(c('geo','leaflet') %in% tl.series$coordinateSystem)) {
       klo <- 'lng'; kla <- 'lat'
@@ -693,15 +693,9 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
     })
   } 
   else {
-    if (is.null(unlist(tl.series$encode[xtem]))) {
-      # append col XcolX 1:max for each group
-      df <- df |> group_modify(~ { .x |> mutate(XcolX = 1:nrow(.)) })
-      tl.series$encode[xtem] <- 'XcolX'    # instead of relocate(XcolX)
-      # replace only source, transforms stay
-      wt$x$opts$dataset[[1]] <- list(source= ec.data(df, header=TRUE))
-    }
-    stopifnot("timeline: bad second parameter name for encode"= !is.null(unlist(tl.series$encode[ytem])))
-    
+    if (is.null(tl.series$encode[[xtem]]) || is.null(tl.series$encode[[ytem]]))
+      stop(paste0('for ',tl.series$type,' use encode=list(',xtem,'=..., ',ytem,'=...)'), call.=FALSE)
+
     # dataset is already in, now loop group column(s)
     #gvar <- df |> group_vars() |> first() |> as.character()  # convert if factor
     di <- 0
@@ -1114,12 +1108,12 @@ ecs.render <- function(wt, env=parent.frame(), quoted= FALSE) {
 #' @export
 ecs.proxy <- function(id) {
   sessi <- globalenv()
-  if (interactive()) {
+  #if (interactive()) {
     if (requireNamespace("shiny", quietly = TRUE)) {
       sessi <- shiny::getDefaultReactiveDomain()
     } else 
       return(invisible(NULL))
-  }
+  #}
   proxy <- list(id= id, session= sessi)
   class(proxy) <- 'ecsProxy'
   return(proxy)
@@ -1164,13 +1158,13 @@ ecs.exec <- function(proxy, cmd= 'p_merge') {
   
   # create web dependencies for JS, if present
   if (!is.null(proxy$dependencies)) {
-    if (interactive()) {
+    #if (interactive()) {
       if (requireNamespace("shiny", quietly = TRUE)) {
         plist$deps <- list(shiny::createWebDependency(
           htmltools::resolveDependencies( proxy$dependencies )[[1]]
         ))
       }
-    }
+    #}
   }
   if (!is.null(proxy$session))
     proxy$session$sendCustomMessage('kahuna', plist)
@@ -1256,9 +1250,7 @@ ec.plugjs <- function(wt=NULL, source=NULL, ask=FALSE) {
 }
 
 # called by widget init
-# .preRender <- function(wt) {
-#   wt
-# }
+# .preRender <- function(wt) { wt }
 
 # convert from R to JS numbering
 .renumber <- function(opa) {

@@ -46,13 +46,13 @@ Make data lists from a data.frame
 }
 \details{
 \code{format='boxplot'} requires the first two \emph{df} columns as: \cr
-    column for the non-computational categorical axis\cr
-    column with (numeric) data to compute the five boxplot values\cr
+\verb{     }column for the non-computational categorical axis\cr
+\verb{     }column with (numeric) data to compute the five boxplot values\cr
 Additional grouping is supported on a column after the second. Groups will show in the legend, if enabled.\cr
 Returns a \code{list(dataset, series, xAxis, yAxis)} to set params in \link{ec.init}.
 Make sure there is enough data for computation, 4+ values per boxplot.\cr
 \code{format='treeTT'} expects data.frame \emph{df} columns \emph{pathString,value,(optional itemStyle)} for \link[data.tree]{FromDataFrameTable}.\cr
-It will add column 'pct' with value percentage for each node. See Details.
+It will add column 'pct' with value percentage for each node. See example below.
 }
 \examples{
 library(dplyr)

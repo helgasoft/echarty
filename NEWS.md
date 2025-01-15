@@ -1,6 +1,10 @@
 # history of package _echarty_
 
-# echarty 1.6.5  latest in development
+# echarty 1.6.6  latest in development
+
+* more tests to increase coverage without disturbing CRAN submission
+
+# echarty 1.6.5  on CRAN
 
 * upgrade ECharts to v.5.6.0, built with R v.4.4.2.
 * auto-load 3D plugin when 3D attributes present (xAxis3D, bar3D, etc.).
@@ -12,7 +16,7 @@
 * integrate website with library using _pkgdown_.
 * moved _examples.R_ into 'demo' folder, _ec.examples_ is no longer a command.
 
-# echarty 1.6.4  on CRAN
+# echarty 1.6.4
 
 * upgrade ECharts to v.5.5.0, built with R v.4.4.0.
 * add _nasep_ parameter to _ec.data('names')_ to easily set nested lists from a _data.frame_.

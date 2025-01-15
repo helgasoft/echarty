@@ -35,18 +35,25 @@ test_that("ecr.ebars", {
   expect_equal(p$x$opts$xAxis$type, 'category')
 
   # data + name + char.encode
-  p <- ec.init(load= 'custom', legend= list(show=T), tooltip= list(show=T), 
-               xAxis=list(type='category'),
-    series= list(list(type='bar', name= 'data',
-      encode= list(x='gear',y='yy'),
-      dimensions= c('cyl','gear','yy','low','high'),
-      data= ec.data(df |> filter(cyl==4))
-  ))) |> 
+  df <- mtcars |> group_by(cyl,gear) |> summarise(yy= round(mean(mpg),2)) |>
+      mutate(low= round(yy-cyl*runif(1),2), high= round(yy+cyl*runif(1),2)) |> ungroup()
+  args <- list(df=df, load= 'custom', xAxis= list(type='category'),
+      series.param= list(type='bar', name= 'data',
+        encode= list(x='gear', y='yy'),
+        dimensions= c('cyl','gear','yy','low','high'),
+        data= ec.data(df |> filter(cyl==4))
+  ))
+  p <- do.call(ec.init, args) |>
     ecr.ebars(encode= list(x='gear', y=c('yy','low','high')), hwidth=12, name='err',
-      itemStyle= list(borderWidth= 2.5, color= "red")
+        itemStyle= list(borderWidth= 2.5, color= "red")
   )
   expect_equal(p$x$opts$series[[2]]$encode$y, c(2,3,4))
   expect_equal(p$x$opts$series[[2]]$itemStyle$borderDashOffset, 12)
+    
+  args$series.param$type <- 'line'   # coverage
+  p <- do.call(ec.init, args) |> ecr.ebars(encode= list(x='gear', y=c('yy','low','high')))
+  args$series.param$type <- 'pie'   # coverage
+  p <- do.call(ec.init, args) |> ecr.ebars(encode= list(x='gear', y=c('yy','low','high')))
 
   df <- Orange |> arrange(Tree) |> mutate(up= circumference+runif(5)*6, 
                                           lo= circumference-runif(5)*6 ) |> filter(age==1231)
