@@ -16,7 +16,8 @@
 <link href="deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Minimal R/Shiny Interface to JavaScript Library ECharts">
+<script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><link href="extra.css" rel="stylesheet">
+<meta property="og:title" content="Minimal R/Shiny Interface to JavaScript Library ECharts">
 <meta name="description" content="Deliver the full functionality of ECharts with minimal overhead. echarty users build R lists for ECharts API. Lean set of powerful commands.">
 <meta property="og:description" content="Deliver the full functionality of ECharts with minimal overhead. echarty users build R lists for ECharts API. Lean set of powerful commands.">
 <meta property="og:image" content="https://helgasoft.github.io/echarty/logo.png">
@@ -29,7 +30,7 @@
 
     <a class="navbar-brand me-2" href="index.html">echarty</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.6.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.6.6.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -47,6 +48,7 @@
     <li><a class="dropdown-item" href="articles/extras.html">Extras</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><a class="dropdown-item" href="articles/mapping.html">Tutor - mapping</a></li>
+    <li><a class="dropdown-item" href="articles/data.hierarchy.html">Tutor - hierarchical data</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="news/index.html">Changelog</a></li>
@@ -174,7 +176,7 @@ Comparison review done Feb 2024 for current versions of echarts4R and echarty. _
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
 <!-- [![Github version](https://img.shields.io/github/v/release/helgasoft/echarty?label=github)](https://github.com/helgasoft/echarty/releases)  <sup>.02</sup>  -->
-<p>Latest development build <strong>1.6.5</strong></p>
+<p>Latest development build <strong>1.6.6.1</strong></p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">'remotes'</span><span class="op">)</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">'remotes'</span><span class="op">)</span></span>
 <span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">'helgasoft/echarty'</span><span class="op">)</span></span></code></pre></div>
@@ -218,7 +220,7 @@ Comparison review done Feb 2024 for current versions of echarts4R and echarty. _
 The <a href="https://helgasoft.github.io/echarty"><strong>WEBSITE</strong></a> has a vast gallery with code and tutorials.<br>
 The package itself has <a href="https://github.com/helgasoft/echarty/blob/main/demo/examples.R" class="external-link">code examples</a> included. Now you can start building <a href="https://echarts.apache.org/examples/en/index.html" class="external-link"><strong>beautiful ECharts</strong></a> with R and Shiny!</p>
 <br><p align="center">
-<a href="https://helgasoft.github.io/echarty/articles/gallery.html" target="_blank"> <img src="reference/figures/ssPolarStack.png" alt="Polar Stack" width="180"><img src="reference/figures/ssBars.gif"><img src="reference/figures/ssThemeRiver.png" width="180"><img src="reference/figures/ssBunny.gif"><br><!-- img src="man/figures/ssMorph.gif" width="180"/ --><img src="reference/figures/ssRose.png" width="180"><img src="reference/figures/ssSpeed.png" width="180"><img src="reference/figures/ssStackBar.png" width="180"></a> <br>Made with echarty. Powered by ECharts.
+<a href="https://helgasoft.github.io/echarty/articles/gallery.html" target="_blank"> <img src="reference/figures/ssPolarStack.png" alt="Polar Stack" width="180"><img src="reference/figures/ssBars.gif" alt="timeline bars"><img src="reference/figures/ssThemeRiver.png" alt="themeRiver" width="180"><img src="reference/figures/ssBunny.gif" alt="3D"><br><!-- img src="man/figures/ssMorph.gif" width="180"/ --><img src="reference/figures/ssRose.png" alt="rose pie" width="180"><img src="reference/figures/ssSpeed.png" alt="map" width="180"><img src="reference/figures/ssStackBar.png" alt="stacked grouped bars" width="180"></a> <br>Made with echarty. Powered by ECharts.
 </p>
 </div>
 </div>
@@ -243,10 +245,10 @@ The package itself has <a href="https://github.com/helgasoft/echarty/blob/main/d
 <h2 data-toc-skip>Dev status</h2>
 <ul class="list-unstyled">
 <li><a href="https://github.com/helgasoft/echarty/actions" class="external-link"><img src="https://github.com/helgasoft/echarty/workflows/R-CMD-check/badge.svg" alt="R-CMD-check"></a></li>
-<li><a href="https://coveralls.io/r/helgasoft/echarty?branch=main" class="external-link"><img src="https://coveralls.io/repos/github/helgasoft/echarty/badge.svg" alt="coverage"></a></li>
+<li><a href="https://coveralls.io/github/helgasoft/echarty" class="external-link"><img src="https://coveralls.io/repos/github/helgasoft/echarty/badge.svg" alt="coverage"></a></li>
 <li><a href="https://github.com/helgasoft/echarty/releases/" class="external-link"><img src="https://img.shields.io/github/languages/code-size/helgasoft/echarty" alt="size"></a></li>
 <li><a href="https://helgasoft.github.io/echarty"><img src="https://img.shields.io/badge/Website-Visit-blue" alt="website"></a></li>
-<li><a href="https://twitter.com/echarty_R" class="external-link"><img src="https://img.shields.io/twitter/follow/echarty.svg?style=social&amp;label=Follow" alt="twitter"></a></li>
+<li><a href="https://x.com/echarty_R" class="external-link"><img src="https://img.shields.io/twitter/follow/echarty.svg?style=social&amp;label=Follow" alt="twitter"></a></li>
 </ul>
 </div>
 
