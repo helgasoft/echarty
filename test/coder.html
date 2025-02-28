@@ -25,7 +25,7 @@ body { font-family: Arial, sans-serif; background-color: Linen; }
 a:link { text-decoration: none; }
 .titl {font-size: 130%; }
 .fontu {font-size: 130%;}
-.center { text-align: center; }
+.center { text-align: center; width: 90%}
 .wrapper { display: flex; 
   margin: 0.5rem;   
   width: 100%;
@@ -34,7 +34,7 @@ a:link { text-decoration: none; }
   border: 1px solid #ccc;
   padding: 1px 6px; margin: 5px;
   /*display: block;*/
-  width: 70%;
+  width: 75%;
   overflow: hidden;
   overflow-y: auto;
   resize: both;
@@ -149,7 +149,7 @@ chart <- ec.init(load='world',
 
 	  	  case 'xyz':
 		code= `df <- mtcars |> mutate(name=rownames(mtcars)) |> relocate(mpg,wt,hp) |> group_by(cyl) 
-chart <- df |> ec.init( load='3D',
+chart <- df |> ec.init(load='3D', ctype='scatter3D',
   backgroundColor= '#777', width='70%', tooltip=list(show=T), legend= list(show=T), 
   title= list(text='mtcars')
 )` 
@@ -270,7 +270,7 @@ See also the <b>real-time data</b> processing <a href='realTime.html' target="_b
 <!-- LikeBtn.com END -->
 
    </div>
-   <textarea id='code' class='textarea inblock' cols=20 rows=7 contenteditable>
+   <textarea id='code' class='textarea inblock' rows=7 contenteditable>
 tmp <- help(package="echarty", help_type='text')
 title <- list(text= paste('echarty', gsub(' ','',tmp$info[[1]][4])), left='center')
 chart <- cars |> ec.init(title= title)
