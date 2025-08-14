@@ -12,15 +12,8 @@ home:
     - dev
 navbar:
   structure:
-    left:
-    - intro
-    - reference
-    - articles
-    - news
-    right:
-    - search
-    - twitter
-    - github
+    left: [intro, reference, articles, news]
+    right: [search, twitter, github]
   components:
     twitter:
       icon: fa-twitter
@@ -37,6 +30,8 @@ navbar:
       - text: -------
       - text: Tutor - mapping
         href: articles/mapping.html
+      - text: Tutor - hierarchical data
+        href: articles/data.hierarchy.html
 
 footer:
   structure:

@@ -49,20 +49,16 @@ These are \emph{htmlwidget} and \emph{ECharts} initialization parameters support
 by echarty. There are code samples for most of them in
 \href{https://github.com/helgasoft/echarty/blob/main/demo/examples.R}{examples}:
 \itemize{
-\item capture = event name(s), to monitor events, usually in Shiny
+\item iniOpts = optional chart configurations like locale,renderer,etc. see
+\href{https://echarts.apache.org/en/api.html#echarts.init}{init}
 \item on = define JavaScript code for event handling, see
 \href{https://echarts.apache.org/en/api.html#echartsInstance.on}{ECharts}
-\item registerMap = define a map from a geoJSON file, see
-\href{https://echarts.apache.org/en/api.html#echartsInstance.registerMap}{ECharts}
+\item capture = event name(s) to monitor, the Shiny way of setting \emph{on}
+above
 \item group = group-name of a chart, see
 \href{https://echarts.apache.org/en/api.html#echartsInstance.group}{ECharts}
 \item connect = command to connect charts with same group-name, see
 \href{https://echarts.apache.org/en/api.html#echarts.connect}{ECharts}
-\item locale = EN(default) or ZH, set from \emph{locale} parameter of \emph{ec.init},
-see \href{https://echarts.apache.org/en/api.html#echarts.init}{ECharts}.
-\item renderer = \emph{canvas}(default) or \emph{svg}, set from \emph{renderer} in
-\emph{ec.init}, see
-\href{https://echarts.apache.org/en/api.html#echarts.init}{ECharts}.
 \item jcode = custom JavaScript code to execute, set from \emph{js} parameter of
 \emph{ec.init}
 }
@@ -74,17 +70,17 @@ R language counting starts from 1.
 Javascript (JS) counting starts from 0.
 \emph{ec.init} supports R-counting of indexes (ex. encode) and dimension (ex.
 visualMap).
-\emph{ec.upd} requires indexes and dimensions to be set with JS-counting.
+All other contexts like \emph{ec.upd} or \emph{ecs.proxy} require JS-counting of
+indexes and dimensions.
 }
 
 \subsection{Javascript built-in functions}{
 
 To allow access to charts from JS.
-\emph{ec_chart(id)} - get the chart object by id (former get_e_charts)
-\emph{ec_option(id)} - get the chart’s option object by id (former
-get_e_charts_opt)
-Parameter \emph{id} could be the internal variable \emph{echwid}, or the value set
-through \emph{ec.init} parameter \emph{elementId}. See demo code in
+\emph{ec_chart(id)} - get the chart object by id
+\emph{ec_option(id)} - get the chart’s option object by id
+Parameter \emph{id} could be the internal JS variable \emph{echwid}, or the value
+set through \emph{ec.init} parameter \emph{elementId}. See demo code in
 \href{https://github.com/helgasoft/echarty/blob/main/demo/examples.R}{examples}
 }
 

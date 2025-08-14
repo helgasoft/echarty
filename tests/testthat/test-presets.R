@@ -17,17 +17,22 @@ test_that("options preset", {
   expect_equal(p$x$theme, 'mine')
   
   options(echarty.theme=NULL)
-  p <- cars |> ec.init(dbg=T)
+  p <- cars |> ec.init(dbg=T, dataZoom=list(show=T))
   expect_equal(p$x$theme, '')
+  # dataZoom should not produce error from r2jsEncode
   
   options(echarty.font='monospace')
   p <- cars |> ec.init()
   expect_equal(p$x$opts$textStyle$fontFamily, 'monospace')
   options(echarty.font=NULL)
   
-  p <- cars |> ec.init(series.param= list(yAxisIndex=1), 
-          yAxis= list(gridIndex=1), visualMap= list(dimension=2))
+  p <- cars |> ec.init(
+    series.param= list(yAxisIndex=1, encode=list(x=1, y=2, tooltip=c(3,4))), 
+    yAxis= list(gridIndex=1), visualMap= list(dimension=2),
+    dataZoom= list(list(),list(yAxisIndex=1)) )
   expect_equal(p$x$opts$series[[1]]$yAxisIndex, 0)  # is decremented?
+  expect_equal(p$x$opts$series[[1]]$encode$tooltip, c(2,3))
+  expect_equal(p$x$opts$dataZoom[[2]]$yAxisIndex, 0)
   expect_equal(p$x$opts$yAxis$gridIndex, 0)
   expect_equal(p$x$opts$visualMap$dimension, 1)
   expect_equal(p$x$opts$dataset[[1]]$dimensions, c('speed','dist'))
@@ -115,7 +120,7 @@ test_that("ec.init presets for timeline groupBy, geo", {
 
   if (isCovr) {
     p <- dat |> group_by(x1) |> ec.init( #load='3D',
-      xAxis3D=list(s=T),yAxis3D=list(s=T),zAxis3D=list(s=T),grid3D=list(s=T),
+      xAxis3D=list(s=T), yAxis3D=list(s=T), zAxis3D=list(s=T), grid3D=list(s=T),
       timeline=list(s=T), legend= list(show=TRUE), 
       series.param= list(type='scatter3D', groupBy= 'x2',
         encode= list(x='x', y='y', z='z'), 
@@ -222,6 +227,46 @@ lng,lat,name,date,place
 		itemStyle= list(color='brown')) )
   expect_equal(p$x$opts$series[[1]]$coordinateSystem, 'geo')
   expect_equal(p$x$opts$geo$map, 'world')
+  
+  p <- ec.init(geo= list(map='world'))    # autoload 'world'
+  expect_equal(p$dependencies[[1]]$name, 'world')
+  p <- ec.init(series.param= list(type='map', map='world')) 
+  expect_equal(p$dependencies[[1]]$name, 'world')
+  p <- ec.init(series= list(list(type='map', map='world')))
+  expect_equal(p$dependencies[[1]]$name, 'world')
+})
+
+test_that("presets for lottieParser and ecStat", {
+  url= 'https://helgasoft.github.io/echarty/test/pinJump.json'
+  cont <- jsonlite::fromJSON(url, simplifyDataFrame=FALSE)
+  # set lottie animation as graphic item in echarty
+  p <- cars |> ec.init( load= 'lottie',
+  	graphic= list(elements= list(
+  		 list( type= "group",  # lottie params qre info + optional (scale, loop, etc.)
+  		 	info= cont, scale= 250, left= 'center', bottom= '25%'  #,rotation= -20
+  		 )
+  	)) 
+  )
+  expect_equal(p$dependencies[[1]]$name, 'lottieParser')
+  
+  s1 <- list(type='scatter', symbolSize=15, datasetIndex=1)
+  s2 <- list(type='line', symbolSize=0, smooth=TRUE, color='red', datasetIndex=2)
+  p <- ec.init(load= 'ecStat',
+    #js= c('echarts.registerTransform(ecStat.transform.regression)','',''),
+    dataset= list(
+      list(source= matrix(runif(18)*5, ncol= 2)), 
+      list(transform= list(type='ecStat:regression', 
+                           config= list(method= 'polynomial', order= 3)) )
+    ),
+    xAxis=list(show=T), yAxis=list(show=T), tooltip= list(position='top'),
+    series= list(s1, s2)
+  )
+  expect_equal(p$dependencies[[1]]$name, 'ecStat')
+  expect_equal(length(unlist(strsplit(p$x$jcode[[1]], 'registerTransform', fixed=TRUE))), 5)
+  p <- ec.init(load= 'ecStat', js='a=1;')
+  expect_equal(length(unlist(strsplit(p$x$jcode[[1]], 'registerTransform', fixed=TRUE))), 5)
+  p <- ec.init(load= 'ecStat', js=c('a=1;','b=2',''))
+  expect_equal(length(unlist(strsplit(p$x$jcode[[1]], 'registerTransform', fixed=TRUE))), 5)
 })
 
 test_that("presets with series.param", {

@@ -32,20 +32,21 @@ R package | echarts4r | echarty
 initial commit | Mar 12, 2018 | Feb 5, 2021
 library size | ![878 KB](https://img.shields.io/github/languages/code-size/JohnCoene/echarts4r.svg) | ![224KB](https://img.shields.io/github/languages/code-size/helgasoft/echarty)
 test coverage | ![32%](https://coveralls.io/repos/github/JohnCoene/echarts4r/badge.svg) [![link](man/figures/external-link-16.png)](https://coveralls.io/github/JohnCoene/echarts4r) | ![93%](https://coveralls.io/repos/github/helgasoft/echarty/badge.svg) [![link](man/figures/external-link-16.png)](https://coveralls.io/github/helgasoft/echarty)
-lines of code | 1,202,623 [![link](man/figures/external-link-16.png)](https://api.codetabs.com/v1/loc/?github=JohnCoene/echarts4r) | 5,517 [![link](man/figures/external-link-16.png)](https://api.codetabs.com/v1/loc?github=helgasoft/echarty)
-API design <sup>(1)</sup> | own commands with parameters | mostly [ECharts option](https://echarts.apache.org/en/option.html) lists
-number of commands | over [200](https://echarts4r.john-coene.com/reference/) | **one** command + optional utility commands
+lines of code | 1,202,592 [![link](man/figures/external-link-16.png)](https://api.codetabs.com/v1/loc/?github=JohnCoene/echarts4r) | 5,720 [![link](man/figures/external-link-16.png)](https://api.codetabs.com/v1/loc?github=helgasoft/echarty)
+echarts.js version | 5.4.3 [![link](man/figures/external-link-16.png)](https://github.com/JohnCoene/echarts4r/blob/master/inst/htmlwidgets/lib/echarts-4.8.0/ecStat.min.js) | 5.6.0 [![link](man/figures/external-link-16.png)](https://github.com/helgasoft/echarty/blob/main/inst/js/echarts.min.js)
+API design | own commands with parameters | mostly [ECharts option](https://echarts.apache.org/en/option.html) lists <sup>(1)</sup>
+number of commands | over [200](https://echarts4r.john-coene.com/reference/) | **one** command (ec.init) + optional utility commands
 [dataset](https://echarts.apache.org/en/option.html#dataset) support | no | **yes**
 [WebR](https://docs.r-wasm.org/webr/latest/) support | no	| **yes**
 [crosstalk](https://rstudio.github.io/crosstalk/) support | no | **yes**
-dependencies ([packrat](https://rdrr.io/cran/packrat/src/R/recursive-package-dependencies.R#sym-recursivePackageDependencies)) | 65 | 40 
+dependencies ([tools](https://www.rdocumentation.org/packages/tools/versions/3.6.2/topics/package_dependencies)) | 70 | 46 
 dependencies ([WebR](https://repo.r-wasm.org)) | 188 | 46 
-utilities | bezier, correlations, histogram, density, loess, flip, nesting, more | extended boxplots, tabsets, layouts, shapefiles, lotties, more
 
+<!-- utilities | bezier, correlations, histogram, density, loess, flip, nesting, more | extended boxplots, tabsets, layouts, shapefiles, lotties, more -->
 <sup>(1)</sup> We encourage users to follow the original ECharts API to construct charts with echarty. 
 	This differs from echarts4r which uses own commands for most chart options.   
 
-Comparison review done Feb 2024 for current versions of echarts4R and echarty.
+Comparison review done February 2025 for current versions of echarts4R and echarty.  
 ___
 </details>
 
@@ -54,7 +55,7 @@ Please consider granting a Github star ⭐ to show your support.
 ## Installation
 
 <!-- [![Github version](https://img.shields.io/github/v/release/helgasoft/echarty?label=github)](https://github.com/helgasoft/echarty/releases)  <sup>.02</sup>  -->
-Latest development build **1.6.6**
+Latest development build **1.6.7**
 
 ``` r
 if (!requireNamespace('remotes')) install.packages('remotes')
@@ -103,7 +104,7 @@ echarty::ec.fromJson('https://helgasoft.github.io/echarty/test/pfull.json')
 
 The **Coder** is a good introduction, type ```library(echarty); demo(coder)```.  
 The [**WEBSITE**](https://helgasoft.github.io/echarty) has a vast gallery with code and tutorials.  
-The package itself has [code examples](https://github.com/helgasoft/echarty/blob/main/demo/examples.R)
+The package itself has [code examples](https://raw.githubusercontent.com/helgasoft/echarty/refs/heads/main/demo/examples.R)
 included.
 Now you can start building [**beautiful ECharts**](https://echarts.apache.org/examples/en/index.html) with R and Shiny!
 
@@ -111,13 +112,13 @@ Now you can start building [**beautiful ECharts**](https://echarts.apache.org/ex
 <p align="center">
 <a href='https://helgasoft.github.io/echarty/articles/gallery.html' target='_blank'>
   <img src="man/figures/ssPolarStack.png" alt="Polar Stack" width="180"/>
-  <img src="man/figures/ssBars.gif"/>
-  <img src="man/figures/ssThemeRiver.png" width="180"/>
-  <img src="man/figures/ssBunny.gif"/> <br>
+  <img src="man/figures/ssBars.gif" alt="timeline bars"/>
+  <img src="man/figures/ssThemeRiver.png" alt="themeRiver" width="180"/>
+  <img src="man/figures/ssBunny.gif" alt="3D"/> <br>
   <!-- img src="man/figures/ssMorph.gif" width="180"/ -->
-  <img src="man/figures/ssRose.png" width="180"/>
-  <img src="man/figures/ssSpeed.png" width="180"/>
-  <img src="man/figures/ssStackBar.png" width="180"/>
+  <img src="man/figures/ssRose.png" alt="rose pie" width="180"/>
+  <img src="man/figures/ssSpeed.png" alt="map" width="180"/>
+  <img src="man/figures/ssStackBar.png" alt="stacked grouped bars" width="180"/>
 </a> 
 <br>Made with echarty. Powered by ECharts.
 </p>

@@ -105,20 +105,22 @@ test_that("layout", {
 
 test_that("tabset with pairs and with pipe", {
   p1 <- cars |> ec.init(grid= list(top= 20), height=333)
-  p2 <- mtcars |> ec.init(height=333)
-  r <- ec.util(cmd='tabset', cars=p1, mtcars=p2)
-  expect_s3_class(r[[2]]$children[[5]]$children[[2]]$children[[1]][[1]], 'echarty')
-  expect_equal(r[[2]]$children[[2]]$children[[1]], "cars")
-  expect_equal(r[[2]]$children[[5]]$children[[1]]$children[[1]][[1]]$x$opts$dataset[[1]]$dimensions, c("speed", "dist"))
-  expect_equal(r[[2]]$children[[5]]$children[[1]]$name, "section")
-  expect_equal(r[[2]]$children[[5]]$children[[1]]$children[[1]][[1]]$height, 333)
-
+  p2 <- mtcars |> ec.init(height=333, width=333)
+  r <- ec.util(cmd='tabset', cars=p1, mtcars=p2, width='444px')
+  expect_s3_class(r[[2]]$children[[1]]$children[[5]][[1]]$children[[1]][[1]], 'echarty')
+  expect_equal(r[[2]]$children[[1]]$children[[2]]$children[[1]], "cars")
+  expect_equal(r[[2]]$children[[1]]$children[[4]]$children[[1]], "mtcars")
+  expect_equal(r[[2]]$children[[1]]$children[[5]][[2]]$children[[1]][[1]]$height, 333)
+  r <- list(p1,p2) |> ec.util(cmd='tabset') |> htmltools::browsable()
+  expect_equal(r[[2]]$children[[1]]$children[[2]]$children[[1]], "chart 1")
+  
   p <- lapply(iris |> group_by(Species) |> group_split(), function(x) { 
         x |> ec.init(ctype= 'scatter', title= list(text= unique(x$Species)))
-  }) |> ec.util(cmd='tabset')
-  expect_equal(length(p[[2]]$children), 7)
-  expect_equal(p[[2]]$children[[7]]$children[[2]]$children[[1]][[1]]$width, NULL)
-  expect_equal(as.character(p[[2]]$children[[6]]$children[[1]]), "virginica")
+  }) |> 
+    ec.util(cmd= 'tabset')   # htmltools::browsable(p)
+  expect_equal(length(p[[2]]$children[[1]]$children), 7)
+  expect_equal(p[[2]]$children[[1]]$children[[7]]$children[[2]]$children[[1]][[1]]$width, NULL)
+  expect_equal(as.character(p[[2]]$children[[1]]$children[[6]]$children[[1]]), "virginica")
 })
 
 test_that("morph 1", {
@@ -185,6 +187,7 @@ test_that("morph 2", {
   expect_equal(p$x$opts$morph[[2]]$series[[3]]$type, 'bar')
   expect_true (p$x$opts$morph[[2]]$series[[3]]$universalTransition$enabled)
   expect_equal(p$x$opts$yAxis, list(show=T, type= "value", name= "disp"))
+  expect_true (p$x$opts$xAxis$scale)  # for ec.upd
 })
 
 test_that("fullscreen", {
@@ -205,6 +208,8 @@ test_that("fullscreen", {
 test_that("rescale", {
   p <- ec.util(cmd='rescale', t=c(5,25), v=44:64)
   expect_equal(p[5], 9)
+  p <- ec.util(cmd='rescale', v=44:64)
+  expect_equal(p[1], 0)
 })
 
 test_that("level", {
@@ -216,6 +221,8 @@ test_that("level", {
   df <- read.table(text=tmp, header= TRUE, sep=',')
   p <- ec.util(cmd='level', df=df)
   expect_equal(p, c(1,2,1))
+  expect_error(ec.util(cmd='level'))
+  expect_error(ec.util(cmd='level', df=df |> rename(dumy=to)))
 })
 
 test_that("labelsInside and doType(xAxis)", {
@@ -370,6 +377,7 @@ test_that("ec.data treePC", {
   )
   expect_equal(p$x$opts$series[[1]]$data[[1]]$value, 711)
   expect_equal(length(p$x$opts$series[[1]]$data[[1]]$children), 4)
+  expect_error(ec.data(data.frame(x=1, y=1:10, char='A'), format='treePC'))
 })
 
 test_that("ec.data treeTK", {
@@ -388,6 +396,30 @@ test_that("ec.data treeTK", {
   	))
   )
   expect_equal(p$x$opts$series[[1]]$data[[1]]$value, 2201)
+  expect_warning(ec.clmn(3, 'dd'))  # col is numeric, others are ignored 
+})
+
+test_that("ec.data borders", {
+  data <- data.frame(   # triangles map
+    long = c(-32, -31.5, -31, -31, -30.5, -30),
+    lat = c(50, 52, 50, 50, 51, 50),
+    region = rep('A', 6),
+    subregion = c(rep('sr1',3), rep('sr2',3))
+  )
+  p <- ec.init( 
+    # geo= list(roam=T, map='trgl', itemStyle= list(areaColor='pink')), 
+    series.param= list( type='map', map='trgl', roam=T,
+      data= list(
+        list(name= 'sr1', value= 9),
+        list(name= 'sr2', value= 1)
+      )
+    ),
+    visualMap= list( max=11, inRange= list(color= rev(rainbow(10)))),
+    tooltip=list(show=T)
+  ) |> 
+  ec.registerMap('trgl', ec.data(data, 'borders'))
+
+  expect_true(endsWith(p$x$registerMap[[1]]$geoJSON, '] ]]}} ]}'))
 })
 
 test_that("ec.data 'names' + nasep, header", {
@@ -460,5 +492,50 @@ test_that("ec.inspect and ec.fromJson", {
   expect_equal(v$x$opts$xAxis$type, 'category')
   p <- ec.fromJson('https://helgasoft.github.io/echarty/test/pfull.json')
   expect_true(inherits(p, 'echarty'))
+})
+
+test_that("ec.registerMap", {
+  usurl <- 'https://echarts.apache.org/examples/data/asset/geo/USA.json'
+  tmp <- data.frame(name = c("Texas", "California"), value = c(111, 222)) |> 
+    ec.init(color= c('lightgray'), visualMap = list(), series.param= list(type= 'map', map= 'usa'))
+  p <- tmp |> ec.registerMap('usa', usurl)
+  expect_equal(p$x$registerMap[[1]]$mapName, "usa")
+  expect_equal(p$x$registerMap[[1]]$geoJSON$type, "FeatureCollection")
+  p <- ec.init(geo= list(map='us2')) |> ec.registerMap('us2', usurl)
+  expect_equal(p$x$registerMap[[1]]$mapName, "us2")
+  p <- tmp|> ec.registerMap('usa', 'http://nono')
+  expect_match(p$x$opts$title$text, "not found")
+
+  expect_error(ec.registerMap('not wt'))
+  p <- cars |> ec.init() |> ec.registerMap()
+  expect_match(p$x$opts$title$text, "missing")
+  expect_error( ec.init(series.param= list(type='map', map='mm')) |> ec.registerMap('mm', 'dummy.json'))
+  
+  # data.frame(name = c('Europe', 'Asia'), value = c(111, 222)) |> 
+  # ec.init(color= c('lightgray'), visualMap = list(),
+  #   series.param= list(type= 'map', map= 'cont')
+  # ) |> ec.registerMap('cont', 'file://C:/temp/continents.geojson')
+  
+  txt <- '{"type": "FeatureCollection", "features": [{
+    "geometry": {"type": "Polygon", "coordinates": [[ [ 20,30],[ 50,30],[ 50,80],[ 20,80] ]]},
+    "properties": {"name": "Area", "childNum": 1}
+  }]}'
+  p <- data.frame(name= 'Area', value= 111) |> 
+  ec.init(color= c('lightgray'), visualMap= list(),
+    series.param= list(type= 'map', map= 'tmap')
+  ) |> ec.registerMap('tmap', txt)
+  #expect_equal(p$x$registerMap[[1]]$geoJSON$features[[1]]$geometry$type, "Polygon")
+  expect_true(class(p$x$registerMap[[1]]$geoJSON)=='json')
+  
+  rarrow <- '<svg version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M21.883 12l-7.527 6.235.644.765 9-7.521-9-7.479-.645.764 7.529 6.236h-21.884v1h21.883z"/></svg>'
+  p <- ec.init(series.param= list(type= 'map', map= 'svgmap')) |> 
+  ec.registerMap('svgmap', rarrow)
+  expect_match(p$x$registerMap[[1]]$svg, '<path d')
+
+  p <- data.frame(name= c('liver','lung'), value= c(11,22)) |> 
+  ec.init(visualMap = list(), series.param= list(type= 'map', map= 'svgmap')) |> 
+  ec.registerMap('svgmap', 'https://echarts.apache.org/examples/data/asset/geo/Veins_Medical_Diagram_clip_art.svg')
+  expect_true(startsWith(p$x$registerMap[[1]]$svg, '<?xml'))
+  expect_equal(p$x$opts$dataset[[1]]$source[[1]][[1]], 'liver')
 })
 

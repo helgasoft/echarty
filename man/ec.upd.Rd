@@ -22,16 +22,18 @@ All numerical indexes for series,visualMap,etc. are JS-counted starting at 0.\cr
 \examples{
 library(dplyr)
 df <- data.frame(x= 1:30, y= runif(30, 5, 10), cat= sample(LETTERS[1:3],size=30,replace=TRUE)) |>
-  		mutate(lwr= y-runif(30, 1, 3), upr= y+runif(30, 2, 4))
+      mutate(lwr= y-runif(30, 1, 3), upr= y+runif(30, 2, 4))
 band.df <- df  |> group_by(cat) |> group_split()
+sband <- list()
+for(ii in 1:length(band.df))   # build all bands
+  sband <- append(sband,
+    ecr.band(band.df[[ii]], 'lwr', 'upr', type='stack', smooth=FALSE,
+       name= unique(band.df[[ii]]$cat), areaStyle= list(color=c('blue','green','yellow')[ii]))
+  )
 
 df |> group_by(cat) |> 
 ec.init(load='custom', ctype='line', 
         xAxis=list(data=c(0,unique(df$x)), boundaryGap=FALSE) ) |> 
-ec.upd({
-  for(ii in 1:length(band.df))   # add bands to their respective groups
-    series <- append(series,   
-      ecr.band(band.df[[ii]], 'lwr', 'upr', type='stack', smooth=FALSE,
-         name= unique(band.df[[ii]]$cat), areaStyle= list(color=c('blue','green','yellow')[ii])) )
-})
+ec.upd({ series <- append(series, sband) })
+
 }

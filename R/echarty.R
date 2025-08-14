@@ -47,18 +47,17 @@ noCoord <- c('polar','radar','singleAxis','parallelAxis','calendar')
 #'  
 #'  **Widget attributes** \cr
 #'  Optional echarty widget attributes include: \cr
-#'  * elementId - Id of the widget, default is NULL(auto-generated)
+#'  * elementId - Id of the widget, default is NULL(auto-generated, stored as _echwid_ variable for JS)
 #'  * load - name(s) of plugin(s) to load. A character vector or comma-delimited string. default NULL.
 #'  * ask - prompt user before downloading plugins when _load_ is present, FALSE by default
 #'  * js - single string or a vector with JavaScript expressions to evaluate.\cr 
 #'    single: exposed _chart_ object (most common)\cr
 #'    vector: \verb{     }see code in \href{https://github.com/helgasoft/echarty/blob/main/demo/examples.R}{examples}\cr
-#'  \verb{     }First expression evaluated before initialization, exposed object _window_ \cr
+#'  \verb{     }First expression evaluated with exposed objects _window_ and _echarts_ \cr
 #'  \verb{     }Second is evaluated with exposed object _opts_. \cr
-#'  \verb{     }Third is evaluated with exposed _chart_ object after _opts_ set.
-#'  * renderer - 'canvas'(default) or 'svg'
-#'  * locale - 'EN'(default) or 'ZH'. Use predefined or custom \href{https://gist.github.com/helgasoft/0618c6537c45bfd9e86d3f9e1da497b8}{like so}.
-#'  * useDirtyRect - enable dirty rectangle rendering or not, FALSE by default, see \href{https://echarts.apache.org/en/api.html#echarts.init}{here}\cr
+#'  \verb{     }Third is evaluated with exposed _chart_ object after initialization with _opts_ already set.
+#'  * iniOpts - a list of initialization options, see _opts_ in \href{https://echarts.apache.org/en/api.html#echarts.init}{echarts.init}\cr
+#'  \verb{     }Defaults: renderer='canvas', locale='EN', useDirtyRect=FALSE\cr
 #'  
 #'  **Built-in plugins** \cr 
 #'  * leaflet - Leaflet maps with customizable tiles, see \href{https://github.com/gnijuohz/echarts-leaflet#readme}{source}\cr
@@ -100,8 +99,15 @@ noCoord <- c('polar','radar','singleAxis','parallelAxis','calendar')
 #' @return A widget to plot, or to save and expand with more features.
 #' 
 #' @examples
-#'  # basic scatter chart from a data.frame, using presets
+#'  # basic scatter chart from a data.frame using presets
 #' cars |> ec.init()
+#' 
+#'  # custom inititlization options and theme
+#' cars |> ec.init(
+#'   iniOpts= list(renderer= 'svg', width= '222px'),
+#'   toolbox= list(feature= list(saveAsImage= list()))
+#' )  |> ec.theme('mine', code=   # theme code JSON
+#'   '{"color": ["green"], "backgroundColor": "lemonchiffon"}' )
 #'  
 #'  # grouping, tooltips, formatting
 #' iris |> dplyr::group_by(Species) |> 
@@ -134,28 +140,27 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
   elementId <- if (is.null(opt1$elementId)) NULL else opt1$elementId
   js <- if (is.null(opt1$js)) NULL else opt1$js
   ask <- if (is.null(opt1$ask)) FALSE else opt1$ask
-  renderer <- if (is.null(opt1$renderer)) 'canvas' else tolower(opt1$renderer)
-  locale <- if (is.null(opt1$locale)) 'EN' else toupper(opt1$locale)
-  useDirtyRect <- if (is.null(opt1$useDirtyRect)) FALSE else opt1$useDirtyRect
+  iniOpts <- if (!is.null(opt1$iniOpts)) opt1$iniOpts else list()
+  # for backward compatibility:
+  if (is.null(iniOpts$renderer)) iniOpts$renderer <- if (is.null(opt1$renderer)) 'canvas' else tolower(opt1$renderer)
+  if (is.null(iniOpts$locale)) iniOpts$locale <- if (is.null(opt1$locale)) 'EN' else toupper(opt1$locale)
+  if (is.null(iniOpts$useDirtyRect)) iniOpts$useDirtyRect <- if (is.null(opt1$useDirtyRect)) FALSE else opt1$useDirtyRect
+
   xtKey <- if (is.null(opt1$xtKey)) 'XkeyX' else opt1$xtKey
   # allow debug feedback thru cat() in JS and R code:
   dbg <- if (is.null(opt1$dbg)) FALSE else opt1$dbg   
   # remove the above attributes since they are not valid ECharts options
-  opt1$ask <- opt1$js <- opt1$renderer <- opt1$locale <- NULL
-  opt1$useDirtyRect <- opt1$elementId <- opt1$xtKey <- opt1$dbg <- NULL
+  opt1$renderer <- opt1$locale <- opt1$useDirtyRect <- opt1$iniOpts <- NULL
+  opt1$ask <- opt1$js <- opt1$elementId <- opt1$xtKey <- opt1$dbg <- NULL
   axis2d <- c('pictorialBar','candlestick','boxplot','scatterGL') #'custom',
   isCrosstalk <- FALSE; deps <- NULL
   
   # forward widget options using x
   x <- list(
     theme = '',
-    draw = TRUE,
-    renderer = renderer,
-    locale = locale,
-    useDirtyRect = useDirtyRect,
+    iniOpts = iniOpts,
     jcode = js, dbg = dbg,
     opts = opt1
-    # settings= list( crosstalk_key= key, crosstalk_group= group )
   )
 
   doType <- function(idx, axx) {
@@ -488,14 +493,39 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
   opt1 <- wt$x$opts
   load <- opt1$load;  wt$x$opts$load <- NULL
   if (length(load)==1 && grepl(',', load, fixed=TRUE))
-      load <- unlist(strsplit(load, ','))
+      load <- unlist(strsplit(load, ','))  # make 'load' a vector
+  # series.param has been merged into series
+  if (dbg) cat('\nseries=',unlist(opt1$series))
+  
   # autoload 3D 
   cnd1 <- any(c('xAxis3D','yAxis3D','zAxis3D','grid3D','globe','geo3D') %in% names(opt1))
-  styp <- ctype
-  if (!is.null(series.param) && !is.null(series.param$type))
-    styp <- series.param$type
-  cnd2 <- any(endsWith(styp, c('3D','GL')))
+  cnd2 <- !is.null(opt1$series)
+  if (cnd2)
+    cnd2 <- length( opt1$series[sapply(opt1$series, 
+              \(x) any(endsWith(x$type, c('3D','GL'))) )] ) >0
   if ((cnd1 || cnd2) && !'3D' %in% load) load <- c(load, '3D')
+
+  # autoload 'world' - for geo OR series
+  cnd1 <- !is.null(opt1$geo); cnd2 <- FALSE
+  if (cnd1 && !is.null(opt1$geo$map)) 
+    cnd2 <- opt1$geo$map=='world'
+  if (!cnd1 || !cnd2) {  #series
+    cnd1 <- !is.null(opt1$series); cnd2 <- FALSE
+    if (cnd1) {
+      # search series for type=='map', map=='world'
+      tmc <- 0
+      cnd2 <- opt1$series[sapply(opt1$series, \(x) {
+        if ('map' %in% names(x)) { 
+          if (!is.null(x$type) && x$type=='map') tmc <<- tmc+1
+          x$map=='world' } else FALSE
+      })]
+      cnd2 <- length(cnd2)==1
+      if (cnd2) stopifnot("type=='map' missing in series"= tmc==1)
+    }
+  }
+  if (cnd1 && cnd2) {
+    if (!'world' %in% load) load <- c(load, 'world')
+  }
   
   path <- system.file('js', package= 'echarty')
   dep <- NULL
@@ -574,6 +604,18 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
     wt$dependencies <- append(wt$dependencies, list(dep))
   }
   if ('ecStat' %in% load) {
+    # add registration if missing in wt$x$jcode
+    jreg <- paste(lapply(list('histogram','regression','clustering','statistics'), 
+      \(x) { paste0('echarts.registerTransform(ecStat.transform.',x,')') }), collapse=';')
+    if (!is.null(js)) {
+      if (!grepl("registerTransform", js, fixed=TRUE)[[1]]) {
+        if (length(js)==1) js <- c(jreg,'',js)
+        else js[[1]] <- paste(js[[1]], jreg)
+        wt$x$jcode <- js
+      }
+    } else
+      wt$x$jcode <- c(jreg,'','')
+
     dep <- htmltools::htmlDependency(
       name = 'ecStat', version = '1.0.0', 
       src = c(file = path), script= 'ecStat.min.js')
@@ -585,14 +627,17 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
     plf <- read.csv(system.file('plugins.csv', package='echarty'), header=TRUE, stringsAsFactors=FALSE)
     if ('3D' %in% load) {
       if (preset) {       # replace 2D presets with 3D
-      isGL <- any(unlist(lapply(opt1$series, \(k){ endsWith(k$type, 'GL') })))  # all GL are 2D
-      if (!isGL) isGL <- endsWith(styp, 'GL')
+      isGL <- any(unlist(lapply(opt1$series, \(k){ endsWith(k$type, 'GL') })))  # GL is 2D
       isMap3d <- !is.null(opt1$globe) || !is.null(opt1$geo3D)
       if (isMap3d) isGL <- FALSE
-      if (!isGL) {  
+      if (!isGL) {
+        # replace 2D types with 3D if any
+        wt$x$opts$series <- lapply(opt1$series, \(ss) { 
+          if (ss$type %in% c('scatter','bar','line')) ss$type <- paste0(ss$type,'3D')
+          ss 
+        })
         # check for series types ending in 3D or GL
-        stypes <- ifelse(!is.null(series.param), styp, 
-                         unlist(lapply(opt1$series, \(k){k$type})) )
+        stypes <- unlist(lapply(wt$x$opts$series, \(k){k$type}))
         stypes <- stypes[stypes!='surface']
         if (!is.null(stypes)) stopifnot("Non-3D series type detected"= all(endsWith(stypes, '3D')) )
         if (!isMap3d) {
@@ -766,7 +811,7 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
   } else
     wt$x$opts$timeline <- .merlis(wt$x$opts$timeline, list(data=steps, axisType='category'))
   
-  return(wt)
+  wt
 }
 
 
@@ -783,18 +828,20 @@ ec.init <- function( df= NULL, preset= TRUE, ctype= 'scatter', ...,
 #' @examples
 #' library(dplyr)
 #' df <- data.frame(x= 1:30, y= runif(30, 5, 10), cat= sample(LETTERS[1:3],size=30,replace=TRUE)) |>
-#'   		mutate(lwr= y-runif(30, 1, 3), upr= y+runif(30, 2, 4))
+#'       mutate(lwr= y-runif(30, 1, 3), upr= y+runif(30, 2, 4))
 #' band.df <- df  |> group_by(cat) |> group_split()
+#' sband <- list()
+#' for(ii in 1:length(band.df))   # build all bands
+#'   sband <- append(sband,
+#'     ecr.band(band.df[[ii]], 'lwr', 'upr', type='stack', smooth=FALSE,
+#'        name= unique(band.df[[ii]]$cat), areaStyle= list(color=c('blue','green','yellow')[ii]))
+#'   )
 #' 
 #' df |> group_by(cat) |> 
 #' ec.init(load='custom', ctype='line', 
 #'         xAxis=list(data=c(0,unique(df$x)), boundaryGap=FALSE) ) |> 
-#' ec.upd({
-#'   for(ii in 1:length(band.df))   # add bands to their respective groups
-#'     series <- append(series,   
-#'       ecr.band(band.df[[ii]], 'lwr', 'upr', type='stack', smooth=FALSE,
-#'          name= unique(band.df[[ii]]$cat), areaStyle= list(color=c('blue','green','yellow')[ii])) )
-#' })
+#' ec.upd({ series <- append(series, sband) })
+#'
 #' @export
 ec.upd <- function(wt, ...) {
   stopifnot('ec.upd: expecting wt as echarty widget'= inherits(wt, 'echarty'))
@@ -1211,7 +1258,7 @@ ec.plugjs <- function(wt=NULL, source=NULL, ask=FALSE) {
   stopifnot('ec.plugjs: expecting source as URL or file://'= 
               startsWith(source, 'http') || startsWith(source, 'file://'))
   if (!.valid.url(source)) {   # CRAN does not like stopifnot errors
-    wt$x$opts$title <- list(text='ERROR ec.plugjs: source is invalid!')
+    wt$x$opts <- list(title= list(text= paste0('ec.plugjs: source "',source,'" is invalid!')))
     return(wt)
   }
   fname <- basename(source)
@@ -1254,19 +1301,21 @@ ec.plugjs <- function(wt=NULL, source=NULL, ask=FALSE) {
 
 # convert from R to JS numbering
 .renumber <- function(opa) {
-
+  doEncode <- function(el) {
+    for(i in 1:length(el$encode)) {
+      if (!is.numeric(el$encode[[i]])) next
+      el$encode[[i]] <- el$encode[[i]] -1
+    }
+    el
+  }
   r2jsEncode <- function(ss) {
   
-    if (any(names(ss)=='encode')) {
-      for(i in 1:length(ss$encode)) {
-        if (!is.numeric(ss$encode[[i]])) next
-          ss$encode[[i]] <- ss$encode[[i]] -1
-      }
-    }
-    if (!ss$type %in% noAxis) {
+    if (any(names(ss)=='encode')) ss <- doEncode(ss)
+
+    #if (!is.null(ss$type) && !ss$type %in% noAxis) {
       if (!is.null(ss$xAxisIndex)) ss$xAxisIndex <- ss$xAxisIndex -1
       if (!is.null(ss$yAxisIndex)) ss$yAxisIndex <- ss$yAxisIndex -1
-    }
+    #}
     if (!is.null(ss$datasetIndex)) ss$datasetIndex <- ss$datasetIndex -1
     if (!is.null(ss$geoIndex)) ss$geoIndex <- ss$geoIndex -1
     if (!is.null(ss$polarIndex)) ss$polarIndex <- ss$polarIndex -1
@@ -1275,8 +1324,11 @@ ec.plugjs <- function(wt=NULL, source=NULL, ask=FALSE) {
     ss
   }
   
-  if (!is.null(opa$series))
-    opa$series <- lapply(opa$series, r2jsEncode)
+  if (!is.null(opa$series)) opa$series <- lapply(opa$series, r2jsEncode)
+  if (!is.null(opa$dataZoom)) {
+    if (all(sapply(opa$dataZoom, is.list))) opa$dataZoom <- lapply(opa$dataZoom, r2jsEncode)
+    else opa$dataZoom <- r2jsEncode(opa$dataZoom)
+  }
   
   decro <- function(x) {
     if (!is.null(x$dimension) && is.numeric(x$dimension)) x$dimension <- x$dimension -1
@@ -1317,7 +1369,7 @@ ec.plugjs <- function(wt=NULL, source=NULL, ask=FALSE) {
 # validate URL  (https:// or file://)
 .valid.url <- function(durl, tsec=2){
   con <- url(durl)
-  check <- suppressWarnings(try(open.connection(con,open="rt",timeout=tsec),silent=TRUE)[1])
+  check <- suppressWarnings(try(open.connection(con, open="rt", timeout=tsec),silent=TRUE)[1])
   suppressWarnings(try(close.connection(con),silent=TRUE))
   ifelse(is.null(check),TRUE,FALSE)
 }

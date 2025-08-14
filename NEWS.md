@@ -1,10 +1,17 @@
 # history of package _echarty_
 
-# echarty 1.6.6  latest in development
+# echarty 1.6.7  latest in development
 
-* more tests to increase coverage without disturbing CRAN submission
+* upgrade ECharts to v.6.0.0, built with R v.4.4.3.
+* new signature of _ec.util_: _cmd_ is now first, to avoid writing 'cmd=...'
+* improved _tabset_ in _ec.util_
+* new _ec.init_ parameter _iniOpts_ for initialization options
+* new helper _ec.registerMap_ for geoJSON and SVG maps
+* new _ec.data_ helper _'borders'_: get geoJSON region borders from data.frame
+* auto-add _load='world'_ if missing in series _map='world'_
+* auto-register _ecStat.transform_ when _load='ecStat'_ is set
 
-# echarty 1.6.5  on CRAN
+# echarty 1.6.6  on CRAN
 
 * upgrade ECharts to v.5.6.0, built with R v.4.4.2.
 * auto-load 3D plugin when 3D attributes present (xAxis3D, bar3D, etc.).
@@ -15,6 +22,7 @@
 * add _event_ parameter in _ec.util_ for cmd='morph'.
 * integrate website with library using _pkgdown_.
 * moved _examples.R_ into 'demo' folder, _ec.examples_ is no longer a command.
+* more tests to increase coverage without disturbing CRAN submission
 
 # echarty 1.6.4
 

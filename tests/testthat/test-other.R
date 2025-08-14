@@ -1,7 +1,7 @@
 #isCovr <- interactive()
 #isCovr <- Sys.getenv("COVERALLS_TOKEN")!=''
 isCovr <- Sys.getenv("R_COVR")!=''
-cat('\n isCovr=',Sys.getenv("R_COVR"),'\n')
+#cat('\n isCovr=',Sys.getenv("R_COVR"),'\n')
 
 test_that("registerMap", {
   # similar in ec.examples, with USA map
@@ -116,18 +116,6 @@ test_that("leaflet with ec.clmn and timeline", {
   expect_equal(p$x$opts$dataset[[2]]$transform$config$dimension, 'stations')
   expect_equal(p$x$opts$dataset[[2]]$transform$config$`=`, 10)
 })
-  
-test_that("ec.upd(), echarts.registerTransform and ecStat", {
-  dset <- data.frame(x=1:10, y=sample(1:100,10))
-  p <- dset |> ec.init(js= 'echarts.registerTransform(ecStat.transform.regression)'
-  ) |> ec.upd({
-    dataset[[2]] <- list(transform = list(type='ecStat:regression'))
-    series[[2]] <- list(
-      type='line', itemStyle=list(color='red'), datasetIndex=1)
-  })
-  expect_equal(p$x$jcode, 'echarts.registerTransform(ecStat.transform.regression)')
-  expect_equal(p$x$opts$dataset[[2]]$transform$type, "ecStat:regression")
-})
 
 test_that("ec.data treeTK", {
 
@@ -229,7 +217,7 @@ test_that("calendar", {
 test_that("ec.plugjs", {
   # .valid.url exits gracefully
   p <- ec.init() |> ec.plugjs('http://does.not.exist.com')
-  expect_true(startsWith(p$x$opts$title$text, 'ERROR'))
+  expect_true(startsWith(p$x$opts$title$text, 'ec.plugjs:'))
   
   if (isCovr) {
   p <- ec.init() |> ec.plugjs(
@@ -246,6 +234,10 @@ test_that("ec.plugjs", {
     )))
   )
   expect_equal(p$x$opts$gmap$zoom, 3)
+  
+  df <- mtcars |> mutate(name=rownames(mtcars)) |> relocate(mpg,wt,hp) |> group_by(cyl) 
+  p <- df |> ec.init(load='3D')
+  expect_equal(p$x$opts$series[[1]]$type, 'scatter3D')
   }
 })
 
@@ -307,7 +299,7 @@ test_that('stops are working in echarty.R', {
   df <- data.frame(x = 1:10, y = seq(1, 20, by=2))
   expect_error(ec.init(0)) # df
   expect_error(ec.init(cars, tl.series= list(d=1))) # groups
-  expect_silent(ec.init(mtcars |> group_by(gear), tl.series= list(type='map'))) # no name/value, can use encode
+  expect_silent(ec.init(mtcars |> group_by(gear), tl.series= list(type='map'))) # no name/value, can use encode; 'regions' err
   expect_silent(ec.init(df |> group_by(y), series.param= list(type='bar')))
   expect_silent(ec.init(df |> group_by(y), series.param= list(type='bar'), 
                         timeline= list(show=T)))
@@ -355,4 +347,7 @@ test_that('for coverage only', {
   args$preset <- FALSE
   p <- do.call(ec.init, args)
   expect_true(is.null(p$x$opts$legend))
+  
+  p <- cars |> ec.init(renderer='svg', locale='ZH', useDirtyRect=T) # legacy params
+  expect_equal(p$x$iniOpts$locale, 'ZH')
 })

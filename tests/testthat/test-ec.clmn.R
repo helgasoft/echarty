@@ -1,3 +1,6 @@
+isCovr <- Sys.getenv("R_COVR")!=''  # Sys.unsetenv("R_COVR")
+cat('\n isCovr=',Sys.getenv("R_COVR"),'\n')  # here because test-ec.clmn is run first
+
 library(dplyr)
 
 test_that("ec.clmn with sprintf, column indexes and names", {

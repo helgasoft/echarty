@@ -74,7 +74,11 @@
 #' 	series.param= list(name= 'quakes', symbolSize= ec.clmn('size', scale=2))
 #' )
 #'
-#' #------ Plugin 'world' with visualMap
+#' #------ Plugin 'world' with visualMap, minimal code
+#' data.frame(name=c('Brazil','Australia'), value=c(111,222)) |>
+#' ec.init(load= 'world', ctype='map', visualMap=list(), color='lightgray')
+#'
+#' #------ Plugin 'world' with timeline
 #' set.seed(333)
 #' cns <- data.frame(   
 #'   val = runif(3, 1, 100),
@@ -110,24 +114,48 @@
 #'   )
 #' } }
 #' 
+#' 
 #' #------ registerMap JSON
 #' # registerMap supports also maps in SVG format, see website gallery
 #' if (interactive()) {
-#' json <- jsonlite::read_json("https://echarts.apache.org/examples/data/asset/geo/USA.json")
-#' dusa <- USArrests
-#' dusa$states <- row.names(dusa)
-#' p <- ec.init(
+#' dusa <- USArrests |> mutate(name= row.names(USArrests)) |> rename(value=UrbanPop)
+#' ec.init(
 #'   series.param= list(type= 'map', map= 'USA', roam= TRUE, zoom= 3, left= -100, top= -30,
-#'     data= lapply(ec.data(dusa, 'names'),
-#'         function(x) list(name=x$states, value=x$UrbanPop))
+#'     data= ec.data(dusa, 'names')
 #'   ),
-#'   visualMap= list(type='continuous', calculable=TRUE,
-#'     inRange= list(color = rainbow(8)),
-#'     min= min(dusa$UrbanPop), max= max(dusa$UrbanPop))
-#' )
-#' p$x$registerMap <- list(list(mapName= 'USA', geoJSON= json))
-#' p
+#'   visualMap= list(type='continuous', calculable=TRUE, inRange= list(color= rainbow(8)),
+#'     min= min(dusa$value), max= max(dusa$value) )
+#' ) |> ec.registerMap('USA', 'https://echarts.apache.org/examples/data/asset/geo/USA.json')
 #' }
+#' 
+#' #------ borders
+#' data <- data.frame(   # triangles map
+#'   long = c(-32, -31.5, -31, -31, -30.5, -30),
+#'   lat = c(50, 52, 50, 50, 51, 50),
+#'   region = c('A', 'A', 'A', 'A', 'A', 'A'),
+#'   subregion = c('sr1','sr1','sr1', 'sr2','sr2','sr2')
+#' )
+#' ec.init( 
+#'   # geo= list(roam=T, map='trgl', itemStyle= list(areaColor='pink')), 
+#'   series.param= list( type='map', map='trgl', roam=T,
+#'     data= list(
+#'       list(name= 'sr1', value= 9),
+#'       list(name= 'sr2', value= 1)
+#'     )
+#'   ),
+#'   visualMap= list( max=11, inRange= list(color= rev(rainbow(10)))),
+#'   tooltip=list(show=T)
+#' ) |> 
+#' ec.registerMap('trgl', ec.data(data, 'borders'))
+#' 
+#' # library(ggplot2)   # CRAN complains
+#' # df <- ggplot2::map_data("world", c("taiwan")) |>
+#' #   mutate(subregion= ifelse(is.na(subregion), region, subregion))
+#' # ec.init(
+#' #   geo= list(roam=T, map='tw', itemStyle= list(areaColor='pink')),
+#' #   tooltip=list(show=T)
+#' # ) |> ec.registerMap('tw', ec.data(df, 'borders'))
+#' 
 #'
 #' #------ locale
 #' mo <- seq.Date(Sys.Date() - 444, Sys.Date(), by= "month")
@@ -338,7 +366,27 @@
 #'     type= 'line', itemStyle=list(color= 'red'), datasetIndex= 1)
 #' })
 #' 
-#' 
+#'
+#' #------ ecSimpleTransform
+#' iris |> ec.init(
+#'   load='https://cdn.jsdelivr.net/gh/100pah/echarts-simple-transform@refs/heads/main/dist/ecSimpleTransform.min.js',
+#'   js= c('echarts.registerTransform(ecSimpleTransform.aggregate)','','')
+#' ) |> ec.upd({ 
+#'   dataset <- append(dataset, list(list(
+#'       transform= list(
+#'         type='ecSimpleTransform:aggregate',
+#'         config= list(
+#'           resultDimensions= list(
+#'             list(from='Sepal.Width', method= 'average'), list(from='Species') 
+#'           )
+#'           ,groupBy= 'Species'
+#'        ))
+#'   )) )
+#'   xAxis <- list(xAxis, list(data= as.character(unique(iris$Species)), name='Avg') )
+#'   series <- append(series, list(list(type='bar', encode=list(x='Species', y='Sepal.Width'), 
+#'                                      datasetIndex=1, xAxisIndex=1, colorBy='data')))
+#' })
+#'
 #' #------ ECharts: dataset, transform and sort
 #' datset <- list(
 #'   list(source=list(
@@ -458,6 +506,10 @@
 #'       lineStyle= list(curveness= 0.3) ))
 #' )
 #' 
+#' #------ tabsets
+#' p1 <- cars |> ec.init(grid= list(top=26), height=333)  # move chart up
+#' p2 <- mtcars |> arrange(mpg) |> ec.init(height=333, ctype='line')
+#' ec.util(cmd= 'tabset', cars= p1, mtcars= p2)
 #' 
 #' #------ group connect 
 #' main <- mtcars |> ec.init(height= 200, legend= list(show=FALSE),
@@ -499,6 +551,54 @@
 #'   series.param= list(type='tree', data=data, symbolSize=33), graphic= list(dbut)
 #' )
 #' 
+#' #------ Events with Javascript handlers ----------
+#' p <- mtcars |> group_by(cyl) |> ec.init(title= list(text=''), dataZoom= list(type= 'inside'))
+#' p$x$on <- list(    # events with Javascript handler
+#'   list(event= 'legendselectchanged', handler= ec.clmn(
+#'     "(e) => { ch1=ec_chart(echwid); opts=ch1.getOption(); opts.title[0].text= 'legend:'+e.name; ch1.setOption(opts); }")),
+#'   list(event= 'datazoom', handler= ec.clmn(
+#'     "(e) => { ch1=ec_chart(echwid); opts=ch1.getOption(); opts.title[0].text= 'Zoom.start: '+ e.batch[0].start.toFixed(); ch1.setOption(opts); }"))
+#' )
+#' p
+#' 
+#'
+#' p <- ec.init( preset= FALSE,
+#'   grid = list(left= "60%", top= "10%", bottom= "10%"),
+#'   xAxis = list(show=T),
+#'   yAxis = list(data = list("heart", "large-intestine", "small-intestine", "spleen", "kidney", "lung", "liver")),
+#'   series = list(
+#'      list(type= "bar", emphasis= list(focus= "self"), data= list(121, 321, 141, 52, 198, 289, 139)),
+#'      list(type='map', map= "organs", left= 10, right= "50%", selectedMode= "multiple",
+#'   		  emphasis= list(focus= "self", label= list(position="bottom", distance=0, color='#fff')),
+#'    	  itemStyle= list(borderWidth=2, borderColor= 'red')
+#' 	    )
+#'   ),
+#'   tooltip = list(show=T) ) |>
+#' ec.registerMap('organs', 'https://echarts.apache.org/examples/data/asset/geo/Veins_Medical_Diagram_clip_art.svg') |>
+#' ec.theme('dark-mushroom')
+#' p$x$on <- list(
+#'   list(event='mouseover', handler=htmlwidgets::JS("function (event) {
+#'       this.dispatchAction({ type:'highlight', query:'series', name:event.name }); }") ),
+#'   list(event='mouseout', handler=htmlwidgets::JS("function (event) {
+#'       this.dispatchAction({ type:'downplay', query:'series', name:event.name }); }") )
+#' )
+#' p
+#' 
+#' #------ generate chart SVG image with SSR & Shiny ----------
+#' # see https://echarts.apache.org/handbook/en/how-to/cross-platform/server/
+#' if (interactive()) {
+#'  runApp( list(  
+#'   ui= fluidPage( ecs.output("plot") ),
+#'   server= function(input, output, session) {
+#'     jco1 <- "svgStr= chart.renderToSVGString(); Shiny.setInputValue('svgic', svgStr); chart.dispose();"
+#'     output$plot <- ecs.render({
+#'       cars |> ec.init(js=jco1, iniOpts= list(renderer='svg', ssr=TRUE, height=200, width=200), animation=F) #,ctype='bar')
+#'     })
+#'     # write a local file is easier in R than JS
+#'     observeEvent(input$svgic, { cat(input$svgic, file='c:/temp/plot.svg') })
+#'   }
+#'  ))
+#' }
 #' 
 #' #------ Events in Shiny ----------
 #' if (interactive()) {

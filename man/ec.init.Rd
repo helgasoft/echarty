@@ -59,18 +59,17 @@ Users can delete or overwrite any presets as needed. \cr
 \strong{Widget attributes} \cr
 Optional echarty widget attributes include: \cr
 \itemize{
-\item elementId - Id of the widget, default is NULL(auto-generated)
+\item elementId - Id of the widget, default is NULL(auto-generated, stored as \emph{echwid} variable for JS)
 \item load - name(s) of plugin(s) to load. A character vector or comma-delimited string. default NULL.
 \item ask - prompt user before downloading plugins when \emph{load} is present, FALSE by default
 \item js - single string or a vector with JavaScript expressions to evaluate.\cr
 single: exposed \emph{chart} object (most common)\cr
 vector: \verb{     }see code in \href{https://github.com/helgasoft/echarty/blob/main/demo/examples.R}{examples}\cr
-\verb{     }First expression evaluated before initialization, exposed object \emph{window} \cr
+\verb{     }First expression evaluated with exposed objects \emph{window} and \emph{echarts} \cr
 \verb{     }Second is evaluated with exposed object \emph{opts}. \cr
-\verb{     }Third is evaluated with exposed \emph{chart} object after \emph{opts} set.
-\item renderer - 'canvas'(default) or 'svg'
-\item locale - 'EN'(default) or 'ZH'. Use predefined or custom \href{https://gist.github.com/helgasoft/0618c6537c45bfd9e86d3f9e1da497b8}{like so}.
-\item useDirtyRect - enable dirty rectangle rendering or not, FALSE by default, see \href{https://echarts.apache.org/en/api.html#echarts.init}{here}\cr
+\verb{     }Third is evaluated with exposed \emph{chart} object after initialization with \emph{opts} already set.
+\item iniOpts - a list of initialization options, see \emph{opts} in \href{https://echarts.apache.org/en/api.html#echarts.init}{echarts.init}\cr
+\verb{     }Defaults: renderer='canvas', locale='EN', useDirtyRect=FALSE\cr
 }
 
 \strong{Built-in plugins} \cr
@@ -115,8 +114,15 @@ Optional series attribute \href{https://echarts.apache.org/en/option.html#series
 Example: \code{encode(x='col3', y='col1')} binds xAxis to \emph{df} column 'col3'.
 }
 \examples{
- # basic scatter chart from a data.frame, using presets
+ # basic scatter chart from a data.frame using presets
 cars |> ec.init()
+
+ # custom inititlization options and theme
+cars |> ec.init(
+  iniOpts= list(renderer= 'svg', width= '222px'),
+  toolbox= list(feature= list(saveAsImage= list()))
+)  |> ec.theme('mine', code=   # theme code JSON
+  '{"color": ["green"], "backgroundColor": "lemonchiffon"}' )
  
  # grouping, tooltips, formatting
 iris |> dplyr::group_by(Species) |> 

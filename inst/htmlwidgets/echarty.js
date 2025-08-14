@@ -84,7 +84,7 @@ ecf = {
     // labelLayout= htmlwidgets::JS("(params) => ecf.labelsInside(params)")) 
     // https://github.com/apache/echarts/issues/17828   thanks to @plainheart
     if (echwid=='') return null;   // single chart only (TODO: many)
-    dchart = get_e_charts(echwid);
+    dchart = ec_chart(echwid);
     const chartWidth = dchart.getWidth();
     const labelRect = params.labelRect;
     const labelX = labelRect.x;
@@ -118,20 +118,12 @@ HTMLWidgets.widget({
       if (!initialized) {
         initialized = true;
         if(x.themeCode){
-          let tcode = JSON.parse(x.themeCode);
+          tcode = JSON.parse(x.themeCode);
           echarts.registerTheme(x.theme, tcode);
         }
       }
       
       if (x.hasOwnProperty('registerMap')) {
-        /*  for( let map = 0; map < x.registerMap.length; map++){
-          if (x.registerMap[map].geoJSON)
-            echarts.registerMap(x.registerMap[map].mapName, 
-                                x.registerMap[map].geoJSON);
-          else if (x.registerMap[map].svg)
-            echarts.registerMap(x.registerMap[map].mapName, 
-              { svg: x.registerMap[map].svg });
-        } */
         for (const map of x.registerMap) {
           if (map.geoJSON)
             echarts.registerMap(map.mapName, map.geoJSON);
@@ -157,9 +149,10 @@ HTMLWidgets.widget({
         }
       }
       if (x.hasOwnProperty('dbg')) { ecf.dbg= x.dbg; }
+      if (ecf.dbg) { console.log(x.theme); console.log(tcode); }
       
-      chart = echarts.init(document.getElementById(el.id), x.theme, 
-      	{ renderer: x.renderer, locale: x.locale, useDirtyRect: x.useDirtyRect }
+      chart = echarts.init(document.getElementById(el.id), x.theme, x.iniOpts
+      	//{ renderer: x.renderer, locale: x.locale, useDirtyRect: x.useDirtyRect }
       );
 
       if (window.onresize==undefined)   // single chart only, TODO: many
@@ -178,8 +171,8 @@ HTMLWidgets.widget({
         } catch(err) { console.log('eva2: ' + err.message) }
       }
       
-      if(x.draw === true)
-        chart.setOption(opts);
+      //if(x.draw === true)
+      chart.setOption(opts);
       
       if (eva3) {	// #3 to use chart object
         try {
@@ -247,7 +240,7 @@ HTMLWidgets.widget({
       if(x.hasOwnProperty('connect')){
         if (Array.isArray(x.connect)) {
           let connections = [];
-          x.connect.forEach(cc => connections.push(get_e_charts(cc)) )
+          x.connect.forEach(cc => connections.push(ec_chart(cc)) )
           connections.push(chart);
           echarts.connect(connections);  
         } else
@@ -400,7 +393,7 @@ if (HTMLWidgets.shinyMode) {
   
     function(data) {
       
-      var chart = get_e_charts(data.id);
+      var chart = ec_chart(data.id);
       if (typeof chart == 'undefined') return;
       if (!data.action) return;
       // add JS dependencies if any

@@ -18,6 +18,7 @@ Except when format is \emph{dendrogram}, then df is a \strong{list}, result of \
 \item \strong{treePC} = build series data for tree charts from parent/children data.frame
 \item \strong{treeTT} = build series data for tree charts from data.frame like Titanic.\cr
 \item \strong{boxplot} = build dataset and source lists, see Details
+\item \strong{borders} = build geoJson string from map_data region borders, see Details
 }}
 
 \item{header}{for dataset, to include the column names or not, default TRUE. Set it to FALSE for \href{https://echarts.apache.org/en/option.html#series-scatter.data}{series.data}.\cr}
@@ -46,13 +47,16 @@ Make data lists from a data.frame
 }
 \details{
 \code{format='boxplot'} requires the first two \emph{df} columns as: \cr
-\verb{     }column for the non-computational categorical axis\cr
-\verb{     }column with (numeric) data to compute the five boxplot values\cr
+    column for the non-computational categorical axis\cr
+    column with (numeric) data to compute the five boxplot values\cr
 Additional grouping is supported on a column after the second. Groups will show in the legend, if enabled.\cr
 Returns a \code{list(dataset, series, xAxis, yAxis)} to set params in \link{ec.init}.
-Make sure there is enough data for computation, 4+ values per boxplot.\cr
+Make sure there is enough data for computation, 4+ values per boxplot.\cr\cr
 \code{format='treeTT'} expects data.frame \emph{df} columns \emph{pathString,value,(optional itemStyle)} for \link[data.tree]{FromDataFrameTable}.\cr
-It will add column 'pct' with value percentage for each node. See example below.
+It will add column 'pct' with value percentage for each node. See example below.\cr\cr
+\code{format='borders'} expects \emph{df} columns \emph{long,lat,region,subregion} as in \link[ggplot2]{map_data}.\cr
+Result to be used as map in \link{ec.registerMap}. See borders code example in \emph{examples.R}.\cr
+This is a slow version for borders, another very fast one is offered as echarty extra, see website.\cr
 }
 \examples{
 library(dplyr)
