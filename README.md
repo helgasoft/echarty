@@ -30,9 +30,9 @@ Wider connectivity and deployment potential through [WebR](https://helgasoft.git
 R package | echarts4r | echarty
 --- | --- | ---
 initial commit | Mar 12, 2018 | Feb 5, 2021
-library size | ![875 KB](https://img.shields.io/github/languages/code-size/JohnCoene/echarts4r.svg) | ![266KB](https://img.shields.io/github/languages/code-size/helgasoft/echarty)
+library size | ![875 KB](https://img.shields.io/github/languages/code-size/JohnCoene/echarts4r.svg) | ![275KB](https://img.shields.io/github/languages/code-size/helgasoft/echarty)
 test coverage | ![32%](https://coveralls.io/repos/github/JohnCoene/echarts4r/badge.svg) [![link](man/figures/external-link-16.png)](https://coveralls.io/github/JohnCoene/echarts4r) | ![98%](https://coveralls.io/repos/github/helgasoft/echarty/badge.svg) [![link](man/figures/external-link-16.png)](https://coveralls.io/github/helgasoft/echarty)
-lines of code | 1,202,681 [![link](man/figures/external-link-16.png)](https://api.codetabs.com/v1/loc/?github=JohnCoene/echarts4r) | 5,988 [![link](man/figures/external-link-16.png)](https://api.codetabs.com/v1/loc?github=helgasoft/echarty)
+lines of code | 1,202,681 [![link](man/figures/external-link-16.png)](https://api.codetabs.com/v1/loc/?github=JohnCoene/echarts4r) | 6,951 [![link](man/figures/external-link-16.png)](https://api.codetabs.com/v1/loc?github=helgasoft/echarty)
 echarts.js version | 5.4.3 [![link](man/figures/external-link-16.png)](https://github.com/JohnCoene/echarts4r/blob/master/inst/htmlwidgets/lib/echarts-4.8.0/echarts-en.min.js) | 6.0.0 [![link](man/figures/external-link-16.png)](https://github.com/helgasoft/echarty/blob/main/inst/js/echarts.min.js)
 API design | own commands with parameters | mostly [ECharts option](https://echarts.apache.org/en/option.html) lists <sup>(1)</sup>
 number of commands | over [200](https://echarts4r.john-coene.com/reference/) | **one** command (ec.init) + optional utility commands

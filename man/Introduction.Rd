@@ -33,12 +33,14 @@ commands have three prefixes to help with auto-completion:
 \subsection{Events}{
 
 Event handling in \strong{Shiny} is done through callbacks.\if{html}{\out{<br>}} See
-considerable sample code in , run as \code{demo(eshiny)}.\if{html}{\out{<br>}} There are three
-built-in event callbacks - \emph{click}, \emph{mouseover}, \emph{mouseout}. All other
-ECharts \href{https://echarts.apache.org/en/api.html#events}{events} could be
+considerable sample code in
+\href{https://github.com/helgasoft/echarty/tree/main/demo/eshiny.R}{eshiny.R},
+run as \code{demo(eshiny)}.\if{html}{\out{<br>}} There are three built-in event callbacks -
+\emph{click}, \emph{mouseover}, \emph{mouseout}. All other ECharts
+\href{https://echarts.apache.org/en/api.html#events}{events} could be
 initialized through \code{ec.init(capture=...)}. \if{html}{\out{<br>}} For event handling in R
 (without Shiny) use parameter \code{ec.init(on=...)} which expects JavaScript
-handlers. Search for ‘event’ in .
+handlers. Search for ‘event’ in \href{https://github.com/helgasoft/echarty/tree/main/demo/examples.R}{code examples}.
 }
 
 \subsection{ECharts initialization parameters}{
@@ -53,7 +55,8 @@ object.\if{html}{\out{<br>}}
 registerCustomSeries} are commands of the global \href{https://echarts.apache.org/en/api.html#echarts}{ECharts object}.
 }
 
-There are R for some of these parameters.
+There are R \href{https://github.com/helgasoft/echarty/tree/main/demo/examples.R}{code examples}
+for some of these parameters.
 }
 
 \subsection{R vs Javascript numbering}{
@@ -69,20 +72,23 @@ dimension (ex. visualMap).\if{html}{\out{<br>}} All other contexts like \emph{ec
 To allow access to charts from JS.\if{html}{\out{<br>}} \strong{ec_chart(id)} - get the chart
 object by id \if{html}{\out{<br>}} \strong{ec_option(id)} - get the chart’s option object by
 id \if{html}{\out{<br>}} Parameter \emph{id} could be the internal JS variable \emph{echwid}, or
-the value set through \emph{ec.init} parameter \emph{elementId}. See .
+the value set through \emph{ec.init} parameter \emph{elementId}. See \href{https://github.com/helgasoft/echarty/tree/main/demo/examples.R}{code examples}.
 }
 
 \subsection{Column-to-style binding with encode}{
 
-ECharts
-\href{https://echarts.apache.org/en/option.html#series-bar.encode}{series.encode}
+ECharts \href{https://echarts.apache.org/en/option.html#series-bar.encode}{series encode}
 enables binding axes and tooltip to data columns. Echarty enhances this
-method for all
-[series$\verb{data](https://echarts.apache.org/en/option.html#series-bar.data) parameters like itemStyle,labels,emphasis,etc. The bindings are set through _series}$encode$\verb{data_. For instance<br> }encode= list(data= list(value= c('xc','yc'), itemStyle= list(opacity= 'oc')))\verb{<br> would match columns _xc,yc,oc_ to each item's value and opacity. The result is a new _series}$data_
-added to the series. It permits to finely customize chart elements
-directly from data.\if{html}{\out{<br>}} Echarty has also an alternative tool,
-style-named columns with \code{ec.data(..nasep)}, but \emph{encode$data} offers
-more flexibility. It is not compatible with \emph{timeline} however.
+method for all \href{https://echarts.apache.org/en/option.html#series-bar.data}{series data}
+parameters like itemStyle,labels,emphasis,etc. The bindings are set
+through \code{series$encode$data}. For instance\if{html}{\out{<br>}}
+\code{encode= list(data= list(value= c('xc','yc'), itemStyle= list(opacity= 'oc')))}\if{html}{\out{<br>}}
+would match columns \emph{xc,yc,oc} to each item’s value and opacity. The
+result is a new \code{series$data} added to the series. It permits to finely
+customize chart elements directly from data.\if{html}{\out{<br>}} Echarty has also an
+alternative tool, style-named columns with \code{ec.data(..nasep)}, but
+\code{encode$data} offers more flexibility. It is not compatible with
+\emph{timeline} however.
 }
 
 \subsection{Code examples}{
@@ -91,8 +97,10 @@ Here is the complete list of sample code \strong{locations}:
 \itemize{
 \item website
 \href{https://helgasoft.github.io/echarty/articles/gallery.html}{gallery}
-\item collection of
-\item Shiny code is in , run with \code{demo(eshiny)}
+\item collection of \href{https://github.com/helgasoft/echarty/tree/main/demo/examples.R}{code examples}
+\item Shiny code is in
+\href{https://github.com/helgasoft/echarty/tree/main/demo/eshiny.R}{eshiny.R},
+run with \code{demo(eshiny)}
 \item demos on \href{https://rpubs.com/echarty}{RPubs}
 \item searchable \href{https://gist.github.com/helgasoft}{gists}
 \item answers to \href{https://github.com/helgasoft/echarty/issues}{Github issues}
@@ -119,9 +127,5 @@ getOption('echarty.theme')      # get
 #> [1] "jazz"
 options('echarty.theme'=NULL)   # remove
 }\if{html}{\out{</div>}}
-
-[series$\verb{data]: R:series}$data [gallery]: R:gallery [RPubs]:
-R:RPubs [gists]: R:gists [Github issues]: R:Github\%0A\%20\%20issues
-[Github tests]: R:Github\%0A\%20\%20\%20\%20tests [options]: R:options
 }
 }
