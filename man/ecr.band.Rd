@@ -30,12 +30,12 @@ A 'custom' serie with lower and upper boundaries
 \details{
 \itemize{
 \item type='polygon': coordinates of the two boundaries are chained into one polygon.\cr
-\verb{     }\emph{xAxis type} could be 'category' or 'value'.\cr
-\verb{     }Set fill color with attribute \emph{color}.
+\verb{     } \emph{xAxis type} could be 'category' or 'value'.\cr
+\verb{     } Set fill color with attribute \emph{color}.
 \item type='stack': two \emph{stacked} lines are drawn, the lower with customizable areaStyle.\cr
-\verb{     }\emph{xAxis type} should be 'category' ! \cr
-\verb{     }Set fill color with attribute \emph{areaStyle$color}.\cr
-\verb{     }Optional tooltip formatter available in \emph{band[[1]]$tipFmt}.
+\verb{     } \emph{xAxis type} should be 'category' ! \cr
+\verb{     } Set fill color with attribute \emph{areaStyle$color}.\cr
+\verb{     } Optional tooltip formatter available in \emph{band[[1]]$tipFmt}.
 }
 Optional parameter \emph{name}, if given, will show up in legend. Legend merges all series with same name into one item.
 }

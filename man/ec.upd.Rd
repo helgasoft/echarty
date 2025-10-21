@@ -32,7 +32,7 @@ for(ii in 1:length(band.df))   # build all bands
   )
 
 df |> group_by(cat) |> 
-ec.init(load='custom', ctype='line', 
+ec.init(load='custom', series.param= list(type='line'), 
         xAxis=list(data=c(0,unique(df$x)), boundaryGap=FALSE) ) |> 
 ec.upd({ series <- append(series, sband) })
 

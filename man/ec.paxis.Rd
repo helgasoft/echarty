@@ -26,12 +26,12 @@ This function could be chained to \emph{ec.init} or used with a \emph{data.frame
 }
 \examples{
 iris |> dplyr::group_by(Species) |>    # chained
-ec.init(ctype= 'parallel', series.param= list(lineStyle= list(width=3))) |> 
+ec.init(series.param= list(type= 'parallel', lineStyle= list(width=3))) |> 
 ec.paxis(cols= c('Petal.Length','Petal.Width','Sepal.Width'))
 
-mtcars |> ec.init(ctype= 'parallel', 
+mtcars |> ec.init( 
    parallelAxis= ec.paxis(mtcars, cols= c('gear','cyl','hp','carb'), nameRotate= 45),
-   series.param= list(smooth= TRUE)
+   series.param= list(type= 'parallel', smooth= TRUE)
 )
 
 }

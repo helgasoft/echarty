@@ -7,12 +7,13 @@
 ec.clmn(col = NULL, ..., scale = 1)
 }
 \arguments{
-\item{col}{A single column index(number) or column name(quoted string), \cr
-or a \link[base]{sprintf} string template for multiple columns.\cr
-NULL(default) for charts with single values like tree, pie.\cr
-'json' to display tooltip with all available values to choose from.\cr
-'log' to write all values in the JS console (F12) for debugging.\cr
-Can contain JS function starting with \emph{'function('} or \emph{'(x) => \{'}.\cr}
+\item{col}{Can contain one of several types of values:\cr
+\verb{     } NULL(default) for charts with single values like tree, pie.\cr
+\verb{     } a single column index(number) or column name(quoted string) \cr
+\verb{     } a \link[base]{sprintf} string template for multiple columns\cr
+\verb{     } 'json' to display tooltip with all available values to choose from\cr
+\verb{     } 'log' to write all values in the JS console (F12) for debugging.\cr
+\verb{     } a string containing a JS function starting with \emph{'function('} or \emph{'(x) =>'}.\cr}
 
 \item{...}{Comma separated column indexes or names, only when \emph{col} is \emph{sprintf}. This allows formatting of multiple columns, as for a tooltip.\cr}
 

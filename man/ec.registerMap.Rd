@@ -18,7 +18,8 @@ Could also be a valid geoJSON or SVG text string. SVG strings start with either 
 An \emph{echarty} widget.
 }
 \description{
-Read geoJSON file to be used in a map chart
+Read geoJSON file to be used in a map chart\cr
+\strong{Deprecated} since v.1.7.0, use ec.init(registerMap=...) instead.
 }
 \details{
 This command replaces the manual setting through \emph{p$x$registerMap}.\cr
@@ -27,7 +28,7 @@ There should be one map series with attribute 'map' matching the name parameter.
 }
 \examples{
 data.frame(name= c('Texas', 'California'), value= c(111, 222)) |> 
-ec.init( color= c('lightgray'), visualMap= list(),
+ec.init( color= c('lightgray'), visualMap= list(min=111),
   series.param= list(type= 'map', map= 'usa')
 ) |> 
 ec.registerMap('usa', 'https://echarts.apache.org/examples/data/asset/geo/USA.json')

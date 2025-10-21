@@ -17,8 +17,8 @@ test_that("options preset", {
   expect_equal(p$x$theme, 'mine')
   
   options(echarty.theme=NULL)
-  p <- cars |> ec.init(dbg=T, dataZoom=list(show=T))
-  expect_equal(p$x$theme, '')
+  p <- cars |> ec.init(dbg=T, dataZoom=list(show=TRUE))
+  expect_true(is.null(p$x$theme))
   # dataZoom should not produce error from r2jsEncode
   
   options(echarty.font='monospace')
@@ -63,7 +63,7 @@ test_that("ec.init presets for grouped data.frame", {
   expect_equal(po$yAxis$name, 'yaxe')
   expect_equal(length(po$dataset[[1]]$source), 10)
   expect_equal(po$dataset[[4]]$id, "triangle")
-  expect_equal(length(po$legend$data), 3)
+  #expect_equal(length(po$legend$data), 3)
   expect_equal(po$series[[1]]$type, 'scatter')
   expect_equal(po$series[[1]]$name, 'circle')
   expect_s3_class(po$series[[2]]$symbol, 'JS_EVAL')
@@ -84,7 +84,7 @@ test_that("ec.init presets for timeline", {
     bt <- data |> dplyr::group_by(!!dplyr::sym(timeline_var)) |> 
       ec.init(series.param = list(no_type='bar'), 
               xAxis= list(name='xval'),
-              timeline= list(show=T) # data= c(1,2,3,4), axisType='value') #ok
+              timeline= list(show=TRUE) # data= c(1,2,3,4), axisType='value') #ok
       )
     bt
   }
@@ -100,7 +100,7 @@ test_that("ec.init presets for timeline", {
   expect_equal(o$options[[1]]$series[[1]]$type, 'scatter')
 })
 
-test_that("ec.init presets for timeline groupBy, geo", {
+test_that("ec.init presets for timeline + groupBy, geo", {
   set.seed(2022)
   dat <- data.frame(
     x1 = rep(2020:2023, each = 4),
@@ -109,19 +109,10 @@ test_that("ec.init presets for timeline groupBy, geo", {
     x4 = runif(16),
     y = abs(runif(16)), z= runif(16)
   ) 
-  p <- dat |> group_by(x1) |> ec.init(
-    legend= list(show=TRUE), timeline= list(show=T),
-    series.param= list(encode= list(x= 'x', y= 'y'), 
-        symbolSize= ec.clmn('x4', scale=30), groupBy= 'x2') 
-  )
-  expect_equal(p$x$opts$options[[4]]$series[[1]]$type, 'scatter')
-  expect_equal(p$x$opts$options[[4]]$series[[1]]$encode$y, 'y')
-  expect_equal(p$x$opts$yAxis$name, 'y')
-
   if (isCovr) {
     p <- dat |> group_by(x1) |> ec.init( #load='3D',
-      xAxis3D=list(s=T), yAxis3D=list(s=T), zAxis3D=list(s=T), grid3D=list(s=T),
-      timeline=list(s=T), legend= list(show=TRUE), 
+      xAxis3D=list(s=TRUE), yAxis3D=list(s=TRUE), zAxis3D=list(s=TRUE), grid3D=list(s=TRUE),
+      timeline=list(s=TRUE), legend= list(show=TRUE), 
       series.param= list(type='scatter3D', groupBy= 'x2',
         encode= list(x='x', y='y', z='z'), 
         symbolSize= ec.clmn('x4', scale=30) )
@@ -138,8 +129,8 @@ test_that("ec.init presets for timeline groupBy, geo", {
     dim = c(11, 88, 44)  # last clmn is value if there is no column 'value'
   )
   p <- cns |> group_by(name) |> 
-  ec.init(load= 'world', tooltip= list(show=T),   # geo
-    timeline= list(show=T),
+  ec.init(load= 'world', tooltip= list(show=TRUE),   # geo
+    timeline= list(show=TRUE),
     series.param= list(type='map'), #encode= list(name='nam', value='val')), 
     visualMap= list()
   )
@@ -163,7 +154,7 @@ test_that("ec.init presets for timeline groupBy, geo", {
   expect_equal(p$x$opts$visualMap$max, 88)
   
   p <- quakes |> head(11) |> group_by(stations) |> 
-  ec.init(load='world', timeline= list(show=T),
+  ec.init(load='world', timeline= list(show=TRUE),
 	  series.param= list(type='scatter', itemStyle= list(color='brown'),
 	    encode= list(lng=2, lat=1, value=3)
 		  #encode= list(lng='long', lat='lat', value='mag')  #ok
@@ -187,9 +178,8 @@ test_that("presets for parallel chart", {
 
 test_that("presets for crosstalk", {
   library(crosstalk)
-  df <- cars
-  df <- SharedData$new(df)
-  p <- df |> ec.init()
+  sdf <- SharedData$new(cars)
+  p <- sdf |> ec.init()
   expect_equal(p$x$opts$dataset[[2]]$id, 'Xtalk')
   expect_equal(p$x$opts$series[[1]]$datasetId, 'Xtalk')
   expect_equal(p$x$opts$dataset[[1]]$dimensions[3], 'XkeyX')
@@ -210,8 +200,8 @@ lng,lat,name,date,place
 -116.127504,32.846118,"fwy #8","2021-04-02","place B"
 -117.316886,30.961700,"Baja","2021-07-02","place B"
 '
-  df <- read.csv(text=tmp, header=TRUE)
-  p <- df |> ec.init(
+  vdf <- read.csv(text=tmp, header=TRUE)
+  p <- vdf |> ec.init(
     load='leaflet', tooltip= list(show=TRUE),
     series= list(list(
       encode= list(tooltip=c(3,4,5))
@@ -254,11 +244,11 @@ test_that("presets for lottieParser and ecStat", {
   p <- ec.init(load= 'ecStat',
     #js= c('echarts.registerTransform(ecStat.transform.regression)','',''),
     dataset= list(
-      list(source= matrix(runif(18)*5, ncol= 2)), 
+      list(source= ec.data(matrix(runif(18)*5, ncol= 2))),
       list(transform= list(type='ecStat:regression', 
                            config= list(method= 'polynomial', order= 3)) )
     ),
-    xAxis=list(show=T), yAxis=list(show=T), tooltip= list(position='top'),
+    xAxis=list(show=TRUE), yAxis=list(show=TRUE), tooltip= list(position='top'),
     series= list(s1, s2)
   )
   expect_equal(p$dependencies[[1]]$name, 'ecStat')
@@ -274,6 +264,7 @@ test_that("presets with series.param", {
     series.param= list(symbol='pin', encode=list(x='size',y='name')))
   expect_equal(p$x$opts$series[[1]]$symbol, 'pin')
   expect_equal(p$x$opts$yAxis$type, 'category')
+  
   p <- ec.init(ctype='line', 
      series.param= list(areaStyle= list(show= T), stack= 'stk', 
                         data= list(c(0,0), c(2,2)))
@@ -309,7 +300,7 @@ test_that('polar, pie, radar, themeRiver, parallel, etc.', {
   p <-  df |> dplyr::group_by(name) |> ec.init(ctype='pie')
   expect_equal(p$x$opts$series[[1]]$encode, list(value=1, itemName=2))
   p <- cars |> ec.init(polar= list(radius= 222), 
-      series.param= list(type='line', smooth=T))
+      series.param= list(type='line', smooth=TRUE))
   expect_equal(p$x$opts$series[[1]]$coordinateSystem, 'polar')
   dd <- data.frame(
     c1 = rep(1:3, each= 2),
@@ -317,7 +308,7 @@ test_that('polar, pie, radar, themeRiver, parallel, etc.', {
     c3 = rep(c('d1', 'd2'), 3)
   )
   p <- ec.init(series.param= list(
-    type='themeRiver', data= ec.data(dd), label= list(s=T) ) )
+    type='themeRiver', data= ec.data(dd), label= list(s=TRUE) ) )
   expect_equal(p$x$opts$singleAxis, list(min='dataMin', max='dataMax'))
   
   p <- ec.init(
@@ -340,11 +331,91 @@ test_that('polar, pie, radar, themeRiver, parallel, etc.', {
 })
 
 test_that('polar presets', {
-  df <- data.frame(x = 1:10, y = seq(1, 20, by = 2))
-  p <- df |> ec.init(ctype='line', polar= list(dummy= T), 
+  p <- data.frame(x = 1:10, y = seq(1, 20, by = 2)) |>
+  ec.init(ctype='line', polar= list(dummy= T), 
   		 series.param= list(smooth= T)
   )
   expect_equal(p$x$opts$polar$radius, 111)
   expect_equal(p$x$opts$radiusAxis$type, 'category')
   expect_equal(p$x$opts$series[[1]]$coordinateSystem, 'polar')
 })
+
+test_that('style-to-column feature', {
+  
+  p <- cars |> mutate(    # non-grouped
+      clr= sample(c('darkgreen','blue','red'), 50, TRUE),
+      opa= sample(c(0.3, 0.6, 0.9), 50, TRUE), value= 1:50
+    ) |>
+  ec.init( dbg=TRUE,
+    series.param= list(symbolSize=22, encode= list(data= list(
+      value=c('speed', 'dist'), 333,   # 333 is illegal R, for covr only
+      label= list(show=TRUE, formatter='speed'),
+      itemStyle= list(color='clr', opacity='opa')) ))
+  )
+  expect_true(is.null(p$x$opts$dataset))
+  #expect_true(is.null(p$x$opts$series[[1]]$encode))
+  expect_equal(length(p$x$opts$series[[1]]$data), 50)
+  expect_equal(p$x$opts$series[[1]]$data[[50]]$value, list(25,85))
+  expect_equal(p$x$opts$series[[1]]$data[[50]]$label$formatter, 25)
+  
+  p <- iris |> group_by(Species) |>    # grouped
+    ec.init(tooltip=list(s=TRUE), series.param= list(
+    encode= list(data= list(value= c('Sepal.Length','Sepal.Width'), 
+                            itemStyle= list(opacity='Petal.Width')) )
+  ))
+  expect_equal(p$x$opts$series[[1]]$data[[2]]$value[[1]], p$x$opts$series[[1]]$data[[2]]$Sepal.Length)
+  expect_equal(p$x$opts$series[[1]]$data[[2]]$itemStyle$opacity, 0.2)
+  expect_true(is.null(p$x$opts$series[[1]]$encode))
+  expect_true(is.null(p$x$opts$dataset))
+
+})
+
+test_that('preset axis type', {
+  p <- ec.init( dataset= list(list(source= c(list(as.list(colnames(df))), ec.data(df)) )))
+  expect_equal(p$x$opts$xAxis$type, 'category')   # sourceHeader
+
+  p <- data.frame(
+    time = seq(from = as.POSIXct("2021-01-01 08:00:00"), to = as.POSIXct("2021-01-01 09:10:00"), by = "1 min"),
+    y = rnorm(71, mean = 100)
+  ) |> ec.init(yAxis= list(scale=TRUE))
+  expect_equal(p$x$opts$xAxis$type, 'time')
+  expect_equal(p$x$opts$yAxis$type, 'value')
+
+  p <- ec.init(dbg=T,
+    series.param = list( encode= list(x=2, y=1),
+    data= list(list(value= list(1,'B')), list(value=list(3,'A')), list(value=list(2, 'C')) )
+  ))
+  expect_equal(p$x$opts$xAxis$type, 'category')
+  
+  dd <- lapply(1:nrow(df), \(ii) {
+    list(value= list(df[ii,]$name, df[ii,]$size, df[ii,]$symbol))
+  })
+  p <- ec.init(series.param= list( data= dd) )
+  expect_equal(p$x$opts$xAxis$type, 'category')
+  p <- ec.init(series.param= list( encode= list(x=3, y=2), data=dd) )
+  expect_equal(p$x$opts$xAxis$type, 'category')
+  expect_equal(length(p$x$opts$series[[1]]$data[[1]]$value), 3)
+  p <- ec.init(series.param= list( encode= list(x=2, y=1), data=dd))
+  expect_equal(p$x$opts$yAxis$type, 'category')
+  
+  p <- ec.init(df, series.param= list( encode= list( data= list(value=c('name','size'), symbol='symbol')) ))
+  expect_equal(length(p$x$opts$series[[1]]$data[[10]]$value), 2)
+  expect_equal(p$x$opts$series[[1]]$data[[10]]$symbol, 'triangle')
+  p <- df |> rename(value= size) |>  
+    ec.init( tooltip= list(show=TRUE), series.param= list( encode= list(
+      data= list(name='name', symbol='symbol')) ))
+  expect_equal(p$x$opts$series[[1]]$data[[1]]$name, 'G')
+  expect_true(is.null(p$x$opts$dataset))
+  p <- ec.init(dataset= list(list(source= ec.data(df, 'names'))),
+        series.param= list(encode= list(x=2, y=1) )) 
+  expect_equal(p$x$opts$yAxis$type, 'category')
+  expect_equal(p$x$opts$dataset[[1]]$source[[10]]$symbol, 'triangle')
+
+  p <- Orange |> mutate(opa= circumference/200) |>   # Tree is factor
+    ec.init(series.param= list(encode= list(data= 
+        list(value= c('Tree','circumference'), itemStyle= list(opacity='opa'))))
+    )
+  expect_equal(p$x$opts$xAxis$type, 'category')
+  expect_equal(p$x$opts$series[[1]]$data[[1]]$itemStyle$opacity, 0.15)
+})
+

@@ -7,7 +7,6 @@
 ec.init(
   df = NULL,
   preset = TRUE,
-  ctype = "scatter",
   ...,
   series.param = NULL,
   tl.series = NULL,
@@ -25,13 +24,11 @@ If grouping is on multiple columns, only the first one is used to determine sett
 \item{preset}{Boolean (default TRUE). Build preset attributes like dataset, series, xAxis, yAxis, etc.\cr
 When preset is FALSE, these attributes need to be set explicitly.\cr}
 
-\item{ctype}{Chart type, default is 'scatter'. Could be set in \emph{series.param} instead.}
-
 \item{...}{Optional widget attributes. See Details. \cr}
 
 \item{series.param}{Additional attributes for single preset series, default is NULL.\cr
 Defines a \strong{single} series for both non-timeline and timeline charts. \cr
-\strong{Multiple} series should be defined directly with \emph{series=list(list(type=...),list(type=...))} or added with \link{ec.upd}.}
+\strong{Multiple} series need to be defined directly with \emph{series=list(list(type=...),list(type=...))} or added with \link{ec.upd}.}
 
 \item{tl.series}{Deprecated, use \emph{timeline} and \emph{series.param} instead.\cr}
 
@@ -50,8 +47,9 @@ Command \emph{ec.init} creates a widget with \link[htmlwidgets]{createWidget}, t
 Numerical indexes for series,visualMap,etc. are R-counted (1,2...)\cr
 
 \strong{Presets} \cr
-When data.frame \strong{df} is present, a \href{https://echarts.apache.org/en/option.html#dataset}{dataset} is preset. \cr
-When \strong{df} is grouped and \emph{ctype} is not NULL, more datasets with legend and series are also preset. \cr
+A \href{https://echarts.apache.org/en/option.html#dataset}{dataset} is pre-set when data.frame \strong{df} is present. \cr
+When \strong{df} is grouped, more datasets with legend and series are also preset. \cr
+Axes for some charts are preset with name and type when suitable.\cr
 Plugin '3D' (load='3D') is required for GL series like \emph{scatterGL, linesGL}, etc. \cr
 Plugins 'leaflet' and 'world' preset \emph{center} to the mean of all coordinates from \strong{df}. \cr
 Users can delete or overwrite any presets as needed. \cr
@@ -61,27 +59,37 @@ Optional echarty widget attributes include: \cr
 \itemize{
 \item elementId - Id of the widget, default is NULL(auto-generated, stored as \emph{echwid} variable for JS)
 \item load - name(s) of plugin(s) to load. A character vector or comma-delimited string. default NULL.
-\item ask - prompt user before downloading plugins when \emph{load} is present, FALSE by default
+\item ask - boolean to prompt user before downloading plugins when \emph{load} is present, default is FALSE.\cr
+\verb{     } Could also be string 'loadRemote' to load plugins remotely.\cr
+\item ctype - alternative way of setting chart type name, default is 'scatter'.\cr
 \item js - single string or a vector with JavaScript expressions to evaluate.\cr
 single: exposed \emph{chart} object (most common)\cr
-vector: \verb{     }see code in \href{https://github.com/helgasoft/echarty/blob/main/demo/examples.R}{examples}\cr
-\verb{     }First expression evaluated with exposed objects \emph{window} and \emph{echarts} \cr
-\verb{     }Second is evaluated with exposed object \emph{opts}. \cr
-\verb{     }Third is evaluated with exposed \emph{chart} object after initialization with \emph{opts} already set.
+vector: \verb{     } see code in \href{https://github.com/helgasoft/echarty/blob/main/demo/examples.R}{examples}\cr
+\verb{     } First expression evaluated with exposed objects \emph{window} and \emph{echarts} \cr
+\verb{     } Second is evaluated with exposed object \emph{opts}. \cr
+\verb{     } Third is evaluated with exposed \emph{chart} object after initialization with \emph{opts} already set.
+\item theme - name of built-in theme to apply, or JSON object from \emph{fromJSON}, see \emph{opts} in \href{https://echarts.apache.org/en/api.html#echarts.init}{echarts.init}\cr
 \item iniOpts - a list of initialization options, see \emph{opts} in \href{https://echarts.apache.org/en/api.html#echarts.init}{echarts.init}\cr
-\verb{     }Defaults: renderer='canvas', locale='EN', useDirtyRect=FALSE\cr
+\verb{     } Defaults: renderer='canvas', locale='EN', useDirtyRect=FALSE\cr
+\item on,off,capture,group - chart instance properties, namely:\cr
+\verb{     } on/off is a list of events to handle with JS, each in a list, see \href{https://echarts.apache.org/en/api.html#echartsInstance.on}{chart.on} and example below\cr
+\verb{     } capture is a vector of event names to capture in Shiny, etc.\cr
+\item connect,disconnect,register,etc. - see \href{https://echarts.apache.org/en/api.html#echarts}{echarts object} methods\cr
 }
 
 \strong{Built-in plugins} \cr
 \itemize{
 \item leaflet - Leaflet maps with customizable tiles, see \href{https://github.com/gnijuohz/echarts-leaflet#readme}{source}\cr
-\item world - world map with country boundaries, see \href{https://github.com/apache/echarts/tree/master/test/data/map/js}{source} \cr
+\item world  - world map with country boundaries, see \href{https://github.com/apache/echarts/tree/master/test/data/map/js}{source} \cr
 \item lottie - support for \href{https://lottiefiles.com}{lotties} \cr
 \item ecStat - statistical tools, see\href{https://github.com/ecomfe/echarts-stat}{echarts-stat}\cr
 \item custom - renderers for \link{ecr.band} and \link{ecr.ebars} \cr
-Plugins with one-time installation: \cr
+}
+
+\strong{Plugins with one-time installation} \cr
+\itemize{
 \item 3D - support for 3D charts and WebGL acceleration, see \href{https://github.com/ecomfe/echarts-gl}{source} and \href{https://echarts.apache.org/en/option-gl.html#series}{docs} \cr
-\verb{     }This plugin is auto-loaded when 3D/GL axes/series are detected.\cr
+\verb{     } This plugin is auto-loaded when 3D/GL axes/series are detected.\cr
 \item liquid - liquid fill, see \href{https://github.com/ecomfe/echarts-liquidfill}{source}  \cr
 \item gmodular - graph modularity, see \href{https://github.com/ecomfe/echarts-graph-modularity}{source}  \cr
 \item wordcloud - cloud of words, see \href{https://github.com/ecomfe/echarts-wordcloud}{source} \cr
@@ -111,27 +119,33 @@ Optional series attribute \href{https://echarts.apache.org/en/option.html#series
 \item set \emph{value} and \emph{itemName} for \emph{pie} chart.
 }
 
-Example: \code{encode(x='col3', y='col1')} binds xAxis to \emph{df} column 'col3'.
+There is an advanced usage of \emph{encode} when each series' item needs to be customized.\cr
+For example \code{encode= list(itemStyle= list(opacity='opac'))} will create series data where each series item's opacity comes from df column 'opac'.\cr
+This binding feature is specific to \emph{echarty} and does not exist in ECharts. See example below.\cr
 }
 \examples{
  # basic scatter chart from a data.frame using presets
 cars |> ec.init()
 
  # custom inititlization options and theme
-cars |> ec.init(
+myth <- '{"color": ["green"], "backgroundColor": "lemonchiffon"}'
+ec.init( cars,
+  theme= jsonlite::fromJSON(myth),
   iniOpts= list(renderer= 'svg', width= '222px'),
   toolbox= list(feature= list(saveAsImage= list()))
-)  |> ec.theme('mine', code=   # theme code JSON
-  '{"color": ["green"], "backgroundColor": "lemonchiffon"}' )
+)
  
- # grouping, tooltips, formatting
+ # grouping, tooltips, formatting, events
 iris |> dplyr::group_by(Species) |> 
 ec.init(        # init with presets
   tooltip= list(show= TRUE),
   series.param= list( 
     symbolSize= ec.clmn('Petal.Width', scale=7),
     tooltip= list(formatter= ec.clmn('Petal.Width: \%@', 'Petal.Width'))
-  )
+  ),
+  on= list(   # events with Javascript handler
+    list(event= 'legendselectchanged', handler= ec.clmn("(e) => alert('legend:'+e.name);"))
+ )
 )
 
 data.frame(n=1:5) |> dplyr::group_by(n) |> ec.init(

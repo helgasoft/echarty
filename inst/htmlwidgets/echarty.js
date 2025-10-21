@@ -117,21 +117,12 @@ HTMLWidgets.widget({
       chart.dispose();    // remove previous if any
       if (!initialized) {
         initialized = true;
-        if(x.themeCode){
-          tcode = JSON.parse(x.themeCode);
-          echarts.registerTheme(x.theme, tcode);
+        // legacy from util.R ec.theme; now directrly thru ec.init(registerTheme=)
+        if(x.themeCode) {  
+          echarts.registerTheme(x.theme, x.themeCode);
         }
       }
       
-      if (x.hasOwnProperty('registerMap')) {
-        for (const map of x.registerMap) {
-          if (map.geoJSON)
-            echarts.registerMap(map.mapName, map.geoJSON);
-          else if (map.svg)
-            echarts.registerMap(map.mapName, { svg: map.svg });
-        }
-      }
-        
       var eva2 = null, eva3 = null;
       if (x.hasOwnProperty('jcode')) {
         if (x.jcode) {
@@ -149,11 +140,31 @@ HTMLWidgets.widget({
         }
       }
       if (x.hasOwnProperty('dbg')) { ecf.dbg= x.dbg; }
-      if (ecf.dbg) { console.log(x.theme); console.log(tcode); }
+      if (ecf.dbg) { console.log(x.theme); }
+
+      // execute echarts functions if any before .init
+      if(x.hasOwnProperty('connect')){
+        if (Array.isArray(x.connect)) {
+          let connections = [];
+          x.connect.forEach(cc => connections.push(ec_chart(cc)) )  // instances array
+          // connections.push(chart);  // why add current by default
+          echarts.connect(connections);  
+        } else
+          echarts.connect(x.connect);  // group name for all
+      }
       
-      chart = echarts.init(document.getElementById(el.id), x.theme, x.iniOpts
-      	//{ renderer: x.renderer, locale: x.locale, useDirtyRect: x.useDirtyRect }
-      );
+      ['disconnect','registerMap','registerCustomSeries','registerTheme','registerLocale'].map(cmd => {
+        if(x.hasOwnProperty(cmd)) {
+          if (Array.isArray(x[cmd]))
+            x[cmd].forEach(argu => echarts[cmd](...Object.values(argu)) )
+          else {
+            echarts[cmd](...Object.values(x[cmd]));
+          }
+        }
+      });
+      
+      chart = echarts.init(document.getElementById(el.id), x.theme, x.iniOpts);
+      if (x.showLoading) chart.showLoading(x.showLoading)
 
       if (window.onresize==undefined)   // single chart only, TODO: many
         window.onresize = function() {
@@ -171,10 +182,10 @@ HTMLWidgets.widget({
         } catch(err) { console.log('eva2: ' + err.message) }
       }
       
-      //if(x.draw === true)
       chart.setOption(opts);
+      chart.hideLoading();   // just in case
       
-      if (eva3) {	// #3 to use chart object
+      if (eva3) {	// #3  chart object w options exposed
         try {
           eval(eva3);
         } catch(err) { console.log('eva3: ' + err.message) }
@@ -225,31 +236,14 @@ HTMLWidgets.widget({
         }
       }
       
-      if(x.hasOwnProperty('on')) {
+      if(x.hasOwnProperty('on'))
         x.on.forEach(ev => chart.on(ev.event, ev.query, ev.handler) )
-      }
       
-      if(x.hasOwnProperty('off')){
-        x.off.forEach(ev => chart.on(ev.event, ev.query, ev.handler) )
-      }
+      if(x.hasOwnProperty('off')) 
+        x.off.forEach(ev => chart.off(ev.event, ev.query, ev.handler) )
       
-      if(x.hasOwnProperty('group')){
-        chart.group = x.group;
-      }
+      if(x.hasOwnProperty('group')) chart.group = x.group;
       
-      if(x.hasOwnProperty('connect')){
-        if (Array.isArray(x.connect)) {
-          let connections = [];
-          x.connect.forEach(cc => connections.push(ec_chart(cc)) )
-          connections.push(chart);
-          echarts.connect(connections);  
-        } else
-          echarts.connect(x.connect);
-      }
-      
-      if(x.hasOwnProperty('disconnect')){
-        echarts.disconnect(x.disconnect);
-      }
       
   // ---------------- crosstalk ----------------
       // keys are numbered differently depending on the source: 
@@ -474,28 +468,29 @@ if (HTMLWidgets.shinyMode) {
                 cpts.legend[0].data = cpts.legend[0].data.concat(data.opts.legend.data);
           }
           if (!cpts.series) break;
+          six = 0;
           if (data.opts.seriesName) {
             // find index by name
-            let idx = cpts.series.findIndex(item => 
-                item.name === Number(data.opts.seriesName));
-            if (idx > -1) data.opts.seriesIndex = idx;
+            let idx = cpts.series.findIndex(item => item.name == data.opts.seriesName);
+            if (idx > -1) six = idx;
           }
-          if (data.opts.seriesIndex)
-            chart.appendData({
-              seriesIndex: data.opts.seriesIndex,
-              data: data.opts.data
-            });
+          if (typeof data.opts.seriesIndex != 'undefined') six = data.opts.seriesIndex;
+          chart.appendData({
+            seriesIndex: six,
+            data: data.opts.data
+          });
+          chart.resize();
           break;
         
         case 'p_del_serie':
           if (data.opts.seriesName) {
-            let series = cpts.series;
-            series.forEach( function(s, index, object) {
+            sers = cpts.series;
+            sers.forEach( function(s, index, object) {
               if(s.name == data.opts.seriesName){
                 object.splice(index, 1);
               }
             })
-            cpts.series = series;
+            cpts.series = sers;
           }
           else if (data.opts.seriesIndex)
             cpts.series.splice(data.opts.seriesIndex, 1);
@@ -503,23 +498,17 @@ if (HTMLWidgets.shinyMode) {
           break;
         
         case 'p_del_marks':
-          let sindx = null;
-          if(data.opts.seriesName){
-            for (let i = 0; i < cpts.series.length; i++) {
-              if(cpts.series[i].name == data.opts.seriesName) {
-                sindx = i; break;
-              }
-            }
+          let sindx = 0;
+          if (data.opts.seriesName){
+            let idx = cpts.series.findIndex(item => item.name == data.opts.seriesName);
+            if (idx > -1) sindx = idx;
           }
-          else if(data.opts.seriesIndex)
-            sindx = data.opts.seriesIndex;
-          if (sindx != null && sindx>0) {
-            let dm = data.opts.delMarks;
-            if (!Array.isArray(dm)) break;
-            if (dm.includes('markArea')) cpts.series[sindx-1].markArea=null;
-            if (dm.includes('markLine')) cpts.series[sindx-1].markLine=null;
-            if (dm.includes('markPoint')) cpts.series[sindx-1].markPoint=null;
-          }
+          if (data.opts.seriesIndex) sindx = data.opts.seriesIndex -1;
+          let dm = data.opts.delMarks;
+          if (!Array.isArray(dm)) break;
+          if (dm.includes('markArea')) cpts.series[sindx].markArea=null;
+          if (dm.includes('markLine')) cpts.series[sindx].markLine=null;
+          if (dm.includes('markPoint')) cpts.series[sindx].markPoint=null;
           chart.setOption(cpts, true);
           break;
           

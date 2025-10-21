@@ -1,6 +1,13 @@
 # history of package _echarty_
 
-# echarty 1.6.7  latest in development
+# echarty 1.7.0  latest in development
+
+* _ec.init_ support for _on_,_off_,_register*_,etc. chart instance and echarts API
+* new value 'loadRemote' for parameter _ask_ to serve new v.6 custom-series
+* ability to attach data columns to item styles through _encode$data_
+* new flame (or icicle) hierarchical chart support as custom series
+
+# echarty 1.6.7
 
 * upgrade ECharts to v.6.0.0, built with R v.4.4.3.
 * new signature of _ec.util_: _cmd_ is now first, to avoid writing 'cmd=...'

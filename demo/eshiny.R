@@ -1,6 +1,7 @@
 #'-----------  Interactive charts with echarty and Shiny ------------
 #' run with command demo(eshiny)  #, package ='echarty')
 #'
+
 stopifnot('session non-interactive'= interactive())
 tryCatch ({
   library(shiny)

@@ -3,6 +3,36 @@
 isCovr <- Sys.getenv("R_COVR")!=''
 #cat('\n isCovr=',Sys.getenv("R_COVR"),'\n')
 
+test_that("registerAll + custom-series v.6", {
+  theme1= '{"color": ["green","#eeaa33"], "backgroundColor": "lemonchiffon"}'
+  p <- cars |> ec.init(
+    theme='mine', registerTheme=list(name='mine', theme=jsonlite::fromJSON(theme1))
+  )
+  expect_equal(p$x$registerTheme$theme$backgroundColor, 'lemonchiffon')
+  
+  p <- cars |> ec.init(theme='dark')    # as string
+  expect_equal(p$x$theme, 'dark')
+  expect_equal(p$dependencies[[1]]$name, 'dark')
+
+  p <- cars |> ec.init(theme= jsonlite::fromJSON(theme1))   # as object
+  expect_equal(class(p$x$theme), 'list')
+  
+  p <- ec.init(
+    load= 'https://cdn.jsdelivr.net/gh/apache/echarts-custom-series@main/custom-series/segmentedDoughnut/dist/index.auto.js',
+    ask= 'loadRemote',
+    series.param= list(
+      type= 'custom', renderItem= 'segmentedDoughnut',
+      coordinateSystem= 'none',
+      itemPayload= list(
+        radius= list('50%','65%'), segmentCount= 8,
+        label= list(show=T, formatter= '{c}/{b}', fontSize=35, color= '#555')
+      ),
+      data= list(5) )
+  )
+  expect_equal(class(p$x$opts$series[[1]]$renderItem), 'character')
+  expect_true(grepl('segmented', p$dependencies[[1]]$src$href))
+})
+  
 test_that("registerMap", {
   # similar in ec.examples, with USA map
   gjson <- jsonlite::parse_json('{"type":"FeatureCollection", "properties":{"id":"all3"},
@@ -55,17 +85,20 @@ test_that("tl.series, timeline options, groupBy", {  # also in test-presets
     x2 = rep(c("A", "A", "B", "B"), 4),
     x3 = runif(16), x4 = runif(16), x5 = abs(runif(16))
   )
-  p <- dat |> group_by(x1) |> ec.init(
-    tl.series= list(encode= list(x= 'x3', y= 'x5'), groupBy='x2',
-                    symbolSize= ec.clmn(4, scale=30)),
-    legend= list(show=T)
+  p <- dat |> group_by(x1) |> ec.init(    # it's tl.series OR series.param + timeline
+    series.param= list(encode= list(x= 'x3', y= 'x5'), groupBy='x2',
+                    symbolSize= ec.clmn('x4', scale=30)),
+    timeline= list(show=TRUE), legend= list(show=TRUE)
   )
   expect_equal(p$x$opts$options[[4]]$series[[2]]$name, 'B')
   expect_true(p$x$opts$dataset[[9]]$transform$config$and[[2]]$dimension=='x2')
+  expect_equal(p$x$opts$options[[4]]$series[[1]]$type, 'scatter')
+  expect_equal(p$x$opts$options[[4]]$series[[1]]$encode$y, 'x5')
+  expect_equal(p$x$opts$yAxis$name, 'x5')
   
   p <- data.frame(name=c('Brazil','Australia'), value=c(111,222)) |> group_by(name) |>
-  ec.init(load= 'world', title= list(text='map %@'), visualMap=list(show=T), 
-        timeline= list(show=T), series.param= list(type='map') )
+  ec.init(load= 'world', title= list(text='map %@'), visualMap=list(show=TRUE), 
+        timeline= list(show=TRUE), series.param= list(type='map') )
   expect_equal(p$x$opts$options[[2]]$title$text, "map Brazil")
   expect_equal(p$x$opts$visualMap$min, 111)
 
@@ -76,22 +109,17 @@ test_that("leaflet with ec.clmn and timeline", {
   tmp <- quakes |> dplyr::relocate('long') |>  # set order to lon,lat
       dplyr::mutate(size= exp(mag)/20) |> head(100)  # add accented size
   p <- tmp |> ec.init(load= 'leaflet',
-                      tooltip = list(formatter= ec.clmn('magnitude %@', 'mag')),
+    tooltip = list(formatter= ec.clmn('magnitude %@', 'mag')),
     series.param= list(datasetIndex= 1, symbolSize= ec.clmn(6, scale=3) )
   )
   expect_equal(p$x$opts$leaflet$zoom, 6)
   expect_equal(p$x$opts$series[[1]]$datasetIndex, 0)  # decremented
   expect_s3_class(p$x$opts$tooltip$formatter, 'JS_EVAL')
+  expect_true(is.null(p$x$opts$xAxis))   # no axes added
 
   p <- tmp |> group_by(stations) |> ec.init(load='leaflet', 
-    legend= list(show=T), tooltip = list(formatter=ec.clmn('magnitude %@', 'mag')),
-  	leaflet= list(center= c(179.462,-20), zoom= 5, tiles= list(
-      list( label= 'OpenTopoMap',
-        urlTemplate= 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
-        options= list(attribution= 'Map tiles by <a href="https://opentopomap.org">OpenTopoMap</a>',
-                      subdomains= 'abcd',	maxZoom= 18, ext= 'png')
-      )
-    )),
+    legend= list(show=TRUE), tooltip = list(formatter=ec.clmn('magnitude %@', 'mag')),
+  	leaflet= list(center= c(179.462,-20), zoom= 5, roam=TRUE),
   	timeline= list(autoPlay=F, axisType='value', 
   	               data= unique(sort(tmp$stations)),
   	               controlStyle= list(borderColor='brown')),
@@ -164,16 +192,16 @@ test_that("3D globe & autoload 3D", {
     data <- list()   # volcano is a lot of data ==slow
     for(y in 1:dim(volcano)[2]) for(x in 1:dim(volcano)[1])
       data <- append(data, list(c(x, y, volcano[x,y])))
-    p <- ec.init(load= '3D', series.param= list(type= 'surface',	data= data) )
+    p <- ec.init(load= '3D', series.param= list(type= 'surface', data= data) )
     expect_equal(length(p$x$opts$series[[1]]$data), 5307)
     cat('\n load 3D + volcano')
   
-    p <- ec.init(load='world', geo3D= list(map= 'world', roam=T),
+    p <- ec.init(load='world', geo3D= list(map= 'world', roam=TRUE),
       series.param= list(type= 'scatter3D', data=list(c(115, 22, 10), c(-116, 32, -11)))
     ) 
     expect_equal(p$x$opts$series[[1]]$coordinateSystem, 'geo3D')
     
-    p <- mtcars |> ec.init(ctype='scatterGL')
+    p <- mtcars |> ec.init(series.param= list(type='scatterGL'))
     expect_equal(p$dependencies[[1]]$name, 'echarts-gl.min.js')
   } 
   else {
@@ -182,7 +210,7 @@ test_that("3D globe & autoload 3D", {
   }
 })
 
-test_that("radar and polar", {  # for coverage
+test_that("radar and polar", {
   p <- ec.init(
   	radar= list(indicator= lapply(LETTERS[1:5], \(x) { list(name=x)} ) ),
   	series= list(list(type='radar', radarIndex=1,
@@ -201,7 +229,7 @@ test_that("radar and polar", {  # for coverage
   p <- do.call(ec.init, args)
   expect_equal(p$x$opts$radiusAxis$type, 'category')
 })
-
+  
 test_that("calendar", {
 
   df <- data.frame(d= seq(as.Date("2023-01-01"), by="day", length.out=360), v=runif(360,1,100))
@@ -258,6 +286,8 @@ test_that("Shiny commands", {
   p <- ecs.proxy('sash')
   expect_equal(p$id, 'sash')
   expect_equal(attributes(p)$class, 'ecsProxy')
+  p$x <- NULL
+  expect_error(ecs.exec(p))
   
   # works in interactive only (+Shiny session), else "attempt to apply non-function"
   # #sendCustomMessage <- \(name,plist) {a <- 1}
@@ -285,16 +315,6 @@ test_that(".merlis", {
   expect_equal(echarty:::.valid.url('http://does.not.exist.com'), FALSE)
 })
 
-test_that('autoset axis type', {
-  df <- data.frame(
-    time = seq(from = as.POSIXct("2021-01-01 08:00:00"), to = as.POSIXct("2021-01-01 09:10:00"), by = "1 min"),
-    y = rnorm(71, mean = 100)
-  )
-  p <- df |> ec.init(yAxis= list(scale=T))
-  expect_equal(p$x$opts$xAxis$type, 'time')
-  expect_equal(p$x$opts$yAxis$type, 'value')
-})
-
 test_that('stops are working in echarty.R', {
   df <- data.frame(x = 1:10, y = seq(1, 20, by=2))
   expect_error(ec.init(0)) # df
@@ -302,7 +322,7 @@ test_that('stops are working in echarty.R', {
   expect_silent(ec.init(mtcars |> group_by(gear), tl.series= list(type='map'))) # no name/value, can use encode; 'regions' err
   expect_silent(ec.init(df |> group_by(y), series.param= list(type='bar')))
   expect_silent(ec.init(df |> group_by(y), series.param= list(type='bar'), 
-                        timeline= list(show=T)))
+                        timeline= list(show=TRUE)))
   # expect_error(cars |> group_by(speed) |> ec.init()) # 3 cols min
   # expect_error(ec.init(data.frame(name='n',value=1) |> group_by(name), 
   #     tl.series= list(type='bar')))  # 3 cols min
@@ -312,9 +332,10 @@ test_that('stops are working in echarty.R', {
   expect_error(ec.util(cmd='layout'))
   expect_error(ecr.band(cars))
   tmp <- cars; tmp <- tmp |> rename(lower=speed, upper=dist)
-  expect_error(ecr.band(tmp, lower='lower', upper='upper')) # no first col
-  tmp <- ToothGrowth; tmp <- tmp |> rename(lower=len, upper=supp) #dose=numeric
-  expect_error(ecr.band(tmp, lower='lower', upper='upper', test='num')) # numeric
+  expect_error(ecr.band(tmp, lower='lower', upper='upper')) # 1st column name
+  tmp <- ToothGrowth
+  expect_error(ecr.band(tmp, lower='len', upper='supp'))    # non-numeric
+
   expect_error(ecr.ebars())
   expect_error(ecr.ebars(1))
   expect_error(ecr.ebars(ec.init(), 1))
@@ -326,13 +347,13 @@ test_that('stops are working in echarty.R', {
   #expect_silent(ec.init(load='liquid'))   # Debian throws warnings in CRAN check
   #expect_silent(ec.init(load='gmodular'))
   #expect_silent(ec.init(load='wordcloud'))
-  expect_error(mtcars |> group_by(cyl) |> ec.init(ctype='parallel'))
+  expect_error(mtcars |> group_by(cyl) |> ec.init(series.param= list(type='parallel')))
   expect_error(data.frame(name= c('A','B','C','D'), value= c(1,2,3,1), cat=c(1,1,2,2)) |>
-    group_by(cat) |> ec.init(timeline= list(s=T), dbg=T, series.param= list(type='pie'))
+    group_by(cat) |> ec.init(timeline= list(s=TRUE), dbg=T, series.param= list(type='pie'))
   )
 })
 
-test_that('for coverage only', {
+test_that('mostly for coverage', {
   args <- list( 
     df= data.frame(name=c('Brazil','Australia'), value=c(111,222)) |> group_by(name),
     load= 'world', visualMap=list(s=TRUE),
@@ -348,6 +369,13 @@ test_that('for coverage only', {
   p <- do.call(ec.init, args)
   expect_true(is.null(p$x$opts$legend))
   
-  p <- cars |> ec.init(renderer='svg', locale='ZH', useDirtyRect=T) # legacy params
+  p <- cars |> ec.init(renderer='svg', locale='ZH', useDirtyRect=TRUE) # legacy params
   expect_equal(p$x$iniOpts$locale, 'ZH')
+  
+  #p <- ec.init() |> ec.plugjs(paste0('file:///',.libPaths()[1],'/echarty/news.md'), ask=TRUE)
+  p <- ec.init() |> ec.plugjs('https://helgasoft.github.io/echarty/js/spooky-ghost.json', ask=TRUE)
+  expect_equal(p$x$opts$series[[1]]$type, 'scatter')
+  
+  #p <- chickwts |> ec.init()  # bug #21282
+  #expect_equal(p$x$opts$dataset[[1]]$dimensions[1], 'feed')
 })

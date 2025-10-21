@@ -44,15 +44,16 @@ test_that("ec.clmn with sprintf, column indexes and names", {
   expect_match(tmp$itemStyle$color, "vv=[x.data['color']];", fixed=TRUE)
   expect_match(tmp$itemStyle$color, "pos=['Sepal.Length'", fixed=TRUE)
   expect_match(tmp$symbolSize, "vv=[x.data['Petal.Length']];", fixed=TRUE)
-  expect_match(p$x$opts$yAxis[[1]]$formatter, "ss=[-2]", fixed=TRUE)
+  expect_match(p$x$opts$yAxis$axisLabel$formatter, "ss=[-2]", fixed=TRUE)
   
   # data + column names
   tmp <- data.frame(name=names(islands), value=islands) |> 
     filter(value>100) |> arrange(value)
   p <- ec.init( tooltip= list(s=TRUE),
-    series = list(list(type= 'pie', data= ec.data(tmp, 'names'), 
+    #series = list(list(type= 'pie', data= ec.data(tmp, 'names'),
+    series.param= list(type= 'pie', data= ec.data(tmp, 'names'), 
             label= list(formatter= ec.clmn('value', scale=2)),
-            tooltip= list(formatter= ec.clmn("%@ <br> %L@", 'name','value'))) )
+            tooltip= list(formatter= ec.clmn("%@ <br> %L@", 'name','value'))) 
   )
   tmp <- p$x$opts$series[[1]]$tooltip$formatter
   expect_equal(length(unlist(gregexpr('x.data', tmp ))), 4)
@@ -92,5 +93,19 @@ test_that("ec.clmn with sprintf, column indexes and names", {
   expect_match(p, 'stringify', fixed=TRUE)
   p <- ec.clmn('log', scale=0)
   expect_match(p, 'logged', fixed=TRUE)
+  
+  p <- ec.init(
+    title= list(text= 'click node or edge'),
+    series.param= list(
+      type= 'graph', layout= 'force',
+      nodes= list(list(name= 'a', value= 10), list(name= 'b', value= 20)),
+      edges= list(list(source= 0, target= 1))
+    ),
+    on= list(    # Javascript handlers
+      list(event='click', query=list(dataType='node'), handler= ec.clmn("(e) => alert('Node');")),
+      list(event='click', query=list(dataType='edge'), handler= "(e) => alert('Edge');")
+    ) )
+  expect_s3_class(p$x$on[[1]]$handler, 'JS_EVAL')
+  expect_s3_class(p$x$on[[2]]$handler, 'JS_EVAL')   # helper in ec.init
 })
 

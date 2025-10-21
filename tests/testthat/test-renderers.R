@@ -66,12 +66,18 @@ test_that("ecr.ebars", {
   )
   expect_equal(p$x$opts$series[[2]]$encode$y, c(2,3,4))
   expect_equal(p$x$opts$series[[2]]$itemStyle$borderDashOffset, 12)
-  p <- tmp |> ec.upd({   # for cov only
+  
+  tt <- tmp |> ec.upd({   # for cov only
     dataset[[1]]$source[[1]] <- dataset[[1]]$dimensions
     dataset[[1]]$dimensions <- NULL
-    dataset[[1]]$sourceHeader <- T  # TODO: should work without it too
-  }) |> ecr.ebars( encode= list(x='Tree', y=c('circumference','lo','up')), hwidth=12 )
+    dataset[[1]]$sourceHeader <- T 
+  })
+  p <- tt |> ecr.ebars( encode= list(x='Tree', y=c('circumference','lo','up')), hwidth=12 )
   expect_equal(p$x$opts$dataset[[1]]$source[[1]][1], 'Tree')
+   # should work without sourceHeader too
+  tt$x$opts$dataset[[1]]$sourceHeader <- NULL
+  p <- tt |> ecr.ebars( encode= list(x='Tree', y=c('circumference','lo','up')))
+  expect_true(is.null(p$x$opts$dataset[[1]]$sourceHeader))
 
   # grouped + non-categorical
   tmp <- round(rnorm(24, sin(1:24/2)*10, .5))
@@ -92,10 +98,10 @@ test_that("ecr.ebars", {
     list(name= 's1',type= 'bar', data= list(5, 20, 36)),
     list(name= 's2',type= 'bar', data= list(4, 2, 40)),
     list(name= 's3',type= 'bar', data= list(15, 10, 36)),
-    list(name= 's2',type= 'custom', z=11, renderItem= htmlwidgets::JS('riErrBars'), 
+    list(name= 's2',type= 'custom', z=11, renderItem= 'riErrBars', 
          itemStyle= list(color= 'brown', borderDashOffset=8 ), # 8= halfWidth
-         encode= list(x=1,y=c(2,3,4)),
-         data= list(list('Mon',5,4,7), list('Tue',10, 9, 11))
+         encode= list(x= 1, y= c(2,3,4))
+         ,data= list(list('Mon',5,4,7), list('Tue',10, 9, 11))
     )
   )
   p <- ec.init(load='custom', yAxis= list(show=T),
@@ -126,7 +132,7 @@ test_that("ecr.ebars riErrBarSimple", {
         # encode() does not work ?!
         # get data from dataset$source in format 'x,lo,hi'
         data= ec.data(as.data.frame(do.call(rbind, dataset[[1]]$source[-1]))[,c(1,3,4)]),
-        renderItem = htmlwidgets::JS("riErrBarSimple") 
+        renderItem = htmlwidgets::JS('riErrBarSimple')
       ) ))
   }) 
   expect_equal(p$x$opts$series[[2]]$type, 'custom')
@@ -137,10 +143,8 @@ test_that("ecr.ebars riErrBarSimple", {
 
 test_that("ecr.band", {
   df <- Orange |> mutate(Tree=as.numeric(Tree)) |> relocate(Tree, .after= last_col())
-  band <- ecr.band(df |> filter(Tree==4) |> inner_join(df |> filter(Tree=='1'), by='age'),
-        'circumference.y', 
-        'circumference.x', 
-        type= 'polygon', name= 'poly1')
+  df2 <- df |> filter(Tree==4) |> inner_join(df |> filter(Tree=='1'), by='age')
+  band <- ecr.band(df2, 'circumference.y', 'circumference.x', type= 'polygon', name= 'poly1')
   p <- ec.init(load='custom',
   	legend= list(s=T), tooltip= list(trigger='axis'), 
   	dataZoom= list(type='inside', filterMode='none'),
@@ -154,6 +158,8 @@ test_that("ecr.band", {
   expect_equal(p$x$opts$series[[1]]$name, 'poly1')
   expect_true( p$x$opts$series[[1]]$renderItem == "riPolygon")
   expect_s3_class(p$x$opts$series[[1]]$renderItem, 'JS_EVAL')
+  band <- ecr.band(df2, 'circumference.y', 'circumference.x', type= 'stack')
+  expect_equal(band[[1]]$name, 'band')  # set default name
 })
 
 test_that("ecr.band tooltips", {
@@ -186,9 +192,7 @@ test_that("leaflet with geoJson", {
     "features": [
       {
          "type": "Feature",
-         "properties": {
-            "color": "purple"
-         },
+         "properties": {"color": "purple"},
          "geometry": {
             "type": "MultiPolygon",
             "coordinates": [
@@ -209,9 +213,7 @@ test_that("leaflet with geoJson", {
       }, 
       {
          "type": "Feature",
-         "properties": {
-            "color": "green"
-         },
+         "properties": {"color": "green", "name": "LineString"},
          "geometry": {
             "type": "LineString",
             "coordinates":
@@ -225,9 +227,7 @@ test_that("leaflet with geoJson", {
       }, 
       {
          "type": "Feature",
-         "properties": {
-            "color": "black"
-         },
+         "properties": {"color": "black", "name": "MultiLineString"},
          "geometry": {
             "type": "MultiLineString",
             "coordinates": [
@@ -248,9 +248,7 @@ test_that("leaflet with geoJson", {
             "type": "Point",
             "coordinates": [-116, 33.66]
          },
-         "properties": {
-            "color": "green"
-         }
+         "properties": {"color": "green", "name": "Point"}
       },
       {
          "type": "Feature",
@@ -258,21 +256,18 @@ test_that("leaflet with geoJson", {
             "type": "MultiPoint",
             "coordinates": [ [-119.0, 35.99], [-120.0, 36.66] ]
          },
-         "properties": {
-            "color": "blue"
-         }
+         "properties": {"color": "blue", "name": "MultiPoint"}
       }
-  ]}')
-  p <- ec.init(load= c('leaflet','custom'), 
+  ]}') |> jsonlite::fromJSON()
+  p <- ec.init(load= c('leaflet','custom'),
     leaflet= list(center= c(-116.35, 35.5), zoom= 5, roam= T), 
     series= list(
-      ec.util(cmd= 'geojson', 
-              geojson= jsonlite::fromJSON(myGeojson),
-              itemStyle= list(opacity= 0.5), 
+      ec.util(cmd= 'geojson', #nid='name',
+              geojson= myGeojson,
+              itemStyle= list(opacity= 0.5),
               ppfill= NULL )  # =no polygon fill
     )
   )
-  
   expect_equal(p$x$opts$leaflet$zoom, 5)
   expect_equal(p$x$opts$series[[1]]$type, 'custom')
   expect_s3_class(p$x$opts$series[[1]]$renderItem, 'JS_EVAL')
@@ -280,25 +275,16 @@ test_that("leaflet with geoJson", {
   expect_equal(length(p$x$opts$series[[1]]$data), 5)
   expect_equal(p$x$opts$series[[1]]$data[[5]][[1]], 5)
   
-# tmp <- jsonlite::fromJSON('https://echarts.apache.org/examples/data/asset/geo/USA.json')
-# p <- ec.init(load= c('leaflet', 'custom'), 
-#   leaflet= list(
-#     center= c(-111, 35.5), zoom= 4, roam= T), 
-#   tooltip= list(show=T),
-#   series= list(
-#     ec.util(cmd= 'geojson', geojson= tmp, colorBy= 'data', nid='name',
-#             itemStyle= list(opacity= 0.5) )
-#   )
-# )
-# p 
-  
+  # myGeojson <- jsonlite::fromJSON('https://echarts.apache.org/examples/data/asset/geo/USA.json')
   p <- ec.init(load= c('world','custom'), 
-	  geo= list(type='map', map='world', center= c(-116.35, 35.5), zoom= 17, roam=TRUE), 
+	  geo= list(type='map', map='world', center= c(-116.35, 35.5), zoom= 17, roam=TRUE),
+	  tooltip= list(show=T),
 	  series= list( 
-	    ec.util(cmd= 'geojson', geojson= jsonlite::fromJSON(myGeojson), cs='geo',
+	    ec.util(cmd= 'geojson', geojson= myGeojson, nid='name', cs='geo',
 	            itemStyle= list(opacity= 0.5), ppfill= 'red' )
 	  )
 	)
   expect_equal(p$x$opts$series[[1]]$coordinateSystem, 'geo')
+  expect_equal(p$x$opts$series[[1]]$data[[5]][[1]], 'MultiPoint')  # check nid
 })
 

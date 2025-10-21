@@ -4,6 +4,7 @@
 
 devAskNewPage(ask = FALSE)
 if (interactive()) {
-  library(shiny)
-  shiny::runGist('https://gist.github.com/helgasoft/02b257429e78e138f87aefce14f7aebc')
+  #library(shiny)
+  #shiny::runGist('https://gist.github.com/helgasoft/02b257429e78e138f87aefce14f7aebc')
+  print(source('https://gist.githubusercontent.com/helgasoft/02b257429e78e138f87aefce14f7aebc/raw/878dc34a7dd2ec239ea3aa96efecb75247db9e0a/app.R'))
 }

@@ -30,15 +30,16 @@ Wider connectivity and deployment potential through [WebR](https://helgasoft.git
 R package | echarts4r | echarty
 --- | --- | ---
 initial commit | Mar 12, 2018 | Feb 5, 2021
-library size | ![878 KB](https://img.shields.io/github/languages/code-size/JohnCoene/echarts4r.svg) | ![224KB](https://img.shields.io/github/languages/code-size/helgasoft/echarty)
-test coverage | ![32%](https://coveralls.io/repos/github/JohnCoene/echarts4r/badge.svg) [![link](man/figures/external-link-16.png)](https://coveralls.io/github/JohnCoene/echarts4r) | ![93%](https://coveralls.io/repos/github/helgasoft/echarty/badge.svg) [![link](man/figures/external-link-16.png)](https://coveralls.io/github/helgasoft/echarty)
-lines of code | 1,202,592 [![link](man/figures/external-link-16.png)](https://api.codetabs.com/v1/loc/?github=JohnCoene/echarts4r) | 5,720 [![link](man/figures/external-link-16.png)](https://api.codetabs.com/v1/loc?github=helgasoft/echarty)
-echarts.js version | 5.4.3 [![link](man/figures/external-link-16.png)](https://github.com/JohnCoene/echarts4r/blob/master/inst/htmlwidgets/lib/echarts-4.8.0/ecStat.min.js) | 5.6.0 [![link](man/figures/external-link-16.png)](https://github.com/helgasoft/echarty/blob/main/inst/js/echarts.min.js)
+library size | ![875 KB](https://img.shields.io/github/languages/code-size/JohnCoene/echarts4r.svg) | ![266KB](https://img.shields.io/github/languages/code-size/helgasoft/echarty)
+test coverage | ![32%](https://coveralls.io/repos/github/JohnCoene/echarts4r/badge.svg) [![link](man/figures/external-link-16.png)](https://coveralls.io/github/JohnCoene/echarts4r) | ![98%](https://coveralls.io/repos/github/helgasoft/echarty/badge.svg) [![link](man/figures/external-link-16.png)](https://coveralls.io/github/helgasoft/echarty)
+lines of code | 1,202,681 [![link](man/figures/external-link-16.png)](https://api.codetabs.com/v1/loc/?github=JohnCoene/echarts4r) | 5,988 [![link](man/figures/external-link-16.png)](https://api.codetabs.com/v1/loc?github=helgasoft/echarty)
+echarts.js version | 5.4.3 [![link](man/figures/external-link-16.png)](https://github.com/JohnCoene/echarts4r/blob/master/inst/htmlwidgets/lib/echarts-4.8.0/echarts-en.min.js) | 6.0.0 [![link](man/figures/external-link-16.png)](https://github.com/helgasoft/echarty/blob/main/inst/js/echarts.min.js)
 API design | own commands with parameters | mostly [ECharts option](https://echarts.apache.org/en/option.html) lists <sup>(1)</sup>
 number of commands | over [200](https://echarts4r.john-coene.com/reference/) | **one** command (ec.init) + optional utility commands
 [dataset](https://echarts.apache.org/en/option.html#dataset) support | no | **yes**
 [WebR](https://docs.r-wasm.org/webr/latest/) support | no	| **yes**
 [crosstalk](https://rstudio.github.io/crosstalk/) support | no | **yes**
+column-to-style | no	| **yes**
 dependencies ([tools](https://www.rdocumentation.org/packages/tools/versions/3.6.2/topics/package_dependencies)) | 70 | 46 
 dependencies ([WebR](https://repo.r-wasm.org)) | 188 | 46 
 
@@ -46,7 +47,7 @@ dependencies ([WebR](https://repo.r-wasm.org)) | 188 | 46
 <sup>(1)</sup> We encourage users to follow the original ECharts API to construct charts with echarty. 
 	This differs from echarts4r which uses own commands for most chart options.   
 
-Comparison review done February 2025 for current versions of echarts4R and echarty.  
+Comparison review done October 2025 for current versions of echarts4R and echarty.  
 ___
 </details>
 
@@ -55,7 +56,7 @@ Please consider granting a Github star ⭐ to show your support.
 ## Installation
 
 <!-- [![Github version](https://img.shields.io/github/v/release/helgasoft/echarty?label=github)](https://github.com/helgasoft/echarty/releases)  <sup>.02</sup>  -->
-Latest development build **1.6.7**
+Latest development build **1.7.0**
 
 ``` r
 if (!requireNamespace('remotes')) install.packages('remotes')

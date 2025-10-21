@@ -1,4 +1,4 @@
-//  JS renderers for error bars, bands, geoJson
+//  JS renderers for error bars, bands, geoJson, flame
 //  Prefix 'ri' stands for 'renderItem' - the calling origin.
 
 /*
@@ -345,6 +345,106 @@ function riOutliers(params, api) {
   }
 }
 
+/* renderItem for flame chart */
+function riFlame(params, api) {
+  const level = api.value(0);
+  const start = api.coord([api.value(1), level]);
+  const end = api.coord([api.value(2), level]);
+  const height = ((api.size && api.size([0, 1])) || [0, 20])[1];
+  const width = end[0] - start[0] -1;  // horiz border width
+  return {
+    type: 'rect',
+    transition: ['shape'],
+    shape: {
+      x: start[0],
+      y: start[1] - height / 2,
+      width,
+      height: height - 2 /* itemGap */,
+      r: 2
+    },
+    style: {
+      fill: api.visual('color')
+    },
+    textConfig: {
+      position: 'insideLeft'
+    },
+    textContent: {
+      style: {
+        text: api.value(3),
+        fontFamily: 'Verdana',
+        fill: '#000',
+        width: width - 4,
+        overflow: 'truncate',
+        ellipsis: '..',
+        truncateMinChar: 1
+      }
+    }
+  };
+}
+
+/*  utils for flame chart click event */
+function flameFilterJson(json, id) {
+  if (id == null) {
+    return json;
+  }
+  const recur = (item, id) => {
+    if (item.name === id) {
+      return item;
+    }
+    for (const child of item.children || []) {
+      const temp = recur(child, id);
+      if (temp) {
+        item.children = [temp];
+        //item.value = temp.value; // change the parents' values
+        return item;
+      }
+    }
+  };
+  return recur(json, id) || json;
+};
+function flameRecursionJson(jsonObj, id) {
+  const data = [];
+  const filteredJson = flameFilterJson(structuredClone(jsonObj), id);
+  const rootVal = 1000;
+  const recur = (item, start= 0, level= 0, wit=null) => {
+    const temp = {
+      name: item.name, 
+      id: item.name,
+      // [level, start_val, end_val, name, percentage, value]
+      value: [
+        level,
+        start,
+        start + wit, 
+        item.name,
+        (wit / rootVal * 100).toFixed(2),
+        item.value
+      ]
+    };
+    data.push(temp);
+    let prevStart = start;
+    if (item.children) 
+      wit /= item.children.length;
+    for (const child of item.children || []) {
+      recur(child, prevStart, level + 1, wit);
+      prevStart = prevStart + wit; 
+    }
+  };
+  recur(filteredJson, 0,0, rootVal);
+  return data;
+};
+function flameClick(params) {    // default event handler
+  // flameData needs to be provided by calling R code
+  const data = flameRecursionJson(flameData, params.data.name);
+  if (data) {
+    const rootValue = data[0].value[2];
+    chart = ec_chart(echwid);
+    chart.setOption({
+      xAxis: { max: rootValue },
+      series: [{ data }]
+    });
+  }
+}
+  
 /*
  ------------- Licence -----------------
 

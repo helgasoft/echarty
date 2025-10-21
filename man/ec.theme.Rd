@@ -23,12 +23,12 @@ Apply a pre-built or custom coded theme to a chart
 Just a few built-in themes are included in folder \code{inst/themes}.\cr
 Their names are dark, gray, jazz, dark-mushroom and macarons.\cr
 The entire ECharts theme collection could be found \href{https://github.com/apache/echarts/tree/master/theme}{here} and files copied if needed.\cr
-To create custom themes or view predefined ones, visit \href{https://echarts.apache.org/en/theme-builder.html}{this site}.
+To create custom themes or view predefined ones, visit \href{https://echarts.apache.org/en/theme-builder.html}{theme-builder}.\cr
+See also alternative \emph{registerTheme} in \link{ec.init}.
 }
 \examples{
 mtcars |> ec.init() |> ec.theme('dark-mushroom')
 cars |> ec.init() |> ec.theme('mine', code=
-  '{"color": ["green","#eeaa33"], 
-    "backgroundColor": "lemonchiffon"}')
+  '{"color": ["green","#eeaa33"], "backgroundColor": "lemonchiffon"}')
 
 }

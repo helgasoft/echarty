@@ -32,56 +32,57 @@ commands have three prefixes to help with auto-completion:
 
 \subsection{Events}{
 
-For event handling in Shiny see sample code in
-\href{https://github.com/helgasoft/echarty/blob/main/demo/eshiny.R}{eshiny.R},
-run as \code{demo(eshiny)}.
-Echarty has three built-in event callbacks - \emph{click}, \emph{mouseover},
-\emph{mouseout}. All other ECharts
-\href{https://echarts.apache.org/en/api.html#events}{events} could be
-initialized through \code{p$x$capture}. Another option is to use \code{p$x$on}
-with JavaScript handlers, see code in
-\href{https://github.com/helgasoft/echarty/blob/main/demo/examples.R}{examples}.
+Event handling in \strong{Shiny} is done through callbacks.\if{html}{\out{<br>}} See
+considerable sample code in , run as \code{demo(eshiny)}.\if{html}{\out{<br>}} There are three
+built-in event callbacks - \emph{click}, \emph{mouseover}, \emph{mouseout}. All other
+ECharts \href{https://echarts.apache.org/en/api.html#events}{events} could be
+initialized through \code{ec.init(capture=...)}. \if{html}{\out{<br>}} For event handling in R
+(without Shiny) use parameter \code{ec.init(on=...)} which expects JavaScript
+handlers. Search for ‘event’ in .
 }
 
-\subsection{Widget \strong{x} parameters}{
+\subsection{ECharts initialization parameters}{
 
-These are \emph{htmlwidget} and \emph{ECharts} initialization parameters supported
-by echarty. There are code samples for most of them in
-\href{https://github.com/helgasoft/echarty/blob/main/demo/examples.R}{examples}:
+Chart initialization is performed by the \emph{echarty::ec.init()}
+command.\if{html}{\out{<br>}} Here is full list of \emph{ec.init} optional parameters:
 \itemize{
-\item iniOpts = optional chart configurations like locale,renderer,etc. see
-\href{https://echarts.apache.org/en/api.html#echarts.init}{init}
-\item on = define JavaScript code for event handling, see
-\href{https://echarts.apache.org/en/api.html#echartsInstance.on}{ECharts}
-\item capture = event name(s) to monitor, the Shiny way of setting \emph{on}
-above
-\item group = group-name of a chart, see
-\href{https://echarts.apache.org/en/api.html#echartsInstance.group}{ECharts}
-\item connect = command to connect charts with same group-name, see
-\href{https://echarts.apache.org/en/api.html#echarts.connect}{ECharts}
-\item jcode = custom JavaScript code to execute, set from \emph{js} parameter of
-\emph{ec.init}
+\item \emph{ask, js, elementId, ctype, xtKey, dbg} are specific to \emph{echarty}\if{html}{\out{<br>}}
+\item \emph{theme, iniOpts, on, off, capture, group} belong to the ECharts \href{https://echarts.apache.org/en/api.html#echartsInstance}{chart instance}
+object.\if{html}{\out{<br>}}
+\item \emph{connect, disconnect, registerMap, registerTheme, registerLocale,
+registerCustomSeries} are commands of the global \href{https://echarts.apache.org/en/api.html#echarts}{ECharts object}.
 }
+
+There are R for some of these parameters.
 }
 
 \subsection{R vs Javascript numbering}{
 
-R language counting starts from 1.
-Javascript (JS) counting starts from 0.
-\emph{ec.init} supports R-counting of indexes (ex. encode) and dimension (ex.
-visualMap).
-All other contexts like \emph{ec.upd} or \emph{ecs.proxy} require JS-counting of
-indexes and dimensions.
+R language counting starts from 1.\if{html}{\out{<br>}} Javascript (JS) counting starts
+from 0.\if{html}{\out{<br>}} \emph{ec.init} supports R-counting of indexes (ex. encode) and
+dimension (ex. visualMap).\if{html}{\out{<br>}} All other contexts like \emph{ec.upd} or
+\emph{ecs.proxy} require JS-counting of indexes and dimensions.
 }
 
 \subsection{Javascript built-in functions}{
 
-To allow access to charts from JS.
-\emph{ec_chart(id)} - get the chart object by id
-\emph{ec_option(id)} - get the chart’s option object by id
-Parameter \emph{id} could be the internal JS variable \emph{echwid}, or the value
-set through \emph{ec.init} parameter \emph{elementId}. See demo code in
-\href{https://github.com/helgasoft/echarty/blob/main/demo/examples.R}{examples}
+To allow access to charts from JS.\if{html}{\out{<br>}} \strong{ec_chart(id)} - get the chart
+object by id \if{html}{\out{<br>}} \strong{ec_option(id)} - get the chart’s option object by
+id \if{html}{\out{<br>}} Parameter \emph{id} could be the internal JS variable \emph{echwid}, or
+the value set through \emph{ec.init} parameter \emph{elementId}. See .
+}
+
+\subsection{Column-to-style binding with encode}{
+
+ECharts
+\href{https://echarts.apache.org/en/option.html#series-bar.encode}{series.encode}
+enables binding axes and tooltip to data columns. Echarty enhances this
+method for all
+[series$\verb{data](https://echarts.apache.org/en/option.html#series-bar.data) parameters like itemStyle,labels,emphasis,etc. The bindings are set through _series}$encode$\verb{data_. For instance<br> }encode= list(data= list(value= c('xc','yc'), itemStyle= list(opacity= 'oc')))\verb{<br> would match columns _xc,yc,oc_ to each item's value and opacity. The result is a new _series}$data_
+added to the series. It permits to finely customize chart elements
+directly from data.\if{html}{\out{<br>}} Echarty has also an alternative tool,
+style-named columns with \code{ec.data(..nasep)}, but \emph{encode$data} offers
+more flexibility. It is not compatible with \emph{timeline} however.
 }
 
 \subsection{Code examples}{
@@ -90,10 +91,8 @@ Here is the complete list of sample code \strong{locations}:
 \itemize{
 \item website
 \href{https://helgasoft.github.io/echarty/articles/gallery.html}{gallery}
-\item \href{https://github.com/helgasoft/echarty/blob/main/demo/examples.R}{demo examples}
-\item Shiny code is in
-\href{https://github.com/helgasoft/echarty/blob/main/demo/eshiny.R}{eshiny.R},
-run with \code{demo(eshiny)}
+\item collection of
+\item Shiny code is in , run with \code{demo(eshiny)}
 \item demos on \href{https://rpubs.com/echarty}{RPubs}
 \item searchable \href{https://gist.github.com/helgasoft}{gists}
 \item answers to \href{https://github.com/helgasoft/echarty/issues}{Github issues}
@@ -120,5 +119,9 @@ getOption('echarty.theme')      # get
 #> [1] "jazz"
 options('echarty.theme'=NULL)   # remove
 }\if{html}{\out{</div>}}
+
+[series$\verb{data]: R:series}$data [gallery]: R:gallery [RPubs]:
+R:RPubs [gists]: R:gists [Github issues]: R:Github\%0A\%20\%20issues
+[Github tests]: R:Github\%0A\%20\%20\%20\%20tests [options]: R:options
 }
 }

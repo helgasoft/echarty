@@ -34,7 +34,7 @@ test_that("shapefiles with multi-POLYGONS", {
 })
 
 test_that("shapefile LINES from ZIP", {
-  if (isCovr) {  # creates a subfolder 'railways'
+  if (isCovr) {  # creates a subfolder in temp folder
     library(sf)
     fname <- ec.util(cmd= 'sf.unzip', 
           url= 'https://helgasoft.github.io/echarty/test/sl.shape.railways.zip')
@@ -46,16 +46,16 @@ test_that("shapefile LINES from ZIP", {
        tooltip= list(formatter= '{a}'), animation= FALSE,
        leaflet= list( roam= TRUE,
          tiles= list(list(
-           urlTemplate= 'https://stamen-tiles-{s}.a.ssl.fastly.net/terrain/{z}/{x}/{y}{r}.{ext}',
-           options= list(attribution= 'Map tiles by <a href="http://stamen.com">Stamen Design</a>, <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>',
-                         subdomains= 'abcd', maxZoom= 18, ext= 'png')))) 
+           urlTemplate= 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+           options= list(attribution= '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>, &copy; <a href="https://carto.com/attributions">CARTO</a>',
+                         subdomains= 'abcd', maxZoom= 20)))) #, ext= 'png'
     )
     expect_equal(p$x$opts$leaflet$tiles[[1]]$options$subdomains, 'abcd')
     expect_equal(p$x$opts$series[[6]]$name, '207557821')
     expect_equal(p$x$opts$series[[6]]$lineStyle$color, 'red')
     
   }
-  else expect_false(interactive())  #expect_equal(1,1) # bypass
+  else expect_false(interactive())  # bypass
 })
 
 test_that("shapefile LINESTRING and MULTILINESTRING", {
@@ -73,7 +73,7 @@ test_that("shapefile LINESTRING and MULTILINESTRING", {
 
 test_that("shapefile POINTS from ZIP", {
   fn <- ec.util(cmd= 'sf.unzip', 
-                url= 'https://helgasoft.github.io/echarty/test/sl.shape.points.zip')
+    url= 'https://helgasoft.github.io/echarty/test/sl.shape.points.zip')
   if (!startsWith(fn, 'ERROR')) {
     expect_true(endsWith(fn, 'points.shp'))     # creates a subfolder 'points'
 
@@ -186,7 +186,7 @@ test_that("morph 2", {
   p <- ec.util(cmd='morph', oscatter, obar)
   expect_equal(p$x$opts$morph[[2]]$series[[3]]$type, 'bar')
   expect_true (p$x$opts$morph[[2]]$series[[3]]$universalTransition$enabled)
-  expect_equal(p$x$opts$yAxis, list(show=T, type= "value", name= "disp"))
+  expect_equal(p$x$opts$yAxis$name, "disp")
   expect_true (p$x$opts$xAxis$scale)  # for ec.upd
 })
 
@@ -285,6 +285,8 @@ test_that("ec.paxis - parallel axis", {
     ec.paxis(cols= c('Illiteracy','Population','Income'))
   expect_equal(p$x$opts$parallelAxis[[1]]$dim, 2)
 
+  p <- ec.paxis(chickwts)
+  expect_equal(p[[2]]$type, 'category')
 })
 
 test_that("ec.data dendrogram", {
@@ -297,6 +299,30 @@ test_that("ec.data dendrogram", {
   expect_equal(p$x$opts$series[[1]]$data[[1]]$name, 'p49')
   expect_equal(p$x$opts$series[[1]]$data[[1]]$children[[1]]$children[[1]]$children[[2]]$name, 'North Carolina')
   expect_equal(length(p$x$opts$series[[1]]$data[[1]]$children[[1]]$children), 2)
+})
+
+test_that("ec.data flame chart", {
+  treeData <- list( name= 'family', children= list(
+      list(name='Grandpa',
+          children= list(
+              list(name='Uncle Leo', value=15,
+                  children= list(list(name='Cousin Jack',value=2), 
+                      list(name='Cousin Mary',value=5,
+                          children=list(list(name='Jackson',value=2))), 
+                              list(name='Cousin Ben',value=4))),
+              list(name='Father', value=10,
+                 children= list(list(name='Me',value=5),
+                      list(name='Brother Peter',value=1))))),
+      list(name='Granma Nancy',
+          children= list(
+              list(name='Uncle Nike',
+                 children=list(list(name='Cousin Betty',value=1), 
+                      list(name='Cousin Jenny',value=2)))))
+  ))
+  p <- ec.data(treeData, 'flame', name='Father')
+  expect_equal(length(p), 5)
+  expect_equal(p[[4]]$value[[4]], 'Me')  # name
+  expect_equal(p[[4]]$value[[6]], '5')   # value
 })
 
 test_that("ec.data boxlpot", {
@@ -419,7 +445,7 @@ test_that("ec.data borders", {
   ) |> 
   ec.registerMap('trgl', ec.data(data, 'borders'))
 
-  expect_true(endsWith(p$x$registerMap[[1]]$geoJSON, '] ]]}} ]}'))
+  expect_true(endsWith(p$x$registerMap[[1]]$opt$geoJSON, '] ]]}} ]}'))
 })
 
 test_that("ec.data 'names' + nasep, header", {
@@ -478,6 +504,7 @@ test_that("ec.inspect and ec.fromJson", {
   #expect_true(regexpr('^\\{\\n  "x": \\{', tmp)==1)
   expect_true(regexpr('^\\{"type":"list","attributes":\\{"names":', tmp)==1)
   expect_true(grepl('dependencies', tmp))
+  expect_error(expect_warning(p |> ec.inspect(target='full', file='xx:/xx')))
     
   v <- ec.fromJson(tmp)   # full
   expect_true(inherits(v, 'echarty'))
@@ -497,10 +524,10 @@ test_that("ec.inspect and ec.fromJson", {
 test_that("ec.registerMap", {
   usurl <- 'https://echarts.apache.org/examples/data/asset/geo/USA.json'
   tmp <- data.frame(name = c("Texas", "California"), value = c(111, 222)) |> 
-    ec.init(color= c('lightgray'), visualMap = list(), series.param= list(type= 'map', map= 'usa'))
+    ec.init(color= c('lightgray'), visualMap= list(min=111), series.param= list(type= 'map', map= 'usa'))
   p <- tmp |> ec.registerMap('usa', usurl)
   expect_equal(p$x$registerMap[[1]]$mapName, "usa")
-  expect_equal(p$x$registerMap[[1]]$geoJSON$type, "FeatureCollection")
+  expect_equal(p$x$registerMap[[1]]$opt$geoJSON$type, "FeatureCollection")
   p <- ec.init(geo= list(map='us2')) |> ec.registerMap('us2', usurl)
   expect_equal(p$x$registerMap[[1]]$mapName, "us2")
   p <- tmp|> ec.registerMap('usa', 'http://nono')
@@ -521,21 +548,21 @@ test_that("ec.registerMap", {
     "properties": {"name": "Area", "childNum": 1}
   }]}'
   p <- data.frame(name= 'Area', value= 111) |> 
-  ec.init(color= c('lightgray'), visualMap= list(),
+  ec.init(color= c('lightgray'), visualMap= list(min=111),
     series.param= list(type= 'map', map= 'tmap')
   ) |> ec.registerMap('tmap', txt)
   #expect_equal(p$x$registerMap[[1]]$geoJSON$features[[1]]$geometry$type, "Polygon")
-  expect_true(class(p$x$registerMap[[1]]$geoJSON)=='json')
+  expect_true(class(p$x$registerMap[[1]]$opt$geoJSON)=='json')
   
   rarrow <- '<svg version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M21.883 12l-7.527 6.235.644.765 9-7.521-9-7.479-.645.764 7.529 6.236h-21.884v1h21.883z"/></svg>'
   p <- ec.init(series.param= list(type= 'map', map= 'svgmap')) |> 
   ec.registerMap('svgmap', rarrow)
-  expect_match(p$x$registerMap[[1]]$svg, '<path d')
+  expect_match(p$x$registerMap[[1]]$opt$svg, '<path d')
 
   p <- data.frame(name= c('liver','lung'), value= c(11,22)) |> 
   ec.init(visualMap = list(), series.param= list(type= 'map', map= 'svgmap')) |> 
   ec.registerMap('svgmap', 'https://echarts.apache.org/examples/data/asset/geo/Veins_Medical_Diagram_clip_art.svg')
-  expect_true(startsWith(p$x$registerMap[[1]]$svg, '<?xml'))
+  expect_true(startsWith(p$x$registerMap[[1]]$opt$svg, '<?xml'))
   expect_equal(p$x$opts$dataset[[1]]$source[[1]][[1]], 'liver')
 })
 

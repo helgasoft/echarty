@@ -29,19 +29,19 @@ Have own default tooltip format showing \emph{value, high & low}.\cr
 Grouped bar series are supported.\cr
 Non-grouped series could be shown with formatter \emph{riErrBarSimple} instead of \emph{ecr.ebars}. This is limited to vertical only, see example below.\cr
 Other limitations:\cr
-\verb{     }manually add axis type='category' when needed\cr
-\verb{     }error bars cannot have own name when data is grouped\cr
-\verb{     }legend select/deselect will not re-position grouped error bars\cr
+\verb{     } manually add axis type='category' when needed\cr
+\verb{     } error bars cannot have own name when data is grouped\cr
+\verb{     } legend select/deselect will not re-position grouped error bars\cr
 }
 \examples{
 library(dplyr)
 df <- mtcars |> group_by(cyl,gear) |> summarise(avg.mpg= round(mean(mpg),2)) |>
   mutate(low = round(avg.mpg-cyl*runif(1),2), 
          high= round(avg.mpg+cyl*runif(1),2))
-ec.init(df, load= 'custom', ctype= 'bar',
+ec.init(df, load= 'custom', series.param= list(type='bar'),
       xAxis= list(type='category'), tooltip= list(show=TRUE)) |>
 ecr.ebars(encode= list(y=c('avg.mpg','low','high'), x='gear'))
-#ecr.ebars(encode= list(y=c(3,4,5), x=2))  # ok: data indexes
+#ecr.ebars(encode= list(y=c(3,4,5), x=2))  # ok with data indexes
 
 # same but horizontal
 ec.init(df, load= 'custom',

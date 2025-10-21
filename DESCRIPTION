@@ -1,7 +1,7 @@
 Package: echarty
 Title: Minimal R/Shiny Interface to JavaScript Library 'ECharts'
-Date: 2025-08-14
-Version: 1.6.7
+Date: 2025-10-20
+Version: 1.7.0
 Authors@R: c(
   person(given= "Larry", family= "Helgason", role= c("aut", "cre"), email= "larry@helgasoft.com", comment="initial code from John Coene's library echarts4r")
   )
@@ -21,7 +21,7 @@ Suggests:
   leaflet (>= 2.2.0),
   knitr,
   rmarkdown
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3
 Roxygen: list(markdown = TRUE)
 License: Apache License (>= 2.0)
 URL: https://helgasoft.github.io/echarty/
