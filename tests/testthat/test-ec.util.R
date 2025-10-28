@@ -72,21 +72,23 @@ test_that("shapefile LINESTRING and MULTILINESTRING", {
 })
 
 test_that("shapefile POINTS from ZIP", {
-  fn <- ec.util(cmd= 'sf.unzip', 
-    url= 'https://helgasoft.github.io/echarty/test/sl.shape.points.zip')
-  if (!startsWith(fn, 'ERROR')) {
-    expect_true(endsWith(fn, 'points.shp'))     # creates a subfolder 'points'
-
-    library(sf)
-    nc <- as.data.frame(st_read(fn, quiet=TRUE)) |> head(10)
-    p <- ec.init(load= c('leaflet'),
-       js= ec.util(cmd= 'sf.bbox', bbox= st_bbox(nc$geometry)), 
-       series= ec.util(df= nc, name= 'spots', itemStyle= list(color= 'red'), verbose=TRUE),
-       tooltip= list(valueFormatter= ec.clmn('json')), legend= list(show= TRUE)
-    )
-    expect_s3_class(p$x$opts$series[[1]]$data[[2]]$value, 'sfg')
-    expect_equal(round(as.numeric(p$x$opts$series[[1]]$data[[2]]$value),1), c(-13.3,8.5))
-    expect_true( p$x$opts$leaflet$roam)
+  if (isCovr) {    # added for CRAN for subfolder, but github coverage suffers
+    fn <- ec.util(cmd= 'sf.unzip', 
+      url= 'https://helgasoft.github.io/echarty/test/sl.shape.points.zip')
+    if (!startsWith(fn, 'ERROR')) {
+      expect_true(endsWith(fn, 'points.shp'))     # creates a subfolder 'points'
+  
+      library(sf)
+      nc <- as.data.frame(st_read(fn, quiet=TRUE)) |> head(10)
+      p <- ec.init(load= c('leaflet'),
+         js= ec.util(cmd= 'sf.bbox', bbox= st_bbox(nc$geometry)), 
+         series= ec.util(df= nc, name= 'spots', itemStyle= list(color= 'red'), verbose=TRUE),
+         tooltip= list(valueFormatter= ec.clmn('json')), legend= list(show= TRUE)
+      )
+      expect_s3_class(p$x$opts$series[[1]]$data[[2]]$value, 'sfg')
+      expect_equal(round(as.numeric(p$x$opts$series[[1]]$data[[2]]$value),1), c(-13.3,8.5))
+      expect_true( p$x$opts$leaflet$roam)
+    }
   }
   fn <- ec.util(cmd= 'sf.unzip', url= 'https://nada.zip')
   expect_equal(fn, 'ERROR invalid zip url')

@@ -9,7 +9,7 @@
 #' 
 #' see also gallery https://helgasoft.github.io/echarty/articles/gallery.html for more examples
 
-#' \donttest {      # for CRAN
+#'
 library(dplyr); library(echarty)
 
 #------ Basic scatter chart, instant display -----
@@ -125,6 +125,18 @@ ec.init(df, title= list(subtext='One axis is category, other is value'),
   )
 )
 
+iris |> mutate(name= sample(c('pot1','pot2','pot3'), 150, TRUE),
+               opa= sample(c(0.4, 0.8, NA), 150, TRUE),
+               dsy= sample(c('rect','diamond','triangle'), 150, TRUE)
+) |> distinct(name, Species, .keep_all= TRUE) |> group_by(name) |>
+ec.init(
+  title= list(subtext='grouped data with styling'),
+  series.param= list(type='bar', encode= list( 
+    data= list(value= c('Species', 'Petal.Width'), 
+               itemStyle= list(opacity='opa', borderRadius=7,
+                               decal= list(symbol= 'dsy', symbolSize=1.5) ))
+  ))
+)
 
 #------ Plugin leaflet -----
 quakes |> dplyr::relocate('long') |>  # set order to long,lat
@@ -178,7 +190,7 @@ if (!is.null(flights)) {
 
 #------ registerMap JSON -----
 # registerMap supports also maps in SVG format, see website gallery
-if (interactive()) {
+
 dusa <- USArrests |> mutate(name= row.names(USArrests)) |> rename(value=UrbanPop)
 ec.init(
   series.param= list(type= 'map', map= 'USA', roam= TRUE, zoom= 3, left= -100, top= -30,
@@ -189,7 +201,7 @@ ec.init(
   registerMap= list(mapName='USA', 
     opt= list(geoJson= jsonlite::read_json('https://echarts.apache.org/examples/data/asset/geo/USA.json')))
 ) #|> ec.registerMap('USA', 'https://echarts.apache.org/examples/data/asset/geo/USA.json')
-}
+
 
 #------ ec.data borders -----
 data <- data.frame(   # triangles map
@@ -426,6 +438,7 @@ ec.upd({
 
 
 #------ ecSimpleTransform -----
+
 iris |> ec.init(
   load='https://cdn.jsdelivr.net/gh/100pah/echarts-simple-transform@refs/heads/main/dist/ecSimpleTransform.min.js',
   js= c('echarts.registerTransform(ecSimpleTransform.aggregate)','','')
@@ -610,6 +623,7 @@ ec.init(load= 'custom',
 )
 
 #------ segmentedDoughnut v.6+ -----
+
 ec.init(
   load= 'https://cdn.jsdelivr.net/gh/apache/echarts-custom-series@main/custom-series/segmentedDoughnut/dist/index.auto.js',
   ask= 'loadRemote',
@@ -841,4 +855,3 @@ if (interactive()) {
 #------------- demo: Shiny interactive charts ---------------
 #  run command: demo(eshiny)
 
-#' }  # donttest

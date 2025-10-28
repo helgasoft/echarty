@@ -97,9 +97,15 @@ if (interactive()) {  # comm.out: Cran Fedora errors about some 'browser'
   )
 }
 
-p1 <- cars |> ec.init(grid= list(top=26), height=333)  # move chart up
-p2 <- mtcars |> arrange(mpg) |> ec.init(height=333, ctype='line')
-ec.util(cmd= 'tabset', cars= p1, mtcars= p2)
+if (interactive()) {
+ p1 <- cars |> ec.init(grid= list(top=26), height=333)  # move chart up
+ p2 <- mtcars |> arrange(mpg) |> ec.init(height=333, ctype='line')
+ ec.util(cmd= 'tabset', cars= p1, mtcars= p2)
+
+ lapply(list('dark','macarons','gray','dark-mushroom'),
+   function(x) cars |> ec.init(grid= list(bottom=5, top=10)) |> ec.theme(x) ) |>
+ ec.util(cmd='layout', cols= 2, title= 'Layout')
+}
 
 cars |> ec.init(
   graphic = list(
@@ -107,10 +113,6 @@ cars |> ec.init(
       js="function(a) {op=ec_option(echwid); alert(op.series[0].type);}")
   )
 )
-
-lapply(list('dark','macarons','gray','dark-mushroom'),
-  function(x) cars |> ec.init(grid= list(bottom=5, top=10)) |> ec.theme(x) ) |>
-ec.util(cmd='layout', cols= 2, title= 'Layout')
 
 colors <- c("blue","red","green")
 cyls <- as.character(sort(unique(mtcars$cyl)))

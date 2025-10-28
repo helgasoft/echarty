@@ -1,6 +1,10 @@
 # history of package _echarty_
 
-# echarty 1.7.0  latest in development
+# echarty 1.7.1  latest in development
+
+* fixes to 1.7.0, updated coder.R
+
+# echarty 1.7.0  on CRAN
 
 * _ec.init_ support for _on_,_off_,_register*_,etc. chart instance and echarts API
 * new value 'loadRemote' for parameter _ask_ to serve new v.6 custom-series

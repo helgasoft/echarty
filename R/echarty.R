@@ -8,13 +8,14 @@
 NULL
 
 lenv <- new.env(parent = emptyenv())
+lenv$coNames <- '' 
 # assign('aa', 11, envir=.ecv.colnames); get('aa', envir=.ecv.colnames)
 noAxisXY <- c('radar','parallel','themeRiver','map','gauge','pie','funnel','polar',  
     'sunburst','tree','treemap','sankey','lines', 'liquidFill','wordCloud') # series
 noCoord <- c('polar','radar','singleAxis','parallelAxis','calendar')
 # using list(show=TRUE) or list(list()) is to create empty object{} in JS
 
-#' Initialize command
+#' Initialize a chart
 #'
 #' Required to build a chart. In most cases this will be the only command necessary.
 #'
@@ -276,6 +277,8 @@ ec.init <- function( df= NULL, preset= TRUE, ...,  #ctype= 'scatter',
   if (!is.null(df)) {
     stopifnot('ec.init: df should be data.frame or SharedData'= 
               inherits(df, c("SharedData", "data.frame")))
+    lenv$coNames <- colnames(df)   # must execute before first ec.clmn
+    
     ct.key <- ct.group <- ct.dfKey <- NULL
     if (requireNamespace("crosstalk", quietly= TRUE)) {
       if (crosstalk::is.SharedData(df)) {
@@ -292,9 +295,6 @@ ec.init <- function( df= NULL, preset= TRUE, ...,  #ctype= 'scatter',
       crosstalk_key = ct.key,
       crosstalk_group = ct.group
     )
-    colun <- ''
-    if (!is.null(df)) colun <- colnames(df)   # must execute before first ec.clmn
-    lenv$coNames <- colun
     # if data.frame given, build dataset regardless of 'preset' or 'dataset'
  
     # column-to-style with encode, replaces dataset column names, then creates series.data
@@ -305,16 +305,18 @@ ec.init <- function( df= NULL, preset= TRUE, ...,  #ctype= 'scatter',
         if ('value' %in% colnames(df)) message("Warning: encode$data$value, but df has already column 'value'")
         vv <- series.param$encode$data$value
         stopifnot('encode$data$value is not a vector of column names'= is.vector(vv))
-        stopifnot('encode$data$value column(s) not found in df'= vv %in% colnames(df))
+        stopifnot('encode$data$value column names not found in df'= vv %in% colnames(df))
         # convert factor to char if any
         ft <- na.omit(sapply(vv, \(x) { if (is.factor(df[[x]])) x else NA}))
         if (length(ft)>0)
           lapply(ft, \(x) { df[[x]] <- as.character(df[[x]]) })
           #df <- df |> mutate(across(all_of(ft), as.character))   # error on group_by
         # add new DB col 'value'
-        df$value <- list(list('',''))
+        df$value <- list(list(rep('', length(vv))))
         for(i in 1:nrow(df)) {
-          df[i,]$value <- list(list(unlist(df[i,vv[1]], use.names=F), unlist(df[i,vv[2]], use.names=F)))
+          tmp <- list()
+          for(k in 1:length(vv)) tmp <- c(tmp, unlist(df[i,vv[k]], use.names=F))
+          df[i,]$value <- list(tmp) #list(list(unlist(df[i,vv[1]], use.names=F), unlist(df[i,vv[2]], use.names=F)))
         }
         # TODO: remove vv columns from df or not?
         sedval <- series.param$encode$data$value  # save for axes
@@ -540,7 +542,7 @@ ec.init <- function( df= NULL, preset= TRUE, ...,  #ctype= 'scatter',
     for(xy in ena) { coln[xy] <- ctyp[xy] <- colp[xy] <- NA }
     
     if (!is.null(df)) {
-      cnms <- colnames(df); coln[1] <- cnms[colX]; coln[2] <- cnms[colY]
+      cnms <- colnames(df); coln[1] <- cnms[colX[1]]; coln[2] <- cnms[colY[1]]
     }
     s1 <- x$opts$series[[1]]
     if (!is.null(s1$dimensions)) cnms <- s1$dimensions
@@ -550,7 +552,7 @@ ec.init <- function( df= NULL, preset= TRUE, ...,  #ctype= 'scatter',
               !slb && !paste0('',s1$coordinateSystem) %in% c('leaflet','geo') &&
     	        !any(noCoord %in% names(x$opts))
     if (isAxes) {  # can search for XY axes names/type
-      colp[1] <- colX; colp[2] <- colY;
+      colp[1] <- colX[1]; colp[2] <- colY[1];
       if (!is.null(s1$encode)) {		# chk $data then $dset
         for(xy in ena) {
           exy <- s1$encode[[xy]]
@@ -606,7 +608,6 @@ ec.init <- function( df= NULL, preset= TRUE, ...,  #ctype= 'scatter',
       for(xy in ena) ctyp[[xy]] <- switch(as.character(ctyp[[xy]]),  #'POSIXct'=,'POSIXlt'=,
         'character'=,'factor'= 'category', 'POSIXt'=,'Date'= 'time', 'numeric'= 'value', 'value')
       # finally set xAxis type, name from coln,ctyp if any
-      if (is.null(x$opts$xAxis)) x$opts$xAxis <- list()
 
       lupd <- list(x=list(), y=list())
       if (any(!is.na(ctyp))) for(xy in ena) if (!is.na(ctyp[xy])) lupd[[xy]]$type <- ctyp[[xy]]

@@ -87,20 +87,22 @@
 #'   )
 #' }
 #' 
-#' p1 <- cars |> ec.init(grid= list(top=26), height=333)  # move chart up
-#' p2 <- mtcars |> arrange(mpg) |> ec.init(height=333, ctype='line')
-#' ec.util(cmd= 'tabset', cars= p1, mtcars= p2)
-#'
+#' if (interactive()) {
+#'  p1 <- cars |> ec.init(grid= list(top=26), height=333)  # move chart up
+#'  p2 <- mtcars |> arrange(mpg) |> ec.init(height=333, ctype='line')
+#'  ec.util(cmd= 'tabset', cars= p1, mtcars= p2)
+#' 
+#'  lapply(list('dark','macarons','gray','dark-mushroom'),
+#'    function(x) cars |> ec.init(grid= list(bottom=5, top=10)) |> ec.theme(x) ) |>
+#'  ec.util(cmd='layout', cols= 2, title= 'Layout')
+#' }
+#' 
 #' cars |> ec.init(
 #'   graphic = list(
 #'     ec.util(cmd='button', text='see type', right='center', top=20,
 #'       js="function(a) {op=ec_option(echwid); alert(op.series[0].type);}")
 #'   )
 #' )
-#' 
-#' lapply(list('dark','macarons','gray','dark-mushroom'),
-#'   function(x) cars |> ec.init(grid= list(bottom=5, top=10)) |> ec.theme(x) ) |>
-#' ec.util(cmd='layout', cols= 2, title= 'Layout')
 #' 
 #' colors <- c("blue","red","green")
 #' cyls <- as.character(sort(unique(mtcars$cyl)))
@@ -281,10 +283,10 @@ ec.util <- function(cmd='sf.series', ..., js=NULL, event='click') {
         
         zfldr <- paste0(dirname(destfile),'/shape.unzipped')  # CRAN complains when getwd used
         unzip(destfile, exdir=zfldr)  # new folder in temp folder
-        #on.exit(unlink(zfldr, recursive=TRUE), add=TRUE)
         # find name
         pat <- ifelse (is.null(opts$shp), '*.shp', paste0(opts$shp,'.shp'))
         tmp <- list.files(path= zfldr, pattern= pat, full.names=TRUE)
+        #on.exit(unlink(zfldr, recursive=TRUE), add=TRUE)   # cannot cleanup: file read later
         if (length(tmp)==0) 
           out <- 'ERROR ec.util: unzipped file not found'
         else
@@ -1061,11 +1063,17 @@ return template.replace(/%@|%L@|%LR@|%R@|%R2@|%M@/g, (m) => {
 	tmp <- suppressWarnings(as.numeric(args) -1)
 	if (all(is.na(tmp))) {   
 		# multiple column names (non-numeric strings)
-		# to find position in colnames
+		# to find position in colnames, or JS dimensionNames
 	  tmp <- lenv$coNames 
-		stopifnot("ec.clmn: colnames missing.
-    Use ec.clmn after ec.data and/or inside ec.init(df).
-    Otherwise use column indexes instead of names."= !is.null(tmp))
+	  if (is.null(tmp)) {
+	    warning("ec.clmn: colnames missing.
+         Use ec.clmn after ec.data and/or inside ec.init(df).
+         Otherwise use column indexes instead of names.", call.=FALSE)
+	    return('col names?')
+	  }
+    # 		stopifnot("ec.clmn: colnames missing.
+    #     Use ec.clmn after ec.data and/or inside ec.init(df).
+    #     Otherwise use column indexes instead of names."= !is.null(tmp))
 		spf <- paste0(spf, " pos=['", paste(tmp, collapse="','"), "'];")
 		t0 <- sapply(args, \(s) toString(paste0("x.data['", s,"']")) )
 		t0 <- paste(t0, collapse=',')
