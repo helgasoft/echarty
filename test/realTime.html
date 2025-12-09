@@ -8,11 +8,11 @@
     <link rel="shortcut icon" href="../img/logo.ico" type="image/x-icon">
 
 	<!--  echarty dependencies  -->
-	<script src="https://cdn.jsdelivr.net/gh/ramnathv/htmlwidgets@v1.6.4/inst/www/htmlwidgets.js"></script>	
+	<script src="https://cdn.jsdelivr.net/gh/ramnathv/htmlwidgets@v1.6.2/inst/www/htmlwidgets.js"></script>	
 	<script src="https://cdn.jsdelivr.net/npm/echarts@latest/dist/echarts.min.js"></script>
-	<script src="https://cdn.jsdelivr.net/gh/helgasoft/echarty@v.1.6.4/inst/htmlwidgets/echarty.js"></script>
+	<script src="https://cdn.jsdelivr.net/gh/helgasoft/echarty@v.1.7.0/inst/htmlwidgets/echarty.min.js"></script>
    <!--  optional:
-	<script src="https://cdn.jsdelivr.net/gh/helgasoft/echarty@v.1.6.4/inst/js/world.js"></script>
+	<script src="https://cdn.jsdelivr.net/gh/helgasoft/echarty@v.1.7.0/inst/js/world.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/echarts-gl@2.0.9/dist/echarts-gl.min.js"></script>
    -->
 
@@ -123,28 +123,30 @@ a:visited { color: purple; }
 cryptt = 'BTC'; curww = '12'; 
 
 // R code for chart
-chartCode = `library(echarty); library(dplyr); library(zoo);
-tbox <- list(right='20%', feature= ec.util(cmd='fullscreen'))
-rdata <- list(list(as.character(Sys.time()), NA));
-lobb <- hibb <- sma <- list()
-prevPrice <- 0    # to compare prices
-plot <- ec.init(elementId='ch1', backgroundColor='#110b29', darkMode=T,
-   title= list(text='`+ cryptt +` Price Live', left='center', subtext=''), 
-   xAxis= list(type='time', splitLine= list(show=FALSE), name='Local time', nameLocation='center', nameGap=24, axisLabel=list(hideOverlap=T)),
-   yAxis= list(name='USD', splitLine= list(lineStyle= list(opacity=0.5)), scale=T, max='dataMax', z=6),
-   tooltip= list(type='cross', trigger='axis', axisPointer= list(axis='x')), toolbox= tbox,
-   series= list(
-      list(type= 'line', name='price', showSymbol=F, data= rdata, lineStyle= list(width=2, color='gold'), z=7,
-         endLabel= list(show=T, color='yellow', offset=c(9,0),
-            formatter= ec.clmn('(p) => { dd= p.data[1]<10 ? 4 :2; return p.data[1].toLocaleString(undefined, {maximumFractionDigits:dd});}')) ),
-      list(type= 'line', name='+BB', showSymbol=F, data= hibb, areaStyle= list(color='navy',opacity=0.7), smooth=T, lineStyle=list(width=1,color='lightblue')),
-      list(type= 'line', name='-BB', showSymbol=F, data= lobb, areaStyle= list(color='#110b29',opacity=1), smooth=T, lineStyle=list(width=1,color='lightblue')),
-      list(type= 'line', name='SMA', showSymbol=F, data= sma, smooth=T, lineStyle= list(width=1, color='lightblue')),
-      list(type= 'effectScatter', rippleEffect= list(period= 3, scale= 3, brushType= 'stroke'), z=7,
-         data= list(last(rdata)), clip=F, symbolSize= 11, itemStyle= list(borderWidth=3, borderColor='red'))
-   ),
-   dataZoom= list(type='inside')
-) |> ec.theme('dark')`
+chartCode = `library(echarty); library(zoo); library(jsonlite); library(dplyr);
+	tbox <- list(right='20%', feature= ec.util(cmd='fullscreen'))
+	rdata <- list(list(as.character(Sys.time()), NA));
+	lobb <- hibb <- sma <- list()
+	prevPrice <- 0    # to compare prices
+	plot <- ec.init(elementId='ch1', backgroundColor='#110b29', theme='dark', #darkMode=T,
+	   title= list(text='`+ cryptt +` Price Live', left='center', subtext=''), 
+	   xAxis= list(type='time', splitLine= list(show=FALSE), name='Local time', nameLocation='center', nameGap=24, axisLabel=list(hideOverlap=T)),
+	   yAxis= list(name='USD', splitLine= list(lineStyle= list(opacity=0.5)), scale=T, max='dataMax', z=6),
+	   tooltip= list(type='cross', trigger='axis', axisPointer= list(axis='x')), toolbox= tbox,
+	   series= list(
+	      list(type= 'line', name='price', showSymbol=F, data= rdata, lineStyle= list(width=2, color='gold'), z=7,
+	         endLabel= list(show=T, color='yellow', offset=c(9,0),
+	            formatter= ec.clmn('(p) => { dd= p.data[1]<10 ? 4 :2; return p.data[1].toLocaleString(undefined, {maximumFractionDigits:dd});}')) ),
+	      list(type= 'line', name='+BB', showSymbol=F, data= hibb, areaStyle= list(color='navy',opacity=0.7), smooth=T, lineStyle=list(width=1,color='lightblue')),
+	      list(type= 'line', name='-BB', showSymbol=F, data= lobb, areaStyle= list(color='#110b29',opacity=1), smooth=T, lineStyle=list(width=1,color='lightblue')),
+	      list(type= 'line', name='SMA', showSymbol=F, data= sma, smooth=T, lineStyle= list(width=1, color='lightblue')),
+	      list(type= 'effectScatter', rippleEffect= list(period= 3, scale= 3, brushType= 'stroke'), z=7,
+	         data= list(last(rdata)), clip=F, symbolSize= 11, itemStyle= list(borderWidth=3, borderColor='red'))
+	   ),
+	   dataZoom= list(type='inside')
+	)
+  	as.character(htmlwidgets:::toHTML(plot))
+`
 
 // R code for live data grab
 dataCode= `json <- jsonlite::fromJSON('https://min-api.cryptocompare.com/data/generateAvg?fsym=BTC&tsym=USD&e=coinbase')
@@ -181,7 +183,7 @@ async function updCrypto() {
    newc = document.getElementById("icrypto").value;
    dataCode = dataCode.replace('?fsym='+ cryptt, '?fsym='+ newc);
    tmp = await webR.evalRString("rdata <- list(); paste('len:',length(rdata))");
-   chart = get_e_charts('ch1');
+   chart = ec_chart('ch1');
    opt1 = chart.getOption(); 
    opt1.title[0].text = opt1.title[0].text.replace(cryptt, newc);
    opt1.title[0].subtext = '';
@@ -194,27 +196,23 @@ async function doChart() {
   document.getElementById('app').innerHTML= 'Wait...';
   tags_plot = '';
   try {
-    tags_plot = await webR.evalRString(chartCode);
+    tags_plot = await webR.evalRString(chartCode);  // was empty
   } catch ({ name, message }) {
     tags_plot = "<div class='err'>Error<br/>" + message + '</div>';
   } finally {
 	// add reactable tags from webR into DOM
 	document.getElementById('app').innerHTML = tags_plot;
+	  // render with HTMLWidgets
+	window.HTMLWidgets.staticRender();
   }
-  // render with HTMLWidgets
-  HTMLWidgets.staticRender();
 }
 
 var webR;
 import('https://webr.r-wasm.org/latest/webr.mjs').then(async ({ WebR }) => {
-   webR = new WebR();
+   webR = new WebR({ interactive: false });
    await webR.init();
-   await webR.evalRString(`
-      webr::shim_install()
-      install.packages('echarty', repos= c('https://repo.r-wasm.org'))
-      'some string'
-   `)
-   chartCode += '\n as.character(htmlwidgets:::as.tags.htmlwidget(plot))'
+   await webR.installPackages(['jsonlite', 'echarty', 'dplyr', 'zoo'], true);
+
    doChart();
 });
 
@@ -279,7 +277,7 @@ async function updChart() {
       hibb = [darr[0], darr[3]]; 
       lobb = [darr[0], darr[4]]; 
    }
-   chart = get_e_charts('ch1');
+   chart = ec_chart('ch1');
    opt1 = chart.getOption();
    pts = opt1.series[0].data.length;
    if (pts>500) {

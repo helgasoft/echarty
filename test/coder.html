@@ -10,15 +10,15 @@
 	<script src="https://cdn.jsdelivr.net/npm/echarts@latest/dist/echarts.min.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/echarts-gl@2.0.9/dist/echarts-gl.min.js"></script>
 	<!--  echarty dependencies  -->
-	<script src="https://cdn.jsdelivr.net/gh/ramnathv/htmlwidgets@v1.6.4/inst/www/htmlwidgets.js"></script>
-	<script src="https://cdn.jsdelivr.net/gh/helgasoft/echarty@v.1.6.4/inst/htmlwidgets/echarty.min.js"></script>
-	<script src="https://cdn.jsdelivr.net/gh/helgasoft/echarty@v.1.6.4/inst/js/renderers.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/gh/ramnathv/htmlwidgets@v1.6.2/inst/www/htmlwidgets.js"></script>
+	<script src="https://cdn.jsdelivr.net/gh/helgasoft/echarty@v.1.7.0/inst/htmlwidgets/echarty.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/gh/helgasoft/echarty@v.1.7.0/inst/js/renderers.min.js"></script>
 
 	<!--  echarty plugins  -->
 	<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js"></script>
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.css">
-	<script src="https://cdn.jsdelivr.net/gh/helgasoft/echarty@v.1.6.4/inst/js/echarts-leaflet.min.js"></script>
-	<script src="https://cdn.jsdelivr.net/gh/helgasoft/echarty@v.1.6.4/inst/js/world.js"></script>
+	<script src="https://cdn.jsdelivr.net/gh/helgasoft/echarty@v.1.7.0/inst/js/echarts-leaflet.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/gh/helgasoft/echarty@v.1.7.0/inst/js/world.js"></script>
 
 	<style>
 body { font-family: Arial, sans-serif; background-color: Linen; }
@@ -111,7 +111,8 @@ import('https://webr.r-wasm.org/latest/webr.mjs').then(async ({ WebR }) => {
   wver= 'WebR v.'+ webR.version; console.log(wver); 
    
   msg.innerHTML = wver+ ', loading echarty...'; 
-  await webR.installPackages(["echarty"]); //, {repos:'https://helgasoft.r-universe.dev'}); 
+  //await webR.installPackages(["echarty"]); //, {repos:'https://helgasoft.r-universe.dev'}); 
+  await webR.installPackages(['jsonlite', 'echarty', 'dplyr', 'zoo'], true);
 
   await webR.objs.globalEnv.bind('ec.webR', true);   // inform R about web environment
   document.getElementById('app').innerHTML = 'Ready to plot &#x1f4ca' ;   //&#x1f44d  
@@ -194,7 +195,7 @@ chart <- ec.init(load='3D',  # grid3D= list(viewControl= list(autoRotate= TRUE))
 async function updCode() {
   document.getElementById('app').innerHTML= 'Wait...';
   exec = 'library(echarty);library(dplyr); \n' + document.getElementById('code').value +
-  	    '\n as.character(htmlwidgets:::as.tags.htmlwidget(chart))'
+  	    '\n as.character(htmlwidgets:::toHTML(chart))'
   tags_plot = '';
   try {
 	tags_plot = await webR.evalRString(exec);
@@ -210,7 +211,7 @@ async function updCode() {
 	dlink.innerHTML = 'Export';
   }
   // render with HTMLWidgets
-  HTMLWidgets.staticRender();
+  window.HTMLWidgets.staticRender();
 }
 
 	</script>

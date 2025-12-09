@@ -1,3 +1,6 @@
-small.nav-text.text-muted.me-auto {
+small.nav-text.text-muted.me-auto {  /* hide version */
+    display: none;
+}
+small.dont-index {  /* hide Source */
     display: none;
 }
