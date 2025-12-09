@@ -152,7 +152,7 @@ chart <- ec.init(load='world',
 		code= `df <- mtcars |> mutate(name=rownames(mtcars)) |> relocate(mpg,wt,hp) |> group_by(cyl) 
 chart <- df |> ec.init(load='3D', ctype='scatter3D',
   backgroundColor= '#777', width='70%', tooltip=list(show=T), legend= list(show=T), 
-  title= list(text='mtcars')
+  title= list(text='mtcars'), xAxis= list(show=F)
 )` 
 		    break;
 
@@ -161,7 +161,9 @@ chart <- df |> ec.init(load='3D', ctype='scatter3D',
   x = seq(0, 2, by = 0.1),
   y = seq(0, 1, by = 0.1)
 ) |> mutate(z = x * (y ^ 2)) |> select(x,y,z)
-chart <- ec.init(load='3D', series.param= list(type= 'surface', data= ec.data(df,'values')) )`
+chart <- ec.init(load='3D',  xAxis= list(show=F), 
+  series.param= list(type= 'surface', data= ec.data(df,'values')) 
+)`
 		    break;
 		  case 'globe':
 		code= `chart <- ec.init(load='3D',
@@ -175,14 +177,15 @@ chart <- ec.init(load='3D', series.param= list(type= 'surface', data= ec.data(df
   ), tooltip= list(show=T) )`
 		    break;
 		  case 'volcano':
-		code= `data(volcano)
-df <- as.data.frame(as.table(volcano)) |> mutate(across(0:2, as.numeric))
+		code= `data(volcano)  # large, slow...
+df <- as.data.frame(as.table(volcano)) |> mutate(across(0:2, as.numeric)) |> head(2000)
 chart <- ec.init(load='3D',  # grid3D= list(viewControl= list(autoRotate= TRUE)),
   series.param= list( type= 'surface', data= ec.data(df),
     wireframe= list(show= FALSE),
     shading= 'realistic', realisticMaterial= list( metalness= 0.5, roughness= 0.6)
   ),
-  visualMap= list(calculable=TRUE, dimension=3, inRange=list(color= rev(rainbow(10))) )
+  visualMap= list(calculable=TRUE, dimension=3, inRange=list(color= rev(rainbow(10))) ),
+  xAxis= list(show=F)  # to be fixed
 )`
 		    break;
 
