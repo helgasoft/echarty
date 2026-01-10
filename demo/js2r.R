@@ -5,7 +5,19 @@
 
 devAskNewPage(ask = FALSE)
 if (interactive()) {
-  #library(shiny)
+  library(shiny)
   #shiny::runGist('https://gist.github.com/helgasoft/819035e853d9889ba02cb69ecc587f34', quiet=TRUE)  # problem Oct.2025
-  print(source('https://gist.githubusercontent.com/helgasoft/02b257429e78e138f87aefce14f7aebc/raw/878dc34a7dd2ec239ea3aa96efecb75247db9e0a/app.R'))
+#  print(source('https://gist.githubusercontent.com/helgasoft/819035e853d9889ba02cb69ecc587f34/raw/1a017d9e99f3cfdafdaf266dce67c55f76eddffa/app.R'))
+  
+  url <- 'https://gist.github.com/helgasoft/819035e853d9889ba02cb69ecc587f34/download'
+  filePath <- tempfile("shinyapp", fileext= ".zip")
+  fileDir <- tempfile("shinyapp")
+  download.file(url, filePath, mode='wb')
+      on.exit(unlink(filePath))
+  first <- as.character(utils::unzip(filePath, list = TRUE)$Name)[1]
+  utils::unzip(filePath, exdir = fileDir)
+  appdir <- file.path(fileDir, first)
+  if (!utils::file_test("-d", appdir)) 
+    appdir <- dirname(appdir)
+  runApp(appdir)
 }

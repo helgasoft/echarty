@@ -25,7 +25,7 @@ df <- data.frame(x= 1:30, y= runif(30, 5, 10), cat= sample(LETTERS[1:3],size=30,
       mutate(lwr= y-runif(30, 1, 3), upr= y+runif(30, 2, 4))
 band.df <- df  |> group_by(cat) |> group_split()
 sband <- list()
-for(ii in 1:length(band.df))   # build all bands
+for(ii in seq_along(band.df))   # build all bands
   sband <- append(sband,
     ecr.band(band.df[[ii]], 'lwr', 'upr', type='stack', smooth=FALSE,
        name= unique(band.df[[ii]]$cat), areaStyle= list(color=c('blue','green','yellow')[ii]))

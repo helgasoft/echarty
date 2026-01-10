@@ -118,7 +118,7 @@ HTMLWidgets.widget({
       if (!initialized) {
         initialized = true;
         // legacy from util.R ec.theme; now directrly thru ec.init(registerTheme=)
-        if(x.themeCode) {  
+        if (x.themeCode) {  
           echarts.registerTheme(x.theme, x.themeCode);
         }
       }
@@ -237,10 +237,10 @@ HTMLWidgets.widget({
       }
       
       if(x.hasOwnProperty('on'))
-        x.on.forEach(ev => chart.on(ev.event, ev.query, ev.handler) )
+        x.on.forEach(ev => chart.on(ev.event, ev.query, ev.handler, ev.context) )
       
       if(x.hasOwnProperty('off')) 
-        x.off.forEach(ev => chart.off(ev.event, ev.query, ev.handler) )
+        x.off.forEach(ev => chart.off(ev.event, ev.query, ev.handler, ev.context) )
       
       if(x.hasOwnProperty('group')) chart.group = x.group;
       

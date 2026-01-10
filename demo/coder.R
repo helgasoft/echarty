@@ -5,7 +5,7 @@
 devAskNewPage(ask = FALSE)
 if (interactive()) {
   # this stopped working - "cannot open URL"
-  #library(shiny)
+  library(shiny)
   #shiny::runGist('https://gist.github.com/helgasoft/02b257429e78e138f87aefce14f7aebc')
   
   # this loads, but gist cannot be edited

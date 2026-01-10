@@ -2,7 +2,7 @@
 % Please edit documentation in R/echarty.R
 \name{ec.init}
 \alias{ec.init}
-\title{Initialize command}
+\title{Initialize a chart}
 \usage{
 ec.init(
   df = NULL,
@@ -27,7 +27,7 @@ When preset is FALSE, these attributes need to be set explicitly.\cr}
 \item{...}{Optional widget attributes. See Details. \cr}
 
 \item{series.param}{Additional attributes for single preset series, default is NULL.\cr
-Defines a \strong{single} series for both non-timeline and timeline charts. \cr
+Defines a \strong{single} series for both non-timeline and timeline charts. Default type is 'scatter'. \cr
 \strong{Multiple} series need to be defined directly with \emph{series=list(list(type=...),list(type=...))} or added with \link{ec.upd}.}
 
 \item{tl.series}{Deprecated, use \emph{timeline} and \emph{series.param} instead.\cr}

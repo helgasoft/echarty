@@ -42,10 +42,28 @@ tmp
 json <- tmp |> ec.inspect()
 ec.fromJson(json) |> ec.theme("dark")
 
+#------ Time data -----
+now <- Sys.time()
+times <- now + (3600 * c(1, 5, 20, 100, 200)) # as.POSIXct()
+df <- data.frame( x= times, y= 1:5 )
+
+ec.init(df,
+  xAxis= list(
+    type= 'time', 
+    axisLabel= list(
+      formatter= '{dd} {HH}:{mm}', customValues= df$x,
+      hideOverlap=T, showMinLabel=T, showMaxLabel=T)
+  ),
+  series = list(list(type= "line", clip= FALSE,
+    markPoint= list(data= list(list(coord= list(df$x[4], 1.8)), list(type= "max") ))
+  )),
+  tooltip= list(trigger= 'axis'),
+  dataZoom= list(show=T, filterMode='none')
+)
 
 #------ Data grouping -----
 iris |> mutate(Species= as.character(Species)) |>
-        group_by(Species) |> ec.init()      # by non-factor column
+        group_by(Species) |> ec.init()      # group by non-factor column
 
 Orange |> group_by(Tree) |> ec.init(
   series.param= list(symbolSize= 10, encode= list(x='age', y='circumference'))
@@ -427,8 +445,9 @@ ec.init(
 # presets for xAxis,yAxis,dataset and series are used
 data.frame(x= 1:10, y= sample(1:100,10)) |>
 ec.init(load= 'ecStat',
-  js= c('echarts.registerTransform(ecStat.transform.regression)','','')) |>
-ec.upd({
+  js= c('echarts.registerTransform(ecStat.transform.regression)','',''),
+  title= list(text= 'regression line')
+) |> ec.upd({
   dataset[[2]] <- list(
   	 transform= list(type= 'ecStat:regression',
                      config= list(method= 'polynomial', order= 3)))
@@ -441,7 +460,9 @@ ec.upd({
 
 iris |> ec.init(
   load='https://cdn.jsdelivr.net/gh/100pah/echarts-simple-transform@refs/heads/main/dist/ecSimpleTransform.min.js',
-  js= c('echarts.registerTransform(ecSimpleTransform.aggregate)','','')
+  js= c('echarts.registerTransform(ecSimpleTransform.aggregate)','',''),
+  title= list( text='ecSimpleTransform.aggregate'), legend= list(show=T),
+  series.param= list(name='scatter')
 ) |> ec.upd({
   dataset <- append(dataset, list(list(
     transform= list(
@@ -453,9 +474,9 @@ iris |> ec.init(
         ,groupBy= 'Species'
      ))
   )) )
-  xAxis <- list(xAxis, list(data= as.character(unique(iris$Species)), name='Avg') )
-  series <- append(series, list(list(type='bar', encode=list(x='Species', y='Sepal.Width'),
-                                     datasetIndex=1, xAxisIndex=1, colorBy='data')))
+  xAxis <- list(xAxis, list(data= as.character(unique(iris$Species)), name='Avg'))
+  series <- append(series, list(list(type='bar', name='Avg',
+    encode=list(x='Species', y='Sepal.Width'), datasetIndex=1, xAxisIndex=1, colorBy='data')))
 })
 
 #------ ECharts dataset, transform and sort
@@ -588,6 +609,7 @@ mtcars |> arrange(mpg) |> ec.init(
 
 
 #------ flame chart -----
+# data 0
 treeData <- list( name= 'family', value=100, children= list(
     list(name='Grandpa', value=25,
         children= list(
@@ -605,27 +627,66 @@ treeData <- list( name= 'family', value=100, children= list(
                children=list(list(name='Cousin Betty',value=1),
                     list(name='Cousin Jenny',value=2)))))
 ))
+
+# data 1
+hc <- hclust(dist(USArrests), "ave")
+cmax <- max(hc$height)
+treeData <- ec.data(hc, format='dendrogram')[[1]]
+
+# # data 2
+# library(data.tree); data(acme)
+# tmp <- acme
+# cmax <- max(tmp$Get('cost'), na.rm=T)
+# tmp$Do(function(x) {   # works with or without values
+#    cos <- as.numeric(x$cost); x$value <- ifelse(length(cos)==0, 0, cos) })  # add 'value'
+# treeData <- tmp |> ToListExplicit(unname =TRUE)
+# 
+# # data 3
+# library(data.tree)
+# library(treemap); data(GNI2014)
+# tmp <- GNI2014
+# # Create a pathString column to define the hierarchy
+# tmp$continent <- as.character(tmp$continent)
+# tmp$pathString <- paste("world", tmp$continent, tmp$country, sep = "/")
+# # Convert the data frame to a data.tree Node
+# tmp <- as.Node(tmp[,])
+# tmp$Do(function(x) {
+#   #pop <- as.numeric(x$population); x$value <- ifelse(length(pop)==0, 0, pop) })  # add 'value'
+#   gni <- as.numeric(x$GNI); x$value <- ifelse(length(gni)==0, 0, gni) })  # add 'value'
+# cmax <- max(tmp$Get('GNI'), na.rm=T) # add -1e9(-1B) for population
+# treeData <- tmp |> ToListExplicit(unname =TRUE)
+
+ # needed by JS for click event
 fdat <- jsonlite::toJSON(treeData, force=TRUE, auto_unbox=TRUE, null='null')
-ec.init(load= 'custom',
-  js= paste0("window.flameData=",fdat,';'),  # needed by JS for click event
+vlvl <- 2  # min level for vertical labels (optional), set in jscode OR jsfun(with button)
+jscode <- paste0('window.flameData=',fdat,'; //window.ec$vlevel=',vlvl,';')
+jfun <- paste0("function(a) {
+      if (typeof ec$vlevel == 'undefined') {window.ec$vlevel=",vlvl,";} else delete window.ec$vlevel;
+      ch= ec_chart(echwid); ch.resize(); }")
+
+ec.init(load= 'custom', title= list(text='flame tree', bottom='5%'),
+  js= c(jscode, '',''),
+  graphic= list(
+    ec.util(cmd='button', text='\u00B1 level2', right=11, top= 20, js=jfun)
+  ),
   xAxis= list(show=F), yAxis= list(show=F),
-  tooltip= list(formatter= ec.clmn('%@ %R2@',4,3)),
+  tooltip= list(formatter= ec.clmn('%@ %R2@',4,6)),
   series.param= list(
     type= 'custom', renderItem= "riFlame",   # JS function in renderers.js
     encode= list(x= c(1, 2, 3), y= 1),
-    data= ec.data(treeData, 'flame', name='family')
+    data= ec.data(treeData, format='flame')  # name='p22' is optional
   ),
   visualMap = list(
-    type= 'continuous', max= 100,
+    type= 'continuous', max= cmax,
     inRange= list(color= c('#2F93C8', '#AEC48F', '#FFDB5C', '#F98862'))
   )
   ,on= list( list(event='click', handler='flameClick'))  # in renderers.js
 )
 
-#------ segmentedDoughnut v.6+ -----
 
+#------ segmented donut v.6 -----
 ec.init(
-  load= 'https://cdn.jsdelivr.net/gh/apache/echarts-custom-series@main/custom-series/segmentedDoughnut/dist/index.auto.js',
+  load= 'https://cdn.jsdelivr.net/gh/apache/echarts-custom-series@main/custom-series/segmentedDoughnut/dist/segmented-doughnut.auto.js',
   ask= 'loadRemote',
   series.param= list(
     type= 'custom', renderItem= 'segmentedDoughnut',
@@ -637,7 +698,32 @@ ec.init(
     data= list(5) )
 )
 
-#------ matrix v.6+ ------
+#------ lineRange & barRange custom charts v.6 -----
+temperatureData = list(
+  list( time= 0, min= 26.7, max= 32.5, avg= 29.1 ),
+  list( time= 100000000, min= 25.3, max= 32.4, avg= 28.4 ),
+  list( time= 200000000, min= 24.6, max= 32.7, avg= 28.2 ),
+  list( time= 300000000, min= 26.8, max= 35.8, avg= 30.5 ),
+  list( time= 400000000, min= 26.2, max= 33.1, avg= 29.3 ),
+  list( time= 500000000, min= 24.9, max= 31.4, avg= 27.8 )
+)
+url <- 'https://cdn.jsdelivr.net/gh/apache/echarts-custom-series@main/custom-series'
+ec.init(
+  load= c( paste0(url,'/lineRange/dist/line-range.auto.min.js'),
+           paste0(url,'/barRange/dist/bar-range.auto.min.js') ),
+  ask= 'loadRemote',
+  xAxis= list(type= "category"),   # other types like time,value do not work (bug)
+  dataset= list(source= temperatureData), tooltip= list(trigger= "axis"), legend= list(top= 15), 
+  series= list(
+  	list(type= "line", name= "Average", smooth= TRUE, encode= list(x= "time", y= "avg", tooltip= "avg" ) ), 
+  	list(type= "custom", name= "lineRange", renderItem= "lineRange", itemPayload= list(areaStyle= list(color= "red")),
+         encode= list(x= "time", y= list("min", "max"), tooltip= list("min", "max")) )
+  	,list(type= "custom", name= "barRange", renderItem= "barRange",
+         encode= list(x= "time", y= list("min", "max"), tooltip= list("min", "max")) )
+  )
+)
+
+#------ matrix v.6 ------
 mtx <- cor(swiss)
 cols <- colnames(mtx)
 mtx[upper.tri(mtx)] <- NA
@@ -667,6 +753,19 @@ ec.init(
   ))
 )
 
+#---- chord v.6 ----
+ec.init(
+  tooltip = list(show=T), legend= list(show=T), 
+  series.param= list(type = "chord", name = "test",
+    startAngle = 90, endAngle = -270, clockwise = FALSE, 
+    lineStyle = list(color = "target"), 
+    data = list(
+      list(name= "A"), list(name= "B"), list(name= "C"), list(name= "D")), 
+    links = list(list(source = "A", target = "B", value = 40), 
+                 list(source = "A", target = "C", value = 20, lineStyle= list(color = "source")), 
+                 list(source = "A", target = "D", value = 10) ))
+)
+
 if (interactive()) {
 #------ tabsets ------
   p1 <- cars |> ec.init(grid= list(top=26), height=333)  # move chart up
@@ -687,10 +786,10 @@ if (interactive()) {
 }
 
 
-#------  ec.init 'js' parameter demo, Javascript execution -----
+#------  ec.init 'js' parameter demo -----
 # in single item scenario (js=jcode), execution is same as j3 below
 j1 <- "winvar= 'j1';" # set window variables
-j2 <- "opts.title.text= 'changed';"   # opts exposed
+j2 <- "opts.title.text= 'Javascript execution';"   # opts exposed and changed
 j3 <- "ww= chart.getWidth(); alert('width:'+ww);"  # chart exposed
 ec.init(js= c(j1, j2, j3), title= list(text= 'Title'),
   series.param= list(name='sname'),
@@ -729,8 +828,9 @@ ec.init(
 )
 
 mtcars |> group_by(cyl) |> 
-ec.init(title= list(text=''), dataZoom= list(type= 'inside'),
-  on= list(    # events with Javascript handler
+ec.init(title= list(text='Events with Javascript handler', subtext='zoom and legend events'), 
+  dataZoom= list(type= 'inside'),
+  on= list(
     list(event= 'legendselectchanged', handler= ec.clmn(
       "(e) => { ch1=ec_chart(echwid); opts=ch1.getOption(); opts.title[0].text= 'legend:'+e.name; ch1.setOption(opts); }")),
     list(event= 'datazoom', handler= ec.clmn(
@@ -741,9 +841,10 @@ ec.init(title= list(text=''), dataZoom= list(type= 'inside'),
 url <- 'https://echarts.apache.org/examples/data/asset/geo/Veins_Medical_Diagram_clip_art.svg'
 svg <- url |> readLines(encoding='UTF-8') |> paste0(collapse="")
 ec.init(
+  title= list(text= 'mouseover events'),
   grid = list(left= "60%", top= "10%", bottom= "10%"), tooltip= list(show=T),
   xAxis = list(show=T),
-  yAxis = list(data = list("heart", "large-intestine", "small-intestine", "spleen", "kidney", "lung", "liver")),
+  yAxis = list(type='category', data = list("heart", "large-intestine", "small-intestine", "spleen", "kidney", "lung", "liver")),
   series = list(
      list(type= "bar", emphasis= list(focus= "self"), data= list(121, 321, 141, 52, 198, 289, 139))
      ,list(type='map', map= "organs", coordinateSystem= 'cartesian2d',
@@ -756,12 +857,12 @@ ec.init(
   registerMap= list(mapName='organs', opt= list(svg= svg)),
   on= list(
     list(event='mouseover',
-      handler=ec.clmn("function(ev) { let cmd={ type:'highlight', seriesIndex:0, name:ev.name};
-      if(ev.seriesType=='bar') { cmd.seriesIndex=1; } //delete cmd.seriesIndex; cmd.geoIndex=0; }
+      handler=ec.clmn("function(ev) { cmd={ type:'highlight', seriesIndex:0, name:ev.name};
+      if(ev.seriesType=='bar') { cmd.seriesIndex=1; }
       this.dispatchAction(cmd); }") ),
     list(event='mouseout',
-      handler=ec.clmn("function(ev) { let cmd={ type:'downplay', seriesIndex:0, name:ev.name};
-      if(ev.seriesType=='bar') { cmd.seriesIndex=1; } //delete cmd.seriesIndex; cmd.geoIndex=0; }
+      handler=ec.clmn("function(ev) { cmd={ type:'downplay', seriesIndex:0, name:ev.name};
+      if(ev.seriesType=='bar') { cmd.seriesIndex=1; }  // delete cmd.seriesIndex; cmd.geoIndex=0; }
       this.dispatchAction(cmd); }") )
   )
 ) |> ec.theme('dark-mushroom')

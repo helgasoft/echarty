@@ -16,11 +16,11 @@ For format \emph{flame} df is an hierarchical \strong{list} with name,value,chil
 \item \strong{values} = list for customized \href{https://echarts.apache.org/en/option.html#series-scatter.data}{series.data} \cr
 \item \strong{names} = named lists useful for named data like \href{https://echarts.apache.org/en/option.html#series-sankey.links}{sankey links}.
 \item \strong{dendrogram} = build series data for Hierarchical Clustering dendrogram
+\item \strong{flame} = build series data (lists of name,id,value) for hierarchy display by \emph{renderItem}
 \item \strong{treePC} = build series data for tree charts from parent/children data.frame
-\item \strong{treeTT} = build series data for tree charts from data.frame like Titanic.\cr
+\item \strong{treeTT} = build series data for tree charts from data.frame like Titanic.
 \item \strong{boxplot} = build dataset and source lists, see Details
 \item \strong{borders} = build geoJson string from map_data region borders, see Details
-\item \strong{flame} = list of hierarchical series data to be presented by \emph{renderItem}\cr
 }}
 
 \item{header}{for dataset, to include the column names or not, default TRUE. Set it to FALSE for \href{https://echarts.apache.org/en/option.html#series-scatter.data}{series.data}.\cr}

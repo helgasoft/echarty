@@ -345,13 +345,24 @@ function riOutliers(params, api) {
   }
 }
 
-/* renderItem for flame chart */
+/* 
+  renderItem for flame chart
+  'ec$vlevel' is a global variable, sets minimal level for vertical labels
+  It should be set in ec.init(js=c('window.ec$vlevel=2;','',''), ...)
+  Root on bottom has level zero(0).
+*/
 function riFlame(params, api) {
   const level = api.value(0);
   const start = api.coord([api.value(1), level]);
   const end = api.coord([api.value(2), level]);
   const height = ((api.size && api.size([0, 1])) || [0, 20])[1];
   const width = end[0] - start[0] -1;  // horiz border width
+  widd= width - 4;
+  textConfig= { position: 'insideLeft', rotation:0 }
+  if (typeof ec$vlevel != 'undefined' && level >= ec$vlevel) {
+    textConfig= {position:['5%','95%'], rotation: 1.57, inside:true}
+    widd= height - 4;
+  }
   return {
     type: 'rect',
     transition: ['shape'],
@@ -365,15 +376,13 @@ function riFlame(params, api) {
     style: {
       fill: api.visual('color')
     },
-    textConfig: {
-      position: 'insideLeft'
-    },
+    textConfig, 
     textContent: {
       style: {
         text: api.value(3),
         fontFamily: 'Verdana',
         fill: '#000',
-        width: width - 4,
+        width: widd,
         overflow: 'truncate',
         ellipsis: '..',
         truncateMinChar: 1
@@ -433,7 +442,8 @@ function flameRecursionJson(jsonObj, id) {
   return data;
 };
 function flameClick(params) {    // default event handler
-  // flameData needs to be provided by calling R code
+  // flameData needs to be provided by the calling R code
+  if (!Object.hasOwn(params, 'data')) return;
   const data = flameRecursionJson(flameData, params.data.name);
   if (data) {
     const rootValue = data[0].value[2];
