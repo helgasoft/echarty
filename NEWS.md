@@ -2,7 +2,8 @@
 
 # echarty 1.7.2  in development
 
-* added _matrixIndex_ in .renumber
+* added _matrixIndex_, _calendarIndex_ and other indexes in .renumber
+* fixed some _globe,3D_ presets
 
 # echarty 1.7.1  on CRAN
 

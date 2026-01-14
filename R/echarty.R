@@ -466,7 +466,7 @@ ec.init <- function( df= NULL, preset= TRUE, ...,  #ctype= 'scatter',
   if (!is.null(ctype)) {    # add series 
     if (!any(c('series','options') %in% namop))
       #series.param = .merlis(series.param, list(type= ctype))  #err: not list(list())
-      x$opts$series <- list(list(type= ctype))
+      x$opts$series <- list(list(type= ctype, id='ec.auto'))
     if (!is.null(tl.series) && is.null(tl.series$type))
       tl.series$type <- ctype
   }
@@ -516,13 +516,13 @@ ec.init <- function( df= NULL, preset= TRUE, ...,  #ctype= 'scatter',
       ss$renderItem <- htmlwidgets::JS(ss$renderItem) 
     ss
   })
-  if (any(c('geo','leaflet', noCoord) %in% namop)) axad <- axad-1
-  if (axad > 0) {     
+  if (any(c('geo','leaflet','globe', noCoord) %in% namop)) axad <- 0  # was axad-1
+  if (axad > 0 && preset) {     
     if (!'xAxis' %in% namop) x$opts$xAxis <- list(show=TRUE)
     if (!'yAxis' %in% namop) x$opts$yAxis <- list(show=TRUE)
   }
   if (dbg) cat('\n axad=',axad)
-  if ((!'legend' %in% namop) && isSname) cat("\nNote: Some series have names, could add legend with 'legend= list(show=T)'") 
+  #if ((!'legend' %in% namop) && isSname) cat("\nNote: Some series have names, could add legend with 'legend= list(show=T)'") 
     
   # reading from encode set above  # TODO: when names not 'x','y' ?
   tmp <- series.param$encode
@@ -673,7 +673,8 @@ ec.init <- function( df= NULL, preset= TRUE, ...,  #ctype= 'scatter',
   if (length(load)==1 && grepl(',', load, fixed=TRUE))
       load <- unlist(strsplit(load, ','))  # make 'load' a vector
   # series.param has been merged into series
-  if (dbg) cat('\nNseries=',length(opt1$series))
+  if (dbg) cat('\nseries=',length(opt1$series), 
+               unlist(lapply(opt1$series, \(ss) { paste0(ss$type,'=',ss$name)}), use.names=F) )
   
   # autoload 3D 
   cnd1 <- any(c('xAxis3D','yAxis3D','zAxis3D','grid3D','globe','geo3D') %in% names(opt1))
@@ -712,12 +713,6 @@ ec.init <- function( df= NULL, preset= TRUE, ...,  #ctype= 'scatter',
       # WARN: duplicate maps if series have map='world' too
       if (!'geo' %in% names(opt1) && !'3D' %in% load)
         wt$x$opts$geo = list(map='world', roam=TRUE)
-      # else {
-      #   wt$x$opts$geo = .merlis(wt$x$opts$geo, list(map='world'))
-      #   if (is.null(wt$x$opts$geo$roam)) wt$x$opts$geo$roam <- TRUE
-      # }
-      # if (!is.null(df))  # cancelled: don't know if df first 2 cols are 'lng','lat'
-      #   wt$x$opts$geo$center= c(mean(unlist(df[,1])), mean(unlist(df[,2])))
     }
     dep <- htmltools::htmlDependency(
       name = 'world', version = '1.0.0', 
@@ -797,33 +792,40 @@ ec.init <- function( df= NULL, preset= TRUE, ...,  #ctype= 'scatter',
   if (any(load %in% c('3D','liquid','gmodular','wordcloud'))) {
     plf <- read.csv(system.file('plugins.csv', package='echarty'), header=TRUE, stringsAsFactors=FALSE)
     if ('3D' %in% load) {
-      if (preset) {       # replace 2D presets with 3D
       isGL <- any(unlist(lapply(opt1$series, \(k){ endsWith(k$type, 'GL') })))  # GL is 2D
       isMap3d <- !is.null(opt1$globe) || !is.null(opt1$geo3D)
       if (isMap3d) isGL <- FALSE
-      if (!isGL) {
-        # replace 2D types with 3D if any
-        wt$x$opts$series <- lapply(opt1$series, \(ss) { 
-          if (ss$type %in% c('scatter','bar','line')) ss$type <- paste0(ss$type,'3D')
-          ss 
-        })
-        # check for series types ending in 3D or GL
-        stypes <- unlist(lapply(wt$x$opts$series, \(k){k$type}))
-        stypes <- stypes[stypes!='surface']
-        if (!is.null(stypes)) stopifnot("Non-3D series type detected"= all(endsWith(stypes, '3D')) )
-        if (!isMap3d) {
-          nops <- names(opt1)   # add defaults 3D
-          for(x in c('xAxis3D','yAxis3D','zAxis3D','grid3D')) {
-            a2d <- sub('3D','',x)
-            if (!(x %in% nops)) {
-              wt$x$opts[[x]] <- if (!is.null(wt$x$opts[[a2d]])) wt$x$opts[[a2d]]
-                                else list(show=TRUE)
+      if (preset) {     # replace 2D presets with 3D
+        if (!isGL) {
+          # replace 2D types with 3D if any
+          wt$x$opts$series <- lapply(opt1$series, \(ss) { 
+            if (ss$type %in% c('scatter','bar','line')) ss$type <- paste0(ss$type,'3D')
+            # coordinateSystem must be 'cartesian3D' 'geo3D' or 'globe'
+            if (is.null(ss$coordinateSystem)) {
+              if (isMap3d) ss$coordinateSystem <- ifelse(is.null(opt1$globe), 'geo3D', 'globe')
+              else ss$coordinateSystem <- 'cartesian3D'
+            }
+            ss 
+          })
+          # check for series types ending in 3D or GL
+          stypes <- unlist(lapply(wt$x$opts$series, \(k){k$type}))
+          stypes <- stypes[stypes!='surface']
+          if (!is.null(stypes)) stopifnot("Non-3D series type detected"= all(endsWith(stypes, '3D')) )
+          if (!isMap3d) {
+            nops <- names(opt1)   # add defaults 3D
+            for(x in c('xAxis3D','yAxis3D','zAxis3D','grid3D')) {
+              a2d <- sub('3D','',x)
+              if (!(x %in% nops)) {
+                wt$x$opts[[x]] <- if (!is.null(wt$x$opts[[a2d]])) wt$x$opts[[a2d]]
+                                  else list(show=TRUE)
+              }
             }
           }
+          wt$x$opts$xAxis <- wt$x$opts$yAxis <- NULL
         }
-        wt$x$opts$xAxis <- wt$x$opts$yAxis <- NULL
+      } else {          # delete default series
+        if (!is.null(opt1$series) && opt1$series[[1]]$id=='ec.auto') wt$x$opts$series[[1]] <- NULL  
       }
-    }
       wt <- ec.plugjs(wt, plf[plf$name=='3D',]$url, ask)
     }
     if ('liquid' %in% load) wt <- ec.plugjs(wt, plf[plf$name=='liquid',]$url, ask)
@@ -936,7 +938,7 @@ ec.init <- function( df= NULL, preset= TRUE, ...,  #ctype= 'scatter',
   }
   
   #wt$x$opts$xAxis <- list(type='category')  # geo,leaf do not like
-  wt$x$opts$series <- NULL   # otherwise legend + scatter series may stay behind
+  wt$x$opts$series <- NULL   # otherwise legend + scatter series may remain
   wt$x$opts$options <- .merlis(optl, wt$x$opts$options)
   
   if (!is.null(tl.series$groupBy)) {
@@ -1504,7 +1506,8 @@ ec.plugjs <- function(wt=NULL, source=NULL, ask=FALSE) {
   }
   r2js <- function(ss) {
     if (any(names(ss)=='encode') && length(ss$encode)>0) ss <- doEncode(ss)
-    decro(ss, c('xAxisIndex','yAxisIndex','singleAxisIndex','datasetIndex','geoIndex','polarIndex','calendarIndex','radarIndex')) 
+    decro(ss, c('xAxisIndex','yAxisIndex','radiusAxisIndex','angleAxisIndex',  # =dataZoom
+          'singleAxisIndex','datasetIndex','geoIndex','polarIndex','radarIndex', 'matrixIndex','calendarIndex')) 
   }
   
   if (!is.null(opa$series)) opa$series <- lapply(opa$series, r2js)
@@ -1513,20 +1516,23 @@ ec.plugjs <- function(wt=NULL, source=NULL, ask=FALSE) {
     else opa$dataZoom <- r2js(opa$dataZoom)
   }
   
-  decType <- \(typ) {   # handle single or multiple items
-    item <- opa[[typ]]; pars <- c('gridIndex','calendarIndex', 'dimension','seriesIndex','categories')
+  decType <- \(typ, pars) {   # handle single or multiple items
+    item <- opa[[typ]]
     if (!is.null(item)) {
       if (all(sapply(item, is.list)))
-        opa[[typ]] <<- lapply(item, decro, pars)  #...
-      else  # last 3 are vMap
+        opa[[typ]] <<- lapply(item, decro, pars)
+      else
         opa[[typ]] <<- decro(item, pars)
     }
   }
-  decType('xAxis')
-  decType('yAxis')
-  decType('visualMap')
-  # some top elements may have matrixIndex
-  opa <- lapply(opa, \(xx) { if (any(names(xx)=='matrixIndex')) xx$matrixIndex <- xx$matrixIndex -1; xx })
+  decType('xAxis', 'gridIndex')
+  decType('yAxis', 'gridIndex')
+  decType('visualMap', c('dimension','categories','seriesIndex','matrixIndex','calendarIndex'))
+  # many top elements may have matrixIndex or calendarIndex
+  opa <- lapply(opa, \(xx) { 
+    if (any(names(xx)=='matrixIndex')) xx$matrixIndex <- xx$matrixIndex -1
+    if (any(names(xx)=='calendarIndex')) xx$calendarIndex <- xx$calendarIndex -1
+    xx })
 }
 
 # merge named lists: list OR list.of.lists like series

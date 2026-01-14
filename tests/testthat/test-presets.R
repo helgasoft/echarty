@@ -47,22 +47,28 @@ test_that("options preset", {
   )
   expect_equal(p$x$opts$options[[5]]$title$text, "gauge #5")
   
-  p <- df |> dplyr::group_by(name) |> ec.init(dbg=T,
-    load='3D',  # redundant, just for coverage (z)
-    timeline= list(show=TRUE, autoPlay=F),
-    series.param= list(type='scatter')
-  )
-  expect_equal(p$x$opts$options[[1]]$series[[1]]$encode$z, 2)
-  
-  p <- data.frame(n=1:5) |> ec.init(
-    dataZoom= list(matrixIndex=1))   # auto-add second column; .renumber
+  p <- data.frame(n=1:5) |> ec.init(  # test auto-add second column; .renumber
+    dataZoom= list(radiusAxisIndex= 1), grid= list(calendarIndex=1, matrixIndex=1))
   expect_equal(length(p$x$opts$dataset[[1]]$source[[1]]), 2)
+  expect_equal(p$x$opts$dataZoom$radiusAxisIndex + p$x$opts$grid$calendarIndex, 0)
+  
+  if (isCovr) {
+    
+    p <- data.frame(x=-112, y=14) |> ec.init(globe= list(globeRadius=100), viewControl= list(autoRotate=F))
+    expect_equal(p$x$opts$series[[1]]$type, 'scatter3D')
+    expect_equal(p$x$opts$series[[1]]$coordinateSystem, 'globe')
+    expect_equal(p$x$opts$series[[1]]$id, "ec.auto")
+    
+    p <- data.frame(x=-112, y=14, z=11) |> ec.init(load='3D')
+    expect_equal(p$x$opts$series[[1]]$coordinateSystem, 'cartesian3D')
+    expect_true(!is.null(p$x$opts$grid3D))
+  }
 })
 
 test_that("webR works with plugins", {
-  lif <- paste0(system.file('js', package='echarty'), '/echarts-liquidfill.min.js')
   ec.webR <<- TRUE
-  tmp <- ec.init(load= 'liquid')
+  lif <- paste0(system.file('js', package='echarty'), '/echarts-liquidfill.min.js')
+  tmp <- ec.init(load= 'liquid,gmodular,wordcloud')
   expect_false(file.exists(lif))
   rm(ec.webR, envir=globalenv())
 })
@@ -142,6 +148,13 @@ test_that("ec.init presets for timeline + groupBy, geo", {
     expect_equal(length(p$x$opts$options[[1]]$series), 2)
     expect_equal(p$x$opts$options[[4]]$series[[2]]$datasetIndex, 8)
     expect_equal(p$x$opts$options[[4]]$series[[2]]$name, 'B')
+    
+    p <- df |> dplyr::group_by(name) |> ec.init(dbg=T,
+      load='3D',  # redundant, just for coverage (z)
+      timeline= list(show=TRUE, autoPlay=F),
+      series.param= list(type='scatter')
+    )
+    expect_equal(p$x$opts$options[[1]]$series[[1]]$encode$z, 2)
   }
   
   cns <- data.frame(
