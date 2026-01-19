@@ -37,6 +37,7 @@ test_that("shapefile LINES from ZIP", {
   if (isCovr) {  # creates a subfolder in temp folder
     library(sf)
     fname <- ec.util(cmd= 'sf.unzip', 
+          shp= 'railways',    # set name: unzip folder can have other .shp files
           url= 'https://helgasoft.github.io/echarty/test/sl.shape.railways.zip')
     nc <- as.data.frame(st_read(fname, quiet=TRUE))
     p <- ec.init(load= 'leaflet',
@@ -55,7 +56,7 @@ test_that("shapefile LINES from ZIP", {
     expect_equal(p$x$opts$series[[6]]$lineStyle$color, 'red')
     
   }
-  else expect_false(interactive())  # bypass
+  else expect_false(interactive())  # bypass in CRAN
 })
 
 test_that("shapefile LINESTRING and MULTILINESTRING", {

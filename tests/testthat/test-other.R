@@ -18,19 +18,17 @@ test_that("registerAll + custom-series v.6", {
   expect_equal(class(p$x$theme), 'list')
   
   p <- ec.init(
-    load= 'https://cdn.jsdelivr.net/gh/apache/echarts-custom-series@main/custom-series/segmentedDoughnut/dist/segmented-doughnut.auto.min.js',
-    ask= 'loadRemote',
+    #load= 'https://cdn.jsdelivr.net/gh/apache/echarts-custom-series@main/custom-series/segmentedDoughnut/dist/segmented-doughnut.auto.min.js',
+    #ask= 'loadRemote',
     series.param= list(
-      type= 'custom', renderItem= 'segmentedDoughnut',
-      coordinateSystem= 'none',
-      itemPayload= list(
-        radius= list('50%','65%'), segmentCount= 8,
-        label= list(show=T, formatter= '{c}/{b}', fontSize=35, color= '#555')
-      ),
-      data= list(5) )
+      renderItem= 'segmentedDoughnut',
+      itemPayload= list(segmentCount= 8, label= list(show=T, formatter= '{c}/{b}', fontSize=35) ),
+      data= list(5) )    # data=5 does not work, auto-set help?
   )
   expect_equal(class(p$x$opts$series[[1]]$renderItem), 'character')
   expect_true(grepl('segmented', p$dependencies[[1]]$src$href))
+  expect_equal(p$x$opts$series[[1]]$type, 'custom')
+  expect_equal(p$x$opts$series[[1]]$coordinateSystem, 'none')
   
   p <- cars |> ec.init( js='confetti();',
     load= 'https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.4/dist/confetti.browser.min.js',
@@ -39,10 +37,20 @@ test_that("registerAll + custom-series v.6", {
   )  # just for coverage (name)
   expect_true(startsWith(p$dependencies[[1]]$name, 'confetti'))
   
-  p <- cars |> ec.init( 
-    load= 'https://www.aol.com/food/',
-    ask= TRUE   # coverage
-  )
+  if (!isCovr) {
+    p <- cars |> ec.init( 
+      load= 'https://www.aol.com/food/',
+      ask= TRUE   # for coverage
+    )
+    #expect_true(startsWith(p$dependencies[[1]]$name, 'food'))
+  }
+  p <- ec.init(mtcars, series= list(
+      list(type= 'scatter', color='brown'),
+      list(renderItem= "contour", itemPayload= list(bandwidth= 20, thresholds= 8))
+  ))
+  expect_true(grepl('contour', p$dependencies[[2]]$src$href))
+  expect_equal(p$x$opts$series[[2]]$type, 'custom')
+  
 })
   
 test_that("registerMap", {
@@ -358,13 +366,25 @@ test_that('stops are working in echarty.R', {
   expect_silent(ec.init(load='lottie'))
   expect_silent(ec.init(load='ecStat'))
   expect_silent(ec.init(load='lottie,ecStat'))
-  #expect_silent(ec.init(load='liquid'))   # Debian throws warnings in CRAN check
-  #expect_silent(ec.init(load='gmodular'))
-  #expect_silent(ec.init(load='wordcloud'))
+  
   expect_error(mtcars |> group_by(cyl) |> ec.init(series.param= list(type='parallel')))
   expect_error(data.frame(name= c('A','B','C','D'), value= c(1,2,3,1), cat=c(1,1,2,2)) |>
-    group_by(cat) |> ec.init(timeline= list(s=TRUE), dbg=T, series.param= list(type='pie'))
+    group_by(cat) |> ec.init(timeline= list(s=TRUE), series.param= list(type='pie'))
   )
+})
+
+test_that("old plugins", {
+  # webR doesn't works with plugins, hack for coverage
+  ec.webR <<- TRUE
+  lif <- paste0(system.file('js', package='echarty'), '/echarts-liquidfill.min.js')
+  tmp <- ec.init(load= 'liquid', ask=TRUE)   # = no ask, no dnld
+  expect_false(file.exists(lif))
+  rm(ec.webR, envir=globalenv())
+  if (isCovr) {     # Debian throws warnings in CRAN check
+    #expect_silent(ec.init(load='liquid'))   
+    expect_silent(ec.init(load='gmodular'))
+    expect_silent(ec.init(load='wordcloud'))
+  }
 })
 
 test_that('unusual cases', {

@@ -11,8 +11,10 @@ lenv <- new.env(parent = emptyenv())
 lenv$coNames <- '' 
 # assign('aa', 11, envir=.ecv.colnames); get('aa', envir=.ecv.colnames)
 noAxisXY <- c('radar','parallel','themeRiver','map','gauge','pie','funnel','polar','chord',  
-    'sunburst','tree','treemap','sankey','lines', 'liquidFill','wordCloud') # series
+    'sunburst','tree','treemap','sankey','lines', 'liquidFill','wordCloud','segmentedDoughnut') # series
 noCoord <- c('polar','radar','singleAxis','parallelAxis','calendar')
+plf <- read.csv(system.file('plugins.csv', package='echarty'), header=TRUE, stringsAsFactors=FALSE)
+renderCustom <- setNames(as.list(plf[[2]]), plf[[1]])
 # using list(show=TRUE) or list(list()) is to create empty object{} in JS
 
 #' Initialize a chart
@@ -72,15 +74,16 @@ noCoord <- c('polar','radar','singleAxis','parallelAxis','calendar')
 #'  * world  - world map with country boundaries, see \href{https://github.com/apache/echarts/tree/master/test/data/map/js}{source} \cr
 #'  * lottie - support for \href{https://lottiefiles.com}{lotties} \cr
 #'  * ecStat - statistical tools, see\href{https://github.com/ecomfe/echarts-stat}{echarts-stat}\cr
-#'  * custom - renderers for [ecr.band] and [ecr.ebars] \cr 
+#'  * custom - renderers for echarty plugins like [ecr.band] and [ecr.ebars] \cr 
 #'  
 #'  **Plugins with one-time installation** \cr
 #'  * 3D - support for 3D charts and WebGL acceleration, see \href{https://github.com/ecomfe/echarts-gl}{source} and \href{https://echarts.apache.org/en/option-gl.html#series}{docs} \cr
 #'  \verb{     } This plugin is auto-loaded when 3D/GL axes/series are detected.\cr
-#'  * liquid - liquid fill, see \href{https://github.com/ecomfe/echarts-liquidfill}{source}  \cr
 #'  * gmodular - graph modularity, see \href{https://github.com/ecomfe/echarts-graph-modularity}{source}  \cr
+#'  * liquid - liquid fill, see \href{https://github.com/ecomfe/echarts-liquidfill}{source}  \cr
 #'  * wordcloud - cloud of words, see \href{https://github.com/ecomfe/echarts-wordcloud}{source} \cr
-#'  or install your own third-party plugins.\cr
+#'  Note: the last three are being moved to the \href{https://github.com/apache/echarts-custom-series}{official custom series}.\cr
+#'  OR install your own third-party plugins like _confetti_, see example below.\cr
 #'  
 #'  **Crosstalk** \cr
 #'  Parameter _df_ should be of type \link[crosstalk]{SharedData}, see \href{https://helgasoft.github.io/echarty/articles/gallery.html#crosstalk-2d}{more info}.\cr
@@ -116,8 +119,8 @@ noCoord <- c('polar','radar','singleAxis','parallelAxis','calendar')
 #'  # custom inititlization options and theme
 #' myth <- '{"color": ["green"], "backgroundColor": "lemonchiffon"}'
 #' ec.init( cars,
-#'   theme= jsonlite::fromJSON(myth),
 #'   iniOpts= list(renderer= 'svg', width= '222px'),
+#'   theme= jsonlite::fromJSON(myth),
 #'   toolbox= list(feature= list(saveAsImage= list()))
 #' )
 #'  
@@ -140,6 +143,19 @@ noCoord <- c('polar','radar','singleAxis','parallelAxis','calendar')
 #'   series.param= list(type='gauge', max=5)
 #' )
 #' 
+#' ec.init(
+#'   series.param= list(
+#'     renderItem= 'segmentedDoughnut',   # v.6  from https://github.com/apache/echarts-custom-series
+#'     itemPayload= list(segmentCount= 8, label= list(show=T, formatter= '{c}/{b}', fontSize=35) ),
+#'     data= list(5) )
+#' )
+#' 
+#' ec.init(cars, js= 'confetti();',  # js code executes on init
+#'   load= 'https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.4/dist/confetti.browser.min.js',
+#'   ask= 'loadRemote',
+#'   on= list(list(event= 'click', handler= ec.clmn('() => confetti()')) )
+#' )
+#' 
 #' @importFrom htmlwidgets createWidget sizingPolicy getDependency JS shinyWidgetOutput shinyRenderWidget
 #' @importFrom utils read.csv modifyList
 #' @import dplyr
@@ -154,7 +170,7 @@ ec.init <- function( df= NULL, preset= TRUE, ...,  #ctype= 'scatter',
   # treacherous R does "partial matching of argument names" (like a bug): 
   #   if 'series.param' is before '...' and 'series' is added, the latter is ignored!
   elementId <- opt1$elementId;  js <- opt1$js
-  ask <- if (is.null(opt1$ask)) FALSE else opt1$ask
+  ask <- ifelse(!is.null(opt1$ask), opt1$ask, FALSE)
   ctype <- if (is.null(opt1$ctype)) 'scatter' else opt1$ctype
   iniOpts <- if (!is.null(opt1$iniOpts)) opt1$iniOpts else list()
   # set defaults + backward compat:
@@ -165,7 +181,6 @@ ec.init <- function( df= NULL, preset= TRUE, ...,  #ctype= 'scatter',
   xtKey <- if (is.null(opt1$xtKey)) 'XkeyX' else opt1$xtKey
   # allow debug feedback thru cat() in R & JS code
   dbg <- if (is.null(opt1$dbg)) FALSE else opt1$dbg  
-  if (dbg) cat('\n coln=', lenv$coNames)
   # remove the above attributes since they are not valid ECharts options
   for (ii in c('renderer','locale','useDirtyRect','iniOpts','ask','js',
     'elementId','xtKey','dbg','ctype')) opt1[ii] <- NULL
@@ -471,7 +486,7 @@ ec.init <- function( df= NULL, preset= TRUE, ...,  #ctype= 'scatter',
       tl.series$type <- ctype
   }
   
-  if ('series' %in% names(x$opts)) {
+  if ('series' %in% namop) {
     if (!is.null(ctype))     # all series, not 1st only
       x$opts$series <- lapply(x$opts$series, function(ss) {
         if (is.null(ss$type)) ss$type <- ctype
@@ -492,6 +507,24 @@ ec.init <- function( df= NULL, preset= TRUE, ...,  #ctype= 'scatter',
   }
   axad <- 1; isSname <- FALSE
   x$opts$series <- lapply(x$opts$series, function(ss) {
+    # renderItem helper
+    if (!is.null(ss$renderItem) && inherits(ss$renderItem, "character")) {
+      if (startsWith(ss$renderItem, 'ri'))
+        ss$renderItem <- htmlwidgets::JS(ss$renderItem)
+      else {  # new ECharts 6 custom series want a character string
+        bask <- (ask==FALSE) | (ask=='loadRemote')
+        if (bask && !is.null(renderCustom[ss$renderItem])) {
+          ask <<- 'loadRemote'
+          x$opts$load <<- c(x$opts$load, renderCustom[[ss$renderItem]])
+        }
+        if (ss$renderItem %in% c('segmentedDoughnut','liquidFill','wordCloud'))
+          ss$coordinateSystem <- 'none'
+        if (!any(grepl('d3.min.js', x$opts$load)) && ss$renderItem=='contour')
+          x$opts$load <<- c('https://cdn.jsdelivr.net/npm/d3@latest/dist/d3.min.js', x$opts$load)
+      }
+      if (!is.null(ss$type)) ss$type <- 'custom'
+    }
+
     tmp <- xyNamesCS(ss)
     if (!is.null(tmp$c)) ss$coordinateSystem <- tmp$c
 
@@ -510,10 +543,6 @@ ec.init <- function( df= NULL, preset= TRUE, ...,  #ctype= 'scatter',
     }
     if (!is.null(ss$name)) isSname <<- TRUE
     
-    # renderItem helper only for our custom functions ri* 
-    # new ECharts custom series, like segmentedDoughnut, want a character string
-    if (!is.null(ss$renderItem) && inherits(ss$renderItem,"character") && startsWith(ss$renderItem, 'ri'))
-      ss$renderItem <- htmlwidgets::JS(ss$renderItem) 
     ss
   })
   if (any(c('geo','leaflet','globe', noCoord) %in% namop)) axad <- 0  # was axad-1
@@ -542,7 +571,7 @@ ec.init <- function( df= NULL, preset= TRUE, ...,  #ctype= 'scatter',
     # set X,Y axes type & name from df OR from series.data
 
     cnms <- NULL
-    ena <- c('x','y') # for polar > c('radius','angle')  #,'lng','lat')
+    ena <- c('x','y') # TODO: for polar= c('radius','angle')  map= c('lng','lat')
     coln <- colp <- ctyp <- list()   # column names, positions, types
     for(xy in ena) { coln[xy] <- ctyp[xy] <- colp[xy] <- NA }
     
@@ -556,9 +585,9 @@ ec.init <- function( df= NULL, preset= TRUE, ...,  #ctype= 'scatter',
               !paste0(s1$type,s1$layout) %in% c('graphforce','graphcircular') &&
               !slb && !paste0('',s1$coordinateSystem) %in% c('leaflet','geo') &&
     	        !any(noCoord %in% names(x$opts))
-    if (isAxes) {  # can search for XY axes names/type
+    if (isAxes) {  # search for single X/Y axis name and type
       colp[1] <- colX[1]; colp[2] <- colY[1];
-      if (!is.null(s1$encode)) {		# chk $data then $dset
+      if (!is.null(s1$encode)) {
         for(xy in ena) {
           exy <- s1$encode[[xy]]
         	if (!is.null(exy) && length(exy) <2 ) {   # exclude multi-values like candlestick
@@ -567,7 +596,7 @@ ec.init <- function( df= NULL, preset= TRUE, ...,  #ctype= 'scatter',
         	}
         }
       } 
-
+      # check first $data then $dset
       if (exists('sedval')) {  # encode$data$value takes precedence
         i <- 1
         for(xy in ena) { 
@@ -576,7 +605,8 @@ ec.init <- function( df= NULL, preset= TRUE, ...,  #ctype= 'scatter',
       } 
       else if ('data' %in% names(s1)) {
         # chk s1$data for type (and maybe name)  list(value=) or list(c()) or mixed
-        # verify only first row in list-of-lists  # non-named but can have names in s1$dimens
+        # verify only first row in list-of-lists  
+        # TODO: s1$data could be non-named but have names in s1$dimensions
         d1 <- if (is.list(s1$data) && is.list(s1$data[[1]])) s1$data[[1]] else s1$data  
         if (!is.null(names(d1))) {
           cnms <- names(d1)
@@ -589,11 +619,13 @@ ec.init <- function( df= NULL, preset= TRUE, ...,  #ctype= 'scatter',
       	  }
         }
         else {    # like data=c(1,2..) 
-    	      if (!is.na(coln[[xy]]) && coln[[xy]] %in% cnms) ctyp[xy] <- tail(class(d1[[coln[[xy]]]]), 1)
+    	      if (!is.na(coln[[xy]]) && coln[[xy]] %in% cnms) ctyp[xy] <- tail(class(d1[[ coln[[xy]] ]]), 1)
     	      else if (!is.na(colp[[xy]])) ctyp[xy] <- tail(class(d1[[colp[[xy]]]]), 1)   # numeric array
         }
       } 
-    	else if (!is.null(x$opts$dataset)) {   # dataset     # TODO ignore if {nam=...} format ?
+    	else if (!is.null(x$opts$dataset)) {   # dataset     
+    	  # TODO: ignore when format is [{name=...},..]  ?
+    	  # TODO: types of multiple xAxis[] (when no series$encode)
         dset <- x$opts$dataset[[1]]
         r1 <- dset$source[[1]]
         if (!is.null(dset$dimensions)) cnms <- dset$dimensions
@@ -602,9 +634,12 @@ ec.init <- function( df= NULL, preset= TRUE, ...,  #ctype= 'scatter',
             cnms <- unlist(r1)  # header
             r1 <- dset$source[[2]]
         }
+       #  for(xy in ena) {
+       #    if (!is.na(coln[xy]) && coln[xy] %in% cnms) colp[xy] <- which(cnms==coln[[xy]])   # name to pos
+       # 	  if (!is.na(colp[xy])) ctyp[xy] <- tail(class(r1[[colp[[xy]]]]), 1)   # numeric array
+       #  }
         for(xy in ena) {
-          if (!is.na(coln[xy]) && coln[xy] %in% cnms) colp[xy] <- which(cnms==coln[[xy]])   # name to pos
-       	  if (!is.na(colp[xy])) ctyp[xy] <- tail(class(r1[[colp[[xy]]]]), 1)   # numeric array
+        	  if (!is.na(colp[xy])) ctyp[xy] <- tail(class(r1[[ colp[[xy]] ]]), 1)
         }
     	}
     
@@ -627,7 +662,8 @@ ec.init <- function( df= NULL, preset= TRUE, ...,  #ctype= 'scatter',
     }   # end isAxes
     
   }   # end preset
-  
+  if (dbg) cat('\n cnames=', lenv$coNames)
+
   x$opts <- .renumber(x$opts)
   
   # ------------- create widget ----------------
@@ -789,8 +825,8 @@ ec.init <- function( df= NULL, preset= TRUE, ...,  #ctype= 'scatter',
   }
   
   # Plugins implemented as dynamic load on-demand
-  if (any(load %in% c('3D','liquid','gmodular','wordcloud'))) {
-    plf <- read.csv(system.file('plugins.csv', package='echarty'), header=TRUE, stringsAsFactors=FALSE)
+  if (any(load %in% c('3D','gmodular','liquid','wordcloud'))) {
+    #plf <- read.csv(system.file('plugins.csv', package='echarty'), header=TRUE, stringsAsFactors=FALSE)
     if ('3D' %in% load) {
       isGL <- any(unlist(lapply(opt1$series, \(k){ endsWith(k$type, 'GL') })))  # GL is 2D
       isMap3d <- !is.null(opt1$globe) || !is.null(opt1$geo3D)
@@ -828,13 +864,13 @@ ec.init <- function( df= NULL, preset= TRUE, ...,  #ctype= 'scatter',
       }
       wt <- ec.plugjs(wt, plf[plf$name=='3D',]$url, ask)
     }
-    if ('liquid' %in% load) wt <- ec.plugjs(wt, plf[plf$name=='liquid',]$url, ask)
-    if ('gmodular' %in% load) wt <- ec.plugjs(wt, plf[plf$name=='gmodular',]$url, ask)
-    if ('wordcloud' %in% load) wt <- ec.plugjs(wt, plf[plf$name=='wordcloud',]$url, ask)
+    for(nn in c('gmodular','liquid','wordcloud')) {
+      if (nn %in% load) wt <- ec.plugjs(wt, plf[plf$name==nn,]$url, ask) }
+    #if ('liquid' %in% load) wt <- ec.plugjs(wt, plf[plf$name=='liquid',]$url, ask)
+    #if ('wordcloud' %in% load) wt <- ec.plugjs(wt, plf[plf$name=='wordcloud',]$url, ask)
   }  
   # load unknown plugins
-  unk <- load[! load %in% c('leaflet','custom','world','lottie','ecStat',
-                            '3D','liquid','gmodular','wordcloud')]
+  unk <- load[! load %in% c('leaflet','custom','world','lottie','ecStat','3D','gmodular','liquid','wordcloud')]
   if (length(unk)>0) {
     for(pg in unk)
       wt <- ec.plugjs(wt, pg, ask)
@@ -1450,7 +1486,6 @@ ec.plugjs <- function(wt=NULL, source=NULL, ask=FALSE) {
     )
   } 
   else {  # download it
-    #if (ask=='loadRemote') ask <- FALSE
     path <- system.file('js', package= 'echarty')
     
     ffull <- paste0(path,'/',fname)
@@ -1498,6 +1533,7 @@ ec.plugjs <- function(wt=NULL, source=NULL, ask=FALSE) {
     x
   }
   doEncode <- function(el) {  # for tooltip, seriesName, itemId, itemName, itemGroupId, itemChildGroupId
+    # should be defined as vector, not list; ex: tooltip= c(2,3), not tooltip= list(2,3)
     for(i in seq_along(el$encode)) {
       if (!is.numeric(el$encode[[i]])) next
       el$encode[[i]] <- el$encode[[i]] -1

@@ -287,10 +287,12 @@ ec.util <- function(cmd='sf.series', ..., js=NULL, event='click') {
         pat <- ifelse (is.null(opts$shp), '*.shp', paste0(opts$shp,'.shp'))
         tmp <- list.files(path= zfldr, pattern= pat, full.names=TRUE)
         #on.exit(unlink(zfldr, recursive=TRUE), add=TRUE)   # cannot cleanup: file read later
-        if (length(tmp)==0) 
-          out <- 'ERROR ec.util: unzipped file not found'
-        else
-          out <- tmp[1]
+        
+        # if (length(tmp)==0) 
+        #   out <- 'ERROR ec.util: unzipped file not found'
+        # else
+        #   out <- tmp[1]
+        out <- ifelse (length(tmp)==0, 'ERROR ec.util: unzipped file not found', tmp[1])
       }
     },
     
@@ -1068,7 +1070,7 @@ return template.replace(/%@|%L@|%LR@|%R@|%R2@|%M@/g, (m) => {
 	    warning("ec.clmn: colnames missing.
          Use ec.clmn after ec.data and/or inside ec.init(df).
          Otherwise use column indexes instead of names.", call.=FALSE)
-	    return('col names?')
+	    return('column names?')
 	  }
     # 		stopifnot("ec.clmn: colnames missing.
     #     Use ec.clmn after ec.data and/or inside ec.init(df).

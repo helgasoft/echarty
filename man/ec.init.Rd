@@ -83,17 +83,18 @@ vector: \verb{     } see code in \href{https://github.com/helgasoft/echarty/blob
 \item world  - world map with country boundaries, see \href{https://github.com/apache/echarts/tree/master/test/data/map/js}{source} \cr
 \item lottie - support for \href{https://lottiefiles.com}{lotties} \cr
 \item ecStat - statistical tools, see\href{https://github.com/ecomfe/echarts-stat}{echarts-stat}\cr
-\item custom - renderers for \link{ecr.band} and \link{ecr.ebars} \cr
+\item custom - renderers for echarty plugins like \link{ecr.band} and \link{ecr.ebars} \cr
 }
 
 \strong{Plugins with one-time installation} \cr
 \itemize{
 \item 3D - support for 3D charts and WebGL acceleration, see \href{https://github.com/ecomfe/echarts-gl}{source} and \href{https://echarts.apache.org/en/option-gl.html#series}{docs} \cr
 \verb{     } This plugin is auto-loaded when 3D/GL axes/series are detected.\cr
-\item liquid - liquid fill, see \href{https://github.com/ecomfe/echarts-liquidfill}{source}  \cr
 \item gmodular - graph modularity, see \href{https://github.com/ecomfe/echarts-graph-modularity}{source}  \cr
+\item liquid - liquid fill, see \href{https://github.com/ecomfe/echarts-liquidfill}{source}  \cr
 \item wordcloud - cloud of words, see \href{https://github.com/ecomfe/echarts-wordcloud}{source} \cr
-or install your own third-party plugins.\cr
+Note: the last three are being moved to the \href{https://github.com/apache/echarts-custom-series}{official custom series}.\cr
+OR install your own third-party plugins like \emph{confetti}, see example below.\cr
 }
 
 \strong{Crosstalk} \cr
@@ -130,8 +131,8 @@ cars |> ec.init()
  # custom inititlization options and theme
 myth <- '{"color": ["green"], "backgroundColor": "lemonchiffon"}'
 ec.init( cars,
-  theme= jsonlite::fromJSON(myth),
   iniOpts= list(renderer= 'svg', width= '222px'),
+  theme= jsonlite::fromJSON(myth),
   toolbox= list(feature= list(saveAsImage= list()))
 )
  
@@ -152,6 +153,19 @@ data.frame(n=1:5) |> dplyr::group_by(n) |> ec.init(
   title= list(text= "gauge #\%@"),
   timeline= list(show=TRUE, autoPlay=TRUE),
   series.param= list(type='gauge', max=5)
+)
+
+ec.init(
+  series.param= list(
+    renderItem= 'segmentedDoughnut',   # v.6  from https://github.com/apache/echarts-custom-series
+    itemPayload= list(segmentCount= 8, label= list(show=T, formatter= '{c}/{b}', fontSize=35) ),
+    data= list(5) )
+)
+
+ec.init(cars, js= 'confetti();',  # js code executes on init
+  load= 'https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.4/dist/confetti.browser.min.js',
+  ask= 'loadRemote',
+  on= list(list(event= 'click', handler= ec.clmn('() => confetti()')) )
 )
 
 }

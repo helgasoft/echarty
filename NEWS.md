@@ -4,6 +4,7 @@
 
 * added _matrixIndex_, _calendarIndex_ and other indexes in .renumber
 * fixed some _globe,3D_ presets
+* new v.6 custom series loaded by _renderItem_ name only (no load/ask needed)
 
 # echarty 1.7.1  on CRAN
 

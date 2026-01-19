@@ -1,5 +1,13 @@
 name,url
 3D,https://cdn.jsdelivr.net/npm/echarts-gl@2.0.9/dist/echarts-gl.min.js
-liquid,https://cdn.jsdelivr.net/npm/echarts-liquidfill@latest/dist/echarts-liquidfill.min.js
 gmodular,https://cdn.jsdelivr.net/npm/echarts-graph-modularity@latest/dist/echarts-graph-modularity.min.js
+liquid,https://cdn.jsdelivr.net/npm/echarts-liquidfill@latest/dist/echarts-liquidfill.min.js
 wordcloud,https://cdn.jsdelivr.net/npm/echarts-wordcloud@latest/dist/echarts-wordcloud.min.js
+segmentedDoughnut,https://cdn.jsdelivr.net/gh/apache/echarts-custom-series@main/custom-series/segmentedDoughnut/dist/segmented-doughnut.auto.min.js
+lineRange,https://cdn.jsdelivr.net/gh/apache/echarts-custom-series@main/custom-series/lineRange/dist/line-range.auto.js
+barRange,https://cdn.jsdelivr.net/gh/apache/echarts-custom-series@main/custom-series/barRange/dist/bar-range.auto.js
+contour,https://cdn.jsdelivr.net/gh/apache/echarts-custom-series@main/custom-series/contour/dist/contour.auto.js
+stage,https://cdn.jsdelivr.net/gh/apache/echarts-custom-series@main/custom-series/stage/dist/stage.auto.js
+violin,https://cdn.jsdelivr.net/gh/apache/echarts-custom-series@main/custom-series/violin/dist/violin.auto.js
+liquidFill,https://cdn.jsdelivr.net/gh/apache/echarts-custom-series@main/custom-series/liquidFill/dist/liquid-fill.auto.js
+wordCloud,https://cdn.jsdelivr.net/gh/apache/echarts-custom-series@main/custom-series/wordCloud/dist/word-cloud.auto.js

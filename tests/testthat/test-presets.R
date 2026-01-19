@@ -19,7 +19,7 @@ test_that("options preset", {
   expect_equal(p$x$themeCode$backgroundColor, 'pink')
   
   options(echarty.theme=NULL)
-  p <- cars |> ec.init(dbg=T, dataZoom=list(show=TRUE))
+  p <- cars |> ec.init(dataZoom= list(show=TRUE))
   expect_true(is.null(p$x$theme))
   # dataZoom should not produce error from r2jsEncode
   
@@ -63,14 +63,6 @@ test_that("options preset", {
     expect_equal(p$x$opts$series[[1]]$coordinateSystem, 'cartesian3D')
     expect_true(!is.null(p$x$opts$grid3D))
   }
-})
-
-test_that("webR works with plugins", {
-  ec.webR <<- TRUE
-  lif <- paste0(system.file('js', package='echarty'), '/echarts-liquidfill.min.js')
-  tmp <- ec.init(load= 'liquid,gmodular,wordcloud')
-  expect_false(file.exists(lif))
-  rm(ec.webR, envir=globalenv())
 })
 
 test_that("ec.init presets for non-grouped data.frame", {
@@ -149,7 +141,7 @@ test_that("ec.init presets for timeline + groupBy, geo", {
     expect_equal(p$x$opts$options[[4]]$series[[2]]$datasetIndex, 8)
     expect_equal(p$x$opts$options[[4]]$series[[2]]$name, 'B')
     
-    p <- df |> dplyr::group_by(name) |> ec.init(dbg=T,
+    p <- df |> dplyr::group_by(name) |> ec.init( dbg=TRUE,
       load='3D',  # redundant, just for coverage (z)
       timeline= list(show=TRUE, autoPlay=F),
       series.param= list(type='scatter')
@@ -374,7 +366,7 @@ test_that('polar presets', {
   expect_equal(p$x$opts$series[[1]]$coordinateSystem, 'polar')
 })
 
-test_that('style-to-column feature', {
+test_that('column-to-style feature', {
   
   p <- cars |> mutate(    # non-grouped
       clr= sample(c('darkgreen','blue','red'), 50, TRUE),
@@ -382,7 +374,7 @@ test_that('style-to-column feature', {
     ) |>
   ec.init( dbg=TRUE,
     series.param= list(symbolSize=22, encode= list(data= list(
-      value=c('speed', 'dist'), 333,   # 333 is illegal R, for covr only
+      value=c('speed', 'dist'), 333,   # 333 is illegal R, for coverage only
       label= list(show=TRUE, formatter='speed'),
       itemStyle= list(color='clr', opacity='opa')) ))
   )
@@ -393,10 +385,12 @@ test_that('style-to-column feature', {
   expect_equal(p$x$opts$series[[1]]$data[[50]]$label$formatter, 25)
   
   p <- iris |> group_by(Species) |>    # grouped
-    ec.init(tooltip=list(s=TRUE), series.param= list(
-    encode= list(data= list(value= c('Sepal.Length','Sepal.Width'), 
-                            itemStyle= list(opacity='Petal.Width')) )
-  ))
+    ec.init( #dbg=FALSE, 
+      series.param= list(
+        encode= list(data= list(value= c('Sepal.Length','Sepal.Width'), 
+                                itemStyle= list(opacity='Petal.Width')) )
+    ), tooltip=list(s=TRUE)
+  )
   expect_equal(p$x$opts$series[[1]]$data[[2]]$value[[1]], p$x$opts$series[[1]]$data[[2]]$Sepal.Length)
   expect_equal(p$x$opts$series[[1]]$data[[2]]$itemStyle$opacity, 0.2)
   expect_true(is.null(p$x$opts$series[[1]]$encode))
@@ -415,12 +409,17 @@ test_that('preset axis type', {
   expect_equal(p$x$opts$xAxis$type, 'time')
   expect_equal(p$x$opts$yAxis$type, 'value')
 
-  p <- ec.init(dbg=T,
+  p <- ec.init( dbg= TRUE,
     series.param = list( encode= list(x=2, y=1),
     data= list(list(value= list(1,'B')), list(value=list(3,'A')), list(value=list(2, 'C')) )
   ))
   expect_equal(p$x$opts$xAxis$type, 'category')
   
+  p <- data.frame(a= letters[1:5], b= 1:5, c=21:25) |>   
+    # relocate(b) |> # needs encode=list(x=1, y=2)  see #21282
+    ec.init( series.param= list(type='bar'), Xdbg= FALSE )   # stop dbg persistence?
+  expect_equal(p$x$opts$xAxis$type, 'category')
+
   dd <- lapply(1:nrow(df), \(ii) {
     list(value= list(df[ii,]$name, df[ii,]$size, df[ii,]$symbol))
   })

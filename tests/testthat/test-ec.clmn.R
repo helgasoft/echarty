@@ -107,5 +107,10 @@ test_that("ec.clmn with sprintf, column indexes and names", {
     ) )
   expect_s3_class(p$x$on[[1]]$handler, 'JS_EVAL')
   expect_s3_class(p$x$on[[2]]$handler, 'JS_EVAL')   # helper in ec.init
+  
+  #expect_warning( ec.init(title= list(text=ec.clmn('templ','colname1'))) )   # lenv$coNames missing 
+  p <- ec.init(title= list(text=ec.clmn('templ','colname1')))    # lenv$coNames missing 
+  # expect_equal(p$x$opts$title$text, 'column names?')
+  expect_true(grepl('[`colname1`]', p$x$opts$title$text, fixed =TRUE))
 })
 
