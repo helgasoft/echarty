@@ -49,7 +49,7 @@ banda <- ecr.band(df, 'lwr', 'upr', type='stack', name='stak', areaStyle= list(c
 df |> ec.init( load='custom', # polygon only
   legend= list(show= TRUE),
   xAxis= list(type='category', boundaryGap=FALSE), # stack
-  #xAxis= list(scale=T, min='dataMin'),            # polygon 
+  #xAxis= list(scale=TRUE, min='dataMin'),            # polygon 
   series= append(
     list(list(type='line', color='blue', name='line1')),
     banda

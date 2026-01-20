@@ -146,7 +146,7 @@ renderCustom <- setNames(as.list(plf[[2]]), plf[[1]])
 #' ec.init(
 #'   series.param= list(
 #'     renderItem= 'segmentedDoughnut',   # v.6  from https://github.com/apache/echarts-custom-series
-#'     itemPayload= list(segmentCount= 8, label= list(show=T, formatter= '{c}/{b}', fontSize=35) ),
+#'     itemPayload= list(segmentCount= 8, label= list(show=TRUE, formatter= '{c}/{b}', fontSize=35) ),
 #'     data= list(5) )
 #' )
 #' 
@@ -408,7 +408,7 @@ ec.init <- function( df= NULL, preset= TRUE, ...,  #ctype= 'scatter',
       lapply(hvals, \(x) {
         cnt <- length(gregexpr(spr, names(x), fixed=TRUE)[[1]])
         #if (cnt < 1) return(NULL)
-        tt <- gsub(spr, '=list(', names(x), fixed=T)
+        tt <- gsub(spr, '=list(', names(x), fixed=TRUE)
         mm <- if (is.character(unlist(x))) paste0('"',unlist(x, use.names=F),'"') else x
         tt <- paste('cc <- list(',tt,'=',mm, paste(rep(')',cnt+1), collapse=''))  # close parenthesis
         tt <- eval(parse(text=tt))
@@ -551,7 +551,7 @@ ec.init <- function( df= NULL, preset= TRUE, ...,  #ctype= 'scatter',
     if (!'yAxis' %in% namop) x$opts$yAxis <- list(show=TRUE)
   }
   if (dbg) cat('\n axad=',axad)
-  #if ((!'legend' %in% namop) && isSname) cat("\nNote: Some series have names, could add legend with 'legend= list(show=T)'") 
+  #if ((!'legend' %in% namop) && isSname) cat("\nNote: Some series have names, could add legend with 'legend= list(show=TRUE)'") 
     
   # reading from encode set above  # TODO: when names not 'x','y' ?
   tmp <- series.param$encode
@@ -1098,7 +1098,7 @@ ec.upd <- function(wt, ...) {
 #' df |> ec.init( load='custom', # polygon only
 #'   legend= list(show= TRUE),
 #'   xAxis= list(type='category', boundaryGap=FALSE), # stack
-#'   #xAxis= list(scale=T, min='dataMin'),            # polygon 
+#'   #xAxis= list(scale=TRUE, min='dataMin'),            # polygon 
 #'   series= append(
 #'     list(list(type='line', color='blue', name='line1')),
 #'     banda

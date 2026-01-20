@@ -158,7 +158,7 @@ data.frame(n=1:5) |> dplyr::group_by(n) |> ec.init(
 ec.init(
   series.param= list(
     renderItem= 'segmentedDoughnut',   # v.6  from https://github.com/apache/echarts-custom-series
-    itemPayload= list(segmentCount= 8, label= list(show=T, formatter= '{c}/{b}', fontSize=35) ),
+    itemPayload= list(segmentCount= 8, label= list(show=TRUE, formatter= '{c}/{b}', fontSize=35) ),
     data= list(5) )
 )
 

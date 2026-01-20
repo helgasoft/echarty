@@ -52,13 +52,13 @@ ec.init(df,
     type= 'time', 
     axisLabel= list(
       formatter= '{dd} {HH}:{mm}', customValues= df$x,
-      hideOverlap=T, showMinLabel=T, showMaxLabel=T)
+      hideOverlap=TRUE, showMinLabel=TRUE, showMaxLabel=TRUE)
   ),
   series = list(list(type= "line", clip= FALSE,
     markPoint= list(data= list(list(coord= list(df$x[4], 1.8)), list(type= "max") ))
   )),
   tooltip= list(trigger= 'axis'),
-  dataZoom= list(show=T, filterMode='none')
+  dataZoom= list(show=TRUE, filterMode='none')
 )
 
 #------ Data grouping -----
@@ -176,7 +176,7 @@ cns <- data.frame(
   dim = c(44,66, 100)
 )
 cns |> group_by(nam) |> ec.init(load= 'world', 
-  timeline= list(s=TRUE), color=c('#eee','green'),
+  timeline= list(show=TRUE), color=c('#eee','green'),
   series.param= list(type='map', 
       encode=list(value='dim', name='nam')
   ),
@@ -229,15 +229,15 @@ data <- data.frame(   # triangles map
   subregion = c('sr1','sr1','sr1', 'sr2','sr2','sr2')
 )
 ec.init(
-  # geo= list(roam=T, map='trgl', itemStyle= list(areaColor='pink')),
-  series.param= list( type='map', map='trgl', roam=T,
+  # geo= list(roam=TRUE, map='trgl', itemStyle= list(areaColor='pink')),
+  series.param= list( type='map', map='trgl', roam=TRUE,
     data= list(
       list(name= 'sr1', value= 9),
       list(name= 'sr2', value= 1)
     )
   ),
   visualMap= list( max=11, inRange= list(color= rev(rainbow(10)))),
-  tooltip=list(show=T),
+  tooltip=list(show=TRUE),
   registerMap= list(mapName='trgl', opt= list(geoJson= ec.data(data, 'borders')))
 ) #|> ec.registerMap('trgl', ec.data(data, 'borders'))
 
@@ -245,8 +245,8 @@ ec.init(
 # df <- ggplot2::map_data("world", c("taiwan")) |>
 #   mutate(subregion= ifelse(is.na(subregion), region, subregion))
 # ec.init(
-#   geo= list(roam=T, map='tw', itemStyle= list(areaColor='pink')),
-#   tooltip=list(show=T)
+#   geo= list(roam=TRUE, map='tw', itemStyle= list(areaColor='pink')),
+#   tooltip=list(show=TRUE)
 # ) |> ec.registerMap('tw', ec.data(df, 'borders'))
 
 
@@ -461,7 +461,7 @@ ec.init(load= 'ecStat',
 iris |> ec.init(
   load='https://cdn.jsdelivr.net/gh/100pah/echarts-simple-transform@refs/heads/main/dist/ecSimpleTransform.min.js',
   js= c('echarts.registerTransform(ecSimpleTransform.aggregate)','',''),
-  title= list( text='ecSimpleTransform.aggregate'), legend= list(show=T),
+  title= list( text='ecSimpleTransform.aggregate'), legend= list(show=TRUE),
   series.param= list(name='scatter')
 ) |> ec.upd({
   dataset <- append(dataset, list(list(
@@ -599,7 +599,7 @@ ec.init(
 
 #------ multiple series + common series.param + dataset -----
 mtcars |> arrange(mpg) |> ec.init(
-  legend= list(show=T), tooltip= list(show=T),
+  legend= list(show=TRUE), tooltip= list(show=TRUE),
   preset=F,   # dont add axes names
   series.param= list(symbolSize=11),
   series= list(
@@ -636,7 +636,7 @@ treeData <- ec.data(hc, format='dendrogram')[[1]]
 # # data 2
 # library(data.tree); data(acme)
 # tmp <- acme
-# cmax <- max(tmp$Get('cost'), na.rm=T)
+# cmax <- max(tmp$Get('cost'), na.rm=TRUE)
 # tmp$Do(function(x) {   # works with or without values
 #    cos <- as.numeric(x$cost); x$value <- ifelse(length(cos)==0, 0, cos) })  # add 'value'
 # treeData <- tmp |> ToListExplicit(unname =TRUE)
@@ -653,7 +653,7 @@ treeData <- ec.data(hc, format='dendrogram')[[1]]
 # tmp$Do(function(x) {
 #   #pop <- as.numeric(x$population); x$value <- ifelse(length(pop)==0, 0, pop) })  # add 'value'
 #   gni <- as.numeric(x$GNI); x$value <- ifelse(length(gni)==0, 0, gni) })  # add 'value'
-# cmax <- max(tmp$Get('GNI'), na.rm=T) # add -1e9(-1B) for population
+# cmax <- max(tmp$Get('GNI'), na.rm=TRUE) # add -1e9(-1B) for population
 # treeData <- tmp |> ToListExplicit(unname =TRUE)
 
  # needed by JS for click event
@@ -686,14 +686,14 @@ ec.init(load= 'custom', title= list(text='flame tree', bottom='5%'),
 
 #------ segmented donut v.6 -----
 ec.init(
-  load= 'https://cdn.jsdelivr.net/gh/apache/echarts-custom-series@main/custom-series/segmentedDoughnut/dist/segmented-doughnut.auto.js',
-  ask= 'loadRemote',
+  #load= 'https://cdn.jsdelivr.net/gh/apache/echarts-custom-series@main/custom-series/segmentedDoughnut/dist/segmented-doughnut.auto.js',
+  #ask= 'loadRemote',
   series.param= list(
-    type= 'custom', renderItem= 'segmentedDoughnut',
-    coordinateSystem= 'none',
+    renderItem= 'segmentedDoughnut',  
+    # type= 'custom', coordinateSystem= 'none',
     itemPayload= list(
       radius= list('50%','65%'), segmentCount= 8,
-      label= list(show=T, formatter= '{c}/{b}', fontSize=35, color= '#555')
+      label= list(show=TRUE, formatter= '{c}/{b}', fontSize=35, color= '#555')
     ),
     data= list(5) )
 )
@@ -755,7 +755,7 @@ ec.init(
 
 #---- chord v.6 ----
 ec.init(
-  tooltip = list(show=T), legend= list(show=T), 
+  tooltip = list(show=TRUE), legend= list(show=TRUE), 
   series.param= list(type = "chord", name = "test",
     startAngle = 90, endAngle = -270, clockwise = FALSE, 
     lineStyle = list(color = "target"), 
@@ -842,8 +842,8 @@ url <- 'https://echarts.apache.org/examples/data/asset/geo/Veins_Medical_Diagram
 svg <- url |> readLines(encoding='UTF-8') |> paste0(collapse="")
 ec.init(
   title= list(text= 'mouseover events'),
-  grid = list(left= "60%", top= "10%", bottom= "10%"), tooltip= list(show=T),
-  xAxis = list(show=T),
+  grid = list(left= "60%", top= "10%", bottom= "10%"), tooltip= list(show=TRUE),
+  xAxis = list(show=TRUE),
   yAxis = list(type='category', data = list("heart", "large-intestine", "small-intestine", "spleen", "kidney", "lung", "liver")),
   series = list(
      list(type= "bar", emphasis= list(focus= "self"), data= list(121, 321, 141, 52, 198, 289, 139))
@@ -911,7 +911,7 @@ if (interactive()) {
     output$plot <- ecs.render({
       mtcars |> group_by(cyl) |>
       ec.init(dataZoom= list(type= 'inside'), title=list(text='mouseover,legend,zoom events'),
-        series.param= list(selectedMode=T),
+        series.param= list(selectedMode=TRUE),
         on= list(             # event(s) with Javascript handler
           list(event= 'legendselectchanged',
                handler= ec.clmn("(e) => Shiny.setInputValue('lgnd', 'legend:'+e.name);"))
