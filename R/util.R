@@ -12,16 +12,15 @@
 #' **cmd = 'sf.series'**\cr
 #' \verb{     } Build _leaflet_ or \href{https://echarts.apache.org/en/option.html#geo.map}{geo} map series from shapefiles.\cr
 #' \verb{     } Supported types: POINT, MULTIPOINT, LINESTRING, MULTILINESTRING, POLYGON, MULTIPOLYGON \cr
-#' \verb{     } Coordinate system is _leaflet_(default), _geo_ or _cartesian3D_ (for POINT(xyz))\cr
+#' \verb{     } Coordinate system could be _leaflet_(default), _geo_, _cartesian2D_ or _cartesian3D_(for POINT(xyz))\cr
 #' \verb{     } Limitations:\cr 
-#' \verb{     }\verb{     } polygons can have only their name in tooltip,  \cr
+#' \verb{     }\verb{     } polygons can have only their name in tooltip, need _load='custom'_ for rendering \cr
 #' \verb{     }\verb{     } assumes Geodetic CRS is WGS 84, for conversion use \link[sf]{st_transform} with _crs=4326_.\cr
 #' \verb{     } Parameters:\cr 
 #' \verb{     }\verb{     } df - value from \link[sf]{st_read}\cr
-#' \verb{     }\verb{     } nid - optional column name for name-id used in tooltips\cr
-#' \verb{     }\verb{     } cs - optional _coordinateSystem_ value, default 'leaflet'\cr
+#' \verb{     }\verb{     } nid - optional column name used in tooltip formatter\cr
 #' \verb{     }\verb{     } verbose - optional, print shapefile item names in console\cr
-#' \verb{     } Returns a list of chart series\cr
+#' \verb{     } Returns a list of chart series\cr\cr
 #' **cmd = 'sf.bbox'**\cr
 #' \verb{     } Returns JavaScript code to position a map inside a bounding box from \link[sf]{st_bbox}, for leaflet only.\cr\cr
 #' **cmd = 'sf.unzip'**\cr
@@ -164,7 +163,7 @@ ec.util <- function(cmd='sf.series', ..., js=NULL, event='click') {
                 coords <- append(coords, list(c(gm[j,1], gm[j,2])))
               sers <<- append(sers, list( c(
                 list(
-                  type= 'custom', coordinateSystem= cs, 
+                  type= 'custom', # coordinateSystem= cs, 
                   renderItem= htmlwidgets::JS('riPolygon'),
                   name= dname, 
                   data= coords), 
@@ -186,10 +185,10 @@ ec.util <- function(cmd='sf.series', ..., js=NULL, event='click') {
               tt <- c(paste(rep('%@', length(flds)), collapse='<br>'), flds)
             }
             pnts <- ec.data(dff, 'names')
-            styp <- ifelse(endsWith(cs, '3D'), 'scatter3D', 'scatter')
+            styp <- ifelse(endsWith(opts$coordinateSystem, '3D'), 'scatter3D', 'scatter')
             sers <- list( c(
-              list(type= styp, coordinateSystem= cs, data= pnts), opts))
-            if (!is.null(tt)) 
+              list(type= styp, data= pnts), opts))  #coordinateSystem= cs, 
+            if (!is.null(tt) && is.null(opts$tooltip))
               sers[[1]]$tooltip= list(formatter= do.call("ec.clmn", as.list(tt)))
           },
           'sfc_POLYGON' =,
@@ -216,8 +215,8 @@ ec.util <- function(cmd='sf.series', ..., js=NULL, event='click') {
                 coords <- append(coords, list(c(geom[k,1], geom[k,2])))
               
               sers <- append(sers, list( c(
-                list( type='lines', polyline= TRUE, coordinateSystem= cs,
-                      name= dname, tooltip= list(formatter= '{a}'), 
+                list( type='lines', #polyline= TRUE, #coordinateSystem= cs,
+                      name= dname, #tooltip= list(formatter= '{a}'), 
                       data= list(coords)),
                 opts) ))
             }
@@ -236,8 +235,8 @@ ec.util <- function(cmd='sf.series', ..., js=NULL, event='click') {
                 corda <- append(corda, list(coords))
               }
               sers <- append(sers, list( c(
-                list( type='lines', polyline= TRUE, coordinateSystem= cs,
-                      name= dname, tooltip= list(formatter= '{a}'),
+                list( type='lines', #polyline= TRUE, #coordinateSystem= cs,
+                      name= dname, #tooltip= list(formatter= '{a}'),
                       data= corda),
                 opts) ))
             }
@@ -256,10 +255,12 @@ ec.util <- function(cmd='sf.series', ..., js=NULL, event='click') {
       
       stopifnot('ec.util: expecting parameter df'= !is.null(opts$df))
       stopifnot('ec.util: expecting df$geometry'= !is.null(opts$df$geometry))
-      cs <- verbose <- NULL   # CRAN check fix
-      do.opties(c('cs','verbose'), list('leaflet', FALSE))
+      verbose <- NULL   # CRAN check fix
+      #do.opties(c('cs','verbose'), list('leaflet', FALSE))
+      do.opties('verbose', list(FALSE))
       tmp <- opts$df
-      opts$df <- opts$cs <- NULL
+      opts$df <- NULL  # <- opts$cs
+      if (is.null(opts$coordinateSystem)) opts$coordinateSystem <- 'leaflet'
       out <- do.series(tmp)
     },
     
@@ -554,7 +555,7 @@ ec.util <- function(cmd='sf.series', ..., js=NULL, event='click') {
 #'  Make sure there is enough data for computation, 4+ values per boxplot.\cr\cr
 #' `format='treeTT'` expects data.frame _df_ columns _pathString,value,(optional itemStyle)_ for \link[data.tree]{FromDataFrameTable}.\cr
 #'  It will add column 'pct' with value percentage for each node. See example below.\cr\cr
-#' `format='borders'` expects _df_ columns _long,lat,region,subregion_ as in \link[ggplot2]{map_data}.\cr
+#' `format='borders'` expects _df_ columns _long,lat,region,subregion_ as in ggplot2::map_data.\cr
 #'  Result to be used as map in [ec.registerMap]. See borders code example in _examples.R_.\cr
 #'  This is a slow version for borders, another very fast one is offered as echarty extra, see website.\cr
 #'  
@@ -1024,116 +1025,184 @@ ec.data <- function(df, format='dataset', header=FALSE, ...) {
 #'   series.param= list(type='line', encode= list(x='Time', y='weight')),
 #' )
 #' @export
-ec.clmn <- function(col=NULL, ..., scale=1) {
-  if (is.null(scale)) scale <- 1
-  if (scale==1) scl <- 'return c;'
-  else {
-    if (scale==0) scl <- 'return Math.round(c);'
-    else scl <- paste0('return (parseFloat(c)*',scale,');') 
+ec.clmn <- function(col = NULL, ..., scale = 1) {
+
+  # ── Normalise scale ─────────────────────────────────────────────────────────
+  scale <- if (is.null(scale)) 1L else scale
+
+  # ── Shortcut: debug helpers (no column logic needed) ────────────────────────
+  if (!is.null(col)) {
+    if (col == "log")
+      return(htmlwidgets::JS(
+        "function(x) { console.log(x); return 'logged'; }"
+      ))
+
+    if (col == "json")
+      return(htmlwidgets::JS(
+        'function(x) {
+          return JSON.stringify(x, null, " ")
+            .replace(/{/g,            "<br>{")
+            .replace(/"value":/g,     "<br> value:")
+            .replace(/"data":/g,      "<br> data:")
+            .replace(/"seriesIndex":/g,"<br> seriesIndex:");
+        }'
+      ))
+
+    # ── Passthrough: raw JS arrow / function literal ─────────────────────────
+    if (is.character(col) && (grepl(") =>", col, fixed = TRUE) ||
+                               startsWith(col, "function(")))
+      return(htmlwidgets::JS(col))
   }
+
+  # ── Scale snippet (appended to single-value paths) ──────────────────────────
+  scale_expr <- switch(as.character(scale),
+    "1" = "return c;",
+    "0" = "return Math.round(c);",
+          paste0("return parseFloat(c) * ", scale, ";")
+  )
+
+  # ── NULL col → pie / sunburst (value only, no column lookup) ────────────────
+  if (is.null(col)) {
+    body <- paste0(
+      "let c = String(typeof x === 'object' ? x.value : x); ",
+      scale_expr
+    )
+    return(htmlwidgets::JS(paste0("function(x) { ", body, " }")))
+  }
+
   args <- list(...)
 
-  ret <- paste("pos=[]; c= String(typeof x=='object' ? x.value : x);", scl)
-  
-  if (is.null(col)) {}   # for pie,sunburst
-  else if (col=='log')
-    ret <- "console.log(x); return 'logged';"
-  else if (col=='json')
-    ret <- 'return JSON.stringify(x, null, " ").replace(/{/g,"<br>{").replace(/"value":/g,"<br> value:").replace(/"data":/g,"<br> data:").replace(/"seriesIndex":/g,"<br> seriesIndex:");'
-  else if (is.character(col) && (grepl(') =>', col) || 
-                                 startsWith(col, 'function(')))
-    return(htmlwidgets::JS(col))
-  else if (is.na(suppressWarnings(as.numeric(col)))) {
-  	
-	spf <- "var sprintf= (template, vals) => {
-j=0; if (template=='%@') return vals[j++];
-return template.replace(/%@|%L@|%LR@|%R@|%R2@|%M@/g, (m) => {
-  if (m=='%@') return vals[j++];
-  if (m=='%L@') return Number(vals[j++]).toLocaleString();
-  if (m=='%LR@') return Math.round(Number(vals[j++])).toLocaleString();
-  if (m=='%R@') return Math.round(Number(vals[j++]));
-  if (m=='%R2@') return Number(vals[j++]).toFixed(2);
-  if (m=='%M@') return x.marker;
-}); };"
-	
-	if (length(args)==0) {  # col is solitary name
-		args <- col; col <- '%@'   # replace
-	}
-	# col is sprintf
-
-	tmp <- suppressWarnings(as.numeric(args) -1)
-	if (all(is.na(tmp))) {   
-		# multiple column names (non-numeric strings)
-		# to find position in colnames, or JS dimensionNames
-	  tmp <- lenv$coNames 
-	  if (is.null(tmp)) {
-	    warning("ec.clmn: colnames missing.
-         Use ec.clmn after ec.data and/or inside ec.init(df).
-         Otherwise use column indexes instead of names.", call.=FALSE)
-	    return('column names?')
-	  }
-    # 		stopifnot("ec.clmn: colnames missing.
-    #     Use ec.clmn after ec.data and/or inside ec.init(df).
-    #     Otherwise use column indexes instead of names."= !is.null(tmp))
-		spf <- paste0(spf, " pos=['", paste(tmp, collapse="','"), "'];")
-		t0 <- sapply(args, \(s) toString(paste0("x.data['", s,"']")) )
-		t0 <- paste(t0, collapse=',')
-		t1 <- paste(args, collapse='`,`')
-		# ec.data(df,'values'): x is array for size, x.data.value for tooltip
-		# x.data = 
-		# 	1) object when ec.data('names')
-		# 	2) array only when ec.data('dataset') or df
-		#		3) x.data.value array with x.dimensionNames when ec.data('values')
-		# if series.dimensions=colnames(df) not set then x.dimensionNames may be wrong,
-		#   like ['lng', 'lat', 'value', 'value0',...]   console.log(x.dimensionNames);
-		# was if (x.dimensionNames && x.dimensionNames.length>0) pos= args.map(z => x.dimensionNames.indexOf(z)); else..
-		ret <- paste0( spf, " 
-aa= Array.isArray(x) ? x : x.data; tmp= null;
-if (aa && aa instanceof Object && !Array.isArray(aa)) {
-	tmp= Object.keys(aa); if (tmp.length==1 && tmp[0]=='value') aa= x.data.value;}
-if (tmp && tmp.length>1)
-	vv=[",t0,"];
-else {
- if (!aa || !aa.length) return `no data`;
- args= [`",t1,"`]; 
- pos= args.map(z => pos.indexOf(z));
- vv= pos.map(p => aa[p]); }")
-	}   # col.names
-	else {   
-		#  multiple numeric, they could be in x, x.data, x.value OR x[].value[]
-		#  in combo-charts (ec.band), get decimal portion as .value[] index
-		tmp <- paste(tmp, collapse=',')
-		ret <- paste0( spf, "ss=[",tmp,"];
-vv= ss.map((e) => { 
-  if (e<0) return x.value ? x.value : x;
-  i= Math.floor(e);
-  return x.value!=null ? x.value[i] : 
-         x.data!=null  ? x.data[i] : 
-         x[i]!=null    ? x[i] : `no data` });
-if (vv.length > 0)
-  vv = ss.map((e,idx) => {
-    if (typeof vv[idx] != 'object') return vv[idx];
-    f= Math.round(e % 1 *10) -1;
-    return vv[idx].value[f];
-  }); ")  # multi-series 1.2, 3.1
-	}  # col.indexes
-    
-	if (scale >0) ret <- paste(ret,"vv= vv.map(e => isNaN(e) | !e ? e : e*",scale,");")
-	if (scale==0) ret <- paste(ret,"vv= vv.map(e => isNaN(e) | !e ? e : Math.round(e));")
-	# keep backwards-quotes for handling '\n'
-	ret <- paste0(ret, "c= sprintf(`",col,"`, vv); return c; ")
-  } # col is string
-  else {      # col is solitary numeric
+  # ── Solitary numeric col index ───────────────────────────────────────────────
+  col_num <- suppressWarnings(as.numeric(col))
+  if (!is.na(col_num)) {
     if (length(args) > 0)
-      warning('col is numeric, others are ignored', call.=FALSE)
-    col <- as.numeric(col) - 1   # from R to JS counting
-    if (col >= 0)
-      ret <- paste0('c= String(x.value!=null ? x.value[',col,
-                    '] : x.data!=null ? x.data[',col,'] : x[',col,'] ); ',scl)
-  }  # col is solitary numeric
-  ret <- gsub('\t',' ', gsub('\n',' ', ret, fixed=T), fixed=T)
-  htmlwidgets::JS(paste0('function(x) {', ret, '}'))
+      warning("ec_clmn: col is numeric; extra arguments are ignored.", call. = FALSE)
+
+    idx  <- col_num - 1L          # R → JS zero-based index
+    body <- if (idx < 0) {
+      # negative index → return x or x.value directly
+      paste0("let c = String(x.value != null ? x.value : x); ", scale_expr)
+    } else {
+      paste0(
+        "const _v = x.value != null ? x.value[", idx, "]",
+        "         : x.data  != null ? x.data[",  idx, "]",
+        "         : x[", idx, "];",
+        "let c = String(_v != null ? _v : ''); ",
+        scale_expr
+      )
+    }
+    return(htmlwidgets::JS(paste0("function(x) { ", body, " }")))
+  }
+
+  # ── String col → sprintf template with one or more data columns ─────────────
+
+  # If col is a bare column name (no format specifiers), promote it to args
+  if (length(args) == 0) {
+    args <- col
+    col  <- "%@"
+  }
+
+  # Inline sprintf that handles ECharts-specific format tokens
+  js_sprintf <- "
+    const sprintf = (tmpl, vals) => {
+      if (tmpl === '%@') return vals[0];
+      let j = 0;
+      return tmpl.replace(/%@|%L@|%LR@|%R@|%R2@|%M@/g, (m) => {
+        if (m === '%@')  return vals[j++];
+        if (m === '%L@') return Number(vals[j++]).toLocaleString();
+        if (m === '%LR@') return Math.round(Number(vals[j++])).toLocaleString();
+        if (m === '%R@') return Math.round(Number(vals[j++]));
+        if (m === '%R2@') return Number(vals[j++]).toFixed(2);
+        if (m === '%M@') return x.marker;
+      });
+    };"
+
+  # Scale helper for arrays
+  scale_arr <- if (scale == 0) {
+    "vv = vv.map(v => (v == null || isNaN(v)) ? v : Math.round(v));"
+  } else if (scale != 1) {
+    paste0("vv = vv.map(v => (v == null || isNaN(v)) ? v : v * ", scale, ");")
+  } else {
+    ""
+  }
+
+  args_num <- suppressWarnings(as.numeric(unlist(args)) - 1L)
+
+  if (all(is.na(args_num))) {
+    # ── Column names ────────────────────────────────────────────────────────
+    col_names <- lenv$coNames
+    if (is.null(col_names)) {
+      warning(
+        "ec_clmn: column names unavailable.\n",
+        "  Call ec_clmn() after ec.data() or inside ec.init(df),\n",
+        "  or use column indexes instead of names.",
+        call. = FALSE
+      )
+      return("column names?")
+    }
+
+    # Build JS arrays for name→position lookup and direct object access
+    all_names_js  <- paste0("['", paste(col_names, collapse = "','"), "']")
+    data_accesses <- paste(
+      vapply(unlist(args), \(s) paste0("data['", s, "']"), character(1L)),
+      collapse = ", "
+    )
+    arg_names_js  <- paste(unlist(args), collapse = "`,`")
+
+    body <- paste0(
+      js_sprintf,
+      " const colNames = ", all_names_js, ";",
+      " let aa = Array.isArray(x) ? x : x.data;",
+      " let vv;",
+      " if (aa && !Array.isArray(aa) && aa instanceof Object) {",
+      "   const keys = Object.keys(aa);",
+      "   if (keys.length === 1 && keys[0] === 'value') aa = aa.value;",
+      " }",
+      " if (aa && !Array.isArray(aa) && Object.keys(aa).length > 1) {",
+      "   vv = [", data_accesses, "];",
+      " } else {",
+      "   if (!aa || !aa.length) return 'no data';",
+      "   const argNames = [`", arg_names_js, "`];",
+      "   const pos = argNames.map(z => colNames.indexOf(z));",
+      "   vv = pos.map(p => aa[p]);",
+      " }",
+      " ", scale_arr,
+      " const c = sprintf(`", col, "`, vv); return c;"
+    )
+
+  } else {
+    # ── Numeric column indexes ───────────────────────────────────────────────
+    idx_js <- paste(args_num, collapse = ", ")
+
+    body <- paste0(
+      js_sprintf,
+      " const ss = [", idx_js, "];",
+      " let vv = ss.map(e => {",
+      "   if (e < 0) return x.value != null ? x.value : x;",
+      "   const i = Math.floor(e);",
+      "   const raw = x.value != null ? x.value[i]",
+      "             : x.data  != null ? x.data[i]",
+      "             : x[i];",
+      "   return raw !== undefined ? raw : 'no data';",
+      " });",
+      # Second pass: handle fractional indexes → nested .value[] (ec.band)
+      # Guard against null slots before accessing .value
+      " vv = ss.map((e, i) => {",
+      "   const v = vv[i];",
+      "   if (v == null || typeof v !== 'object') return v;",
+      "   const f = Math.round(e % 1 * 10) - 1;",
+      "   return v.value != null ? v.value[f] : null;",
+      " });",
+      " ", scale_arr,
+      " const c = sprintf(`", col, "`, vv); return c;"
+    )
+  }
+
+  # Collapse to a single line (ECharts expects a JS string, not a file)
+  body_line <- gsub("\\s+", " ", trimws(body))
+  htmlwidgets::JS(paste0("function(x) { ", body_line, " }"))
 }
+  
 
 # ----------- Other utilities ----------------------
 

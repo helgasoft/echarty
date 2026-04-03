@@ -61,7 +61,7 @@ Returns a \code{list(dataset, series, xAxis, yAxis)} to set params in \link{ec.i
 Make sure there is enough data for computation, 4+ values per boxplot.\cr\cr
 \code{format='treeTT'} expects data.frame \emph{df} columns \emph{pathString,value,(optional itemStyle)} for \link[data.tree]{FromDataFrameTable}.\cr
 It will add column 'pct' with value percentage for each node. See example below.\cr\cr
-\code{format='borders'} expects \emph{df} columns \emph{long,lat,region,subregion} as in \link[ggplot2]{map_data}.\cr
+\code{format='borders'} expects \emph{df} columns \emph{long,lat,region,subregion} as in ggplot2::map_data.\cr
 Result to be used as map in \link{ec.registerMap}. See borders code example in \emph{examples.R}.\cr
 This is a slow version for borders, another very fast one is offered as echarty extra, see website.\cr
 }

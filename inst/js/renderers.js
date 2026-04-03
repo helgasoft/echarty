@@ -188,6 +188,7 @@ function riPolygon(params, api) {
             fill: color,
             stroke: echarts.color.lift(color)
         })
+        //,emphasisDisabled: true 
     };
 }
 

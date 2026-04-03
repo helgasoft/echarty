@@ -7,9 +7,11 @@
 #' @name -- Introduction --
 NULL
 
+# TODO: review if lenv are strictly required or if some state can be passed explicitly as function arguments
 lenv <- new.env(parent = emptyenv())
-lenv$coNames <- '' 
-# assign('aa', 11, envir=.ecv.colnames); get('aa', envir=.ecv.colnames)
+lenv$coNames <- ''
+lenv$pairs <- list(); spr <- '\u205B'
+# the following are read-only, could be made editable with unlockBinding()
 noAxisXY <- c('radar','parallel','themeRiver','map','gauge','pie','funnel','polar','chord',  
     'sunburst','tree','treemap','sankey','lines', 'liquidFill','wordCloud','segmentedDoughnut') # series
 noCoord <- c('polar','radar','singleAxis','parallelAxis','calendar')
@@ -72,7 +74,7 @@ renderCustom <- setNames(as.list(plf[[2]]), plf[[1]])
 #'  **Built-in plugins** \cr 
 #'  * leaflet - Leaflet maps with customizable tiles, see \href{https://github.com/gnijuohz/echarts-leaflet#readme}{source}\cr
 #'  * world  - world map with country boundaries, see \href{https://github.com/apache/echarts/tree/master/test/data/map/js}{source} \cr
-#'  * lottie - support for \href{https://lottiefiles.com}{lotties} \cr
+#'  * lottie - support for https://lottiefiles.com \cr
 #'  * ecStat - statistical tools, see\href{https://github.com/ecomfe/echarts-stat}{echarts-stat}\cr
 #'  * custom - renderers for echarty plugins like [ecr.band] and [ecr.ebars] \cr 
 #'  
@@ -172,11 +174,13 @@ ec.init <- function( df= NULL, preset= TRUE, ...,  #ctype= 'scatter',
   elementId <- opt1$elementId;  js <- opt1$js
   ask <- ifelse(!is.null(opt1$ask), opt1$ask, FALSE)
   ctype <- if (is.null(opt1$ctype)) 'scatter' else opt1$ctype
+  
   iniOpts <- if (!is.null(opt1$iniOpts)) opt1$iniOpts else list()
   # set defaults + backward compat:
   if (is.null(iniOpts$renderer)) iniOpts$renderer <- if (is.null(opt1$renderer)) 'canvas' else tolower(opt1$renderer)
   if (is.null(iniOpts$locale)) iniOpts$locale <- if (is.null(opt1$locale)) 'EN' else toupper(opt1$locale)
   if (is.null(iniOpts$useDirtyRect)) iniOpts$useDirtyRect <- if (is.null(opt1$useDirtyRect)) FALSE else opt1$useDirtyRect
+  # other iniOpts are devicePixelRatio, ssr, useCoarsePointer, pointerSize
 
   xtKey <- if (is.null(opt1$xtKey)) 'XkeyX' else opt1$xtKey
   # allow debug feedback thru cat() in R & JS code
@@ -189,7 +193,6 @@ ec.init <- function( df= NULL, preset= TRUE, ...,  #ctype= 'scatter',
   x <- list(
     iniOpts = iniOpts,
     jcode = js, dbg = dbg
-    #,opts = opt1
   )
   for (ii in c('theme', 'on','off','capture','group',            # instance obj
     'connect','disconnect','registerMap','registerCustomSeries', # echarts obj
@@ -203,11 +206,11 @@ ec.init <- function( df= NULL, preset= TRUE, ...,  #ctype= 'scatter',
     })
   x$opts <- opt1
 
-  axis2d <- c('pictorialBar','candlestick','boxplot','scatterGL') #'custom',
   isCrosstalk <- FALSE; deps <- NULL
   xyNamesCS <- function(ser) {
+    # TODO: move out as .serieNamesCoord(ser, opt1, ..?)
     # set x,y names + cs(coordinateSystem), called by {loop all series} or tl.series
-    # careful: setting x$opts$ but could be wt$x$opts coming from tl.series
+    axis2d <- c('pictorialBar','candlestick','boxplot','scatterGL') #'custom',
     xtem <- 'x'; ytem <- 'y'
     if (is.null(ser$coordinateSystem)) {   # assist with coordinateSystem
       ser$coordinateSystem <- 'unknown'
@@ -230,16 +233,17 @@ ec.init <- function( df= NULL, preset= TRUE, ...,  #ctype= 'scatter',
     }
     if (!is.null(opt1$calendar) && ser$type %in% c('heatmap','scatter','effectScatter'))
       ser$coordinateSystem <- 'calendar'
-    #if (!is.null(opt1$radar)) series?$type <- 'radar'
-    if (ser$type == 'parallel') {
-      if (is.null(opt1$parallelAxis) && !is.null(df))
-        x$opts$parallelAxis <<- ec.paxis(df)
-      if (!is.null(grnm) && tail(colnames(df),1) != grnm)
-        stop(paste0("ec.init: df group column '",grnm,"' should be last for parallel chart"))
-    }
-    
-    if (ser$type == 'themeRiver')
-      x$opts$singleAxis <<- .merlis(x$opts$singleAxis, list(min='dataMin', max='dataMax'))
+
+    # #careful: setting x$opts$ but could be wt$x$opts coming from tl.series
+    # if (ser$type == 'parallel') {
+    #   if (is.null(opt1$parallelAxis) && !is.null(df))
+    #     x$opts$parallelAxis <<- ec.paxis(df)
+    #   if (!is.null(grnm) && tail(colnames(df),1) != grnm)
+    #     stop(paste0("ec.init: df group column '",grnm,"' should be last for parallel chart"))
+    # }
+    # 
+    # if (ser$type == 'themeRiver')
+    #   x$opts$singleAxis <<- .merlis(x$opts$singleAxis, list(min='dataMin', max='dataMax'))
     # some series may need axes, others not. collect decisions for all series
     if (ser$type %in% noAxisXY 
         || ser$coordinateSystem %in% c('none','matrix','geo','leaflet','globe','geo3D','cartesian3D','singleAxis')
@@ -260,9 +264,9 @@ ec.init <- function( df= NULL, preset= TRUE, ...,  #ctype= 'scatter',
       ser$coordinateSystem <- NULL
     return(list(x=xtem, y=ytem, z='z', c=ser$coordinateSystem))
   }
-  doVMap <- function(wid) {
+  
+  doVMap <- function(vm) {
     # visualMap assist: auto add min/max/calculable   (categories==piecewise)
-    vm <- wid$opts$visualMap
     out <- NULL
     if (!is.null(df) && !is.null(vm) &&
         is.null(vm$min) && is.null(vm$max) && is.null(vm$categories) &&
@@ -342,55 +346,17 @@ ec.init <- function( df= NULL, preset= TRUE, ...,  #ctype= 'scatter',
         if (dbg) cat('\n encode$data$value:',vv)
       }  #value
       
-      opairs <- hvals <- list();  spr <- '\u205B'
-      process_named_nested_lists <- function(x, path = NULL) {
-        # If the current element is not a list, process it and return.
-        if (!is.list(x)) {
-          if (!is.null(names(x)) && length(names(x)) > 0) {
-            # handles named atomic vectors or single named elements
-            #message(paste("\nProcessing named element at path:", paste(path, collapse = "."), "Name:", names(x), "Value:", x))
-          } else {
-            # handles unnamed atomic vectors or single unnamed elements
-            message(paste("ERROR unnamed element at path:", paste(path, collapse = "."), "Value:", x))
-          }
-          #return(NULL)  # uncomment if need to process above
-        }
-      
-        # Iterate through elements of the current list
-        for (i in seq_along(x)) {
-          current_name <- names(x)[i]
-          current_element <- x[[i]]
-      
-          # Construct the current path
-          new_path <- if (is.null(path)) current_name else c(path, current_name)
-      
-          # If the current element is a list, recurse
-          if (is.list(current_element)) {
-            #message(paste("Entering nested list at path:", paste(new_path, collapse = ".")))
-            process_named_nested_lists(current_element, new_path)
-          } else {
-            # named element (not a list)
-            if (!is.null(current_name) && current_name != "") {
-              #message(paste("\nProcessing named element at path:", paste(new_path, collapse = "."), "Name:", current_name, "Value:", current_element))
-              opairs[paste(new_path, collapse=spr)] <<- current_element
-            } else {
-              # an unnamed element (not a list)
-              message(paste("ERROR unnamed element at path:", paste(new_path, collapse=spr), "Value:", current_element))
-            }
-          }
-        }
-      }
-      
-      process_named_nested_lists(series.param$encode$data)
-      for(nm in names(opairs)) {    # rename df columns!
+      hvals <- list(); lenv$pairs <- list()
+      .process_named_nested_lists(series.param$encode$data)   # fill lenv$pairs
+      for(nm in names(lenv$pairs)) {    # rename df columns
         #if (grepl(spr, nm, fixed=TRUE)) {  # may have simple values
-          if (opairs[nm] %in% names(df)) {
+          if (lenv$pairs[nm] %in% names(df)) {
             dname <- if (grepl(spr, nm, fixed=TRUE)) paste0(nm,spr) else nm
-            names(df) <- gsub(opairs[nm], dname, names(df))
+            names(df) <- gsub(lenv$pairs[nm], dname, names(df))
             # delete from encode$data
             series.param$encode$data[nm] <- NULL
           } else { # hard value
-            hvals <- append(hvals, list(opairs[nm]))
+            hvals <- append(hvals, list(lenv$pairs[nm]))
           }
         #}
       }
@@ -432,7 +398,7 @@ ec.init <- function( df= NULL, preset= TRUE, ...,  #ctype= 'scatter',
           type= 'filter', config= list(dimension= grnm, '='=nm)), id= nm)))
         d.One <- list(name= as.character(nm),
                      type= if (is.null(ctype)) 'scatter' else ctype)
-        if (exists('opairs')) {    # column-to-style for grouped series
+        if (exists('hvals')) {    # column-to-style for grouped series
           fdf <- df |> filter(get(grnm) == nm)
           xxl <- ec.data(fdf, 'names', nasep=spr) 
           d.One$data <- lapply(xxl, \(x) { modifyList(x, hv) })
@@ -446,7 +412,7 @@ ec.init <- function( df= NULL, preset= TRUE, ...,  #ctype= 'scatter',
       if (preset) {
         if (is.null(opt1$series)) x$opts$series <- sers
         if (is.null(opt1$legend)) x$opts$legend <- list(show=TRUE)  #legd
-        if (exists('opairs')) x$opts$dataset <- NULL  # dataset needed by timeline > incompatible
+        if (exists('hvals')) x$opts$dataset <- NULL  # dataset needed by timeline > incompatible
         
         # group by any column  (prevent group columns from becoming X/Y axis?)
         pos <- which(colnames(df)==grnm)  # find position of group column
@@ -463,7 +429,7 @@ ec.init <- function( df= NULL, preset= TRUE, ...,  #ctype= 'scatter',
     }
     else {    # non-grouped
       
-      if (exists('opairs')) {
+      if (exists('hvals')) {
         xxl <- ec.data(df, 'names', nasep=spr)
         # finally merge hard values (if any) to all items inside series.data
         series.param$data <- lapply(xxl, \(x) { modifyList(x, hv) })
@@ -472,7 +438,7 @@ ec.init <- function( df= NULL, preset= TRUE, ...,  #ctype= 'scatter',
         x$opts$dataset <- list(list(dimensions= colnames(df), source= ec.data(df)))
     }
   
-    tmp <- doVMap(x)
+    tmp <- doVMap(x$opts$visualMap)
     x$opts$visualMap <- .merlis(x$opts$visualMap, tmp)
   }   # end df
 
@@ -524,12 +490,20 @@ ec.init <- function( df= NULL, preset= TRUE, ...,  #ctype= 'scatter',
       }
       if (!is.null(ss$type)) ss$type <- 'custom'
     }
+    
+    if (ss$type == 'parallel') {
+      if (is.null(opt1$parallelAxis) && !is.null(df))
+        x$opts$parallelAxis <<- ec.paxis(df)
+      if (!is.null(grnm) && tail(colnames(df),1) != grnm)
+        stop(paste0("ec.init: df group column '",grnm,"' should be last for parallel chart"))
+    }
+    if (ss$type == 'themeRiver')
+      x$opts$singleAxis <<- .merlis(x$opts$singleAxis, list(min='dataMin', max='dataMax'))
+    if (ss$type=='map' && is.null(ss$geoIndex))
+      ss <- .merlis(ss, list(geoIndex=1))
 
     tmp <- xyNamesCS(ss)
     if (!is.null(tmp$c)) ss$coordinateSystem <- tmp$c
-
-    if (ss$type=='map' && is.null(ss$geoIndex))
-      ss <- .merlis(ss, list(geoIndex=1))
     
     # add encode to series after grouping, if missing 
     if (!(colX==1 && colY==2)) {
@@ -625,7 +599,7 @@ ec.init <- function( df= NULL, preset= TRUE, ...,  #ctype= 'scatter',
       } 
     	else if (!is.null(x$opts$dataset)) {   # dataset     
     	  # TODO: ignore when format is [{name=...},..]  ?
-    	  # TODO: types of multiple xAxis[] (when no series$encode)
+    	  # TODO: types of multiple xAxis[] when no series$encode
         dset <- x$opts$dataset[[1]]
         r1 <- dset$source[[1]]
         if (!is.null(dset$dimensions)) cnms <- dset$dimensions
@@ -682,7 +656,18 @@ ec.init <- function( df= NULL, preset= TRUE, ...,  #ctype= 'scatter',
     ),
     dependencies = deps
   )
-  #if (dbg) cat('\naxis2d=',axis2d)
+  
+  if (isCrosstalk) {  # add transformation filter
+    tmp <- list(list( 
+      id= 'Xtalk',
+      transform = list(type= 'filter', 
+                       config= list(dimension= xtKey, reg='^')
+                       #"^(50|56|62|68|74|152|158)$")
+    )))
+    wt$x$opts$dataset <- append(wt$x$opts$dataset, tmp)
+    if ('series' %in% names(wt$x$opts))
+      wt$x$opts$series[[1]]$datasetId= 'Xtalk'
+  }
   
   tmp <- getOption('echarty.font')
   if (!is.null(tmp))
@@ -703,7 +688,8 @@ ec.init <- function( df= NULL, preset= TRUE, ...,  #ctype= 'scatter',
     }
   }
   
-  # ------------- plugins loading -----------------------------
+  # ------------- plugins loading ------------ 
+  # TODO: wt <- .setPlugins(wt)
   opt1 <- wt$x$opts
   load <- opt1$load;  wt$x$opts$load <- NULL
   if (length(load)==1 && grepl(',', load, fixed=TRUE))
@@ -876,33 +862,21 @@ ec.init <- function( df= NULL, preset= TRUE, ...,  #ctype= 'scatter',
       wt <- ec.plugjs(wt, pg, ask)
   }
   
-  if (isCrosstalk) {  # add transformation filter
-    tmp <- list(list( 
-      id= 'Xtalk',
-      transform = list(type= 'filter', 
-                       config= list(dimension= xtKey, reg='^')
-                       #"^(50|56|62|68|74|152|158)$")
-    )))
-    wt$x$opts$dataset <- append(wt$x$opts$dataset, tmp)
-    if ('series' %in% names(opt1))
-      wt$x$opts$series[[1]]$datasetId= 'Xtalk'
-  }
-  
   
   # ------------- timeline is last -----------------
   if (is.null(tl.series) && is.null(opt1$timeline)) return(wt)
   if (!preset) return(wt)
   if (!is.null(opt1$options) && !is.null(opt1$timeline))
     return(wt)    # both set manually
+  if (is.null(df) || !is.grouped_df(df))
+    stop('ec.init: timeline requires a grouped data.frame df')
 
   if (is.null(tl.series) && 
       !is.null(opt1$timeline) && 
       !is.null(series.param))
     tl.series <- series.param
-  
-  if (is.null(df) || !is.grouped_df(df))
-    stop('ec.init: timeline requires a grouped data.frame df')
 
+  #---------- TODO: wt <- .addTimeline(wt, tl.series)
   if (is.null(tl.series$encode)) {
     tl.series$encode <- list(x=colX, y=colY)  # set default for non-map series
     if ('3D' %in% load) tl.series$encode$z <- 3
@@ -1563,7 +1537,7 @@ ec.plugjs <- function(wt=NULL, source=NULL, ask=FALSE) {
   }
   decType('xAxis', 'gridIndex')
   decType('yAxis', 'gridIndex')
-  decType('visualMap', c('dimension','categories','seriesIndex','matrixIndex','calendarIndex'))
+  decType('visualMap', c('dimension','seriesIndex','matrixIndex','calendarIndex'))  #,'categories'
   # many top elements may have matrixIndex or calendarIndex
   opa <- lapply(opa, \(xx) { 
     if (any(names(xx)=='matrixIndex')) xx$matrixIndex <- xx$matrixIndex -1
@@ -1594,6 +1568,44 @@ ec.plugjs <- function(wt=NULL, source=NULL, ask=FALSE) {
   ifelse(is.null(check),TRUE,FALSE)
 }
 
+# recursive func for column-to-style
+.process_named_nested_lists <- function(x, path= NULL) {
+  # If the current element is not a list, process it and return.
+  if (!is.list(x)) {
+    if (!is.null(names(x)) && length(names(x)) > 0) {
+      # handles named atomic vectors or single named elements
+      #message(paste("\nProcessing named element at path:", paste(path, collapse = "."), "Name:", names(x), "Value:", x))
+    } else {
+      # handles unnamed atomic vectors or single unnamed elements
+      message(paste("ERROR unnamed element at path:", paste(path, collapse = "."), "Value:", x))
+    }
+    #return(NULL)  # uncomment if need to process above
+  }
+
+  # Iterate through elements of the current list
+  for (i in seq_along(x)) {
+    current_name <- names(x)[i]
+    current_element <- x[[i]]
+
+    # Construct the current path
+    new_path <- if (is.null(path)) current_name else c(path, current_name)
+
+    # If the current element is a list, recurse
+    if (is.list(current_element)) {
+      #message(paste("Entering nested list at path:", paste(new_path, collapse = ".")))
+      .process_named_nested_lists(current_element, new_path)
+    } else {
+      # named element (not a list)
+      if (!is.null(current_name) && current_name != "") {
+        #message(paste("\nProcessing named element at path:", paste(new_path, collapse = "."), "Name:", current_name, "Value:", current_element))
+        lenv$pairs[paste(new_path, collapse=spr)] <- current_element
+      } else {
+        # an unnamed element (not a list)
+        message(paste("ERROR unnamed element at path:", paste(new_path, collapse=spr), "Value:", current_element))
+      }
+    }
+  }
+}
 
 #  ------------- Global Options -----------------
 #' 

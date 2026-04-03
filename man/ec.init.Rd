@@ -81,7 +81,7 @@ vector: \verb{     } see code in \href{https://github.com/helgasoft/echarty/blob
 \itemize{
 \item leaflet - Leaflet maps with customizable tiles, see \href{https://github.com/gnijuohz/echarts-leaflet#readme}{source}\cr
 \item world  - world map with country boundaries, see \href{https://github.com/apache/echarts/tree/master/test/data/map/js}{source} \cr
-\item lottie - support for \href{https://lottiefiles.com}{lotties} \cr
+\item lottie - support for https://lottiefiles.com \cr
 \item ecStat - statistical tools, see\href{https://github.com/ecomfe/echarts-stat}{echarts-stat}\cr
 \item custom - renderers for echarty plugins like \link{ecr.band} and \link{ecr.ebars} \cr
 }

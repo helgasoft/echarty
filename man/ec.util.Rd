@@ -22,16 +22,15 @@ tabset, table layout, support for GIS shapefiles through library 'sf'
 \strong{cmd = 'sf.series'}\cr
 \verb{     } Build \emph{leaflet} or \href{https://echarts.apache.org/en/option.html#geo.map}{geo} map series from shapefiles.\cr
 \verb{     } Supported types: POINT, MULTIPOINT, LINESTRING, MULTILINESTRING, POLYGON, MULTIPOLYGON \cr
-\verb{     } Coordinate system is \emph{leaflet}(default), \emph{geo} or \emph{cartesian3D} (for POINT(xyz))\cr
+\verb{     } Coordinate system could be \emph{leaflet}(default), \emph{geo}, \emph{cartesian2D} or \emph{cartesian3D}(for POINT(xyz))\cr
 \verb{     } Limitations:\cr
-\verb{     }\verb{     } polygons can have only their name in tooltip,  \cr
+\verb{     }\verb{     } polygons can have only their name in tooltip, need \emph{load='custom'} for rendering \cr
 \verb{     }\verb{     } assumes Geodetic CRS is WGS 84, for conversion use \link[sf]{st_transform} with \emph{crs=4326}.\cr
 \verb{     } Parameters:\cr
 \verb{     }\verb{     } df - value from \link[sf]{st_read}\cr
-\verb{     }\verb{     } nid - optional column name for name-id used in tooltips\cr
-\verb{     }\verb{     } cs - optional \emph{coordinateSystem} value, default 'leaflet'\cr
+\verb{     }\verb{     } nid - optional column name used in tooltip formatter\cr
 \verb{     }\verb{     } verbose - optional, print shapefile item names in console\cr
-\verb{     } Returns a list of chart series\cr
+\verb{     } Returns a list of chart series\cr\cr
 \strong{cmd = 'sf.bbox'}\cr
 \verb{     } Returns JavaScript code to position a map inside a bounding box from \link[sf]{st_bbox}, for leaflet only.\cr\cr
 \strong{cmd = 'sf.unzip'}\cr

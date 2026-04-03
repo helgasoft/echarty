@@ -183,7 +183,7 @@ test_that("ecr.band tooltips", {
        )  # 3.3= upper_serie_index +.+ index_of_column_inside
   )
   expect_equal(p$x$opts$series[[2]]$stack, 'Band')
-  expect_match(p$x$opts$tooltip$formatter, 'ss=[2.3,0.2,1.2]', fixed=TRUE)
+  expect_match(p$x$opts$tooltip$formatter, 'ss = [2.3, 0.2, 1.2]', fixed=TRUE)
 })
 
 test_that("leaflet with geoJson", {

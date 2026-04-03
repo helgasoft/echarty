@@ -3,8 +3,10 @@
 # echarty 1.7.2  in development
 
 * added _matrixIndex_, _calendarIndex_ and other indexes in .renumber
-* fixed some _globe,3D_ presets
-* new v.6 custom series loaded by _renderItem_ name only (no load/ask needed)
+* fixed some _globe, 3D_ presets
+* new v.6 custom series can be loaded by _renderItem_ name only, no load/ask needed
+* cmd='sf.series' in _ec.util_: removed parameter _cs_, use _coordinateSystem_ instead
+* _ec.clmn_ refactored
 
 # echarty 1.7.1  on CRAN
 

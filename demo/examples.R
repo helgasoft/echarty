@@ -281,6 +281,13 @@ if (interactive()) {
 
 
 #------ Heatmap -----
+data.frame(
+  x = rep(seq_len(4), 5) |> as.character(),   # = category-type axis
+  y = rep(seq_len(5), each= 4) |> as.character(),
+  z = rnorm(4*5)
+) |>
+ec.init( ctype= 'heatmap', visualMap= list(calculable= T) )
+
 times <- c(5,1,0,0,0,0,0,0,0,0,0,2,4,1,1,3,4,6,4,4,3,3,2,5,7,0,0,0,0,0,
            0,0,0,0,5,2,2,6,9,11,6,7,8,12,5,5,7,2,1,1,0,0,0,0,0,0,0,0,3,2,
            1,9,8,10,6,5,5,5,7,4,2,4,7,3,0,0,0,0,0,0,1,0,5,4,7,14,13,12,9,5,
@@ -684,6 +691,36 @@ ec.init(load= 'custom', title= list(text='flame tree', bottom='5%'),
 )
 
 
+#------ violin v.6 -----
+iris |> relocate(Species) |>   # X-axis column to be first
+ec.init(
+  tooltip = list(show=T), 
+  xAxis = list(type= "category", jitter= 50, jitterOverlap= F), 
+  series = list(
+    list(renderItem= "violin", colorBy= "item",
+         itemPayload = list(areaOpacity= 0.6)), 
+    list(type= "scatter", colorBy= "item", symbolSize= 8)
+  )
+)
+
+#------ contour (density) v.6 -----
+ec.init(cars,  
+  legend= list(show=T),
+  series= list(
+    list(type= 'scatter', name='scat', color='brown'),
+    list(
+      renderItem= "contour",
+      itemPayload= list(
+        itemStyle= list(color= c("#5470c6", "#91cc75", "#fac858", "#ee6666")),
+        lineStyle= list(opacity= 0.5),
+        bandwidth= 20, thresholds= 8
+      ), 
+      tooltip= list(formatter='{c}') # contour tooltip is useless
+    )
+  ),
+  dataZoom= list(type='inside'), tooltip= list(show=T)
+)
+
 #------ segmented donut v.6 -----
 ec.init(
   #load= 'https://cdn.jsdelivr.net/gh/apache/echarts-custom-series@main/custom-series/segmentedDoughnut/dist/segmented-doughnut.auto.js',
@@ -707,18 +744,15 @@ temperatureData = list(
   list( time= 400000000, min= 26.2, max= 33.1, avg= 29.3 ),
   list( time= 500000000, min= 24.9, max= 31.4, avg= 27.8 )
 )
-url <- 'https://cdn.jsdelivr.net/gh/apache/echarts-custom-series@main/custom-series'
 ec.init(
-  load= c( paste0(url,'/lineRange/dist/line-range.auto.min.js'),
-           paste0(url,'/barRange/dist/bar-range.auto.min.js') ),
-  ask= 'loadRemote',
-  xAxis= list(type= "category"),   # other types like time,value do not work (bug)
-  dataset= list(source= temperatureData), tooltip= list(trigger= "axis"), legend= list(top= 15), 
+  xAxis= list(type= "category"),   # other types like time,value do not work (ECharts bug)
+  dataset= list(source= temperatureData), 
+  tooltip= list(trigger= "axis"), legend= list(top= 15), 
   series= list(
   	list(type= "line", name= "Average", smooth= TRUE, encode= list(x= "time", y= "avg", tooltip= "avg" ) ), 
-  	list(type= "custom", name= "lineRange", renderItem= "lineRange", itemPayload= list(areaStyle= list(color= "red")),
+  	list(renderItem= "lineRange", name= "lineRange", itemPayload= list(areaStyle= list(color= "red")),
          encode= list(x= "time", y= list("min", "max"), tooltip= list("min", "max")) )
-  	,list(type= "custom", name= "barRange", renderItem= "barRange",
+  	,list(renderItem= "barRange", name= "barRange", 
          encode= list(x= "time", y= list("min", "max"), tooltip= list("min", "max")) )
   )
 )
@@ -748,7 +782,7 @@ ec.init(
   visualMap= list(type='continuous', min=-1,max=1, dimension=3,
                  calculable=TRUE, orient='horizontal', bottom=0, left='center'),
   series= list(list(type= 'heatmap', coordinateSystem= 'matrix',
-                    data= ec.data(datam),
+    data= ec.data(datam),
     label= list(show=TRUE, formatter= ec.clmn('%R2@', 3))
   ))
 )

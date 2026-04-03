@@ -13,10 +13,11 @@ test_that("ec.clmn with sprintf, column indexes and names", {
                        symbolSize= ec.clmn(3, scale=3))
   )
   tmp <- p$x$opts$series[[1]]$itemStyle$color
-  expect_true(tmp == "function(x) {c= String(x.value!=null ? x.value[5] : x.data!=null ? x.data[5] : x[5] ); return c;}")
+  #expect_true(tmp == "function(x) {c= String(x.value!=null ? x.value[5] : x.data!=null ? x.data[5] : x[5] ); return c;}")
+  expect_true(startsWith(tmp, "function(x) { const _v = x.value != null ? x.value[5]"))
   expect_s3_class(tmp, 'JS_EVAL')
   tmp <-  p$x$opts$series[[1]]$symbolSize
-  expect_true(startsWith(tmp, "function(x) {c= String(x.value!=null ? x.value[2]"))
+  expect_true(startsWith(tmp, "function(x) { const _v = x.value != null ? x.value[2]"))
   expect_s3_class(tmp, 'JS_EVAL')
   tmp <- p$x$opts$tooltip$formatter
   expect_match(tmp, "sprintf(`Petal Length %@, Width %@`, vv)", fixed=TRUE)
@@ -40,11 +41,16 @@ test_that("ec.clmn with sprintf, column indexes and names", {
     #,tooltip= list(formatter= ec.clmn('Length %@, Width %@', 'Petal.Length','Petal.Width')) # use 3,4
   )
   tmp <- p$x$opts$series[[1]]
-  expect_match(tmp$tooltip$formatter, "vv=[x.data['Petal.Length'],x.data['Petal.Width']];", fixed=TRUE)
-  expect_match(tmp$itemStyle$color, "vv=[x.data['color']];", fixed=TRUE)
-  expect_match(tmp$itemStyle$color, "pos=['Sepal.Length'", fixed=TRUE)
-  expect_match(tmp$symbolSize, "vv=[x.data['Petal.Length']];", fixed=TRUE)
-  expect_match(p$x$opts$yAxis$axisLabel$formatter, "ss=[-2]", fixed=TRUE)
+  #expect_match(tmp$tooltip$formatter, "vv=[x.data['Petal.Length'],x.data['Petal.Width']];", fixed=TRUE)
+  #expect_match(tmp$itemStyle$color, "vv=[x.data['color']];", fixed=TRUE)
+  #expect_match(tmp$itemStyle$color, "pos=['Sepal.Length'", fixed=TRUE)
+  #expect_match(tmp$symbolSize, "vv=[x.data['Petal.Length']];", fixed=TRUE)
+  #expect_match(p$x$opts$yAxis$axisLabel$formatter, "ss=[-2]", fixed=TRUE)
+  expect_match(tmp$tooltip$formatter, "vv = [data['Petal.Length'], data['Petal.Width']];", fixed=TRUE)
+  expect_match(tmp$itemStyle$color, "vv = [data['color']", fixed=TRUE)
+  expect_match(tmp$itemStyle$color, "colNames = ['Sepal.Length',", fixed=TRUE)
+  expect_match(tmp$symbolSize, "vv = [data['Petal.Length']];", fixed=TRUE)
+  expect_match(p$x$opts$yAxis$axisLabel$formatter, "ss = [-2];", fixed=TRUE)
   
   # data + column names
   tmp <- data.frame(name=names(islands), value=islands) |> 
@@ -56,11 +62,11 @@ test_that("ec.clmn with sprintf, column indexes and names", {
             tooltip= list(formatter= ec.clmn("%@ <br> %L@", 'name','value'))) 
   )
   tmp <- p$x$opts$series[[1]]$tooltip$formatter
-  expect_equal(length(unlist(gregexpr('x.data', tmp ))), 4)
-  expect_match(tmp, "[x.data['name'],x.data['value']]", fixed=TRUE)
+  expect_equal(length(unlist(gregexpr('x.data', tmp ))), 1)
+  expect_match(tmp, "argNames = [`name`,`value`];", fixed=TRUE)
   expect_s3_class(tmp, 'JS_EVAL')
   tmp <- p$x$opts$series[[1]]$label$formatter
-  expect_equal(length(unlist(gregexpr('x.data', tmp ))), 3)
+  expect_match(tmp, "argNames = [`value`];", fixed=TRUE)
   expect_is(tmp, 'JS_EVAL')
   
   # leaflet + mixed
@@ -70,8 +76,8 @@ test_that("ec.clmn with sprintf, column indexes and names", {
     series.param= list(symbolSize= ec.clmn('size', scale=2)),
     tooltip= list(formatter= ec.clmn('magnitude %@', 'mag')) # 'mag' is 4th col
   )
-  expect_true(grepl("x.data['mag']", p$x$opts$tooltip$formatter, fixed=TRUE ))
-  expect_true(grepl("[x.data['size']]", p$x$opts$series[[1]]$symbolSize, fixed=TRUE ))
+  expect_true(grepl("argNames = [`mag`];", p$x$opts$tooltip$formatter, fixed=TRUE ))
+  expect_true(grepl("[data['size']]", p$x$opts$series[[1]]$symbolSize, fixed=TRUE ))
   
   # data + mixed
   isl <- data.frame(name=names(islands), value=islands) |> arrange(desc(value)) |> 
@@ -84,7 +90,7 @@ test_that("ec.clmn with sprintf, column indexes and names", {
                        label=list(position='inside', 
           formatter=ec.clmn("%@\n%@", 'name','value')) ))
   )
-  expect_equal("function(x) {pos=[]; c= String(typeof x=='object' ? x.value : x); return c;}",
+  expect_equal("function(x) { let c = String(typeof x === 'object' ? x.value : x); return c; }",
                as.character(p$x$opts$tooltip$formatter) )
   expect_equal(p$x$opts$series[[1]]$data[[1]]$name, 'Asia')
   
