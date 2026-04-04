@@ -24,8 +24,8 @@ Suggests:
 Config/Needs/wasm:
   htmlwidgets,
   dplyr,
-  data.tree
-  jsonlite
+  data.tree,
+  jsonlite,
   leaflet
 RoxygenNote: 7.3.3
 Roxygen: list(markdown = TRUE)
