@@ -10,7 +10,7 @@ Depends: R (>= 4.1.0)
 Imports:
   htmlwidgets,
   dplyr (>= 0.7.0),
-  data.tree (>= 1.0.0),
+  data.tree (>= 1.0.0)
 Suggests:
   htmltools (>= 0.5.0),
   shiny (>= 1.7.0),
@@ -21,6 +21,12 @@ Suggests:
   leaflet (>= 2.2.0),
   knitr,
   rmarkdown
+Config/Needs/wasm:
+  htmlwidgets,
+  dplyr,
+  data.tree
+  jsonlite
+  leaflet
 RoxygenNote: 7.3.3
 Roxygen: list(markdown = TRUE)
 License: Apache License (>= 2.0)
