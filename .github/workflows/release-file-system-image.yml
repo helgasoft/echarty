@@ -19,7 +19,7 @@ jobs:
 
       - name: Build WebAssembly file system image
         uses: r-wasm/actions/build-file-system-image@v1
-        with:
+        #with:
           # Optional: install extra system libraries needed by your package
           # (same names as apt packages in the webr build environment)
           # packages: 'libxml2-dev libcurl4-openssl-dev'
