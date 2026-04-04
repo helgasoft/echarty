@@ -1,18 +1,36 @@
 # Workflow derived from https://github.com/r-wasm/actions/tree/v2/examples
 # Need help debugging build failures? Start at https://github.com/r-lib/actions#where-to-find-help
+name: Build and deploy wasm R package image
+
 on:
   push:
     tags:
       - 'v*'
   workflow_dispatch:
 
-name: Build and deploy wasm R package image
-
 jobs:
-  release-file-system-image:
-    uses: r-wasm/actions/.github/workflows/release-file-system-image.yml@v2
+  build:
+    runs-on: ubuntu-latest
     permissions:
-      # For publishing artifact files to the release
       contents: write
-      # To download GitHub Packages within action
-      repository-projects: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build WebAssembly file system image
+        uses: r-wasm/actions/build-file-system-image@v1
+        with:
+          # Optional: install extra system libraries needed by your package
+          # (same names as apt packages in the webr build environment)
+          # packages: 'libxml2-dev libcurl4-openssl-dev'
+
+          # Optional: pin to a specific webr version
+          # webr-version: '0.4.1'
+
+          # Optional: extra R packages to bundle alongside yours
+          # r-packages: 'dplyr ggplot2'
+
+      - name: Upload to GitHub Release
+        uses: r-wasm/actions/upload-release-file-system-image@v1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
