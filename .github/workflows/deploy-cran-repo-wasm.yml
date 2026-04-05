@@ -1,0 +1,22 @@
+# Workflow derived from https://github.com/r-wasm/actions/tree/v2/examples
+# Need help debugging build failures? Start at https://github.com/r-lib/actions#where-to-find-help
+on:
+  push:
+    # Only build on main or master branch
+    branches: [main, master]
+  # Or when triggered manually
+  workflow_dispatch: {}
+
+name: Build and deploy wasm R package repository
+
+jobs:
+  # Reads `./packages` for package references to put
+  # into a CRAN-like repository hosted on GitHub pages
+  deploy-cran-repo:
+    uses: r-wasm/actions/.github/workflows/deploy-cran-repo.yml@v2
+    permissions:
+      # To download GitHub Packages within action
+      repository-projects: read
+      # For publishing to pages environment
+      pages: write
+      id-token: write
