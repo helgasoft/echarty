@@ -10,68 +10,68 @@
 #' @param event Optional event name for cmd='morph', default is 'click'.
 #' @details 
 #' **cmd = 'sf.series'**\cr
-#' \verb{     } Build _leaflet_ or \href{https://echarts.apache.org/en/option.html#geo.map}{geo} map series from shapefiles.\cr
-#' \verb{     } Supported types: POINT, MULTIPOINT, LINESTRING, MULTILINESTRING, POLYGON, MULTIPOLYGON \cr
-#' \verb{     } Coordinate system could be _leaflet_(default), _geo_, _cartesian2D_ or _cartesian3D_(for POINT(xyz))\cr
-#' \verb{     } Limitations:\cr 
-#' \verb{     }\verb{     } polygons can have only their name in tooltip, need _load='custom'_ for rendering \cr
-#' \verb{     }\verb{     } assumes Geodetic CRS is WGS 84, for conversion use \link[sf]{st_transform} with _crs=4326_.\cr
-#' \verb{     } Parameters:\cr 
-#' \verb{     }\verb{     } df - value from \link[sf]{st_read}\cr
-#' \verb{     }\verb{     } nid - optional column name used in tooltip formatter\cr
-#' \verb{     }\verb{     } verbose - optional, print shapefile item names in console\cr
-#' \verb{     } Returns a list of chart series\cr\cr
+#' \tab Build _leaflet_ or \href{https://echarts.apache.org/en/option.html#geo.map}{geo} map series from shapefiles.\cr
+#' \tab Supported types: POINT, MULTIPOINT, LINESTRING, MULTILINESTRING, POLYGON, MULTIPOLYGON \cr
+#' \tab Coordinate system could be _leaflet_(default), _geo_, _cartesian2D_ or _cartesian3D_(for POINT(xyz))\cr
+#' \tab Limitations:\cr 
+#' \tab\tab polygons can have only their name in tooltip, need _load='custom'_ for rendering \cr
+#' \tab\tab assumes Geodetic CRS is WGS 84, for conversion use \link[sf]{st_transform} with _crs=4326_.\cr
+#' \tab Parameters:\cr 
+#' \tab\tab df - value from \link[sf]{st_read}\cr
+#' \tab\tab nid - optional column name used in tooltip formatter\cr
+#' \tab\tab verbose - optional, print shapefile item names in console\cr
+#' \tab Returns a list of chart series\cr\cr
 #' **cmd = 'sf.bbox'**\cr
-#' \verb{     } Returns JavaScript code to position a map inside a bounding box from \link[sf]{st_bbox}, for leaflet only.\cr\cr
+#' \tab Returns JavaScript code to position a map inside a bounding box from \link[sf]{st_bbox}, for leaflet only.\cr\cr
 #' **cmd = 'sf.unzip'**\cr
-#' \verb{     } Unzips a remote file and returns local file name of the unzipped .shp file\cr
-#' \verb{     }\verb{     } url - URL of remote zipped shapefile\cr
-#' \verb{     }\verb{     } shp - optional name of .shp file inside ZIP file if multiple exist. Do not add file extension. \cr
-#' \verb{     } Returns full name of unzipped .shp file, or error string starting with 'ERROR'\cr\cr
+#' \tab Unzips a remote file and returns local file name of the unzipped .shp file\cr
+#' \tab\tab url - URL of remote zipped shapefile\cr
+#' \tab\tab shp - optional name of .shp file inside ZIP file if multiple exist. Do not add file extension. \cr
+#' \tab Returns full name of unzipped .shp file, or error string starting with 'ERROR'\cr\cr
 #' **cmd = 'geojson'** \cr
-#' \verb{     } Custom series list from geoJson objects\cr
-#' \verb{     }\verb{     } geojson - object from \link[jsonlite]{fromJSON}\cr
-#' \verb{     }\verb{     } cs - optional _coordinateSystem_ value, default 'leaflet'\cr
-#' \verb{     }\verb{     } ppfill - optional fill color like '#F00', OR NULL for no-fill, for all Points and Polygons\cr
-#' \verb{     }\verb{     } nid - optional feature property for item name used in tooltips\cr
-#' \verb{     }\verb{     } ... - optional custom series attributes like _itemStyle_\cr
-#' \verb{     } Can display also geoJson _feature properties_: color; lwidth, ldash (lines); ppfill, radius (points)\cr\cr
+#' \tab Custom series list from geoJson objects\cr
+#' \tab\tab geojson - object from \link[jsonlite]{fromJSON}\cr
+#' \tab\tab cs - optional _coordinateSystem_ value, default 'leaflet'\cr
+#' \tab\tab ppfill - optional fill color like '#F00', OR NULL for no-fill, for all Points and Polygons\cr
+#' \tab\tab nid - optional feature property for item name used in tooltips\cr
+#' \tab\tab ... - optional custom series attributes like _itemStyle_\cr
+#' \tab Can display also geoJson _feature properties_: color; lwidth, ldash (lines); ppfill, radius (points)\cr\cr
 #' **cmd = 'layout'** \cr
-#' \verb{     } Multiple charts in table-like rows/columns format\cr
-#' \verb{     }\verb{     } ... - List of charts\cr
-#' \verb{     }\verb{     } title - optional title for the entire set\cr
-#' \verb{     }\verb{     } rows - optional number of rows\cr 
-#' \verb{     }\verb{     } cols - optional number of columns\cr
-#' \verb{     } Returns a container \link[htmltools]{div} in rmarkdown, otherwise \link[htmltools]{browsable}.\cr
-#' \verb{     } For 3-4 charts one would use multiple series within a \href{https://echarts.apache.org/en/option.html#grid}{grid}. \cr
-#' \verb{     } For greater number of charts _ec.util(cmd='layout')_ comes in handy\cr\cr
+#' \tab Multiple charts in table-like rows/columns format\cr
+#' \tab\tab ... - List of charts\cr
+#' \tab\tab title - optional title for the entire set\cr
+#' \tab\tab rows - optional number of rows\cr 
+#' \tab\tab cols - optional number of columns\cr
+#' \tab Returns a container \link[htmltools]{div} in rmarkdown, otherwise \link[htmltools]{browsable}.\cr
+#' \tab For 3-4 charts one would use multiple series within a \href{https://echarts.apache.org/en/option.html#grid}{grid}. \cr
+#' \tab For greater number of charts _ec.util(cmd='layout')_ comes in handy\cr\cr
 #' **cmd = 'tabset'** \cr
-#' \verb{     }\verb{     } ... - a list of name/chart pairs like \emph{n1=chart1, n2=chart2}, each tab may contain a chart, see example\cr
-#' \verb{     }\verb{     } tabStyle - tab style string, see default \emph{strTabStyle} variable in the code\cr
-#' \verb{     }\verb{     } width - optional width size for the tabset, in CSS format, default is 100%\cr
-#' \verb{     } Returns A) \link[htmltools]{browsable} when '...' params are provided\cr
-#' \verb{     } Returns B) \link[htmltools]{tagList} of tabs when in a pipe (no '...' params)\cr
-#' \verb{     } Please note that a maximum of five(5) tabs are supported by current _tabStyle_.\cr\cr
+#' \tab\tab ... - a list of name/chart pairs like \emph{n1=chart1, n2=chart2}, each tab may contain a chart, see example\cr
+#' \tab\tab tabStyle - tab style string, see default \emph{strTabStyle} variable in the code\cr
+#' \tab\tab width - optional width size for the tabset, in CSS format, default is 100%\cr
+#' \tab Returns A) \link[htmltools]{browsable} when '...' params are provided\cr
+#' \tab Returns B) \link[htmltools]{tagList} of tabs when in a pipe (no '...' params)\cr
+#' \tab Please note that a maximum of five(5) tabs are supported by current _tabStyle_.\cr\cr
 #' **cmd = 'button'** \cr
-#' \verb{     } UI button to execute a JS function,\cr
-#' \verb{     }\verb{     } text - the button label\cr
-#' \verb{     }\verb{     } js - the JS function string\cr
-#' \verb{     }\verb{     } ... - optional parameters for the \href{https://echarts.apache.org/en/option.html#graphic.elements-rect.type}{rect} element\cr
-#' \verb{     } Returns a graphic.elements-\href{https://echarts.apache.org/en/option.html#graphic.elements-rect.type}{rect} element.\cr\cr
+#' \tab UI button to execute a JS function,\cr
+#' \tab\tab text - the button label\cr
+#' \tab\tab js - the JS function string\cr
+#' \tab\tab ... - optional parameters for the \href{https://echarts.apache.org/en/option.html#graphic.elements-rect.type}{rect} element\cr
+#' \tab Returns a graphic.elements-\href{https://echarts.apache.org/en/option.html#graphic.elements-rect.type}{rect} element.\cr\cr
 #' **cmd = 'morph'** \cr
-#' \verb{     }\verb{     } ... - a list of charts or chart option lists\cr
-#' \verb{     }\verb{     } event - name of event for switching charts. Default is \emph{click}.\cr
-#' \verb{     } Returns a chart with ability to morph into other charts\cr\cr
+#' \tab\tab ... - a list of charts or chart option lists\cr
+#' \tab\tab event - name of event for switching charts. Default is \emph{click}.\cr
+#' \tab Returns a chart with ability to morph into other charts\cr\cr
 #' **cmd = 'fullscreen'** \cr
-#' \verb{     } A toolbox feature to toggle fullscreen on/off. Works in a browser, not in RStudio.\cr\cr
+#' \tab A toolbox feature to toggle fullscreen on/off. Works in a browser, not in RStudio.\cr\cr
 #' **cmd = 'rescale'** \cr
-#' \verb{     }\verb{     } v - input vector of numeric values to rescale\cr
-#' \verb{     }\verb{     } t - target range c(min,max), numeric vector of two\cr\cr
+#' \tab\tab v - input vector of numeric values to rescale\cr
+#' \tab\tab t - target range c(min,max), numeric vector of two\cr\cr
 #' **cmd = 'level'** \cr
-#' \verb{     } Calculate vertical levels for timeline \emph{line} charts, returns a numeric vector\cr
-#' \verb{     }\verb{     } df - data.frame with _from_ and _to_ columns\cr
-#' \verb{     }\verb{     } from - name of 'from' column\cr
-#' \verb{     }\verb{     } to - name of 'to' column\cr
+#' \tab Calculate vertical levels for timeline \emph{line} charts, returns a numeric vector\cr
+#' \tab\tab df - data.frame with _from_ and _to_ columns\cr
+#' \tab\tab from - name of 'from' column\cr
+#' \tab\tab to - name of 'to' column\cr
 #' 
 #' @examples
 #' library(dplyr)
@@ -548,8 +548,8 @@ ec.util <- function(cmd='sf.series', ..., js=NULL, event='click') {
 #'   
 #' @details 
 #' `format='boxplot'` requires the first two _df_ columns as: \cr
-#' \verb{     }\verb{     } column for the non-computational categorical axis\cr
-#' \verb{     }\verb{     } column with (numeric) data to compute the five boxplot values\cr
+#' \tab\tab column for the non-computational categorical axis\cr
+#' \tab\tab column with (numeric) data to compute the five boxplot values\cr
 #'  Additional grouping is supported on a column after the second. Groups will show in the legend, if enabled.\cr
 #'  Returns a `list(dataset, series, xAxis, yAxis)` to set params in [ec.init]. 
 #'  Make sure there is enough data for computation, 4+ values per boxplot.\cr\cr
@@ -978,12 +978,12 @@ ec.data <- function(df, format='dataset', header=FALSE, ...) {
 #' Helper function to display/format data column(s) by index or name
 #' 
 #' @param col Can contain one of several types of values:\cr
-#' \verb{     } NULL(default) for charts with single values like tree, pie.\cr
-#' \verb{     } a single column index(number) or column name(quoted string) \cr
-#' \verb{     } a \link[base]{sprintf} string template for multiple columns\cr
-#' \verb{     } 'json' to display tooltip with all available values to choose from\cr 
-#' \verb{     } 'log' to write all values in the JS console (F12) for debugging.\cr
-#' \verb{     } a string containing a JS function starting with _'function('_ or _'(x) =>'_.\cr
+#' \tab NULL(default) for charts with single values like tree, pie.\cr
+#' \tab a single column index(number) or column name(quoted string) \cr
+#' \tab a \link[base]{sprintf} string template for multiple columns\cr
+#' \tab 'json' to display tooltip with all available values to choose from\cr 
+#' \tab 'log' to write all values in the JS console (F12) for debugging.\cr
+#' \tab a string containing a JS function starting with _'function('_ or _'(x) =>'_.\cr
 #' @param ... Comma separated column indexes or names, only when \emph{col} is \emph{sprintf}. This allows formatting of multiple columns, as for a tooltip.\cr
 #' @param scale A positive number, multiplier for numeric columns. When scale is 0, all numeric values are rounded.
 #' @return A JavaScript code string (usually a function) marked as executable, see \link[htmlwidgets]{JS}.
@@ -1328,9 +1328,9 @@ ec.theme <- function (wt, name='custom', code= NULL)
 #' 
 #' @param wt An \code{echarty} widget as returned by [ec.init]
 #' @param target type of resulting value: \cr
-#' \verb{     }\verb{     } 'opts' - the htmlwidget _options_ as JSON (default)\cr
-#' \verb{     }\verb{     } 'full' - the _entire_ htmlwidget as JSON\cr
-#' \verb{     }\verb{     } 'data' - info about chart's embedded data (char vector)
+#' \tab\tab 'opts' - the htmlwidget _options_ as JSON (default)\cr
+#' \tab\tab 'full' - the _entire_ htmlwidget as JSON\cr
+#' \tab\tab 'data' - info about chart's embedded data (char vector)
 #' @param ... Additional attributes to pass to \link[jsonlite]{toJSON}\cr
 #' 'file' - optional file name to save to when target='full'\cr
 #' @return A JSON string, except when \code{target} is 'data' - then
@@ -1407,10 +1407,10 @@ ec.inspect <- function(wt, target='opts', ...) {
 #' Convert JSON string or file to chart
 #' 
 #' @param txt Could be one of the following:\cr
-#' \verb{     } class _url_, like \code{url('https://serv.us/cars.txt')}\cr
-#' \verb{     } class _file_, like \code{file('c:/temp/cars.txt','rb')}\cr
-#' \verb{     } class _json_, like \code{ec.inspect(p)}, for options or full\cr
-#' \verb{     } class _character_, JSON string with options only, see example below\cr
+#' \tab class _url_, like \code{url('https://serv.us/cars.txt')}\cr
+#' \tab class _file_, like \code{file('c:/temp/cars.txt','rb')}\cr
+#' \tab class _json_, like \code{ec.inspect(p)}, for options or full\cr
+#' \tab class _character_, JSON string with options only, see example below\cr
 #' @param ... Any attributes to pass to internal [ec.init] when _txt_ is options only
 #' @return An _echarty_ widget.
 #' 

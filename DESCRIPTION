@@ -29,3 +29,4 @@ BugReports: https://github.com/helgasoft/echarty/issues/
 Encoding: UTF-8
 Language: en-US
 VignetteBuilder: rmarkdown, knitr
+Rdmacros: echarty

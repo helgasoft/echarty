@@ -13,7 +13,7 @@ ec.plugjs(wt = NULL, source = NULL, ask = FALSE)
 file name suffix is '.js'. Default is NULL.}
 
 \item{ask}{Boolean, whether to ask the user to download source if missing, default is FALSE.
-\verb{     }  Could also be string 'loadRemote' to load plugins remotely.\cr}
+\tab  Could also be string 'loadRemote' to load plugins remotely.\cr}
 }
 \value{
 A widget with JS dependency added if successful, otherwise input wt

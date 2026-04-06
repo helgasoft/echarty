@@ -20,68 +20,68 @@ tabset, table layout, support for GIS shapefiles through library 'sf'
 }
 \details{
 \strong{cmd = 'sf.series'}\cr
-\verb{     } Build \emph{leaflet} or \href{https://echarts.apache.org/en/option.html#geo.map}{geo} map series from shapefiles.\cr
-\verb{     } Supported types: POINT, MULTIPOINT, LINESTRING, MULTILINESTRING, POLYGON, MULTIPOLYGON \cr
-\verb{     } Coordinate system could be \emph{leaflet}(default), \emph{geo}, \emph{cartesian2D} or \emph{cartesian3D}(for POINT(xyz))\cr
-\verb{     } Limitations:\cr
-\verb{     }\verb{     } polygons can have only their name in tooltip, need \emph{load='custom'} for rendering \cr
-\verb{     }\verb{     } assumes Geodetic CRS is WGS 84, for conversion use \link[sf]{st_transform} with \emph{crs=4326}.\cr
-\verb{     } Parameters:\cr
-\verb{     }\verb{     } df - value from \link[sf]{st_read}\cr
-\verb{     }\verb{     } nid - optional column name used in tooltip formatter\cr
-\verb{     }\verb{     } verbose - optional, print shapefile item names in console\cr
-\verb{     } Returns a list of chart series\cr\cr
+\tab Build \emph{leaflet} or \href{https://echarts.apache.org/en/option.html#geo.map}{geo} map series from shapefiles.\cr
+\tab Supported types: POINT, MULTIPOINT, LINESTRING, MULTILINESTRING, POLYGON, MULTIPOLYGON \cr
+\tab Coordinate system could be \emph{leaflet}(default), \emph{geo}, \emph{cartesian2D} or \emph{cartesian3D}(for POINT(xyz))\cr
+\tab Limitations:\cr
+\tab\tab polygons can have only their name in tooltip, need \emph{load='custom'} for rendering \cr
+\tab\tab assumes Geodetic CRS is WGS 84, for conversion use \link[sf]{st_transform} with \emph{crs=4326}.\cr
+\tab Parameters:\cr
+\tab\tab df - value from \link[sf]{st_read}\cr
+\tab\tab nid - optional column name used in tooltip formatter\cr
+\tab\tab verbose - optional, print shapefile item names in console\cr
+\tab Returns a list of chart series\cr\cr
 \strong{cmd = 'sf.bbox'}\cr
-\verb{     } Returns JavaScript code to position a map inside a bounding box from \link[sf]{st_bbox}, for leaflet only.\cr\cr
+\tab Returns JavaScript code to position a map inside a bounding box from \link[sf]{st_bbox}, for leaflet only.\cr\cr
 \strong{cmd = 'sf.unzip'}\cr
-\verb{     } Unzips a remote file and returns local file name of the unzipped .shp file\cr
-\verb{     }\verb{     } url - URL of remote zipped shapefile\cr
-\verb{     }\verb{     } shp - optional name of .shp file inside ZIP file if multiple exist. Do not add file extension. \cr
-\verb{     } Returns full name of unzipped .shp file, or error string starting with 'ERROR'\cr\cr
+\tab Unzips a remote file and returns local file name of the unzipped .shp file\cr
+\tab\tab url - URL of remote zipped shapefile\cr
+\tab\tab shp - optional name of .shp file inside ZIP file if multiple exist. Do not add file extension. \cr
+\tab Returns full name of unzipped .shp file, or error string starting with 'ERROR'\cr\cr
 \strong{cmd = 'geojson'} \cr
-\verb{     } Custom series list from geoJson objects\cr
-\verb{     }\verb{     } geojson - object from \link[jsonlite]{fromJSON}\cr
-\verb{     }\verb{     } cs - optional \emph{coordinateSystem} value, default 'leaflet'\cr
-\verb{     }\verb{     } ppfill - optional fill color like '#F00', OR NULL for no-fill, for all Points and Polygons\cr
-\verb{     }\verb{     } nid - optional feature property for item name used in tooltips\cr
-\verb{     }\verb{     } ... - optional custom series attributes like \emph{itemStyle}\cr
-\verb{     } Can display also geoJson \emph{feature properties}: color; lwidth, ldash (lines); ppfill, radius (points)\cr\cr
+\tab Custom series list from geoJson objects\cr
+\tab\tab geojson - object from \link[jsonlite]{fromJSON}\cr
+\tab\tab cs - optional \emph{coordinateSystem} value, default 'leaflet'\cr
+\tab\tab ppfill - optional fill color like '#F00', OR NULL for no-fill, for all Points and Polygons\cr
+\tab\tab nid - optional feature property for item name used in tooltips\cr
+\tab\tab ... - optional custom series attributes like \emph{itemStyle}\cr
+\tab Can display also geoJson \emph{feature properties}: color; lwidth, ldash (lines); ppfill, radius (points)\cr\cr
 \strong{cmd = 'layout'} \cr
-\verb{     } Multiple charts in table-like rows/columns format\cr
-\verb{     }\verb{     } ... - List of charts\cr
-\verb{     }\verb{     } title - optional title for the entire set\cr
-\verb{     }\verb{     } rows - optional number of rows\cr
-\verb{     }\verb{     } cols - optional number of columns\cr
-\verb{     } Returns a container \link[htmltools]{div} in rmarkdown, otherwise \link[htmltools]{browsable}.\cr
-\verb{     } For 3-4 charts one would use multiple series within a \href{https://echarts.apache.org/en/option.html#grid}{grid}. \cr
-\verb{     } For greater number of charts \emph{ec.util(cmd='layout')} comes in handy\cr\cr
+\tab Multiple charts in table-like rows/columns format\cr
+\tab\tab ... - List of charts\cr
+\tab\tab title - optional title for the entire set\cr
+\tab\tab rows - optional number of rows\cr
+\tab\tab cols - optional number of columns\cr
+\tab Returns a container \link[htmltools]{div} in rmarkdown, otherwise \link[htmltools]{browsable}.\cr
+\tab For 3-4 charts one would use multiple series within a \href{https://echarts.apache.org/en/option.html#grid}{grid}. \cr
+\tab For greater number of charts \emph{ec.util(cmd='layout')} comes in handy\cr\cr
 \strong{cmd = 'tabset'} \cr
-\verb{     }\verb{     } ... - a list of name/chart pairs like \emph{n1=chart1, n2=chart2}, each tab may contain a chart, see example\cr
-\verb{     }\verb{     } tabStyle - tab style string, see default \emph{strTabStyle} variable in the code\cr
-\verb{     }\verb{     } width - optional width size for the tabset, in CSS format, default is 100\%\cr
-\verb{     } Returns A) \link[htmltools]{browsable} when '...' params are provided\cr
-\verb{     } Returns B) \link[htmltools]{tagList} of tabs when in a pipe (no '...' params)\cr
-\verb{     } Please note that a maximum of five(5) tabs are supported by current \emph{tabStyle}.\cr\cr
+\tab\tab ... - a list of name/chart pairs like \emph{n1=chart1, n2=chart2}, each tab may contain a chart, see example\cr
+\tab\tab tabStyle - tab style string, see default \emph{strTabStyle} variable in the code\cr
+\tab\tab width - optional width size for the tabset, in CSS format, default is 100\%\cr
+\tab Returns A) \link[htmltools]{browsable} when '...' params are provided\cr
+\tab Returns B) \link[htmltools]{tagList} of tabs when in a pipe (no '...' params)\cr
+\tab Please note that a maximum of five(5) tabs are supported by current \emph{tabStyle}.\cr\cr
 \strong{cmd = 'button'} \cr
-\verb{     } UI button to execute a JS function,\cr
-\verb{     }\verb{     } text - the button label\cr
-\verb{     }\verb{     } js - the JS function string\cr
-\verb{     }\verb{     } ... - optional parameters for the \href{https://echarts.apache.org/en/option.html#graphic.elements-rect.type}{rect} element\cr
-\verb{     } Returns a graphic.elements-\href{https://echarts.apache.org/en/option.html#graphic.elements-rect.type}{rect} element.\cr\cr
+\tab UI button to execute a JS function,\cr
+\tab\tab text - the button label\cr
+\tab\tab js - the JS function string\cr
+\tab\tab ... - optional parameters for the \href{https://echarts.apache.org/en/option.html#graphic.elements-rect.type}{rect} element\cr
+\tab Returns a graphic.elements-\href{https://echarts.apache.org/en/option.html#graphic.elements-rect.type}{rect} element.\cr\cr
 \strong{cmd = 'morph'} \cr
-\verb{     }\verb{     } ... - a list of charts or chart option lists\cr
-\verb{     }\verb{     } event - name of event for switching charts. Default is \emph{click}.\cr
-\verb{     } Returns a chart with ability to morph into other charts\cr\cr
+\tab\tab ... - a list of charts or chart option lists\cr
+\tab\tab event - name of event for switching charts. Default is \emph{click}.\cr
+\tab Returns a chart with ability to morph into other charts\cr\cr
 \strong{cmd = 'fullscreen'} \cr
-\verb{     } A toolbox feature to toggle fullscreen on/off. Works in a browser, not in RStudio.\cr\cr
+\tab A toolbox feature to toggle fullscreen on/off. Works in a browser, not in RStudio.\cr\cr
 \strong{cmd = 'rescale'} \cr
-\verb{     }\verb{     } v - input vector of numeric values to rescale\cr
-\verb{     }\verb{     } t - target range c(min,max), numeric vector of two\cr\cr
+\tab\tab v - input vector of numeric values to rescale\cr
+\tab\tab t - target range c(min,max), numeric vector of two\cr\cr
 \strong{cmd = 'level'} \cr
-\verb{     } Calculate vertical levels for timeline \emph{line} charts, returns a numeric vector\cr
-\verb{     }\verb{     } df - data.frame with \emph{from} and \emph{to} columns\cr
-\verb{     }\verb{     } from - name of 'from' column\cr
-\verb{     }\verb{     } to - name of 'to' column\cr
+\tab Calculate vertical levels for timeline \emph{line} charts, returns a numeric vector\cr
+\tab\tab df - data.frame with \emph{from} and \emph{to} columns\cr
+\tab\tab from - name of 'from' column\cr
+\tab\tab to - name of 'to' column\cr
 }
 \examples{
 library(dplyr)

@@ -55,20 +55,20 @@ renderCustom <- setNames(as.list(plf[[2]]), plf[[1]])
 #'  * elementId - Id of the widget, default is NULL(auto-generated, stored as _echwid_ variable for JS)
 #'  * load - name(s) of plugin(s) to load. A character vector or comma-delimited string. default NULL.
 #'  * ask - boolean to prompt user before downloading plugins when _load_ is present, default is FALSE.\cr
-#'  \verb{     } Could also be string 'loadRemote' to load plugins remotely.\cr
+#'  \tab Could also be string 'loadRemote' to load plugins remotely.\cr
 #'  * ctype - alternative way of setting chart type name, default is 'scatter'.\cr
 #'  * js - single string or a vector with JavaScript expressions to evaluate.\cr 
 #'    single: exposed _chart_ object (most common)\cr
-#'    vector: \verb{     } see code in \href{https://github.com/helgasoft/echarty/blob/main/demo/examples.R}{examples}\cr
-#'  \verb{     } First expression evaluated with exposed objects _window_ and _echarts_ \cr
-#'  \verb{     } Second is evaluated with exposed object _opts_. \cr
-#'  \verb{     } Third is evaluated with exposed _chart_ object after initialization with _opts_ already set.
+#'    vector: \tab see code in \href{https://github.com/helgasoft/echarty/blob/main/demo/examples.R}{examples}\cr
+#'  \tab First expression evaluated with exposed objects _window_ and _echarts_ \cr
+#'  \tab Second is evaluated with exposed object _opts_. \cr
+#'  \tab Third is evaluated with exposed _chart_ object after initialization with _opts_ already set.
 #'  * theme - name of built-in theme to apply, or JSON object from _fromJSON_, see _opts_ in \href{https://echarts.apache.org/en/api.html#echarts.init}{echarts.init}\cr
 #'  * iniOpts - a list of initialization options, see _opts_ in \href{https://echarts.apache.org/en/api.html#echarts.init}{echarts.init}\cr
-#'  \verb{     } Defaults: renderer='canvas', locale='EN', useDirtyRect=FALSE\cr
+#'  \tab Defaults: renderer='canvas', locale='EN', useDirtyRect=FALSE\cr
 #'  * on,off,capture,group - chart instance properties, namely:\cr
-#'  \verb{     } on/off is a list of events to handle with JS, each in a list, see \href{https://echarts.apache.org/en/api.html#echartsInstance.on}{chart.on} and example below\cr
-#'  \verb{     } capture is a vector of event names to capture in Shiny, etc.\cr
+#'  \tab on/off is a list of events to handle with JS, each in a list, see \href{https://echarts.apache.org/en/api.html#echartsInstance.on}{chart.on} and example below\cr
+#'  \tab capture is a vector of event names to capture in Shiny, etc.\cr
 #'  * connect,disconnect,register,etc. - see \href{https://echarts.apache.org/en/api.html#echarts}{echarts object} methods\cr
 #'  
 #'  **Built-in plugins** \cr 
@@ -80,7 +80,7 @@ renderCustom <- setNames(as.list(plf[[2]]), plf[[1]])
 #'  
 #'  **Plugins with one-time installation** \cr
 #'  * 3D - support for 3D charts and WebGL acceleration, see \href{https://github.com/ecomfe/echarts-gl}{source} and \href{https://echarts.apache.org/en/option-gl.html#series}{docs} \cr
-#'  \verb{     } This plugin is auto-loaded when 3D/GL axes/series are detected.\cr
+#'  \tab This plugin is auto-loaded when 3D/GL axes/series are detected.\cr
 #'  * gmodular - graph modularity, see \href{https://github.com/ecomfe/echarts-graph-modularity}{source}  \cr
 #'  * liquid - liquid fill, see \href{https://github.com/ecomfe/echarts-liquidfill}{source}  \cr
 #'  * wordcloud - cloud of words, see \href{https://github.com/ecomfe/echarts-wordcloud}{source} \cr
@@ -1053,12 +1053,12 @@ ec.upd <- function(wt, ...) {
 #' @details
 #' \itemize{
 #' \item type='polygon': coordinates of the two boundaries are chained into one polygon.\cr
-#' \verb{     } _xAxis type_ could be 'category' or 'value'.\cr
-#' \verb{     } Set fill color with attribute _color_.
+#' \tab _xAxis type_ could be 'category' or 'value'.\cr
+#' \tab Set fill color with attribute _color_.
 #' \item type='stack': two _stacked_ lines are drawn, the lower with customizable areaStyle.\cr
-#' \verb{     } _xAxis type_ should be 'category' ! \cr
-#' \verb{     } Set fill color with attribute _areaStyle$color_.\cr
-#' \verb{     } Optional tooltip formatter available in _band\[\[1\]\]$tipFmt_.
+#' \tab _xAxis type_ should be 'category' ! \cr
+#' \tab Set fill color with attribute _areaStyle$color_.\cr
+#' \tab Optional tooltip formatter available in _band\[\[1\]\]$tipFmt_.
 #' }
 #' Optional parameter _name_, if given, will show up in legend. Legend merges all series with same name into one item.
 #' 
@@ -1160,9 +1160,9 @@ str='high <b>'+(lo+hi)+'</b>'+lin+'<br>low <b>'+lo+'</b>'; return str;}"  # stac
 #' Grouped bar series are supported.\cr
 #' Non-grouped series could be shown with formatter _riErrBarSimple_ instead of _ecr.ebars_. This is limited to vertical only, see example below.\cr
 #' Other limitations:\cr
-#' \verb{     } manually add axis type='category' when needed\cr
-#' \verb{     } error bars cannot have own name when data is grouped\cr
-#' \verb{     } legend select/deselect will not re-position grouped error bars\cr
+#' \tab manually add axis type='category' when needed\cr
+#' \tab error bars cannot have own name when data is grouped\cr
+#' \tab legend select/deselect will not re-position grouped error bars\cr
 #' 
 #' @examples
 #' library(dplyr)
@@ -1412,7 +1412,7 @@ ecs.exec <- function(proxy, cmd= 'p_merge') {
 #' @param source URL or file:// of a Javascript plugin, \cr
 #'   file name suffix is '.js'. Default is NULL.
 #' @param ask Boolean, whether to ask the user to download source if missing, default is FALSE.
-#'  \verb{     }  Could also be string 'loadRemote' to load plugins remotely.\cr
+#'  \tab  Could also be string 'loadRemote' to load plugins remotely.\cr
 #' @return A widget with JS dependency added if successful, otherwise input wt
 #'
 #' @details When \emph{source} is URL, the plugin file is installed with an optional popup prompt.\cr

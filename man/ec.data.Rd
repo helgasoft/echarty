@@ -54,8 +54,8 @@ Make data lists from a data.frame
 }
 \details{
 \code{format='boxplot'} requires the first two \emph{df} columns as: \cr
-\verb{     }\verb{     } column for the non-computational categorical axis\cr
-\verb{     }\verb{     } column with (numeric) data to compute the five boxplot values\cr
+\tab\tab column for the non-computational categorical axis\cr
+\tab\tab column with (numeric) data to compute the five boxplot values\cr
 Additional grouping is supported on a column after the second. Groups will show in the legend, if enabled.\cr
 Returns a \code{list(dataset, series, xAxis, yAxis)} to set params in \link{ec.init}.
 Make sure there is enough data for computation, 4+ values per boxplot.\cr\cr

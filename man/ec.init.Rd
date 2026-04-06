@@ -60,20 +60,20 @@ Optional echarty widget attributes include: \cr
 \item elementId - Id of the widget, default is NULL(auto-generated, stored as \emph{echwid} variable for JS)
 \item load - name(s) of plugin(s) to load. A character vector or comma-delimited string. default NULL.
 \item ask - boolean to prompt user before downloading plugins when \emph{load} is present, default is FALSE.\cr
-\verb{     } Could also be string 'loadRemote' to load plugins remotely.\cr
+\tab Could also be string 'loadRemote' to load plugins remotely.\cr
 \item ctype - alternative way of setting chart type name, default is 'scatter'.\cr
 \item js - single string or a vector with JavaScript expressions to evaluate.\cr
 single: exposed \emph{chart} object (most common)\cr
-vector: \verb{     } see code in \href{https://github.com/helgasoft/echarty/blob/main/demo/examples.R}{examples}\cr
-\verb{     } First expression evaluated with exposed objects \emph{window} and \emph{echarts} \cr
-\verb{     } Second is evaluated with exposed object \emph{opts}. \cr
-\verb{     } Third is evaluated with exposed \emph{chart} object after initialization with \emph{opts} already set.
+vector: \tab see code in \href{https://github.com/helgasoft/echarty/blob/main/demo/examples.R}{examples}\cr
+\tab First expression evaluated with exposed objects \emph{window} and \emph{echarts} \cr
+\tab Second is evaluated with exposed object \emph{opts}. \cr
+\tab Third is evaluated with exposed \emph{chart} object after initialization with \emph{opts} already set.
 \item theme - name of built-in theme to apply, or JSON object from \emph{fromJSON}, see \emph{opts} in \href{https://echarts.apache.org/en/api.html#echarts.init}{echarts.init}\cr
 \item iniOpts - a list of initialization options, see \emph{opts} in \href{https://echarts.apache.org/en/api.html#echarts.init}{echarts.init}\cr
-\verb{     } Defaults: renderer='canvas', locale='EN', useDirtyRect=FALSE\cr
+\tab Defaults: renderer='canvas', locale='EN', useDirtyRect=FALSE\cr
 \item on,off,capture,group - chart instance properties, namely:\cr
-\verb{     } on/off is a list of events to handle with JS, each in a list, see \href{https://echarts.apache.org/en/api.html#echartsInstance.on}{chart.on} and example below\cr
-\verb{     } capture is a vector of event names to capture in Shiny, etc.\cr
+\tab on/off is a list of events to handle with JS, each in a list, see \href{https://echarts.apache.org/en/api.html#echartsInstance.on}{chart.on} and example below\cr
+\tab capture is a vector of event names to capture in Shiny, etc.\cr
 \item connect,disconnect,register,etc. - see \href{https://echarts.apache.org/en/api.html#echarts}{echarts object} methods\cr
 }
 
@@ -89,7 +89,7 @@ vector: \verb{     } see code in \href{https://github.com/helgasoft/echarty/blob
 \strong{Plugins with one-time installation} \cr
 \itemize{
 \item 3D - support for 3D charts and WebGL acceleration, see \href{https://github.com/ecomfe/echarts-gl}{source} and \href{https://echarts.apache.org/en/option-gl.html#series}{docs} \cr
-\verb{     } This plugin is auto-loaded when 3D/GL axes/series are detected.\cr
+\tab This plugin is auto-loaded when 3D/GL axes/series are detected.\cr
 \item gmodular - graph modularity, see \href{https://github.com/ecomfe/echarts-graph-modularity}{source}  \cr
 \item liquid - liquid fill, see \href{https://github.com/ecomfe/echarts-liquidfill}{source}  \cr
 \item wordcloud - cloud of words, see \href{https://github.com/ecomfe/echarts-wordcloud}{source} \cr

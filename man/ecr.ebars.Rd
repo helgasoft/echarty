@@ -29,9 +29,9 @@ Have own default tooltip format showing \emph{value, high & low}.\cr
 Grouped bar series are supported.\cr
 Non-grouped series could be shown with formatter \emph{riErrBarSimple} instead of \emph{ecr.ebars}. This is limited to vertical only, see example below.\cr
 Other limitations:\cr
-\verb{     } manually add axis type='category' when needed\cr
-\verb{     } error bars cannot have own name when data is grouped\cr
-\verb{     } legend select/deselect will not re-position grouped error bars\cr
+\tab manually add axis type='category' when needed\cr
+\tab error bars cannot have own name when data is grouped\cr
+\tab legend select/deselect will not re-position grouped error bars\cr
 }
 \examples{
 library(dplyr)
