@@ -1,13 +1,8 @@
-pandoc: '3.2'
-pkgdown: 2.1.1
+pandoc: 3.1.11
+pkgdown: 2.2.0
 pkgdown_sha: ~
-articles:
-  articles/data.hierarchy: data.hierarchy.html
-  echarty: echarty.html
-  articles/extras: extras.html
-  articles/gallery: gallery.html
-  articles/mapping: mapping.html
-last_built: 2025-01-18T02:09Z
+articles: {}
+last_built: 2026-04-06T07:03Z
 urls:
   reference: https://helgasoft.github.io/echarty/reference
   article: https://helgasoft.github.io/echarty/articles

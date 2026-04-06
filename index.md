@@ -1,68 +1,110 @@
+# echarty
 
-## Introduction
+[![echarty.gallery](reference/figures/echarty.gallery.png)](https://helgasoft.github.io/echarty)
 
-The goal of **echarty** is to provide a minimal interface between R and native ECharts [components](https://echarts.apache.org/en/option.html).
-Use R data lists and a few _echarty_ commands to build a chart. There are utilities included to assist with data preparation (*ec.data*), Shiny with proxy (*ecs.\**) and formatting (*ec.clmn*).  
-Have the **full functionality** of [ECharts](https://echarts.apache.org/examples/en/index.html) in R with minimal overhead!   
-<br/>  
-<!-- 
-Building complex charts as data structures is a powerful concept, also simple and easy to use.  As decribed in [this paper](https://doi.org/10.1016/j.visinf.2018.04.011), library ECharts' foundation lays on the "*user-configurable declarative object* **option**". [Option](https://echarts.apache.org/en/option.html) is JSON-like data.  
--->
+This package is a thin R wrapper around Javascript library
+[ECharts](https://echarts.apache.org/en/index.html).  
+**One** major command(*ec.init*) uses R lists to support the [ECharts
+API](https://echarts.apache.org/en/option.html).  
+Benefit from ECharts **full functionality** and build interactive charts
+in R and Shiny with minimal overhead.
 
-## Gallery
-Enjoy [the gallery](gallery.html) and grab some chart code!  
-Good place to get started with **echarty** 
-[![](img/echarty.gallery.png)](gallery.html)
-<br /><br />
+Wider connectivity and deployment potential through
+[WebR](https://helgasoft.github.io/echarty/test/coder.html) and
+[crosstalk](https://rpubs.com/echarty/crosstalk).
 
-## Learn by example
-Try [WebR Coder](test/coder.html) or the more complete R **Coder**:
-```r
-demo(coder, package='echarty')
+**Compare to echarts4r** 📌
+
+| R package                                                                                                        | echarts4r                                                                                                                                                                 | echarty                                                                                                                                                               |
+|------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| initial commit                                                                                                   | Mar 12, 2018                                                                                                                                                              | Feb 5, 2021                                                                                                                                                           |
+| library size                                                                                                     | ![875 KB](https://img.shields.io/github/languages/code-size/JohnCoene/echarts4r.svg)                                                                                      | ![275KB](https://img.shields.io/github/languages/code-size/helgasoft/echarty)                                                                                         |
+| test coverage                                                                                                    | ![32%](https://coveralls.io/repos/github/JohnCoene/echarts4r/badge.svg)[![link](reference/figures/external-link-16.png)](https://coveralls.io/github/JohnCoene/echarts4r) | ![98%](https://coveralls.io/repos/github/helgasoft/echarty/badge.svg)[![link](reference/figures/external-link-16.png)](https://coveralls.io/github/helgasoft/echarty) |
+| lines of code                                                                                                    | 1,202,681 [![link](reference/figures/external-link-16.png)](https://api.codetabs.com/v1/loc/?github=JohnCoene/echarts4r)                                                  | 6,951 [![link](reference/figures/external-link-16.png)](https://api.codetabs.com/v1/loc?github=helgasoft/echarty)                                                     |
+| echarts.js version                                                                                               | 5.4.3 [![link](reference/figures/external-link-16.png)](https://github.com/JohnCoene/echarts4r/blob/master/inst/htmlwidgets/lib/echarts-4.8.0/echarts-en.min.js)          | 6.0.0 [![link](reference/figures/external-link-16.png)](https://github.com/helgasoft/echarty/blob/main/inst/js/echarts.min.js)                                        |
+| API design                                                                                                       | own commands with parameters                                                                                                                                              | mostly [ECharts option](https://echarts.apache.org/en/option.html) lists ⁽¹⁾                                                                                          |
+| number of commands                                                                                               | over [200](https://echarts4r.john-coene.com/reference/)                                                                                                                   | **one** command (ec.init) + optional utility commands                                                                                                                 |
+| [dataset](https://echarts.apache.org/en/option.html#dataset) support                                             | no                                                                                                                                                                        | **yes**                                                                                                                                                               |
+| [WebR](https://docs.r-wasm.org/webr/latest/) support                                                             | no                                                                                                                                                                        | **yes**                                                                                                                                                               |
+| [crosstalk](https://rstudio.github.io/crosstalk/) support                                                        | no                                                                                                                                                                        | **yes**                                                                                                                                                               |
+| column-to-style                                                                                                  | no                                                                                                                                                                        | **yes**                                                                                                                                                               |
+| dependencies ([tools](https://www.rdocumentation.org/packages/tools/versions/3.6.2/topics/package_dependencies)) | 70                                                                                                                                                                        | 46                                                                                                                                                                    |
+| dependencies ([WebR](https://repo.r-wasm.org))                                                                   | 188                                                                                                                                                                       | 46                                                                                                                                                                    |
+
+⁽¹⁾ We encourage users to follow the original ECharts API to construct
+charts with echarty. This differs from echarts4r which uses own commands
+for most chart options.
+
+Comparison review done October 2025 for current versions of echarts4R
+and echarty.  
+\_\_\_
+
+Please consider granting a Github star ⭐ to show your support.
+
+## Installation
+
+Latest development build **1.7.2**
+
+``` r
+if (!requireNamespace('remotes')) install.packages('remotes')
+remotes::install_github('helgasoft/echarty')
 ```
-See what you can do with echarty and **Shiny**
-```r
-demo(eshiny, package='echarty')
+
+[![CRAN
+status](https://www.r-pkg.org/badges/version/echarty)](https://cran.r-project.org/package=echarty)
+From [CRAN](https://CRAN.R-project.org):
+
+``` r
+install.packages('echarty')
 ```
-Have fun with **Translator Assistant**  - translate Javascript data to R! 
-&nbsp; ECharts has lots of great [examples](https://echarts.apache.org/examples/en/)
-. The goal is to facilitate translation of their JSON-like data (*option* object) to R lists.
-```r
-demo(js2r, package='echarty')
+
+## Examples
+
+``` r
+library(echarty); library(dplyr)
+
+#  scatter chart (default)
+cars |> ec.init()
+
+#  parallel chart
+ToothGrowth |> ec.init(ctype= 'parallel')
+
+#  3D chart with GL plugin
+iris |> group_by(Species) |> ec.init(load= '3D')
+
+#  timeline of two series with grouping, formatting, autoPlay
+iris |> group_by(Species) |> 
+ec.init(
+  timeline= list(autoPlay= TRUE),
+  series.param = list(
+    symbolSize= ec.clmn('Petal.Width', scale= 9),
+    encode= list(x= 'Sepal.Width', y='Petal.Length'),
+    markLine= list(data= list(list(type='max'), list(type='min')))
+  )
+)
+
+# show a remote map chart, needs package leaflet installed
+echarty::ec.fromJson('https://helgasoft.github.io/echarty/test/pfull.json')
 ```
-Or browse some interesting <a href='https://gist.github.com/helgasoft'>code gists</a>.
-<br/><br/>
 
-## Tutorials
-More detailed step-by-step examples with tips and tricks.
+## Get started
 
-[Example 1](uc1.md) - Building an interactive map with regional data
+The **Coder** is a good introduction, type
+[`library(echarty); demo(coder)`](https://helgasoft.github.io/echarty/).  
+The [**WEBSITE**](https://helgasoft.github.io/echarty) has a vast
+gallery with code and tutorials.  
+The package itself has [code
+examples](https://raw.githubusercontent.com/helgasoft/echarty/refs/heads/main/demo/examples.R)
+included. Now you can start building [**beautiful
+ECharts**](https://echarts.apache.org/examples/en/index.html) with R and
+Shiny!
 
-[Example 2](uc2.md) - Like Clockwork
+  
 
-[Example 3](uc3.html) - Hierarchical data
-
-[Example 4](uc4.html) - Sankey with timeline
-
-[Example 5](uc5.html) - Bubbles without troubles with JavaScript 
-
-[Example 6](uc6.html) - Grouped, stacked and timelined
-<br /><br/>
-
-## Crosstalk 
-Social media for charts!  Examples - [basic](https://rpubs.com/echarty/crosstalk) and [advanced](https://rpubs.com/echarty/crossmap) &nbsp; <span style="color:magenta">*live*</span>  
-More in the [gallery](gallery.md#crosstalk-2d).
-<br /><br/>
-
-## Extras
-Specific utilities and applications [💲 code for sale](extras.md).
-<br/>
-<br/>
-## Open Source Acknowledgements
- **echarty** was inspired by and benefits some code from [echarts4R](https://github.com/JohnCoene/echarts4r),  
- hat tip also to the pioneers - [recharts](https://github.com/yihui/recharts) and [ECharts2Shiny](https://github.com/XD-DENG/ECharts2Shiny),  
- and cheers for [htmlwidgets](https://github.com/ramnathv/htmlwidgets/) and [ECharts](https://echarts.apache.org/en/) to make it all possible.  
- <br/>
-<br/>
-
-
+[![Polar Stack](reference/figures/ssPolarStack.png)![timeline
+bars](reference/figures/ssBars.gif)![themeRiver](reference/figures/ssThemeRiver.png)![3D](reference/figures/ssBunny.gif)  
+![rose
+pie](reference/figures/ssRose.png)![map](reference/figures/ssSpeed.png)![stacked
+grouped
+bars](reference/figures/ssStackBar.png)](https://helgasoft.github.io/echarty/articles/gallery.html)  
+Made with echarty. Powered by ECharts.
