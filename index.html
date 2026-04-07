@@ -29,7 +29,7 @@
 
     <a class="navbar-brand me-2" href="index.html">echarty</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.7.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.7.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -38,6 +38,7 @@
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
+<li class="nav-item"><a class="nav-link" href="articles/echarty.html">Get started</a></li>
 <li class="nav-item"><a class="nav-link" href="reference/index.html">Reference</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-gallery-" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Gallery+</button>
@@ -45,7 +46,6 @@
 <li><a class="dropdown-item" href="articles/gallery.html">Gallery</a></li>
     <li><a class="dropdown-item" href="articles/extras.html">Extras</a></li>
     <li><hr class="dropdown-divider"></li>
-    <li><a class="dropdown-item" href="articles/mapping.html">Tutor - mapping</a></li>
     <li><a class="dropdown-item" href="articles/data.hierarchy.html">Tutor - hierarchical data</a></li>
   </ul>
 </li>
@@ -87,23 +87,23 @@ Benefit from ECharts <strong>full functionality</strong> and build interactive c
 <col width="33%">
 <col width="33%">
 </colgroup>
-<thead><tr class="header">
+<thead><tr>
 <th>R package</th>
 <th>echarts4r</th>
 <th>echarty</th>
 </tr></thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td>initial commit</td>
 <td>Mar 12, 2018</td>
 <td>Feb 5, 2021</td>
 </tr>
-<tr class="even">
+<tr>
 <td>library size</td>
 <td><img src="https://img.shields.io/github/languages/code-size/JohnCoene/echarts4r.svg" alt="875 KB"></td>
 <td><img src="https://img.shields.io/github/languages/code-size/helgasoft/echarty" alt="275KB"></td>
 </tr>
-<tr class="odd">
+<tr>
 <td>test coverage</td>
 <td>
 <img src="https://coveralls.io/repos/github/JohnCoene/echarts4r/badge.svg" alt="32%"><a href="https://coveralls.io/github/JohnCoene/echarts4r" class="external-link"><img src="reference/figures/external-link-16.png" alt="link"></a>
@@ -112,62 +112,62 @@ Benefit from ECharts <strong>full functionality</strong> and build interactive c
 <img src="https://coveralls.io/repos/github/helgasoft/echarty/badge.svg" alt="98%"><a href="https://coveralls.io/github/helgasoft/echarty" class="external-link"><img src="reference/figures/external-link-16.png" alt="link"></a>
 </td>
 </tr>
-<tr class="even">
+<tr>
 <td>lines of code</td>
 <td>1,202,681 <a href="https://api.codetabs.com/v1/loc/?github=JohnCoene/echarts4r" class="external-link"><img src="reference/figures/external-link-16.png" alt="link"></a>
 </td>
 <td>6,951 <a href="https://api.codetabs.com/v1/loc?github=helgasoft/echarty" class="external-link"><img src="reference/figures/external-link-16.png" alt="link"></a>
 </td>
 </tr>
-<tr class="odd">
+<tr>
 <td>echarts.js version</td>
 <td>5.4.3 <a href="https://github.com/JohnCoene/echarts4r/blob/master/inst/htmlwidgets/lib/echarts-4.8.0/echarts-en.min.js" class="external-link"><img src="reference/figures/external-link-16.png" alt="link"></a>
 </td>
 <td>6.0.0 <a href="https://github.com/helgasoft/echarty/blob/main/inst/js/echarts.min.js" class="external-link"><img src="reference/figures/external-link-16.png" alt="link"></a>
 </td>
 </tr>
-<tr class="even">
+<tr>
 <td>API design</td>
 <td>own commands with parameters</td>
 <td>mostly <a href="https://echarts.apache.org/en/option.html" class="external-link">ECharts option</a> lists <sup>(1)</sup>
 </td>
 </tr>
-<tr class="odd">
+<tr>
 <td>number of commands</td>
 <td>over <a href="https://echarts4r.john-coene.com/reference/" class="external-link">200</a>
 </td>
 <td>
 <strong>one</strong> command (ec.init) + optional utility commands</td>
 </tr>
-<tr class="even">
+<tr>
 <td>
 <a href="https://echarts.apache.org/en/option.html#dataset" class="external-link">dataset</a> support</td>
 <td>no</td>
 <td><strong>yes</strong></td>
 </tr>
-<tr class="odd">
+<tr>
 <td>
 <a href="https://docs.r-wasm.org/webr/latest/" class="external-link">WebR</a> support</td>
 <td>no</td>
 <td><strong>yes</strong></td>
 </tr>
-<tr class="even">
+<tr>
 <td>
 <a href="https://rstudio.github.io/crosstalk/" class="external-link">crosstalk</a> support</td>
 <td>no</td>
 <td><strong>yes</strong></td>
 </tr>
-<tr class="odd">
+<tr>
 <td>column-to-style</td>
 <td>no</td>
 <td><strong>yes</strong></td>
 </tr>
-<tr class="even">
+<tr>
 <td>dependencies (<a href="https://www.rdocumentation.org/packages/tools/versions/3.6.2/topics/package_dependencies" class="external-link">tools</a>)</td>
 <td>70</td>
 <td>46</td>
 </tr>
-<tr class="odd">
+<tr>
 <td>dependencies (<a href="https://repo.r-wasm.org" class="external-link">WebR</a>)</td>
 <td>188</td>
 <td>46</td>
@@ -182,10 +182,10 @@ ___
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
 <!-- [![Github version](https://img.shields.io/github/v/release/helgasoft/echarty?label=github)](https://github.com/helgasoft/echarty/releases)  <sup>.02</sup>  -->
-<p>Latest development build <strong>1.7.2</strong></p>
+<p>Latest development build <strong>1.7.3</strong></p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">'remotes'</span><span class="op">)</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">'remotes'</span><span class="op">)</span></span>
-<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">'helgasoft/echarty'</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">'helgasoft/echarty'</span><span class="op">)</span></span></code></pre></div>
 <p><a href="https://cran.r-project.org/package=echarty" class="external-link"><img src="https://www.r-pkg.org/badges/version/echarty" alt="CRAN status"></a> From <a href="https://CRAN.R-project.org" class="external-link">CRAN</a>:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">'echarty'</span><span class="op">)</span></span></code></pre></div>

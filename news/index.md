@@ -1,6 +1,10 @@
 # Changelog
 
-## echarty 1.7.2 in development
+## echarty 1.7.3 in development
+
+- fix series\$id bug
+
+## echarty 1.7.2 on CRAN
 
 CRAN release: 2026-04-04
 

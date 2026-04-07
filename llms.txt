@@ -15,21 +15,21 @@ Wider connectivity and deployment potential through
 
 **Compare to echarts4r** 📌
 
-| R package                                                                                                        | echarts4r                                                                                                                                                                 | echarty                                                                                                                                                               |
-|------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| initial commit                                                                                                   | Mar 12, 2018                                                                                                                                                              | Feb 5, 2021                                                                                                                                                           |
-| library size                                                                                                     | ![875 KB](https://img.shields.io/github/languages/code-size/JohnCoene/echarts4r.svg)                                                                                      | ![275KB](https://img.shields.io/github/languages/code-size/helgasoft/echarty)                                                                                         |
-| test coverage                                                                                                    | ![32%](https://coveralls.io/repos/github/JohnCoene/echarts4r/badge.svg)[![link](reference/figures/external-link-16.png)](https://coveralls.io/github/JohnCoene/echarts4r) | ![98%](https://coveralls.io/repos/github/helgasoft/echarty/badge.svg)[![link](reference/figures/external-link-16.png)](https://coveralls.io/github/helgasoft/echarty) |
-| lines of code                                                                                                    | 1,202,681 [![link](reference/figures/external-link-16.png)](https://api.codetabs.com/v1/loc/?github=JohnCoene/echarts4r)                                                  | 6,951 [![link](reference/figures/external-link-16.png)](https://api.codetabs.com/v1/loc?github=helgasoft/echarty)                                                     |
-| echarts.js version                                                                                               | 5.4.3 [![link](reference/figures/external-link-16.png)](https://github.com/JohnCoene/echarts4r/blob/master/inst/htmlwidgets/lib/echarts-4.8.0/echarts-en.min.js)          | 6.0.0 [![link](reference/figures/external-link-16.png)](https://github.com/helgasoft/echarty/blob/main/inst/js/echarts.min.js)                                        |
-| API design                                                                                                       | own commands with parameters                                                                                                                                              | mostly [ECharts option](https://echarts.apache.org/en/option.html) lists ⁽¹⁾                                                                                          |
-| number of commands                                                                                               | over [200](https://echarts4r.john-coene.com/reference/)                                                                                                                   | **one** command (ec.init) + optional utility commands                                                                                                                 |
-| [dataset](https://echarts.apache.org/en/option.html#dataset) support                                             | no                                                                                                                                                                        | **yes**                                                                                                                                                               |
-| [WebR](https://docs.r-wasm.org/webr/latest/) support                                                             | no                                                                                                                                                                        | **yes**                                                                                                                                                               |
-| [crosstalk](https://rstudio.github.io/crosstalk/) support                                                        | no                                                                                                                                                                        | **yes**                                                                                                                                                               |
-| column-to-style                                                                                                  | no                                                                                                                                                                        | **yes**                                                                                                                                                               |
-| dependencies ([tools](https://www.rdocumentation.org/packages/tools/versions/3.6.2/topics/package_dependencies)) | 70                                                                                                                                                                        | 46                                                                                                                                                                    |
-| dependencies ([WebR](https://repo.r-wasm.org))                                                                   | 188                                                                                                                                                                       | 46                                                                                                                                                                    |
+| R package | echarts4r | echarty |
+|----|----|----|
+| initial commit | Mar 12, 2018 | Feb 5, 2021 |
+| library size | ![875 KB](https://img.shields.io/github/languages/code-size/JohnCoene/echarts4r.svg) | ![275KB](https://img.shields.io/github/languages/code-size/helgasoft/echarty) |
+| test coverage | ![32%](https://coveralls.io/repos/github/JohnCoene/echarts4r/badge.svg)[![link](reference/figures/external-link-16.png)](https://coveralls.io/github/JohnCoene/echarts4r) | ![98%](https://coveralls.io/repos/github/helgasoft/echarty/badge.svg)[![link](reference/figures/external-link-16.png)](https://coveralls.io/github/helgasoft/echarty) |
+| lines of code | 1,202,681 [![link](reference/figures/external-link-16.png)](https://api.codetabs.com/v1/loc/?github=JohnCoene/echarts4r) | 6,951 [![link](reference/figures/external-link-16.png)](https://api.codetabs.com/v1/loc?github=helgasoft/echarty) |
+| echarts.js version | 5.4.3 [![link](reference/figures/external-link-16.png)](https://github.com/JohnCoene/echarts4r/blob/master/inst/htmlwidgets/lib/echarts-4.8.0/echarts-en.min.js) | 6.0.0 [![link](reference/figures/external-link-16.png)](https://github.com/helgasoft/echarty/blob/main/inst/js/echarts.min.js) |
+| API design | own commands with parameters | mostly [ECharts option](https://echarts.apache.org/en/option.html) lists ⁽¹⁾ |
+| number of commands | over [200](https://echarts4r.john-coene.com/reference/) | **one** command (ec.init) + optional utility commands |
+| [dataset](https://echarts.apache.org/en/option.html#dataset) support | no | **yes** |
+| [WebR](https://docs.r-wasm.org/webr/latest/) support | no | **yes** |
+| [crosstalk](https://rstudio.github.io/crosstalk/) support | no | **yes** |
+| column-to-style | no | **yes** |
+| dependencies ([tools](https://www.rdocumentation.org/packages/tools/versions/3.6.2/topics/package_dependencies)) | 70 | 46 |
+| dependencies ([WebR](https://repo.r-wasm.org)) | 188 | 46 |
 
 ⁽¹⁾ We encourage users to follow the original ECharts API to construct
 charts with echarty. This differs from echarts4r which uses own commands
@@ -43,7 +43,7 @@ Please consider granting a Github star ⭐ to show your support.
 
 ## Installation
 
-Latest development build **1.7.2**
+Latest development build **1.7.3**
 
 ``` r
 if (!requireNamespace('remotes')) install.packages('remotes')
@@ -113,8 +113,6 @@ Made with echarty. Powered by ECharts.
 
 ## All functions
 
-- [`-- Introduction --`](https://helgasoft.github.io/echarty/reference/Introduction.md)
-  : echarty
 - [`ec.clmn()`](https://helgasoft.github.io/echarty/reference/ec.clmn.md)
   : Data column format
 - [`ec.data()`](https://helgasoft.github.io/echarty/reference/ec.data.md)
@@ -149,4 +147,17 @@ Made with echarty. Powered by ECharts.
   : Shiny: Create a proxy
 - [`ecs.render()`](https://helgasoft.github.io/echarty/reference/ecs.render.md)
   : Shiny: Plot command to render chart
+- [`-- Introduction --`](https://helgasoft.github.io/echarty/reference/Introduction.md)
+  : echarty
 
+# Articles
+
+### All vignettes
+
+- [Hierarchical
+  data](https://helgasoft.github.io/echarty/articles/data.hierarchy.md):
+- [Introduction to
+  echarty](https://helgasoft.github.io/echarty/articles/echarty.md):
+- [Extras](https://helgasoft.github.io/echarty/articles/extras.md):
+- [Gallery](https://helgasoft.github.io/echarty/articles/gallery.md):
+- [introduction](https://helgasoft.github.io/echarty/articles/introduction.md):

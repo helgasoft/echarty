@@ -2,8 +2,6 @@
 
 ## All functions
 
-- [`-- Introduction --`](https://helgasoft.github.io/echarty/reference/Introduction.md)
-  : echarty
 - [`ec.clmn()`](https://helgasoft.github.io/echarty/reference/ec.clmn.md)
   : Data column format
 - [`ec.data()`](https://helgasoft.github.io/echarty/reference/ec.data.md)
@@ -38,3 +36,5 @@
   : Shiny: Create a proxy
 - [`ecs.render()`](https://helgasoft.github.io/echarty/reference/ecs.render.md)
   : Shiny: Plot command to render chart
+- [`-- Introduction --`](https://helgasoft.github.io/echarty/reference/Introduction.md)
+  : echarty
