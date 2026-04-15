@@ -51,8 +51,9 @@ jobs:
         shell: Rscript {0}
         run: |
           # install.packages("rwasm", repos = "https://cloud.r-project.org")
-          install.packages("pak")
-          pak::pak("r-wasm/rwasm")
+          # pak::pak("r-wasm/rwasm")  # pak does not install/compile
+          install.packages("remotes")
+          remotes::install_github("r-wasm/rwasm")
       
       - uses: actions/checkout@v4
       
