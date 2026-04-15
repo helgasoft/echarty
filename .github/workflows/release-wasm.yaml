@@ -74,7 +74,3 @@ jobs:
           file_glob: true
           overwrite: true
 
-          file: '._rwasm_image/*'          # Path to the generated image files
-          tag: ${{ github.event.release.tag_name || github.ref_name }}
-          file_glob: true
-          overwrite: true
