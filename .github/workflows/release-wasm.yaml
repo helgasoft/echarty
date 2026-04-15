@@ -1,0 +1,21 @@
+name: Build and release WebAssembly image
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # needed to create a GitHub Release
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build and upload WebAssembly file system image
+     	  uses: r-wasm/actions/.github/workflows/release-file-system-image.yml@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
