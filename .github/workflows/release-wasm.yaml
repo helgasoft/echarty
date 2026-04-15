@@ -1,16 +1,103 @@
+# Workflow for building and uploading a WebAssembly R package image to a GitHub Release
+# Adapted from: https://github.com/r-wasm/actions/blob/main/.github/workflows/release-file-system-image.yml
 name: Build and release WebAssembly image
 
 on:
-  push:
-    tags:
-      - 'v*'
+  # Trigger this workflow when you publish a new GitHub Release
+  release:
+    types: [published]
+
+  # Allow manual triggering from the Actions tab for testing
   workflow_dispatch:
+    inputs:
+      packages:
+        description: 'R packages to include (space or comma separated). Defaults to "." (current package)'
+        required: false
+        default: '.'
+        type: string
+      strip:
+        description: 'Directories to strip from the image (e.g., "demo, doc, examples"). Use "NULL" for none.'
+        required: false
+        default: 'demo, man, pkgdown, tests, vignettes'
+        type: string
+      webr-image:
+        description: 'webR Docker image to use for building'
+        required: false
+        default: 'ghcr.io/r-wasm/webr:main'
+        type: string
+      compress:
+        description: 'Compress the Emscripten VFS image'
+        required: false
+        default: false
+        type: boolean
+
+# Allow only one concurrent build for a given release tag
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.release.tag_name || github.run_id }}
+  cancel-in-progress: true
 
 jobs:
-  release-file-system-image:
-    uses: r-wasm/actions/.github/workflows/release-file-system-image.yml@v2
+  build-and-upload:
+    runs-on: ubuntu-24.04
+
     permissions:
-      # For publishing artifact files to the release
-      contents: write
-      # To download GitHub Packages within action
-      repository-projects: read
+      contents: write  # Required to upload assets to the release
+
+    steps:
+      # 1. Setup R environment
+      - name: Setup R
+        uses: r-lib/actions/setup-r@v2
+        #with:
+        #  r-version: '4.3.1'  # You can adjust this version
+
+      # 2. Checkout your repository
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 3. Checkout the r-wasm/actions repository (needed for the build action)
+      - name: Checkout r-wasm/actions
+        uses: actions/checkout@v4
+        with:
+          repository: r-wasm/actions
+          ref: v2          # Use a stable version tag
+          path: .r-wasm-actions  # Clone into this directory
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # 4. (Optional) Extract additional R package dependencies from DESCRIPTION
+      - name: Find Config/Needs/wasm in DESCRIPTION
+        id: wasm_needs
+        shell: Rscript {0}
+        run: |
+          if (!file.exists("DESCRIPTION")) {
+            cat("pkg=\n", file = Sys.getenv("GITHUB_OUTPUT"), append = TRUE)
+          } else {
+            dcf <- read.dcf("DESCRIPTION")
+            needs <- if ("Config/Needs/wasm" %in% colnames(dcf)) dcf[1, "Config/Needs/wasm"] else ""
+            # Clean up whitespace and split by commas/spaces
+            pkgs <- trimws(unlist(strsplit(needs, "[ ,]+")))
+            pkgs <- pkgs[pkgs != ""]
+            cat("pkg=", paste(pkgs, collapse = ","), "\n", file = Sys.getenv("GITHUB_OUTPUT"), append = TRUE)
+          }
+
+      # 5. Build the WebAssembly image
+      - name: Build wasm image
+        uses: ./.r-wasm-actions/build-rwasm
+        with:
+          packages: |
+            ${{ inputs.packages || '.' }}
+            ${{ steps.wasm_needs.outputs.pkg }}
+          strip: ${{ inputs.strip || 'NULL' }}
+          image-path: ._rwasm_image
+          webr-image: ${{ inputs.webr-image || 'ghcr.io/r-wasm/webr:main' }}
+          compress: ${{ inputs.compress || false }}
+
+      # 6. Upload the built image to the GitHub Release
+      - name: Upload to Release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+
+          file: '._rwasm_image/*'          # Path to the generated image files
+          tag: ${{ github.event.release.tag_name || github.ref_name }}
+          file_glob: true
+          overwrite: true
