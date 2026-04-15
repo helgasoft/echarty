@@ -50,7 +50,9 @@ jobs:
       - name: Install rwasm
         shell: Rscript {0}
         run: |
-          install.packages("rwasm", repos = "https://cloud.r-project.org")
+          # install.packages("rwasm", repos = "https://cloud.r-project.org")
+          install.packages("pak")
+          pak::pak("r-wasm/rwasm")
       
       - uses: actions/checkout@v4
       
