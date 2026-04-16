@@ -41,8 +41,7 @@ concurrency:
 # Simplified version with hardcoded options
 jobs:
   build-and-upload:
-    runs-on: ubuntu-24.04
-    
+    runs-on: ubuntu-24-latest
     permissions:
       contents: write
 
@@ -61,25 +60,34 @@ jobs:
             Rscript -e "
               library(rwasm)
               
-              # Create directories
-              dir.create('./lib', showWarnings = FALSE)
-              dir.create('./repo', showWarnings = FALSE)
-              
-              # Build current package with standard stripping
-              make_library(
-                repo_dir = './repo',
-                lib_dir = './lib',
-                strip = c('demo', 'man', 'pkgdown', 'tests', 'vignettes')
+              # Step 1: Add the current package to the repository
+              # This builds the WebAssembly binary and creates repo_dir structure
+              message('Step 1: Building package for WebAssembly...')
+              rwasm::add_pkg(
+                packages = '.',           # Current package
+                repo_dir = './repo',      # Creates repository structure here
+                dependencies = NA         # Include hard dependencies
               )
               
-              message('✓ Build complete')
-              print(list.files('./lib', recursive = TRUE))
+              # Step 2: Create the filesystem image from the repository
+              # This generates the .data and .js.metadata files
+              message('Step 2: Creating filesystem image...')
+              rwasm::make_vfs_library(
+                repo_dir = './repo',
+                out_dir = './vfs',
+                out_name = 'library'
+              )
+              
+              message('✓ Build completed successfully')
+              message('Output files in ./vfs/')
+              print(list.files('./vfs', recursive = TRUE))
             "
 
       - name: Upload to Release
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: './lib/*'
+          file: './vfs/*'
           tag: ${{ github.event.release.tag_name || github.ref_name }}
           file_glob: true
+          overwrite: true
