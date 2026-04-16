@@ -49,6 +49,19 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Test GitHub authentication
+        uses: addnab/docker-run-action@v3
+        with:
+          image: ghcr.io/r-wasm/webr:main
+          options: -v ${{ github.workspace }}:/work -w /work
+          run: |
+            Rscript -e "
+              # Test GitHub API access
+              result <- system2('curl', c('-H', paste0('Authorization: token ', Sys.getenv('GITHUB_PAT')), 
+                                   'https://api.github.com/rate_limit'), stdout = TRUE)
+              cat(paste(result, collapse = '\n'))
+            "
+          
       - name: Build wasm image using webR Docker container
         uses: addnab/docker-run-action@v3
         env:
