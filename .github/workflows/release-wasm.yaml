@@ -82,7 +82,7 @@ jobs:
               # Step 1: Add the current package to the repository
               message('Step 1: Building package for WebAssembly...')
               rwasm::add_pkg(
-                packages = '.',
+                packages = 'local::.',
                 repo_dir = './repo',
                 dependencies = NA,  # Install hard dependencies
                 remotes = NA  # Prefer built-in package list
