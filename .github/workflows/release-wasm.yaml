@@ -36,39 +36,47 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.release.tag_name || github.run_id }}
   cancel-in-progress: true
 
+
+
+# Simplified version with hardcoded options
 jobs:
   build-and-upload:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-24-latest
+    
     permissions:
       contents: write
-    
+
     steps:
-      - uses: r-lib/actions/setup-r@v2
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build wasm image using webR Docker container
+        uses: addnab/docker-run-action@v3
         with:
-          r-version: '4.4.0'
-      
-      - name: Install rwasm
-        shell: Rscript {0}
-        run: |
-          # install.packages("rwasm", repos = "https://cloud.r-project.org")
-          # pak::pak("r-wasm/rwasm")  # pak does not install/compile
-          install.packages("remotes")
-          remotes::install_github("r-wasm/rwasm")
-      
-      - uses: actions/checkout@v4
-      
-      - name: Build current package
-        shell: Rscript {0}
-        run: |
-          library(rwasm)
-          dir.create("._rwasm_image", showWarnings = FALSE)
-          make_library(
-            packages = ".",
-            strip = c("demo", "doc", "examples", "help", "html", "tests", "vignette"),
-            output = "._rwasm_image"
-          )
-      
-      - name: Upload
+          image: ghcr.io/r-wasm/webr:main
+          options: |
+            -v ${{ github.workspace }}:/work
+            -w /work
+          run: |
+            Rscript -e "
+              library(rwasm)
+              
+              # Create output directory
+              dir.create('._rwasm_image', showWarnings = FALSE)
+              
+              # Build current package with standard stripping
+              make_library(
+                packages = '.',
+                strip = c('demo', 'doc', 'examples', 'help', 'html', 'tests', 'vignette'),
+                output = '._rwasm_image',
+                compress = FALSE
+              )
+              
+              message('✓ Build complete')
+              print(list.files('._rwasm_image', recursive = TRUE))
+            "
+
+      - name: Upload to Release
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
@@ -76,4 +84,3 @@ jobs:
           tag: ${{ github.event.release.tag_name || github.ref_name }}
           file_glob: true
           overwrite: true
-
