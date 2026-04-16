@@ -61,26 +61,25 @@ jobs:
             Rscript -e "
               library(rwasm)
               
-              # Create output directory
-              dir.create('._rwasm_image', showWarnings = FALSE)
+              # Create directories
+              dir.create('./lib', showWarnings = FALSE)
+              dir.create('./repo', showWarnings = FALSE)
               
               # Build current package with standard stripping
               make_library(
-                packages = '.',
-                strip = c('demo', 'doc', 'examples', 'help', 'html', 'tests', 'vignette'),
-                output = '._rwasm_image',
-                compress = FALSE
+                repo_dir = './repo',
+                lib_dir = './lib',
+                strip = c('demo', 'man', 'pkgdown', 'tests', 'vignettes')
               )
               
               message('✓ Build complete')
-              print(list.files('._rwasm_image', recursive = TRUE))
+              print(list.files('./lib', recursive = TRUE))
             "
 
       - name: Upload to Release
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: '._rwasm_image/*'
+          file: './lib/*'
           tag: ${{ github.event.release.tag_name || github.ref_name }}
           file_glob: true
-          overwrite: true
