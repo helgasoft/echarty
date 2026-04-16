@@ -1,6 +1,10 @@
 # history of package _echarty_
 
-# echarty 1.7.2  in development
+# echarty 1.7.3  in development
+
+* refactor some code inside _ec.init_
+
+# echarty 1.7.2  on CRAN
 
 * added _matrixIndex_, _calendarIndex_ and other indexes in .renumber
 * fixed some _globe, 3D_ presets

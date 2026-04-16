@@ -24,13 +24,15 @@ test_that("ec.clmn with sprintf, column indexes and names", {
   expect_s3_class(tmp, 'JS_EVAL')
   
   # dataset + column names
-  p <- iris |> inner_join(data.frame(Species=unique(iris$Species), color= rainbow(3))) |>
+  p <- iris |> inner_join(data.frame(Species=unique(iris$Species), color= rainbow(3)), by='Species') |>
   ec.init(
   	yAxis= list(axisLabel= list(formatter=ec.clmn('%R2@', -1, scale=0.5))),
+  	xAxis= list(axisLabel= list(formatter=ec.clmn(scale=2)) ), 
+  	   # triggerEvent=TRUE, tooltip= list(show=TRUE, formatter=ec.clmn('div %@', -1, scale=0.5)) ),
     series.param= list(
       itemStyle= list(color= ec.clmn('color')),
       symbolSize= ec.clmn('Petal.Length', scale=3)
-  	,tooltip= list(formatter= ec.clmn('Petal Length %@, Width %@', 'Petal.Length','Petal.Width'))
+  	,tooltip= list(formatter= ec.clmn('Petal: Length %@, Width %@', 'Petal.Length','Petal.Width'))
     )
     ,tooltip= list(s=T)  # enables series.tooltip
     # does not pass thru ec.init(df) - cant use colnames!
@@ -46,28 +48,30 @@ test_that("ec.clmn with sprintf, column indexes and names", {
   #expect_match(tmp$itemStyle$color, "pos=['Sepal.Length'", fixed=TRUE)
   #expect_match(tmp$symbolSize, "vv=[x.data['Petal.Length']];", fixed=TRUE)
   #expect_match(p$x$opts$yAxis$axisLabel$formatter, "ss=[-2]", fixed=TRUE)
-  expect_match(tmp$tooltip$formatter, "vv = [data['Petal.Length'], data['Petal.Width']];", fixed=TRUE)
-  expect_match(tmp$itemStyle$color, "vv = [data['color']", fixed=TRUE)
+  expect_match(tmp$tooltip$formatter, "vv = [aa['Petal.Length'], aa['Petal.Width']];", fixed=TRUE)
+  expect_match(tmp$itemStyle$color, "vv = [aa['color']", fixed=TRUE)
   expect_match(tmp$itemStyle$color, "colNames = ['Sepal.Length',", fixed=TRUE)
-  expect_match(tmp$symbolSize, "vv = [data['Petal.Length']];", fixed=TRUE)
+  expect_match(tmp$symbolSize, "vv = [aa['Petal.Length']];", fixed=TRUE)
   expect_match(p$x$opts$yAxis$axisLabel$formatter, "ss = [-2];", fixed=TRUE)
   
-  # data + column names
-  tmp <- data.frame(name=names(islands), value=islands) |> 
-    filter(value>100) |> arrange(value)
-  p <- ec.init( tooltip= list(s=TRUE),
-    #series = list(list(type= 'pie', data= ec.data(tmp, 'names'),
-    series.param= list(type= 'pie', data= ec.data(tmp, 'names'), 
-            label= list(formatter= ec.clmn('value', scale=2)),
-            tooltip= list(formatter= ec.clmn("%@ <br> %L@", 'name','value'))) 
+  # data + mixed
+  isl <- data.frame(name=names(islands), value=islands) |> arrange(desc(value)) |> 
+      head(13) |> mutate(colr=rainbow(13))
+  p <- ec.init(
+    title = list(text = "Landmasses over 60,000 mi\u00B2", left = 'center'),
+    #tooltip = list(trigger='item', formatter=ec.clmn()),
+    tooltip= list(formatter= ec.clmn("%@ <br> %L@", 'name','value')),
+    series = list(list(type='pie', radius='50%', data= ec.data(isl, 'names'),
+      itemStyle= list(color= ec.clmn('colr')),
+      label= list(position='inside', formatter=ec.clmn("%@\\n%@", 'name','value')) ))
   )
-  tmp <- p$x$opts$series[[1]]$tooltip$formatter
+  expect_equal(p$x$opts$series[[1]]$data[[1]]$name, 'Asia')
+  tmp <- p$x$opts$tooltip$formatter
   expect_equal(length(unlist(gregexpr('x.data', tmp ))), 1)
   expect_match(tmp, "argNames = [`name`,`value`];", fixed=TRUE)
   expect_s3_class(tmp, 'JS_EVAL')
   tmp <- p$x$opts$series[[1]]$label$formatter
-  expect_match(tmp, "argNames = [`value`];", fixed=TRUE)
-  expect_is(tmp, 'JS_EVAL')
+  expect_match(tmp, "argNames = [`name`,`value`];", fixed=TRUE)
   
   # leaflet + mixed
   tmp <- quakes |> relocate('long') |>     # set order to lon,lat
@@ -77,23 +81,7 @@ test_that("ec.clmn with sprintf, column indexes and names", {
     tooltip= list(formatter= ec.clmn('magnitude %@', 'mag')) # 'mag' is 4th col
   )
   expect_true(grepl("argNames = [`mag`];", p$x$opts$tooltip$formatter, fixed=TRUE ))
-  expect_true(grepl("[data['size']]", p$x$opts$series[[1]]$symbolSize, fixed=TRUE ))
-  
-  # data + mixed
-  isl <- data.frame(name=names(islands), value=islands) |> arrange(desc(value)) |> 
-      head(13) |> mutate(colr=rainbow(13))
-  p <- ec.init(
-    title = list(text = "Landmasses over 60,000 mi\u00B2", left = 'center'),
-    tooltip = list(trigger='item', formatter=ec.clmn()),
-    series = list(list(type='pie', radius='50%', data= ec.data(isl, 'names'),
-                       itemStyle= list(color= ec.clmn('colr')),
-                       label=list(position='inside', 
-          formatter=ec.clmn("%@\n%@", 'name','value')) ))
-  )
-  expect_equal("function(x) { let c = String(typeof x === 'object' ? x.value : x); return c; }",
-               as.character(p$x$opts$tooltip$formatter) )
-  expect_equal(p$x$opts$series[[1]]$data[[1]]$name, 'Asia')
-  
+  expect_true(grepl("[aa['size']]", p$x$opts$series[[1]]$symbolSize, fixed=TRUE ))
   
   p <- ec.clmn('json', scale=NULL)
   expect_match(p, 'stringify', fixed=TRUE)
@@ -106,13 +94,15 @@ test_that("ec.clmn with sprintf, column indexes and names", {
       type= 'graph', layout= 'force',
       nodes= list(list(name= 'a', value= 10), list(name= 'b', value= 20)),
       edges= list(list(source= 0, target= 1))
-    ),
+    ), tooltip = list(formatter=ec.clmn()),
     on= list(    # Javascript handlers
       list(event='click', query=list(dataType='node'), handler= ec.clmn("(e) => alert('Node');")),
       list(event='click', query=list(dataType='edge'), handler= "(e) => alert('Edge');")
     ) )
   expect_s3_class(p$x$on[[1]]$handler, 'JS_EVAL')
   expect_s3_class(p$x$on[[2]]$handler, 'JS_EVAL')   # helper in ec.init
+  expect_equal("function(x) { let c = String(typeof x === 'object' ? x.value : x); return c; }",
+               as.character(p$x$opts$tooltip$formatter) )
   
   #expect_warning( ec.init(title= list(text=ec.clmn('templ','colname1'))) )   # lenv$coNames missing 
   p <- ec.init(title= list(text=ec.clmn('templ','colname1')))    # lenv$coNames missing 

@@ -28,10 +28,10 @@ navbar:
       - text: Extras
         href: articles/extras.html
       - text: -------
-      - text: Tutor - mapping
-        href: articles/mapping.html
       - text: Tutor - hierarchical data
         href: articles/data.hierarchy.html
+      - text: Tutor - mapping
+        href: articles/mapping.html
 
 footer:
   structure:

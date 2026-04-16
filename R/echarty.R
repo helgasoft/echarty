@@ -17,6 +17,8 @@ noAxisXY <- c('radar','parallel','themeRiver','map','gauge','pie','funnel','pola
 noCoord <- c('polar','radar','singleAxis','parallelAxis','calendar')
 plf <- read.csv(system.file('plugins.csv', package='echarty'), header=TRUE, stringsAsFactors=FALSE)
 renderCustom <- setNames(as.list(plf[[2]]), plf[[1]])
+# ── Helper: safe null coalesce ────────────────────────────────────────────────
+`%||%` <- function(a, b) if (!is.null(a) && !is.na(a)) a else b
 # using list(show=TRUE) or list(list()) is to create empty object{} in JS
 
 #' Initialize a chart
@@ -160,6 +162,7 @@ renderCustom <- setNames(as.list(plf[[2]]), plf[[1]])
 #' 
 #' @importFrom htmlwidgets createWidget sizingPolicy getDependency JS shinyWidgetOutput shinyRenderWidget
 #' @importFrom utils read.csv modifyList
+#' @importFrom stats setNames
 #' @import dplyr
 #' 
 #' @export
@@ -207,243 +210,793 @@ ec.init <- function( df= NULL, preset= TRUE, ...,  #ctype= 'scatter',
   x$opts <- opt1
 
   isCrosstalk <- FALSE; deps <- NULL
+  
+if (!is.null(opt1$old)) {
+  # xyNamesCS <- function(ser) {
+  #   # TODO: move out as .serieNamesCoord(ser, opt1, ..?)
+  #   # set x,y names + cs(coordinateSystem), called by {loop all series} or tl.series
+  #   axis2d <- c('pictorialBar','candlestick','boxplot','scatterGL') #'custom',
+  #   xtem <- 'x'; ytem <- 'y'
+  #   if (is.null(ser$coordinateSystem)) {   # assist with coordinateSystem
+  #     ser$coordinateSystem <- 'unknown'
+  #     if (ser$type %in% axis2d)
+  #       ser$coordinateSystem <- 'cartesian2d'   # default 'scatter' comes here
+  #     if (any(noCoord %in% names(opt1)) || 
+  #         ser$type %in% c('map','themeRiver'))
+  #       ser$coordinateSystem <- 'unknown'       # keep to compare below
+  #     if (ser$type %in% c('scatter3D','bar3D','line3D','surface'))
+  #       ser$coordinateSystem <- 'cartesian3D'
+  #     if (ser$type %in% c('scatter3D','bar3D','lines3D')) {
+  #       if (!is.null(opt1$geo3D)) ser$coordinateSystem <- 'geo3D'
+  #       if (!is.null(opt1$globe)) ser$coordinateSystem <- 'globe'
+  #     }
+  #     if (ser$type %in% c('scatter','scatterGL','lines')) {
+  #       if (!is.null(opt1$geo)) ser$coordinateSystem <- 'geo'
+  #       if ('world' %in% opt1$load) ser$coordinateSystem <- 'geo'
+  #       if ('leaflet' %in% opt1$load) ser$coordinateSystem <- 'leaflet'
+  #     }
+  #   }
+  #   if (!is.null(opt1$calendar) && ser$type %in% c('heatmap','scatter','effectScatter'))
+  #     ser$coordinateSystem <- 'calendar'
+  # 
+  #   # #careful: setting x$opts$ but could be wt$x$opts coming from tl.series
+  #   # if (ser$type == 'parallel') {
+  #   #   if (is.null(opt1$parallelAxis) && !is.null(df))
+  #   #     x$opts$parallelAxis <<- ec.paxis(df)
+  #   #   if (!is.null(grnm) && tail(colnames(df),1) != grnm)
+  #   #     stop(paste0("ec.init: df group column '",grnm,"' should be last for parallel chart"))
+  #   # }
+  #   # 
+  #   # if (ser$type == 'themeRiver')
+  #   #   x$opts$singleAxis <<- .merlis(x$opts$singleAxis, list(min='dataMin', max='dataMax'))
+  #   # some series may need axes, others not. collect decisions for all series
+  #   if (ser$type %in% noAxisXY 
+  #       || ser$coordinateSystem %in% c('none','matrix','geo','leaflet','globe','geo3D','cartesian3D','singleAxis')
+  #       || any(c('roam') %in% names(ser))   # maps,graph
+  #       || (any(c('layout') %in% names(ser)) && ser$layout=='force')  # graph
+  #   ) axad <<- axad-1
+  #   else axad <<- axad+1  # must have XY axes
+  #   
+  #   if (ser$type == 'pie') {
+  #     xtem <- 'value'; ytem <- 'itemName' }
+  #   if (ser$coordinateSystem=='polar') { 
+  #     xtem <- 'radius'; ytem <- 'angle' }
+  #   if (ser$coordinateSystem %in% c('geo','leaflet')) {
+  #     xtem <- 'lng'; ytem <- 'lat' }
+  #   if (ser$type == 'map') {
+  #     xtem <- 'name'; ytem <- 'value' }
+  #   if (ser$coordinateSystem=='unknown')
+  #     ser$coordinateSystem <- NULL
+  #   return(list(x=xtem, y=ytem, z='z', c=ser$coordinateSystem))
+  # }
+  # 
+  # doVMap <- function(vm) {
+  #   # visualMap assist: auto add min/max/calculable   (categories==piecewise)
+  #   out <- NULL
+  #   if (!is.null(df) && !is.null(vm) &&
+  #       is.null(vm$min) && is.null(vm$max) && is.null(vm$categories) &&
+  #       (is.null(vm$type) || (vm$type == 'continuous')) ) {
+  #     
+  #       xx <- length(colnames(df))   # last numeric column (by default)
+  #       for(xx in xx:1) if (is.numeric(unlist(df[,xx]))) break  # unlist for group_by
+  #       if (any(names(df) == 'value') && (
+  #         (!is.null(tl.series) && tl.series$type=='map') ||
+  #         (!is.null(series.param) && series.param$type=='map'))
+  #       ) xx <- 'value'
+  #       if (!is.null(vm$dimension)) xx <- vm$dimension
+  #       out <- list(
+  #         min= min(na.omit(df[,xx])),
+  #         max= max(na.omit(df[,xx])),
+  #         calculable= TRUE
+  #       )
+  #   }
+  #   out
+  # }
+  # 
+  # # ------------- data.frame -------------------
+  # colX <- 1     # by default 1st column is X, 2nd is Y, 3rd is Z
+  # colY <- 2
+  # grnm <- NULL
+  # if (!is.null(df)) {
+  #   stopifnot('ec.init: df should be data.frame or SharedData'= 
+  #             inherits(df, c("SharedData", "data.frame")))
+  #   
+  #   ct.key <- ct.group <- ct.dfKey <- NULL
+  #   if (requireNamespace("crosstalk", quietly= TRUE)) {
+  #     if (crosstalk::is.SharedData(df)) {
+  #       isCrosstalk <- TRUE
+  #       ct.key <- as.list(df$key())
+  #       ct.group <- df$groupName()
+  #       deps <- crosstalk::crosstalkLibs()
+  #       ct.dfKey <- df$key()
+  #       df <- df$origData()
+  #     }
+  #   }
+  #   if (xtKey=='XkeyX') df$XkeyX <- ct.dfKey   # add new column for Xtalk filtering, if needed
+  #   x$settings = list(
+  #     crosstalk_key = ct.key,
+  #     crosstalk_group = ct.group
+  #   )
+  #   stopifnot('ec.init: df is empty'= length(colnames(df)) > 0)
+  #   # silently auto-add extra column for some charts and for colX/colY
+  #   if (length(colnames(df)) == 1 && !is.grouped_df(df)) 
+  #     df <- df |> mutate(duplicate= 1:nrow(df))   
+  #   lenv$coNames <- colnames(df)   # must execute before first ec.clmn
+  #   # if data.frame given, build dataset regardless of 'preset' or 'dataset'
+  # 
+  #   # column-to-style with encode, replaces dataset column names, then creates series.data
+  #   if (!is.null(series.param$encode) && !is.null(series.param$encode$data) && is.null(opt1$timeline)) {
+  #     stopifnot('encode$data set, but series.param$data also set'= is.null(series.param$data))
+  #     #stopifnot('encode set, but df is grouped'= !dplyr::is.grouped_df(df))
+  #     if (!is.null(series.param$encode$data$value)) {
+  #       if ('value' %in% colnames(df)) message("Warning: encode$data$value, but df has already column 'value'")
+  #       vv <- series.param$encode$data$value
+  #       stopifnot('encode$data$value is not a vector of column names'= is.vector(vv))
+  #       stopifnot('encode$data$value column names not found in df'= vv %in% colnames(df))
+  #       # convert factor to char if any
+  #       ft <- na.omit(sapply(vv, \(x) { if (is.factor(df[[x]])) x else NA}))
+  #       if (length(ft)>0)
+  #         lapply(ft, \(x) { df[[x]] <- as.character(df[[x]]) })
+  #         #df <- df |> mutate(across(all_of(ft), as.character))   # error on group_by
+  #       # add new DB col 'value'
+  #       df$value <- list(list(rep('', length(vv))))
+  #       for(i in 1:nrow(df)) {
+  #         tmp <- list()
+  #         for(k in seq_along(vv)) tmp <- c(tmp, unlist(df[i,vv[k]], use.names=F))
+  #         df[i,]$value <- list(tmp) 
+  #       }
+  #       # TODO: remove vv columns from df or not?
+  #       sedval <- series.param$encode$data$value  # save for axes
+  #       series.param$encode$data$value <- NULL   # not needed anymore 
+  #       if (dbg) cat('\n encode$data$value:',vv)
+  #     }  #value
+  #     
+  #     hvals <- list(); lenv$pairs <- list()
+  #     .process_named_nested_lists(series.param$encode$data)   # fill lenv$pairs
+  #     for(nm in names(lenv$pairs)) {    # rename df columns
+  #       #if (grepl(spr, nm, fixed=TRUE)) {  # may have simple values
+  #         if (lenv$pairs[nm] %in% names(df)) {
+  #           dname <- if (grepl(spr, nm, fixed=TRUE)) paste0(nm,spr) else nm
+  #           names(df) <- gsub(lenv$pairs[nm], dname, names(df))
+  #           # delete from encode$data
+  #           series.param$encode$data[nm] <- NULL
+  #         } else { # hard value
+  #           hvals <- append(hvals, list(lenv$pairs[nm]))
+  #         }
+  #       #}
+  #     }
+  #     # cleanup encode
+  #     if (length(series.param$encode$data) > 0) {
+  #       tmp <- which(sapply(series.param$encode$data, is.list))   # all lists, remove from encode
+  #       if (length(tmp)>0) series.param$encode$data <- series.param$encode$data[!names(series.param$encode$data) %in% names(tmp)]
+  #     }
+  #     if (length(series.param$encode$data) <1) series.param$encode$data <- NULL
+  #     if (length(series.param$encode) <1) series.param$encode <- NULL
+  #     if (dbg) cat('\n hard values:',unlist(hvals))
+  #     
+  #     # prep hard values for merging, if any
+  #     hv <- cc <- list()
+  #     lapply(hvals, \(x) {
+  #       cnt <- length(gregexpr(spr, names(x), fixed=TRUE)[[1]])
+  #       #if (cnt < 1) return(NULL)
+  #       tt <- gsub(spr, '=list(', names(x), fixed=TRUE)
+  #       mm <- if (is.character(unlist(x))) paste0('"',unlist(x, use.names=F),'"') else x
+  #       tt <- paste('cc <- list(',tt,'=',mm, paste(rep(')',cnt+1), collapse=''))  # close parenthesis
+  #       tt <- eval(parse(text=tt))
+  #       hv <<- modifyList(hv, cc)
+  #     })
+  # 
+  #   }   # end column-to-style
+  #   
+  #   # grouping uses dataset transform
+  #   if (dplyr::is.grouped_df(df)) {
+  #     # name of 1st grouping column 
+  #     grnm <- df |> group_vars() |> first() |> as.character()  # convert if factor
+  #     x$opts$dataset <- list(list(dimensions= colnames(df), source= ec.data(df)))
+  #     grvals <- unlist(dplyr::group_data(df)[grnm], use.names=FALSE)
+  #     txfm <- sers <- list()
+  #     #legd = list(data= list())   # not needed
+  #     k <- 0
+  #     for(nm in grvals) { 
+  #       k <- k+1
+  #       txfm <- append(txfm, list(list(transform= list(
+  #         type= 'filter', config= list(dimension= grnm, '='=nm)), id= nm)))
+  #       d.One <- list(name= as.character(nm),
+  #                    type= if (is.null(ctype)) 'scatter' else ctype)
+  #       if (exists('hvals')) {    # column-to-style for grouped series
+  #         fdf <- df |> filter(get(grnm) == nm)
+  #         xxl <- ec.data(fdf, 'names', nasep=spr) 
+  #         d.One$data <- lapply(xxl, \(x) { modifyList(x, hv) })
+  #       } else
+  #         d.One$datasetIndex <- k+1      # datasetIndex will be decremented later
+  #       sers <- append(sers, list(d.One))
+  #       #legd$data <- append(legd$data, list(list(name=as.character(nm))))
+  #     }
+  #     x$opts$dataset <- append(x$opts$dataset, txfm)
+  #     
+  #     if (preset) {
+  #       if (is.null(opt1$series)) x$opts$series <- sers
+  #       if (is.null(opt1$legend)) x$opts$legend <- list(show=TRUE)  #legd
+  #       if (exists('hvals')) x$opts$dataset <- NULL  # dataset needed by timeline > incompatible
+  #       
+  #       # group by any column  (prevent group columns from becoming X/Y axis?)
+  #       pos <- which(colnames(df)==grnm)  # find position of group column
+  #       if (!is.null(tl.series) && !is.null(tl.series$groupBy))
+  #         pos <- c(pos, which(colnames(df)==tl.series$groupBy))
+  #       if (!is.null(series.param) && !is.null(series.param$groupBy))
+  #         pos <- c(pos, which(colnames(df)==series.param$groupBy))
+  #       allp <- rep(TRUE, length(colnames(df)))
+  #       allp <- replace(allp, pos, FALSE)   # mark pos of grp column
+  #       colX <- which(allp==TRUE)[1]   # first two==TRUE are X,Y
+  #       colY <- which(allp==TRUE)[2]
+  #       if (is.na(colY)) colY <- length(colnames(df))
+  #     }
+  #   }
+  #   else {    # non-grouped
+  #     
+  #     if (exists('hvals')) {
+  #       xxl <- ec.data(df, 'names', nasep=spr)
+  #       # finally merge hard values (if any) to all items inside series.data
+  #       series.param$data <- lapply(xxl, \(x) { modifyList(x, hv) })
+  #       
+  #     } else     # TODO: auto-add one series for dataset ?
+  #       x$opts$dataset <- list(list(dimensions= colnames(df), source= ec.data(df)))
+  #   }
+  # 
+  #   tmp <- doVMap(x$opts$visualMap)
+  #   x$opts$visualMap <- .merlis(x$opts$visualMap, tmp)
+  # }   # end df
+  # 
+  # #----- series driven logic, add axes only if applicable -----------
+  # namop <- names(x$opts)
+  # if (!is.null(ctype)) {    # add series 
+  #   if (!any(c('series','options') %in% namop))
+  #     #series.param = .merlis(series.param, list(type= ctype))  #err: not list(list())
+  #     x$opts$series <- list(list(type= ctype, id='ec.auto'))
+  #   if (!is.null(tl.series) && is.null(tl.series$type))
+  #     tl.series$type <- ctype
+  # }
+  # 
+  # if ('series' %in% namop) {
+  #   if (!is.null(ctype))     # all series, not 1st only
+  #     x$opts$series <- lapply(x$opts$series, function(ss) {
+  #       if (is.null(ss$type)) ss$type <- ctype
+  #       ss })
+  # }
+  # # options are manually built, dont update type
+  # 
+  # if ('polar' %in% namop) {
+  #   if (is.null(x$opts$polar$radius)) x$opts$polar$radius = 111
+  #   if (is.null(x$opts$radiusAxis)) x$opts$radiusAxis= list(type= 'category')
+  #   if (is.null(x$opts$angleAxis)) x$opts$angleAxis= list(doit=TRUE)
+  #   if (!is.null(series.param)) 
+  #     series.param = .merlis(series.param, list(coordinateSystem= "polar"))
+  # }
+  # 
+  # if (!is.null(series.param)) {
+  #   x$opts$series <- .merlis(x$opts$series, series.param)
+  # }
+  # axad <- 1; isSname <- FALSE
+  # x$opts$series <- lapply(x$opts$series, function(ss) {
+  #   # renderItem helper
+  #   if (!is.null(ss$renderItem) && inherits(ss$renderItem, "character")) {
+  #     if (startsWith(ss$renderItem, 'ri'))
+  #       ss$renderItem <- htmlwidgets::JS(ss$renderItem)
+  #     else {  # new ECharts 6 custom series want a character string
+  #       bask <- (ask==FALSE) | (ask=='loadRemote')
+  #       if (bask && !is.null(renderCustom[ss$renderItem])) {
+  #         ask <<- 'loadRemote'
+  #         x$opts$load <<- c(x$opts$load, renderCustom[[ss$renderItem]])
+  #       }
+  #       if (ss$renderItem %in% c('segmentedDoughnut','liquidFill','wordCloud'))
+  #         ss$coordinateSystem <- 'none'
+  #       if (!any(grepl('d3.min.js', x$opts$load)) && ss$renderItem=='contour')
+  #         x$opts$load <<- c('https://cdn.jsdelivr.net/npm/d3@latest/dist/d3.min.js', x$opts$load)
+  #     }
+  #     if (!is.null(ss$type)) ss$type <- 'custom'
+  #   }
+  #   
+  #   if (ss$type == 'parallel') {
+  #     if (is.null(opt1$parallelAxis) && !is.null(df))
+  #       x$opts$parallelAxis <<- ec.paxis(df)
+  #     if (!is.null(grnm) && tail(colnames(df),1) != grnm)
+  #       stop(paste0("ec.init: df group column '",grnm,"' should be last for parallel chart"))
+  #   }
+  #   if (ss$type == 'themeRiver')
+  #     x$opts$singleAxis <<- .merlis(x$opts$singleAxis, list(min='dataMin', max='dataMax'))
+  #   if (ss$type=='map' && is.null(ss$geoIndex))
+  #     ss <- .merlis(ss, list(geoIndex=1))
+  # 
+  #   tmp <- xyNamesCS(ss)
+  #   if (!is.null(tmp$c)) ss$coordinateSystem <- tmp$c
+  #   
+  #   # add encode to series after grouping, if missing 
+  #   if (!(colX==1 && colY==2)) {
+  #     xtem <- tmp$x; ytem <- tmp$y
+  #     if (!any(names(ss)=='encode')) {
+  #         ss$encode <- list()
+  #         ss$encode[xtem] <- colX   # R count
+  #         ss$encode[ytem] <- colY 
+  #     }
+  #     # else don't overwrite user's encode
+  #   }
+  #   if (!is.null(ss$name)) isSname <<- TRUE
+  #   
+  #   ss
+  # })
+  # if (any(c('geo','leaflet','globe', noCoord) %in% namop)) axad <- 0  # was axad-1
+  # if (axad > 0 && preset) {     
+  #   if (!'xAxis' %in% namop) x$opts$xAxis <- list(show=TRUE)
+  #   if (!'yAxis' %in% namop) x$opts$yAxis <- list(show=TRUE)
+  # }
+  # if (dbg) cat('\n axad=',axad)
+  # #if ((!'legend' %in% namop) && isSname) cat("\nNote: Some series have names, could add legend with 'legend= list(show=TRUE)'") 
+  #   
+  # # reading from encode set above  # TODO: when names not 'x','y' ?
+  # tmp <- series.param$encode
+  # if (!is.null(tmp) && length(tmp)>0 && !is.null(x$opts$xAxis)) {
+  #   if (!is.null(tmp$x)) {
+  #     if (is.numeric(tmp$x)) colX <- tmp$x
+  #     else if (!is.null(df)) colX <- which(colnames(df) %in% tmp$x) 
+  #   }
+  #   if (!is.null(tmp$y)) {
+  #     if (is.numeric(tmp$y)) colY <- tmp$y
+  #     else if (!is.null(df)) colY <- which(colnames(df) %in% tmp$y)
+  #   }
+  # }
+  # if (dbg) cat('\n colX=',colX,' colY=',colY)
+  # 
+  # if (preset) {
+  #   # set X,Y axes type & name from df OR from series.data
+  # 
+  #   cnms <- NULL
+  #   ena <- c('x','y') # TODO: for polar= c('radius','angle')  map= c('lng','lat')
+  #   coln <- colp <- ctyp <- list()   # column names, positions, types
+  #   for(xy in ena) { coln[xy] <- ctyp[xy] <- colp[xy] <- NA }
+  #   
+  #   if (!is.null(df)) {
+  #     cnms <- colnames(df); coln[1] <- cnms[colX[1]]; coln[2] <- cnms[colY[1]]
+  #   }
+  #   s1 <- x$opts$series[[1]]
+  #   if (!is.null(s1$dimensions)) cnms <- s1$dimensions
+  #   slb <- s1$seriesLayoutBy; slb <- (!is.null(slb) && slb=='row')
+  #   isAxes <- !s1$type %in% c('custom',noAxisXY) && 
+  #             !paste0(s1$type,s1$layout) %in% c('graphforce','graphcircular') &&
+  #             !slb && !paste0('',s1$coordinateSystem) %in% c('leaflet','geo') &&
+  #   	        !any(noCoord %in% names(x$opts))
+  #   if (isAxes) {  # search for single X/Y axis name and type
+  #     colp[1] <- colX[1]; colp[2] <- colY[1];
+  #     if (!is.null(s1$encode)) {
+  #       for(xy in ena) {
+  #         exy <- s1$encode[[xy]]
+  #       	if (!is.null(exy) && length(exy) <2 ) {   # exclude multi-values like candlestick
+  #       	  if (inherits(exy, 'character')) coln[xy] <- exy  
+  #       	  if (inherits(exy, 'numeric')) colp[xy] <- exy
+  #       	}
+  #       }
+  #     } 
+  #     # check first $data then $dset
+  #     if (exists('sedval')) {  # encode$data$value takes precedence
+  #       i <- 1
+  #       for(xy in ena) { 
+  #         coln[xy] <- sedval[i]; 
+  #         ctyp[xy] <- tail(class(unlist(df[1, sedval[i]])), 1); i<-i+1 }
+  #     } 
+  #     else if ('data' %in% names(s1)) {
+  #       # chk s1$data for type (and maybe name)  list(value=) or list(c()) or mixed
+  #       # verify only first row in list-of-lists  
+  #       # TODO: s1$data could be non-named but have names in s1$dimensions
+  #       d1 <- if (is.list(s1$data) && is.list(s1$data[[1]])) s1$data[[1]] else s1$data  
+  #       if (!is.null(names(d1))) {
+  #         cnms <- names(d1)
+  #     	  for(xy in ena) {
+  #           if (!is.na(coln[[xy]]) && coln[[xy]] %in% cnms) ctyp[xy] <- tail(class(d1[[coln[[xy]]]]), 1)
+  #           else if (!is.na(colp[[xy]])) {
+  #             ctyp[xy] <- if ('value' %in% cnms) tail(class(d1$value[[colp[[xy]]]]), 1)
+  #                         else tail(class(d1[[colp[[xy]]]]), 1)   # numeric array
+  #           }
+  #     	  }
+  #       }
+  #       else {    # like data=c(1,2..) 
+  #   	      if (!is.na(coln[[xy]]) && coln[[xy]] %in% cnms) ctyp[xy] <- tail(class(d1[[ coln[[xy]] ]]), 1)
+  #   	      else if (!is.na(colp[[xy]])) ctyp[xy] <- tail(class(d1[[colp[[xy]]]]), 1)   # numeric array
+  #       }
+  #     } 
+  #   	else if (!is.null(x$opts$dataset)) {   # dataset     
+  #   	  # TODO: ignore when format is [{name=...},..]  ?
+  #   	  # TODO: types of multiple xAxis[] when no series$encode
+  #       dset <- x$opts$dataset[[1]]
+  #       r1 <- dset$source[[1]]
+  #       if (!is.null(dset$dimensions)) cnms <- dset$dimensions
+  #       else if (length(dset$source) >1 && 
+  #         !identical(lapply(r1, class), lapply(dset$source[[2]], class)) )  {
+  #           cnms <- unlist(r1)  # header
+  #           r1 <- dset$source[[2]]
+  #       }
+  #      #  for(xy in ena) {
+  #      #    if (!is.na(coln[xy]) && coln[xy] %in% cnms) colp[xy] <- which(cnms==coln[[xy]])   # name to pos
+  #      # 	  if (!is.na(colp[xy])) ctyp[xy] <- tail(class(r1[[colp[[xy]]]]), 1)   # numeric array
+  #      #  }
+  #       for(xy in ena) {
+  #       	  if (!is.na(colp[xy])) ctyp[xy] <- tail(class(r1[[ colp[[xy]] ]]), 1)
+  #       }
+  #   	}
+  #   
+  #     lenv$coNames <- cnms
+  #     # convert ctyp
+  #     for(xy in ena) ctyp[[xy]] <- switch(as.character(ctyp[[xy]]),  #'POSIXct'=,'POSIXlt'=,
+  #       'character'=,'factor'= 'category', 'POSIXt'=,'Date'= 'time', 'numeric'= 'value', 'value')
+  #     # finally set xAxis type, name from coln,ctyp if any
+  # 
+  #     lupd <- list(x=list(), y=list())
+  #     if (any(!is.na(ctyp))) for(xy in ena) if (!is.na(ctyp[xy])) lupd[[xy]]$type <- ctyp[[xy]]
+  #     if (any(!is.na(coln))) for(xy in ena) if (!is.na(coln[xy])) lupd[[xy]]$name <- coln[[xy]]
+  #     names(lupd) <- c('xAxis','yAxis')
+  #     for(xy in names(lupd)) {    # merge by just adding missing props
+  #       if (!is.null(names(lupd[[xy]])) && length(names(x$opts[[xy]])) >0)  # dont deal with multiple axes
+  #      	  x$opts[[xy]] <- c(lupd[[xy]], x$opts[[xy]])[!duplicated(c(names(lupd[[xy]]), names(x$opts[[xy]])), fromLast=TRUE)]
+  #     }
+  #     
+  #     if (dbg) cat('\n colp=',unlist(colp),' ctyp=',unlist(ctyp))
+  #   }   # end isAxes
+  #   
+  # }   # end preset
+}
+else {
+
+  # ── Constants ────────────────────────────────────────────────────────────────
+  # Centralise every magic string so changes propagate everywhere automatically.
+  
+  CS_CARTESIAN2D <- "cartesian2d"
+  CS_CARTESIAN3D <- "cartesian3D"
+  CS_GEO         <- "geo"
+  CS_GEO3D       <- "geo3D"
+  CS_GLOBE       <- "globe"
+  CS_LEAFLET     <- "leaflet"
+  CS_CALENDAR    <- "calendar"
+  CS_POLAR       <- "polar"
+  CS_NONE        <- "none"
+  CS_UNKNOWN     <- "unknown"     # internal sentinel; never emitted to ECharts
+  
+  TYPES_AXIS2D   <- c("pictorialBar", "candlestick", "boxplot", "scatterGL")
+  TYPES_GEO3D    <- c("scatter3D", "bar3D", "lines3D")
+  TYPES_CART3D   <- c("scatter3D", "bar3D", "line3D", "surface")
+  TYPES_GEO_2D   <- c("scatter", "scatterGL", "lines")
+  TYPES_CALENDAR <- c("heatmap", "scatter", "effectScatter")
+  TYPES_NO_COORD <- c("map", "themeRiver")
+  
+  AXES_ENA       <- c("x", "y")   # standard axis pair key names
+  
+  # ── xyNamesCS ─────────────────────────────────────────────────────────────────
+  # Resolve coordinate system for a series and return the x/y/z/c name mapping.
+  # Side-effect: updates `axad` in the enclosing scope (+1 = needs axes, -1 = doesn't).
+  #
+  # @param ser  A single series list from x$opts$series.
+  # @return     Named list(x, y, z, c) — dimension labels + resolved coordinateSystem.
+  
   xyNamesCS <- function(ser) {
-    # TODO: move out as .serieNamesCoord(ser, opt1, ..?)
-    # set x,y names + cs(coordinateSystem), called by {loop all series} or tl.series
-    axis2d <- c('pictorialBar','candlestick','boxplot','scatterGL') #'custom',
-    xtem <- 'x'; ytem <- 'y'
-    if (is.null(ser$coordinateSystem)) {   # assist with coordinateSystem
-      ser$coordinateSystem <- 'unknown'
-      if (ser$type %in% axis2d)
-        ser$coordinateSystem <- 'cartesian2d'   # default 'scatter' comes here
-      if (any(noCoord %in% names(opt1)) || 
-          ser$type %in% c('map','themeRiver'))
-        ser$coordinateSystem <- 'unknown'       # keep to compare below
-      if (ser$type %in% c('scatter3D','bar3D','line3D','surface'))
-        ser$coordinateSystem <- 'cartesian3D'
-      if (ser$type %in% c('scatter3D','bar3D','lines3D')) {
-        if (!is.null(opt1$geo3D)) ser$coordinateSystem <- 'geo3D'
-        if (!is.null(opt1$globe)) ser$coordinateSystem <- 'globe'
+  
+    cs <- ser$coordinateSystem   # may be NULL (user did not set it)
+  
+    # ── Infer coordinateSystem when absent ──────────────────────────────────────
+    if (is.null(cs)) {
+  
+      has_no_coord <- any(noCoord %in% names(opt1))
+      cs <- CS_UNKNOWN   # default sentinel
+  
+      if (ser$type %in% TYPES_AXIS2D)        cs <- CS_CARTESIAN2D
+      if (has_no_coord ||
+          ser$type %in% TYPES_NO_COORD)      cs <- CS_UNKNOWN
+  
+      if (ser$type %in% TYPES_CART3D)        cs <- CS_CARTESIAN3D
+  
+      if (ser$type %in% TYPES_GEO3D) {
+        if (!is.null(opt1$geo3D))             cs <- CS_GEO3D
+        if (!is.null(opt1$globe))             cs <- CS_GLOBE
       }
-      if (ser$type %in% c('scatter','scatterGL','lines')) {
-        if (!is.null(opt1$geo)) ser$coordinateSystem <- 'geo'
-        if ('world' %in% opt1$load) ser$coordinateSystem <- 'geo'
-        if ('leaflet' %in% opt1$load) ser$coordinateSystem <- 'leaflet'
+  
+      if (ser$type %in% TYPES_GEO_2D) {
+        if (!is.null(opt1$geo))               cs <- CS_GEO
+        if ("world"   %in% opt1$load)         cs <- CS_GEO
+        if ("leaflet" %in% opt1$load)         cs <- CS_LEAFLET
       }
     }
-    if (!is.null(opt1$calendar) && ser$type %in% c('heatmap','scatter','effectScatter'))
-      ser$coordinateSystem <- 'calendar'
-
-    # #careful: setting x$opts$ but could be wt$x$opts coming from tl.series
-    # if (ser$type == 'parallel') {
-    #   if (is.null(opt1$parallelAxis) && !is.null(df))
-    #     x$opts$parallelAxis <<- ec.paxis(df)
-    #   if (!is.null(grnm) && tail(colnames(df),1) != grnm)
-    #     stop(paste0("ec.init: df group column '",grnm,"' should be last for parallel chart"))
-    # }
-    # 
-    # if (ser$type == 'themeRiver')
-    #   x$opts$singleAxis <<- .merlis(x$opts$singleAxis, list(min='dataMin', max='dataMax'))
-    # some series may need axes, others not. collect decisions for all series
-    if (ser$type %in% noAxisXY 
-        || ser$coordinateSystem %in% c('none','matrix','geo','leaflet','globe','geo3D','cartesian3D','singleAxis')
-        || any(c('roam') %in% names(ser))   # maps,graph
-        || (any(c('layout') %in% names(ser)) && ser$layout=='force')  # graph
-    ) axad <<- axad-1
-    else axad <<- axad+1  # must have XY axes
-    
-    if (ser$type == 'pie') {
-      xtem <- 'value'; ytem <- 'itemName' }
-    if (ser$coordinateSystem=='polar') { 
-      xtem <- 'radius'; ytem <- 'angle' }
-    if (ser$coordinateSystem %in% c('geo','leaflet')) {
-      xtem <- 'lng'; ytem <- 'lat' }
-    if (ser$type == 'map') {
-      xtem <- 'name'; ytem <- 'value' }
-    if (ser$coordinateSystem=='unknown')
-      ser$coordinateSystem <- NULL
-    return(list(x=xtem, y=ytem, z='z', c=ser$coordinateSystem))
+  
+    if (!is.null(opt1$calendar) && ser$type %in% TYPES_CALENDAR)
+      cs <- CS_CALENDAR
+  
+    # ── Decide whether this series needs XY axes ─────────────────────────────
+    no_axes <-
+      ser$type %in% noAxisXY ||
+      cs %in% c(CS_NONE, "matrix", CS_GEO, CS_LEAFLET, CS_GLOBE,
+                CS_GEO3D, CS_CARTESIAN3D, "singleAxis") ||
+      "roam"   %in% names(ser) ||                          # maps, graph
+      ("layout" %in% names(ser) && ser$layout == "force")  # graph force layout
+  
+    axad <<- if (no_axes) axad - 1L else axad + 1L
+  
+    # Resolve the sentinel back to NULL — ECharts must not receive CS_UNKNOWN
+    resolved_cs <- if (cs == CS_UNKNOWN) NULL else cs
+    if (!is.null(resolved_cs)) ser$coordinateSystem <- resolved_cs
+  
+    # ── Map coordinate system to axis dimension names ─────────────────────────
+    dim_names <- switch(
+      resolved_cs %||% CS_UNKNOWN, #cs %||% CS_UNKNOWN,
+      polar   = list(x = "radius", y = "angle"),
+      geo     = ,
+      leaflet = list(x = "lng",    y = "lat"),
+      list(x = "x", y = "y")   # default (cartesian2d, calendar, unknown, ...)
+    )
+  
+    # Series-type overrides take precedence over coordinate system
+    if (ser$type == 'pie') { dim_names <- list(x="value", y= "itemName") }
+    if (ser$type == 'map') { dim_names <- list(x="name", y= "value") }
+  
+    if (dbg) cat('\n xyNamesCS: x=',dim_names$x,' y=',dim_names$y,' cs=',resolved_cs)
+    list(x = dim_names$x, y = dim_names$y, z = "z", c = resolved_cs)
   }
+  
+  
+  # ── doVMap ────────────────────────────────────────────────────────────────────
+  # Auto-fill visualMap min/max/calculable from the data frame when the user
+  # has not supplied them.  Returns NULL or a list to merge into visualMap.
   
   doVMap <- function(vm) {
-    # visualMap assist: auto add min/max/calculable   (categories==piecewise)
-    out <- NULL
-    if (!is.null(df) && !is.null(vm) &&
-        is.null(vm$min) && is.null(vm$max) && is.null(vm$categories) &&
-        (is.null(vm$type) || (vm$type == 'continuous')) ) {
-      
-        xx <- length(colnames(df))   # last numeric column (by default)
-        for(xx in xx:1) if (is.numeric(unlist(df[,xx]))) break  # unlist for group_by
-        if (any(names(df) == 'value') && (
-          (!is.null(tl.series) && tl.series$type=='map') ||
-          (!is.null(series.param) && series.param$type=='map'))
-        ) xx <- 'value'
-        if (!is.null(vm$dimension)) xx <- vm$dimension
-        out <- list(
-          min= min(na.omit(df[,xx])),
-          max= max(na.omit(df[,xx])),
-          calculable= TRUE
-        )
-    }
-    out
-  }
- 
-  # ------------- data.frame -------------------
-  colX <- 1     # by default 1st column is X, 2nd is Y, 3rd is Z
-  colY <- 2
-  grnm <- NULL
-  if (!is.null(df)) {
-    stopifnot('ec.init: df should be data.frame or SharedData'= 
-              inherits(df, c("SharedData", "data.frame")))
+  
+    # Only act when: df exists, vm exists, no manual bounds, no categories,
+    # and type is continuous (or unset)
+    needs_auto <-
+      !is.null(df) &&
+      !is.null(vm) &&
+      is.null(vm$min) && is.null(vm$max) && is.null(vm$categories) &&
+      (is.null(vm$type) || vm$type == "continuous")
+  
+    if (!needs_auto) return(NULL)
+  
+    # replace col.name dimension with col.position
+    #if (!is.numeric(vm$dimension)) vm$dimension <- which(names(df)==vm$dimension)
     
-    ct.key <- ct.group <- ct.dfKey <- NULL
-    if (requireNamespace("crosstalk", quietly= TRUE)) {
-      if (crosstalk::is.SharedData(df)) {
-        isCrosstalk <- TRUE
-        ct.key <- as.list(df$key())
-        ct.group <- df$groupName()
-        deps <- crosstalk::crosstalkLibs()
-        ct.dfKey <- df$key()
-        df <- df$origData()
-      }
-    }
-    if (xtKey=='XkeyX') df$XkeyX <- ct.dfKey   # add new column for Xtalk filtering, if needed
-    x$settings = list(
-      crosstalk_key = ct.key,
-      crosstalk_group = ct.group
-    )
-    stopifnot('ec.init: df is empty'= length(colnames(df)) > 0)
-    # silently auto-add extra column for some charts and for colX/colY
-    if (length(colnames(df)) == 1 && !is.grouped_df(df)) 
-      df <- df |> mutate(duplicate= 1:nrow(df))   
-    lenv$coNames <- colnames(df)   # must execute before first ec.clmn
-    # if data.frame given, build dataset regardless of 'preset' or 'dataset'
- 
-    # column-to-style with encode, replaces dataset column names, then creates series.data
-    if (!is.null(series.param$encode) && !is.null(series.param$encode$data) && is.null(opt1$timeline)) {
-      stopifnot('encode$data set, but series.param$data also set'= is.null(series.param$data))
-      #stopifnot('encode set, but df is grouped'= !dplyr::is.grouped_df(df))
-      if (!is.null(series.param$encode$data$value)) {
-        if ('value' %in% colnames(df)) message("Warning: encode$data$value, but df has already column 'value'")
-        vv <- series.param$encode$data$value
-        stopifnot('encode$data$value is not a vector of column names'= is.vector(vv))
-        stopifnot('encode$data$value column names not found in df'= vv %in% colnames(df))
-        # convert factor to char if any
-        ft <- na.omit(sapply(vv, \(x) { if (is.factor(df[[x]])) x else NA}))
-        if (length(ft)>0)
-          lapply(ft, \(x) { df[[x]] <- as.character(df[[x]]) })
-          #df <- df |> mutate(across(all_of(ft), as.character))   # error on group_by
-        # add new DB col 'value'
-        df$value <- list(list(rep('', length(vv))))
-        for(i in 1:nrow(df)) {
-          tmp <- list()
-          for(k in seq_along(vv)) tmp <- c(tmp, unlist(df[i,vv[k]], use.names=F))
-          df[i,]$value <- list(tmp) 
-        }
-        # TODO: remove vv columns from df or not?
-        sedval <- series.param$encode$data$value  # save for axes
-        series.param$encode$data$value <- NULL   # not needed anymore 
-        if (dbg) cat('\n encode$data$value:',vv)
-      }  #value
-      
-      hvals <- list(); lenv$pairs <- list()
-      .process_named_nested_lists(series.param$encode$data)   # fill lenv$pairs
-      for(nm in names(lenv$pairs)) {    # rename df columns
-        #if (grepl(spr, nm, fixed=TRUE)) {  # may have simple values
-          if (lenv$pairs[nm] %in% names(df)) {
-            dname <- if (grepl(spr, nm, fixed=TRUE)) paste0(nm,spr) else nm
-            names(df) <- gsub(lenv$pairs[nm], dname, names(df))
-            # delete from encode$data
-            series.param$encode$data[nm] <- NULL
-          } else { # hard value
-            hvals <- append(hvals, list(lenv$pairs[nm]))
-          }
-        #}
-      }
-      # cleanup encode
-      if (length(series.param$encode$data) > 0) {
-        tmp <- which(sapply(series.param$encode$data, is.list))   # all lists, remove from encode
-        if (length(tmp)>0) series.param$encode$data <- series.param$encode$data[!names(series.param$encode$data) %in% names(tmp)]
-      }
-      if (length(series.param$encode$data) <1) series.param$encode$data <- NULL
-      if (length(series.param$encode) <1) series.param$encode <- NULL
-      if (dbg) cat('\n hard values:',unlist(hvals))
-      
-      # prep hard values for merging, if any
-      hv <- cc <- list()
-      lapply(hvals, \(x) {
-        cnt <- length(gregexpr(spr, names(x), fixed=TRUE)[[1]])
-        #if (cnt < 1) return(NULL)
-        tt <- gsub(spr, '=list(', names(x), fixed=TRUE)
-        mm <- if (is.character(unlist(x))) paste0('"',unlist(x, use.names=F),'"') else x
-        tt <- paste('cc <- list(',tt,'=',mm, paste(rep(')',cnt+1), collapse=''))  # close parenthesis
-        tt <- eval(parse(text=tt))
-        hv <<- modifyList(hv, cc)
-      })
-
-    }   # end column-to-style
-    
-    # grouping uses dataset transform
-    if (dplyr::is.grouped_df(df)) {
-      # name of 1st grouping column 
-      grnm <- df |> group_vars() |> first() |> as.character()  # convert if factor
-      x$opts$dataset <- list(list(dimensions= colnames(df), source= ec.data(df)))
-      grvals <- unlist(dplyr::group_data(df)[grnm], use.names=FALSE)
-      txfm <- sers <- list()
-      #legd = list(data= list())   # not needed
-      k <- 0
-      for(nm in grvals) { 
-        k <- k+1
-        txfm <- append(txfm, list(list(transform= list(
-          type= 'filter', config= list(dimension= grnm, '='=nm)), id= nm)))
-        d.One <- list(name= as.character(nm),
-                     type= if (is.null(ctype)) 'scatter' else ctype)
-        if (exists('hvals')) {    # column-to-style for grouped series
-          fdf <- df |> filter(get(grnm) == nm)
-          xxl <- ec.data(fdf, 'names', nasep=spr) 
-          d.One$data <- lapply(xxl, \(x) { modifyList(x, hv) })
-        } else
-          d.One$datasetIndex <- k+1      # datasetIndex will be decremented later
-        sers <- append(sers, list(d.One))
-        #legd$data <- append(legd$data, list(list(name=as.character(nm))))
-      }
-      x$opts$dataset <- append(x$opts$dataset, txfm)
-      
-      if (preset) {
-        if (is.null(opt1$series)) x$opts$series <- sers
-        if (is.null(opt1$legend)) x$opts$legend <- list(show=TRUE)  #legd
-        if (exists('hvals')) x$opts$dataset <- NULL  # dataset needed by timeline > incompatible
-        
-        # group by any column  (prevent group columns from becoming X/Y axis?)
-        pos <- which(colnames(df)==grnm)  # find position of group column
-        if (!is.null(tl.series) && !is.null(tl.series$groupBy))
-          pos <- c(pos, which(colnames(df)==tl.series$groupBy))
-        if (!is.null(series.param) && !is.null(series.param$groupBy))
-          pos <- c(pos, which(colnames(df)==series.param$groupBy))
-        allp <- rep(TRUE, length(colnames(df)))
-        allp <- replace(allp, pos, FALSE)   # mark pos of grp column
-        colX <- which(allp==TRUE)[1]   # first two==TRUE are X,Y
-        colY <- which(allp==TRUE)[2]
-        if (is.na(colY)) colY <- length(colnames(df))
-      }
-    }
-    else {    # non-grouped
-      
-      if (exists('hvals')) {
-        xxl <- ec.data(df, 'names', nasep=spr)
-        # finally merge hard values (if any) to all items inside series.data
-        series.param$data <- lapply(xxl, \(x) { modifyList(x, hv) })
-        
-      } else     # TODO: auto-add one series for dataset ?
-        x$opts$dataset <- list(list(dimensions= colnames(df), source= ec.data(df)))
+    # Determine which column to use for bounds
+    col_idx <- if (!is.null(vm$dimension)) {
+      vm$dimension    # should be already numerical
+    } else {
+      # Last numeric column (scan right-to-left)
+      nc   <- ncol(df)
+      hits <- which(vapply(seq_len(nc), \(i) is.numeric(unlist(df[, i])), logical(1L)))
+      if (length(hits)) tail(hits, 1L) else nc
     }
   
-    tmp <- doVMap(x$opts$visualMap)
-    x$opts$visualMap <- .merlis(x$opts$visualMap, tmp)
-  }   # end df
+    # Map charts use the 'value' column when present
+    is_map_series <-
+      (!is.null(tl.series)    && tl.series$type    == "map") ||
+      (!is.null(series.param) && series.param$type == "map")
+  
+    if ("value" %in% names(df) && is_map_series)
+      col_idx <- "value"
+  
+    col_vals <- na.omit(df[, col_idx])
+  
+    list(
+      #dimension  = vm$dimension,
+      min        = min(col_vals),
+      max        = max(col_vals),
+      calculable = TRUE
+    )
+  }
+  
+  
+  # ── Data-frame block ──────────────────────────────────────────────────────────
+  
+  colX <- 1L   # default: 1st column → X axis
+  colY <- 2L   # default: 2nd column → Y axis
+  grnm <- NULL
+  
+  if (!is.null(df)) {
+  
+    stopifnot(
+      "ec.init: df should be data.frame or SharedData" =
+        inherits(df, c("SharedData", "data.frame"))
+    )
+  
+    # ── Crosstalk integration ────────────────────────────────────────────────
+    ct.key <- ct.group <- ct.dfKey <- NULL
+  
+    if (requireNamespace("crosstalk", quietly = TRUE) &&
+        crosstalk::is.SharedData(df)) {
+      isCrosstalk <- TRUE
+      ct.key      <- as.list(df$key())
+      ct.group    <- df$groupName()
+      deps        <- crosstalk::crosstalkLibs()
+      ct.dfKey    <- df$key()
+      df          <- df$origData()
+    }
+  
+    if (xtKey == "XkeyX") df$XkeyX <- ct.dfKey   # column for crosstalk filtering
+  
+    x$settings <- list(
+      crosstalk_key   = ct.key,
+      crosstalk_group = ct.group
+    )
+  
+    stopifnot("ec.init: df is empty" = ncol(df) > 0)
+  
+    # Silently add a dummy column when df has only one column (non-grouped)
+    if (ncol(df) == 1L && !is.grouped_df(df))
+      df <- df |> mutate(duplicate = seq_len(nrow(df)))
+  
+    lenv$coNames <- colnames(df)   # must run before first ec.clmn call
+  
+    # ── encode$data — column-to-style mapping ───────────────────────────────
+    enc_data   <- series.param$encode$data
+    has_encode <- !is.null(enc_data) && !is.null(series.param$encode) &&
+                  is.null(opt1$timeline)
+  
+    if (has_encode) {
+  
+      stopifnot(
+        "encode$data set, but series.param$data also set" = is.null(series.param$data)
+      )
+  
+      sedval <- NULL   # will hold encode$data$value column names if set
+  
+      # ── Collapse multiple df columns into a single list-valued 'value' column
+      if (!is.null(enc_data$value)) {
+        vv <- enc_data$value
+  
+        if ("value" %in% colnames(df))
+          message("Warning: encode$data$value, but df already has column 'value'")
+  
+        stopifnot(
+          "encode$data$value is not a vector of column names" = is.vector(vv),
+          "encode$data$value column names not found in df"    = vv %in% colnames(df)
+        )
+  
+        # Convert any factor columns to character in-place
+        factor_cols <- vv[vapply(vv, \(col) is.factor(df[[col]]), logical(1L))]
+        for (col in factor_cols) df[[col]] <- as.character(df[[col]])
+  
+        # Build list-per-row 'value' column
+        df$value <- lapply(seq_len(nrow(df)), \(i) {
+          unlist(df[i, vv], use.names = FALSE)
+        })
+  
+        sedval <- vv
+        series.param$encode$data$value <- NULL   # consumed above
+        if (dbg) cat("\n encode$data$value:", vv)
+      }
+  
+      # ── Rename df columns from encode$data mappings ──────────────────────
+      hvals <- list()
+      lenv$pairs <- list()
+      .process_named_nested_lists(series.param$encode$data)   # populates lenv$pairs
+  
+      for (nm in names(lenv$pairs)) {
+        pair_val <- lenv$pairs[[nm]]
+  
+        if (pair_val %in% names(df)) {
+          dname        <- if (grepl(spr, nm, fixed = TRUE)) paste0(nm, spr) else nm
+          names(df)    <- sub(pair_val, dname, names(df), fixed = TRUE)
+          series.param$encode$data[[nm]] <- NULL
+        } else {
+          hvals <- c(hvals, list(setNames(list(pair_val), nm)))
+        }
+      }
+  
+      # Drop any remaining list entries from encode$data; NULL-out if empty
+      list_entries <- vapply(series.param$encode$data, is.list, logical(1L))
+      if (any(list_entries)) {
+        tmp <- series.param$encode$data[!list_entries]
+        if (length(tmp)>0)   # see test with unnamed 333
+          series.param$encode$data <- tmp[nzchar(names(tmp))]
+        else
+          series.param$encode$data <- NULL
+      }
+  
+      if (length(series.param$encode$data) == 0L) series.param$encode$data <- NULL
+      if (length(series.param$encode)      == 0L) series.param$encode      <- NULL
+  
+      if (dbg) cat("\n hard values:", unlist(hvals))
+  
+      # ── Build nested list from hard values (for later merge into series data)
+      hv <- list()
+      for (hval in hvals) {
+        cnt <- lengths(regmatches(names(hval), gregexpr(spr, names(hval), fixed = TRUE)))
+        lhs <- gsub(spr, "=list(", names(hval), fixed = TRUE)
+        rhs <- if (is.character(unlist(hval))) paste0('"', unlist(hval), '"') else unlist(hval)
+        expr_text <- paste0(
+          "list(", lhs, "=", rhs,
+          strrep(")", cnt + 1L)
+        )
+        hv <- modifyList(hv, eval(parse(text = expr_text)))
+      }
+  
+    }   # end encode block
+  
+    # ── Grouped data-frame: expand into dataset + transform filter series ────
+    if (is.grouped_df(df)) {
+  
+      grnm    <- as.character(first(group_vars(df)))
+      grvals  <- unlist(group_data(df)[[grnm]], use.names = FALSE)
+  
+      x$opts$dataset <- list(list(dimensions = colnames(df), source = ec.data(df)))
+  
+      # Build one transform + one series per group value
+      transforms <- lapply(grvals, \(nm) list(
+        transform = list(type = "filter", config = list(dimension = grnm, "=" = nm)),
+        id        = nm
+      ))
+  
+      sers <- lapply(seq_along(grvals), \(k) {
+        nm    <- grvals[[k]]
+        entry <- list(
+          name = as.character(nm),
+          type = ctype %||% "scatter"
+        )
+        if (exists('hvals')) {  # && length(hvals) > 0L
+          fdf        <- df |> filter(.data[[grnm]] == nm)
+          row_data   <- ec.data(fdf, "names", nasep = spr)
+          entry$data <- lapply(row_data, \(r) modifyList(r, hv))
+        } else {
+          entry$datasetIndex <- k + 1L   # 0-based; decremented later
+        }
+        entry
+      })
+  
+      x$opts$dataset <- c(x$opts$dataset, transforms)
+  
+      if (preset) {
+        if (is.null(opt1$series)) x$opts$series <- sers
+        if (is.null(opt1$legend)) x$opts$legend <- list(show = TRUE)
+  
+        # dataset is incompatible with column-to-style (timeline scenario)
+        if (exists("hvals")) x$opts$dataset <- NULL  #  && length(hvals) > 0L
+  
+        # Exclude the grouping column(s) from X/Y column selection
+        excl_cols <- which(colnames(df) %in% c(
+          grnm,
+          tl.series$groupBy,
+          series.param$groupBy
+        ))
+        keep_mask <- rep(TRUE, ncol(df))
+        keep_mask[excl_cols] <- FALSE
+        keep_pos  <- which(keep_mask)
+  
+        colX <- keep_pos[1L]
+        colY <- keep_pos[2L] %||% ncol(df)
+      }
+  
+    } 
+    else {
+      # ── Non-grouped: direct dataset or series data ───────────────────────
+      if (exists("hvals")) {  # && length(hvals) > 0L
+        row_data          <- ec.data(df, "names", nasep = spr)
+        series.param$data <- lapply(row_data, \(r) modifyList(r, hv))
+      } else {
+        x$opts$dataset <- list(list(
+          dimensions = colnames(df),
+          source     = ec.data(df)
+        ))
+      }
+    }
 
-  #----- series driven logic, add axes only if applicable -----------
-  namop <- names(x$opts)
+    if ('visualMap' %in% names(x$opts)) {
+      # convert visualMap to list of lists if a lone list
+      if (!is.null(names(x$opts$visualMap))) x$opts$visualMap <- list(x$opts$visualMap)
+      x$opts$visualMap <- lapply(x$opts$visualMap, \(xx) {
+        # replace col.name dimension with col.position
+        if ('dimension' %in% names(xx) && !is.numeric(xx$dimension)) 
+          xx$dimension <- which(names(df)==xx$dimension)
+        # Auto-populate visualMap bounds min/max
+        xx <- .merlis(xx, doVMap(xx) )
+        xx
+      })
+    }
+  
+  }   # end df block
+  
+  
+  # ── Series-driven logic: axes, coordinate systems, encode ────────────────────
+  namop  <- names(x$opts)
   if (!is.null(ctype)) {    # add series 
     if (!any(c('series','options') %in% namop))
       #series.param = .merlis(series.param, list(type= ctype))  #err: not list(list())
@@ -471,171 +1024,265 @@ ec.init <- function( df= NULL, preset= TRUE, ...,  #ctype= 'scatter',
   if (!is.null(series.param)) {
     x$opts$series <- .merlis(x$opts$series, series.param)
   }
-  axad <- 1; isSname <- FALSE
-  x$opts$series <- lapply(x$opts$series, function(ss) {
-    # renderItem helper
-    if (!is.null(ss$renderItem) && inherits(ss$renderItem, "character")) {
-      if (startsWith(ss$renderItem, 'ri'))
+  
+  axad   <- 1L
+  isSname <- FALSE
+  
+  if (!is.null(x$opts$series))
+    x$opts$series <- lapply(x$opts$series, function(ss) {
+  
+    # ── renderItem / custom series ─────────────────────────────────────────
+    if (!is.null(ss$renderItem) && is.character(ss$renderItem)) {
+  
+      if (startsWith(ss$renderItem, "ri")) {
         ss$renderItem <- htmlwidgets::JS(ss$renderItem)
-      else {  # new ECharts 6 custom series want a character string
-        bask <- (ask==FALSE) | (ask=='loadRemote')
-        if (bask && !is.null(renderCustom[ss$renderItem])) {
-          ask <<- 'loadRemote'
-          x$opts$load <<- c(x$opts$load, renderCustom[[ss$renderItem]])
+  
+      } else {
+        # ECharts 6+ named custom render items
+        can_load <- isFALSE(ask) || ask == "loadRemote"
+  
+        if (can_load && !is.null(renderCustom[[ss$renderItem]])) {
+          ask          <<- "loadRemote"
+          x$opts$load  <<- c(x$opts$load, renderCustom[[ss$renderItem]])
         }
-        if (ss$renderItem %in% c('segmentedDoughnut','liquidFill','wordCloud'))
-          ss$coordinateSystem <- 'none'
-        if (!any(grepl('d3.min.js', x$opts$load)) && ss$renderItem=='contour')
-          x$opts$load <<- c('https://cdn.jsdelivr.net/npm/d3@latest/dist/d3.min.js', x$opts$load)
+  
+        if (ss$renderItem %in% c("segmentedDoughnut", "liquidFill", "wordCloud"))
+          ss$coordinateSystem <- CS_NONE
+  
+        needs_d3 <- ss$renderItem == "contour" &&
+                    !any(grepl("d3.min.js", x$opts$load, fixed = TRUE))
+        if (needs_d3)
+          x$opts$load <<- c(
+            "https://cdn.jsdelivr.net/npm/d3@latest/dist/d3.min.js",
+            x$opts$load
+          )
       }
-      if (!is.null(ss$type)) ss$type <- 'custom'
+  
+      if (!is.null(ss$type)) ss$type <- "custom"
     }
-    
-    if (ss$type == 'parallel') {
+  
+    # ── Per-type setup ────────────────────────────────────────────────────
+    if (identical(ss$type, "parallel")) {
       if (is.null(opt1$parallelAxis) && !is.null(df))
         x$opts$parallelAxis <<- ec.paxis(df)
-      if (!is.null(grnm) && tail(colnames(df),1) != grnm)
-        stop(paste0("ec.init: df group column '",grnm,"' should be last for parallel chart"))
+      if (!is.null(grnm) && tail(colnames(df), 1L) != grnm)
+        stop(paste0(
+          "ec.init: df group column '", grnm,
+          "' should be last for parallel chart"
+        ))
     }
-    if (ss$type == 'themeRiver')
-      x$opts$singleAxis <<- .merlis(x$opts$singleAxis, list(min='dataMin', max='dataMax'))
-    if (ss$type=='map' && is.null(ss$geoIndex))
-      ss <- .merlis(ss, list(geoIndex=1))
-
-    tmp <- xyNamesCS(ss)
-    if (!is.null(tmp$c)) ss$coordinateSystem <- tmp$c
-    
-    # add encode to series after grouping, if missing 
-    if (!(colX==1 && colY==2)) {
-      xtem <- tmp$x; ytem <- tmp$y
-      if (!any(names(ss)=='encode')) {
-          ss$encode <- list()
-          ss$encode[xtem] <- colX   # R count
-          ss$encode[ytem] <- colY 
-      }
-      # else don't overwrite user's encode
+  
+    if (identical(ss$type, "themeRiver"))
+      x$opts$singleAxis <<- .merlis(
+        x$opts$singleAxis,
+        list(min = "dataMin", max = "dataMax")
+      )
+  
+    if (identical(ss$type, "map") && is.null(ss$geoIndex))
+      ss <- .merlis(ss, list(geoIndex = 1L))
+  
+    # ── Coordinate system + axis names ───────────────────────────────────
+    cs_info <- xyNamesCS(ss)
+    if (!is.null(cs_info$c)) ss$coordinateSystem <- cs_info$c
+  
+    # ── Add encode when user-specified columns differ from defaults ───────
+    user_changed_cols <- !(colX == 1L && colY == 2L)
+    if (user_changed_cols && is.null(ss$encode)) {
+      ss$encode                <- list()
+      ss$encode[[cs_info$x]]  <- colX
+      ss$encode[[cs_info$y]]  <- colY
     }
+  
     if (!is.null(ss$name)) isSname <<- TRUE
-    
+  
     ss
   })
-  if (any(c('geo','leaflet','globe', noCoord) %in% namop)) axad <- 0  # was axad-1
-  if (axad > 0 && preset) {     
-    if (!'xAxis' %in% namop) x$opts$xAxis <- list(show=TRUE)
-    if (!'yAxis' %in% namop) x$opts$yAxis <- list(show=TRUE)
+  
+  # Geo-type top-level options always suppress axes
+  if (any(c("geo", "leaflet", "globe", noCoord) %in% namop)) axad <- 0L
+  
+  if (axad > 0L && preset) {
+    if (!"xAxis" %in% namop) x$opts$xAxis <- list(show = TRUE)
+    if (!"yAxis" %in% namop) x$opts$yAxis <- list(show = TRUE)
   }
-  if (dbg) cat('\n axad=',axad)
-  #if ((!'legend' %in% namop) && isSname) cat("\nNote: Some series have names, could add legend with 'legend= list(show=TRUE)'") 
-    
-  # reading from encode set above  # TODO: when names not 'x','y' ?
-  tmp <- series.param$encode
-  if (!is.null(tmp) && length(tmp)>0 && !is.null(x$opts$xAxis)) {
-    if (!is.null(tmp$x)) {
-      if (is.numeric(tmp$x)) colX <- tmp$x
-      else if (!is.null(df)) colX <- which(colnames(df) %in% tmp$x) 
+  
+  if (dbg) cat("\n axad=", axad)
+  
+  # ── Sync colX/colY from series encode (user may have set encode explicitly) ──
+  enc <- series.param$encode
+  if (!is.null(enc) && length(enc) > 0L && !is.null(x$opts$xAxis)) {
+  
+    resolve_col <- function(val) {
+      if (is.numeric(val))  {if (length(val)>1)  return(NULL) else return(val) }
+      if (!is.null(df))     return(which(colnames(df) %in% val))
+      NULL
     }
-    if (!is.null(tmp$y)) {
-      if (is.numeric(tmp$y)) colY <- tmp$y
-      else if (!is.null(df)) colY <- which(colnames(df) %in% tmp$y)
-    }
+  
+    if (!is.null(enc$x)) colX <- resolve_col(enc$x) %||% colX
+    if (!is.null(enc$y)) colY <- resolve_col(enc$y) %||% colY
   }
-  if (dbg) cat('\n colX=',colX,' colY=',colY)
-
+  
+  if (dbg) cat("\n colX=", colX, " colY=", colY)
+  
+  
+  # ── Preset: infer xAxis / yAxis type and name ─────────────────────────────────
+  
   if (preset) {
-    # set X,Y axes type & name from df OR from series.data
-
-    cnms <- NULL
-    ena <- c('x','y') # TODO: for polar= c('radius','angle')  map= c('lng','lat')
-    coln <- colp <- ctyp <- list()   # column names, positions, types
-    for(xy in ena) { coln[xy] <- ctyp[xy] <- colp[xy] <- NA }
-    
+  
+    # col_names: character names of X/Y columns (may be NA)
+    # col_pos:   integer positions              (may be NA)
+    # col_type:  ECharts type string            (may be NA)
+    col_names <- col_pos <- col_type <- setNames(
+      vector("list", 2L), AXES_ENA
+    )
+    for (ax in AXES_ENA) col_names[[ax]] <- col_pos[[ax]] <- col_type[[ax]] <- NA
+  
+    cnms <- NULL   # all column names available for lookup
+  
     if (!is.null(df)) {
-      cnms <- colnames(df); coln[1] <- cnms[colX[1]]; coln[2] <- cnms[colY[1]]
+      cnms         <- colnames(df)
+      col_names$x  <- cnms[colX[1L]]
+      col_names$y  <- cnms[colY[1L]]
     }
-    s1 <- x$opts$series[[1]]
+  
+    s1  <- x$opts$series[[1L]]
     if (!is.null(s1$dimensions)) cnms <- s1$dimensions
-    slb <- s1$seriesLayoutBy; slb <- (!is.null(slb) && slb=='row')
-    isAxes <- !s1$type %in% c('custom',noAxisXY) && 
-              !paste0(s1$type,s1$layout) %in% c('graphforce','graphcircular') &&
-              !slb && !paste0('',s1$coordinateSystem) %in% c('leaflet','geo') &&
-    	        !any(noCoord %in% names(x$opts))
-    if (isAxes) {  # search for single X/Y axis name and type
-      colp[1] <- colX[1]; colp[2] <- colY[1];
+  
+    by_row  <- isTRUE(s1$seriesLayoutBy == "row")
+    is_axes <-
+      !isTRUE(s1$type %in% c("custom", noAxisXY)) &&
+      !paste0(s1$type, s1$layout) %in% c("graphforce", "graphcircular") &&
+      !by_row &&
+      !isTRUE(s1$coordinateSystem %in% c("leaflet", "geo")) &&
+      !any(noCoord %in% names(x$opts))
+  
+    if (is_axes) {
+  
+      col_pos$x <- colX[1L]
+      col_pos$y <- colY[1L]
+  
+      # Refine from series$encode
       if (!is.null(s1$encode)) {
-        for(xy in ena) {
-          exy <- s1$encode[[xy]]
-        	if (!is.null(exy) && length(exy) <2 ) {   # exclude multi-values like candlestick
-        	  if (inherits(exy, 'character')) coln[xy] <- exy  
-        	  if (inherits(exy, 'numeric')) colp[xy] <- exy
-        	}
+        for (ax in AXES_ENA) {
+          exy <- s1$encode[[ax]]
+          if (!is.null(exy) && length(exy) == 1L) {
+            if (is.character(exy)) col_names[[ax]] <- exy
+            if (is.numeric(exy))   col_pos[[ax]]   <- exy
+          }
         }
-      } 
-      # check first $data then $dset
-      if (exists('sedval')) {  # encode$data$value takes precedence
-        i <- 1
-        for(xy in ena) { 
-          coln[xy] <- sedval[i]; 
-          ctyp[xy] <- tail(class(unlist(df[1, sedval[i]])), 1); i<-i+1 }
-      } 
-      else if ('data' %in% names(s1)) {
-        # chk s1$data for type (and maybe name)  list(value=) or list(c()) or mixed
-        # verify only first row in list-of-lists  
-        # TODO: s1$data could be non-named but have names in s1$dimensions
-        d1 <- if (is.list(s1$data) && is.list(s1$data[[1]])) s1$data[[1]] else s1$data  
-        if (!is.null(names(d1))) {
-          cnms <- names(d1)
-      	  for(xy in ena) {
-            if (!is.na(coln[[xy]]) && coln[[xy]] %in% cnms) ctyp[xy] <- tail(class(d1[[coln[[xy]]]]), 1)
-            else if (!is.na(colp[[xy]])) {
-              ctyp[xy] <- if ('value' %in% cnms) tail(class(d1$value[[colp[[xy]]]]), 1)
-                          else tail(class(d1[[colp[[xy]]]]), 1)   # numeric array
-            }
-      	  }
-        }
-        else {    # like data=c(1,2..) 
-    	      if (!is.na(coln[[xy]]) && coln[[xy]] %in% cnms) ctyp[xy] <- tail(class(d1[[ coln[[xy]] ]]), 1)
-    	      else if (!is.na(colp[[xy]])) ctyp[xy] <- tail(class(d1[[colp[[xy]]]]), 1)   # numeric array
-        }
-      } 
-    	else if (!is.null(x$opts$dataset)) {   # dataset     
-    	  # TODO: ignore when format is [{name=...},..]  ?
-    	  # TODO: types of multiple xAxis[] when no series$encode
-        dset <- x$opts$dataset[[1]]
-        r1 <- dset$source[[1]]
-        if (!is.null(dset$dimensions)) cnms <- dset$dimensions
-        else if (length(dset$source) >1 && 
-          !identical(lapply(r1, class), lapply(dset$source[[2]], class)) )  {
-            cnms <- unlist(r1)  # header
-            r1 <- dset$source[[2]]
-        }
-       #  for(xy in ena) {
-       #    if (!is.na(coln[xy]) && coln[xy] %in% cnms) colp[xy] <- which(cnms==coln[[xy]])   # name to pos
-       # 	  if (!is.na(colp[xy])) ctyp[xy] <- tail(class(r1[[colp[[xy]]]]), 1)   # numeric array
-       #  }
-        for(xy in ena) {
-        	  if (!is.na(colp[xy])) ctyp[xy] <- tail(class(r1[[ colp[[xy]] ]]), 1)
-        }
-    	}
-    
-      lenv$coNames <- cnms
-      # convert ctyp
-      for(xy in ena) ctyp[[xy]] <- switch(as.character(ctyp[[xy]]),  #'POSIXct'=,'POSIXlt'=,
-        'character'=,'factor'= 'category', 'POSIXt'=,'Date'= 'time', 'numeric'= 'value', 'value')
-      # finally set xAxis type, name from coln,ctyp if any
-
-      lupd <- list(x=list(), y=list())
-      if (any(!is.na(ctyp))) for(xy in ena) if (!is.na(ctyp[xy])) lupd[[xy]]$type <- ctyp[[xy]]
-      if (any(!is.na(coln))) for(xy in ena) if (!is.na(coln[xy])) lupd[[xy]]$name <- coln[[xy]]
-      names(lupd) <- c('xAxis','yAxis')
-      for(xy in names(lupd)) {    # merge by just adding missing props
-        if (!is.null(names(lupd[[xy]])) && length(names(x$opts[[xy]])) >0)  # dont deal with multiple axes
-       	  x$opts[[xy]] <- c(lupd[[xy]], x$opts[[xy]])[!duplicated(c(names(lupd[[xy]]), names(x$opts[[xy]])), fromLast=TRUE)]
       }
-      
-      if (dbg) cat('\n colp=',unlist(colp),' ctyp=',unlist(ctyp))
-    }   # end isAxes
-    
+  
+      # ── Determine column types from the data source ──────────────────────
+        # check first $data then $dset
+      if (exists('sedval')) {  # encode$data$value takes precedence
+  
+      #if (!is.null(sedval)) {
+        # encode$data$value takes precedence
+        for (i in seq_along(AXES_ENA)) {
+          ax            <- AXES_ENA[[i]]
+          col_names[[ax]] <- sedval[[i]]
+          col_type[[ax]]  <- tail(class(unlist(df[1L, sedval[[i]]])), 1L)
+        }
+  
+      } 
+      else if ("data" %in% names(s1)) {
+        # Inspect series$data directly
+        d1 <- if (is.list(s1$data) && is.list(s1$data[[1L]])) s1$data[[1L]] else s1$data
+        nm_d1 <- names(d1)
+  
+        if (!is.null(nm_d1)) {
+          cnms <- nm_d1
+          for (ax in AXES_ENA) {
+            cn <- col_names[[ax]]
+            cp <- col_pos[[ax]]
+            if (!is.na(cn) && cn %in% cnms) {
+              col_type[[ax]] <- tail(class(d1[[cn]]), 1L)
+            } else if (!is.na(cp)) {
+              col_type[[ax]] <- if ("value" %in% cnms)
+                tail(class(d1$value[[cp]]), 1L)
+              else
+                tail(class(d1[[cp]]), 1L)
+            }
+          }
+        } 
+        else {
+          d1 <- unlist(d1)
+          # Unnamed data vector e.g. data = c(1, 2, ...) like boxplot
+          for (ax in AXES_ENA) {
+            #cn <- col_names[[ax]]
+            cp <- col_pos[[ax]]
+            #if (!is.na(cn) && !is.null(cnms) && cn %in% cnms)
+            #  col_type[[ax]] <- tail(class(d1[[cn]]), 1L)
+            #else 
+              if (!is.na(cp))
+                col_type[[ax]] <- tail(class(d1[[cp]]), 1L)
+          }
+        }
+  
+      } 
+      else if (!is.null(x$opts$dataset)) {
+        # dataset source
+        dset <- x$opts$dataset[[1L]]
+        r1   <- dset$source[[1L]]
+  
+        if (!is.null(dset$dimensions)) {
+          cnms <- dset$dimensions
+        } else if (length(dset$source) > 1L &&
+                   !identical(lapply(r1, class),
+                              lapply(dset$source[[2L]], class))) {
+          cnms <- unlist(r1)       # first row is the header
+          r1   <- dset$source[[2L]]
+        }
+  
+        for (ax in AXES_ENA) {
+          cp <- col_pos[[ax]]
+          if (!is.na(cp)) col_type[[ax]] <- tail(class(r1[[cp]]), 1L)
+        }
+      }
+  
+      lenv$coNames <- cnms
+  
+      # ── Convert R class names to ECharts axis type strings ───────────────
+      to_echarts_type <- function(cls) {
+        switch(as.character(cls),
+          character = , factor  = "category",
+          POSIXt    = , Date    = "time",
+          numeric               = "value",
+          "value"               # fallback
+        )
+      }
+      col_type <- lapply(col_type, to_echarts_type)
+  
+      # ── Merge inferred type/name into xAxis/yAxis (missing props only) ───
+      axis_updates <- setNames(
+        lapply(AXES_ENA, \(ax) {
+          upd <- list()
+          if (!is.na(col_type[[ax]])) upd$type <- col_type[[ax]]
+          if (!is.na(col_names[[ax]] %||% NA)) upd$name <- col_names[[ax]]
+          upd
+        }),
+        c("xAxis", "yAxis")
+      )
+  
+      for (ax_key in names(axis_updates)) {
+        upd      <- axis_updates[[ax_key]]
+        existing <- x$opts[[ax_key]]
+  
+        # Only merge when both sides are named (single-axis scenario)
+        if (length(upd) > 0L && length(names(existing)) > 0L) {
+          merged           <- c(upd, existing)
+          x$opts[[ax_key]] <- merged[!duplicated(names(merged), fromLast = TRUE)]
+        }
+      }
+  
+      if (dbg) cat("\n col_pos=", unlist(col_pos), " col_type=", unlist(col_type))
+  
+    }   # end is_axes
+  
   }   # end preset
+  
+}
+
   if (dbg) cat('\n cnames=', lenv$coNames)
 
   x$opts <- .renumber(x$opts)
@@ -846,7 +1493,7 @@ ec.init <- function( df= NULL, preset= TRUE, ...,  #ctype= 'scatter',
           wt$x$opts$xAxis <- wt$x$opts$yAxis <- NULL
         }
       } else {          # delete default series
-        if (!is.null(opt1$series) && opt1$series[[1]]$id=='ec.auto') wt$x$opts$series[[1]] <- NULL  
+        if (!is.null(opt1$series) && !is.null(opt1$series[[1]]$id) && opt1$series[[1]]$id=='ec.auto') wt$x$opts$series[[1]] <- NULL  
       }
       wt <- ec.plugjs(wt, plf[plf$name=='3D',]$url, ask)
     }

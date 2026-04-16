@@ -120,7 +120,7 @@ test_that("tl.series, timeline options, groupBy", {  # also in test-presets
   ec.init(load= 'world', title= list(text='map %@'), visualMap=list(show=TRUE), 
         timeline= list(show=TRUE), series.param= list(type='map') )
   expect_equal(p$x$opts$options[[2]]$title$text, "map Brazil")
-  expect_equal(p$x$opts$visualMap$min, 111)
+  expect_equal(p$x$opts$visualMap[[1]]$min, 111)
 
 })
 

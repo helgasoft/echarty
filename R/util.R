@@ -1144,7 +1144,7 @@ ec.clmn <- function(col = NULL, ..., scale = 1) {
     # Build JS arrays for name→position lookup and direct object access
     all_names_js  <- paste0("['", paste(col_names, collapse = "','"), "']")
     data_accesses <- paste(
-      vapply(unlist(args), \(s) paste0("data['", s, "']"), character(1L)),
+      vapply(unlist(args), \(s) paste0("aa['", s, "']"), character(1L)),
       collapse = ", "
     )
     arg_names_js  <- paste(unlist(args), collapse = "`,`")

@@ -35,7 +35,7 @@ test_that("ecr.ebars", {
   expect_equal(p$x$opts$xAxis$type, 'category')
 
   # data + name + char.encode
-  df <- mtcars |> group_by(cyl,gear) |> summarise(yy= round(mean(mpg),2)) |>
+  df <- mtcars |> group_by(cyl,gear) |> summarise(yy= round(mean(mpg),2), .groups = "drop_last") |>
       mutate(low= round(yy-cyl*runif(1),2), high= round(yy+cyl*runif(1),2)) |> ungroup()
   args <- list(df=df, load= 'custom', xAxis= list(type='category'),
       series.param= list(type='bar', name= 'data',

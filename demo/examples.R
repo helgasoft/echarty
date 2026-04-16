@@ -167,7 +167,7 @@ ec.init(load= 'leaflet',
 
 #------ Plugin 'world' with visualMap, minimal code -----
 data.frame(name=c('Brazil','Australia'), value=c(111,222)) |>
-ec.init(load= 'world', ctype='map', visualMap=list(), color='lightgray')
+ec.init(load= 'world', ctype='map', visualMap=list(show=T), color='#ddd')
 
 #------ Plugin 'world' with timeline -----
 set.seed(333)
@@ -252,12 +252,11 @@ ec.init(
 
 #------ locale -----
 mo <- seq.Date(Sys.Date() - 444, Sys.Date(), by= "month")
-df <- data.frame(date= mo, val= runif(length(mo), 1, 10))
-p <- df |> ec.init(title= list(text= 'ZH locale test'),
-    toolbox= list(feature= list(saveAsImage= list(type='svg'))) )
-p$x$locale <- 'ZH'
-p$x$renderer <- 'svg'
-p
+df <- data.frame(date= mo, val= runif(length(mo), 1, 10)) |>
+ec.init(locale= 'ZH', renderer='svg',
+  title= list(text= 'ZH locale test'),
+  toolbox= list(feature= list(saveAsImage= list(type='svg'))) 
+)
 
 
 #------ Pie -----
@@ -364,7 +363,7 @@ bands <- ecr.band(dats, 'DAX','FTSE', name= 'Ftse-Dax',
 						areaStyle= list(color='pink'))
 ec.init(load= 'custom',
   tooltip= list(trigger= 'axis'),
-  legend= list(show= TRUE), xAxis= list(type= 'category'),
+  legend= list(top=11),
   dataZoom= list(type= 'slider', end= 50),
   series = append( bands,
     list(list(type= 'line', name= 'CAC', color= 'red', symbolSize= 1,
@@ -382,11 +381,12 @@ ec.init(load= 'custom',
 df <- mtcars |> group_by(cyl,gear) |> summarise(yy= round(mean(mpg),2)) |>
   mutate(low= round(yy-cyl*runif(1),2),
          high= round(yy+cyl*runif(1),2))
-df |> ec.init(load='custom', ctype='bar',
-              xAxis= list(type='category'), tooltip= list(show=TRUE)) |>
-  ecr.ebars( # name = 'eb',  # cannot have own name in grouped series
+ec.init(df, load='custom', ctype='bar',
+            xAxis= list(type='category'), tooltip= list(show=TRUE)) |>
+ecr.ebars( # name = 'eb',  # cannot have own name in grouped series
     encode= list(x='gear', y=c('yy','low','high')),
-    tooltip = list(formatter=ec.clmn('high <b>%@</b><br>low <b>%@</b>', 'high','low')))
+    tooltip = list(formatter=ec.clmn('high <b>%@</b><br>low <b>%@</b>', 'high','low'))
+)
 
 
 #------ Timeline simple -----
@@ -465,11 +465,13 @@ ec.init(load= 'ecStat',
 
 #------ ecSimpleTransform -----
 
-iris |> ec.init(
+tmp <- data.frame(Species=as.vector(unique(iris$Species)), colr=c("#387e78","#eeb422","#d9534f"))
+iris |> inner_join(tmp) |> ec.init(
   load='https://cdn.jsdelivr.net/gh/100pah/echarts-simple-transform@refs/heads/main/dist/ecSimpleTransform.min.js',
   js= c('echarts.registerTransform(ecSimpleTransform.aggregate)','',''),
   title= list( text='ecSimpleTransform.aggregate'), legend= list(show=TRUE),
-  series.param= list(name='scatter')
+  tooltip= list(formatter='{c}'),
+  series.param= list(name='scatter', itemStyle= list(color=ec.clmn('colr')))
 ) |> ec.upd({
   dataset <- append(dataset, list(list(
     transform= list(
@@ -482,8 +484,8 @@ iris |> ec.init(
      ))
   )) )
   xAxis <- list(xAxis, list(data= as.character(unique(iris$Species)), name='Avg'))
-  series <- append(series, list(list(type='bar', name='Avg',
-    encode=list(x='Species', y='Sepal.Width'), datasetIndex=1, xAxisIndex=1, colorBy='data')))
+  series <- append(series, list(list(type='bar', name='Avg', itemStyle= list(color='violet'),
+    encode=list(x='Species', y='Sepal.Width'), datasetIndex=1, xAxisIndex=1)))
 })
 
 #------ ECharts dataset, transform and sort
@@ -582,6 +584,7 @@ sankey <- data.frame(
 )
 data <- ec.data(sankey, 'names')
 ec.init(
+  title= list(text= 'Sankey'),
   series.param= list(type= 'sankey', data= data, edges= data )
 )
 
@@ -607,10 +610,10 @@ ec.init(
 #------ multiple series + common series.param + dataset -----
 mtcars |> arrange(mpg) |> ec.init(
   legend= list(show=TRUE), tooltip= list(show=TRUE),
-  preset=F,   # dont add axes names
-  series.param= list(symbolSize=11),
+  # auto axes
+  series.param= list(symbol='diamond', symbolSize=15),
   series= list(
-    list(type='scatter',name='s1'),
+    list(type='scatter',name='s1', encode= list(y='gear')),
     list(type='line',   name='s2'))
 )
 
@@ -634,47 +637,51 @@ treeData <- list( name= 'family', value=100, children= list(
                children=list(list(name='Cousin Betty',value=1),
                     list(name='Cousin Jenny',value=2)))))
 ))
+cmax = 55   # = max value
 
 # data 1
 hc <- hclust(dist(USArrests), "ave")
 cmax <- max(hc$height)
 treeData <- ec.data(hc, format='dendrogram')[[1]]
 
-# # data 2
-# library(data.tree); data(acme)
-# tmp <- acme
-# cmax <- max(tmp$Get('cost'), na.rm=TRUE)
-# tmp$Do(function(x) {   # works with or without values
-#    cos <- as.numeric(x$cost); x$value <- ifelse(length(cos)==0, 0, cos) })  # add 'value'
-# treeData <- tmp |> ToListExplicit(unname =TRUE)
-# 
-# # data 3
-# library(data.tree)
-# library(treemap); data(GNI2014)
-# tmp <- GNI2014
-# # Create a pathString column to define the hierarchy
-# tmp$continent <- as.character(tmp$continent)
-# tmp$pathString <- paste("world", tmp$continent, tmp$country, sep = "/")
-# # Convert the data frame to a data.tree Node
-# tmp <- as.Node(tmp[,])
-# tmp$Do(function(x) {
-#   #pop <- as.numeric(x$population); x$value <- ifelse(length(pop)==0, 0, pop) })  # add 'value'
-#   gni <- as.numeric(x$GNI); x$value <- ifelse(length(gni)==0, 0, gni) })  # add 'value'
-# cmax <- max(tmp$Get('GNI'), na.rm=TRUE) # add -1e9(-1B) for population
-# treeData <- tmp |> ToListExplicit(unname =TRUE)
+if (FALSE) {
+  # data 2
+  library(data.tree); data(acme)
+  tmp <- acme
+  cmax <- max(tmp$Get('cost'), na.rm=TRUE)
+  tmp$Do(function(x) {   # works with or without values
+     cos <- as.numeric(x$cost); x$value <- ifelse(length(cos)==0, 0, cos) })  # add 'value'
+  treeData <- tmp |> ToListExplicit(unname =TRUE)
+}
+if (FALSE) {
+  # data 3
+  library(data.tree)
+  library(treemap); data(GNI2014)  # several dependencies...
+  tmp <- GNI2014
+  # Create a pathString column to define the hierarchy
+  tmp$continent <- as.character(tmp$continent)
+  tmp$pathString <- paste("world", tmp$continent, tmp$country, sep = "/")
+  # Convert the data frame to a data.tree Node
+  tmp <- as.Node(tmp[,])
+  tmp$Do(function(x) {
+    #pop <- as.numeric(x$population); x$value <- ifelse(length(pop)==0, 0, pop) })  # add 'value'
+    gni <- as.numeric(x$GNI); x$value <- ifelse(length(gni)==0, 0, gni) })  # add 'value'
+  cmax <- max(tmp$Get('GNI'), na.rm=TRUE) # add -1e9(-1B) for population
+  treeData <- tmp |> ToListExplicit(unname =TRUE)
+}
 
  # needed by JS for click event
 fdat <- jsonlite::toJSON(treeData, force=TRUE, auto_unbox=TRUE, null='null')
-vlvl <- 2  # min level for vertical labels (optional), set in jscode OR jsfun(with button)
+vlvl <- 2  # min level for vertical labels (optional), set in jscode OR jsbtn
 jscode <- paste0('window.flameData=',fdat,'; //window.ec$vlevel=',vlvl,';')
-jfun <- paste0("function(a) {
-      if (typeof ec$vlevel == 'undefined') {window.ec$vlevel=",vlvl,";} else delete window.ec$vlevel;
-      ch= ec_chart(echwid); ch.resize(); }")
+jsbtn <- paste0("function(a) {
+    if (typeof ec$vlevel == 'undefined') {window.ec$vlevel=",vlvl,";} else delete window.ec$vlevel;
+    ch= ec_chart(echwid); ch.resize(); }")
 
 ec.init(load= 'custom', title= list(text='flame tree', bottom='5%'),
   js= c(jscode, '',''),
   graphic= list(
-    ec.util(cmd='button', text='\u00B1 level2', right=11, top= 20, js=jfun)
+    ec.util(cmd='button', text='\u00B1 vlevel2', right=11, top= 20, js=jbtn)
   ),
   xAxis= list(show=F), yAxis= list(show=F),
   tooltip= list(formatter= ec.clmn('%@ %R2@',4,6)),
@@ -977,11 +984,14 @@ if (interactive()) {
  runApp( list(
   ui= fluidPage( ecs.output("plot") ),
   server= function(input, output, session) {
+    # chart is saved in SVG file, does not show in plot
     jco1 <- "svgStr= chart.renderToSVGString(); Shiny.setInputValue('svgic', svgStr); chart.dispose();"
     output$plot <- ecs.render({
-      cars |> ec.init(js=jco1, iniOpts= list(renderer='svg', ssr=TRUE, height=200, width=200), animation=F) #,ctype='bar')
+      cars |> ec.init(js= jco1, # ctype='bar', 
+        iniOpts= list(renderer='svg', ssr=TRUE, height=200, width=200), animation=F
+      )
     })
-    # write a local file is easier in R than JS
+    # writing a local file is easier in R than JS
     observeEvent(input$svgic, { cat(input$svgic, file='c:/temp/plot.svg') })
   }
  ))

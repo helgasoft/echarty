@@ -30,13 +30,13 @@ test_that("options preset", {
   
   p <- cars |> ec.init(
     series.param= list(yAxisIndex=1, encode=list(x=1, y=2, tooltip=c(3,4))), 
-    yAxis= list(gridIndex=1), visualMap= list(dimension=2),
+    yAxis= list(gridIndex=1), visualMap= list(dimension='dist'),
     dataZoom= list(list(),list(yAxisIndex=1)) )
   expect_equal(p$x$opts$series[[1]]$yAxisIndex, 0)  # is decremented?
   expect_equal(p$x$opts$series[[1]]$encode$tooltip, c(2,3))
   expect_equal(p$x$opts$dataZoom[[2]]$yAxisIndex, 0)
   expect_equal(p$x$opts$yAxis$gridIndex, 0)
-  expect_equal(p$x$opts$visualMap$dimension, 1)
+  expect_equal(p$x$opts$visualMap[[1]]$dimension, 1)   # convert to numeric + decrement
   expect_equal(p$x$opts$dataset[[1]]$dimensions, c('speed','dist'))
   
   # single column df with timeline; from ec.init examples
@@ -158,7 +158,7 @@ test_that("ec.init presets for timeline + groupBy, geo", {
   ec.init(load= 'world', tooltip= list(show=TRUE),   # geo
     timeline= list(show=TRUE),
     series.param= list(type='map'), #encode= list(name='nam', value='val')), 
-    visualMap= list()
+    visualMap= list(show=T)
   )
 
   # name & value are required column names for tl.series
@@ -166,7 +166,7 @@ test_that("ec.init presets for timeline + groupBy, geo", {
   #expect_equal(p$x$opts$options[[1]]$series[[1]]$data[[1]]$name, 'Brazil')
   expect_equal(p$x$opts$options[[1]]$series[[1]]$datasetIndex, 1)
   expect_equal(p$x$opts$geo$map, 'world')
-  expect_equal(p$x$opts$visualMap$max, 99)
+  expect_equal(p$x$opts$visualMap[[1]]$max, 99)
   
   # map defaults:
   # 1. map serie picks up first num clmn for value, first char clmn for name
@@ -177,7 +177,7 @@ test_that("ec.init presets for timeline + groupBy, geo", {
         list(type='map'), list(type='scatter', data=list(c(-117,32)))) )
   #expect_equal(p$x$opts$dataset[[1]]$dimensions, c("val","name","dim"))
   expect_equal(p$x$opts$series[[1]]$geoIndex, 0)
-  expect_equal(p$x$opts$visualMap$max, 88)
+  expect_equal(p$x$opts$visualMap[[1]]$max, 88)
   
   p <- quakes |> head(11) |> group_by(stations) |> 
   ec.init(load='world', timeline= list(show=TRUE),
@@ -300,14 +300,14 @@ test_that("presets with series.param", {
     ec.init(series.param= list(encode= list(x=3, y=2)))
   expect_equal(p$x$opts$yAxis$name, 'name')
   p <- data.frame(name=c('Brazil','Australia'), value=c(111,222)) |>
-    ec.init(load='world', series.param= list(type='map'), visualMap=list())
-  expect_equal(p$x$opts$visualMap$max, 222)
+    ec.init(load='world', series.param= list(type='map'), visualMap=list(show=T))
+  expect_equal(p$x$opts$visualMap[[1]]$max, 222)
 })
 
 test_that("presets for visualMap", {
   p <- df |> ec.init(visualMap= list(dimension= 2, inRange= list(color= c("blue", "red"))) )
-  expect_equal(p$x$opts$visualMap$dimension, 1)
-  expect_equal(round(p$x$opts$visualMap$min,2), 8.66)
+  expect_equal(p$x$opts$visualMap[[1]]$dimension, 1)
+  expect_equal(round(p$x$opts$visualMap[[1]]$min,2), 8.66)
 })
 
 test_that('axis names from preset encode', {
@@ -370,7 +370,7 @@ test_that('column-to-style feature', {
   
   p <- cars |> mutate(    # non-grouped
       clr= sample(c('darkgreen','blue','red'), 50, TRUE),
-      opa= sample(c(0.3, 0.6, 0.9), 50, TRUE), value= 1:50
+      opa= sample(c(0.3, 0.6, 0.9), 50, TRUE),  #value= 1:50
     ) |>
   ec.init( dbg=TRUE,
     series.param= list(symbolSize=22, encode= list(data= list(
@@ -381,7 +381,7 @@ test_that('column-to-style feature', {
   expect_true(is.null(p$x$opts$dataset))
   #expect_true(is.null(p$x$opts$series[[1]]$encode))
   expect_equal(length(p$x$opts$series[[1]]$data), 50)
-  expect_equal(p$x$opts$series[[1]]$data[[50]]$value, list(25,85))
+  expect_equal(p$x$opts$series[[1]]$data[[50]]$value, c(25,85))
   expect_equal(p$x$opts$series[[1]]$data[[50]]$label$formatter, 25)
   
   p <- iris |> group_by(Species) |>    # grouped
