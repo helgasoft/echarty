@@ -18,7 +18,7 @@ on:
       strip:
         description: 'Directories to strip from the image (e.g., "demo, doc, examples"). Use "NULL" for none.'
         required: false
-        default: 'demo, man, pkgdown, tests, vignettes, doc, examples, help, html'
+        default: 'demo, man, pkgdown, tests, vignettes'
         type: string
       webr-image:
         description: 'webR Docker image to use for building'
@@ -38,7 +38,7 @@ concurrency:
 
 
 
-# Simplified version with hardcoded options
+# Simplified version from release-file-system-image.yml
 jobs:
   build-and-upload:
     runs-on: ubuntu-24.04
@@ -46,56 +46,46 @@ jobs:
       contents: write
 
     steps:
-      - name: Checkout repository
+      # name: Validate event is release is REMOVED
+      - name: Checkout calling repository
         uses: actions/checkout@v4
 
-      - name: Test GitHub authentication
-        uses: addnab/docker-run-action@v3
+      - name: Checkout r-wasm/actions repository
+        uses: actions/checkout@v4
         with:
-          image: ghcr.io/r-wasm/webr:main
-          options: -v ${{ github.workspace }}:/work -w /work
-          run: |
-            Rscript -e "
-              # Test GitHub API access
-              result <- system2('curl', c('-H', paste0('Authorization: token ', Sys.getenv('GITHUB_PAT')), 
-                                   'https://api.github.com/rate_limit'), stdout = TRUE)
-              cat(paste(result, collapse = '\n'))
-            "
-          
-      - name: Build wasm image using webR Docker container
-        uses: addnab/docker-run-action@v3
-        env:
-          GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+          ref: v1
+          repository: r-wasm/actions
+          token: ${{ secrets.GITHUB_TOKEN }}
+          path: .actions
+
+      - name: Find `Config/Needs/wasm` in DESCRIPTION
+        id: needs
+        shell: Rscript {0}
+        run: |
+          has_wasm_need <-
+            file.exists("DESCRIPTION") &&
+            "Config/Needs/wasm" %in% names(as.list(read.dcf("DESCRIPTION")[1,]))
+          pkg <- if (has_wasm_need) as.list(read.dcf("DESCRIPTION")[1,])$`Config/Needs/wasm` else ""
+          pkg <- paste0(strsplit(pkg, "[[:space:],]+")[[1]], collapse = ",")
+          cat("pkg=", pkg, "\n", file = Sys.getenv("GITHUB_OUTPUT"), sep = "", append = TRUE)
+
+      - name: Build wasm image
+        uses: ./.actions/build-rwasm
         with:
-          image: ghcr.io/r-wasm/webr:main
-          options: |
-            -v ${{ github.workspace }}:/work
-            -w /work
-            -e GITHUB_PAT=${{ secrets.GITHUB_TOKEN }}
-          run: |
-            Rscript -e "
-              # Set GitHub PAT for authentication
-              Sys.setenv(GITHUB_PAT = Sys.getenv('GITHUB_PAT'))
-              
-              library(rwasm)
-              
-              # Step 1: Add the current package to the repository
-              message('Step 1: Building package for WebAssembly...')
-              rwasm::add_pkg(
-                packages = 'local::.',
-                repo_dir = './repo',
-                dependencies = NA,  # Install hard dependencies
-                remotes = NA  # Prefer built-in package list
-              )
-              
-              # Step 2: Create the filesystem image
-              message('Step 2: Creating filesystem image...')
-              rwasm::make_vfs_library(
-                repo_dir = './repo',
-                out_dir = './vfs',
-                out_name = 'library'
-              )
-              
-              message('✓ Build completed successfully')
-              print(list.files('./vfs', recursive = TRUE))
-            "
+          packages: |
+            ${{ inputs.packages }}
+            ${{ steps.needs.outputs.pkg }}
+          strip: ${{ inputs.strip }}
+          image-path: ._rwasm
+          webr-image: ${{ inputs.webr-image }}
+
+      - name: Upload wasm image to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: "._rwasm/*"
+          tag: ${{ github.ref }}
+          file_glob: true
+          overwrite: true
+
+
