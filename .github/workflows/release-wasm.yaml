@@ -13,7 +13,7 @@ on:
       packages:
         description: 'R packages to include (space or comma separated). Defaults to "." (current package)'
         required: false
-        default: '.'
+        default: 'dplyr, htmlwidgets, data.tree'
         type: string
       strip:
         description: 'Directories to strip from the image (e.g., "demo, doc, examples"). Use "NULL" for none.'
@@ -58,23 +58,14 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           path: .actions
 
-      - name: Find `Config/Needs/wasm` in DESCRIPTION
-        id: needs
-        shell: Rscript {0}
-        run: |
-          has_wasm_need <-
-            file.exists("DESCRIPTION") &&
-            "Config/Needs/wasm" %in% names(as.list(read.dcf("DESCRIPTION")[1,]))
-          pkg <- if (has_wasm_need) as.list(read.dcf("DESCRIPTION")[1,])$`Config/Needs/wasm` else ""
-          pkg <- paste0(strsplit(pkg, "[[:space:],]+")[[1]], collapse = ",")
-          cat("pkg=", pkg, "\n", file = Sys.getenv("GITHUB_OUTPUT"), sep = "", append = TRUE)
+      #- name: Find `Config/Needs/wasm` in DESCRIPTION
 
       - name: Build wasm image
         uses: ./.actions/build-rwasm
         with:
           packages: |
             ${{ inputs.packages }}
-            ${{ steps.needs.outputs.pkg }}
+      #      ${{ steps.needs.outputs.pkg }}
           strip: ${{ inputs.strip }}
           image-path: ._rwasm
           webr-image: ${{ inputs.webr-image }}
