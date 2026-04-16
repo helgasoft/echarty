@@ -51,26 +51,31 @@ jobs:
 
       - name: Build wasm image using webR Docker container
         uses: addnab/docker-run-action@v3
+        env:
+          GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
         with:
           image: ghcr.io/r-wasm/webr:main
           options: |
             -v ${{ github.workspace }}:/work
             -w /work
+            -e GITHUB_PAT=${{ secrets.GITHUB_TOKEN }}
           run: |
             Rscript -e "
+              # Set GitHub PAT for authentication
+              Sys.setenv(GITHUB_PAT = Sys.getenv('GITHUB_PAT'))
+              
               library(rwasm)
               
               # Step 1: Add the current package to the repository
-              # This builds the WebAssembly binary and creates repo_dir structure
               message('Step 1: Building package for WebAssembly...')
               rwasm::add_pkg(
-                packages = '.',           # Current package
-                repo_dir = './repo',      # Creates repository structure here
-                dependencies = NA         # Include hard dependencies
+                packages = '.',
+                repo_dir = './repo',
+                dependencies = NA,  # Install hard dependencies
+                remotes = NA  # Prefer built-in package list
               )
               
-              # Step 2: Create the filesystem image from the repository
-              # This generates the .data and .js.metadata files
+              # Step 2: Create the filesystem image
               message('Step 2: Creating filesystem image...')
               rwasm::make_vfs_library(
                 repo_dir = './repo',
@@ -79,15 +84,5 @@ jobs:
               )
               
               message('✓ Build completed successfully')
-              message('Output files in ./vfs/')
               print(list.files('./vfs', recursive = TRUE))
             "
-
-      - name: Upload to Release
-        uses: svenstaro/upload-release-action@v2
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: './vfs/*'
-          tag: ${{ github.event.release.tag_name || github.ref_name }}
-          file_glob: true
-          overwrite: true
