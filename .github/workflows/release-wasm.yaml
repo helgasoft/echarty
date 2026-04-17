@@ -1,23 +1,17 @@
-name: Build and release WebAssembly image
-
+# Workflow derived from https://github.com/r-wasm/actions/tree/v1/examples
+# Need help debugging build failures? Start at https://github.com/r-lib/actions#where-to-find-help
 on:
-  push:
-    tags:
-      - 'v*'
-  workflow_dispatch:
+  release:
+    # Must republish release to update assets
+    types: [ published ]
+
+name: Build and deploy wasm R package image
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  release-file-system-image:
+    uses: r-wasm/actions/.github/workflows/release-file-system-image.yml@v1
     permissions:
-      contents: write   # needed to create a GitHub Release
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Build and upload WebAssembly file system image
-        #uses: r-wasm/actions/build-and-upload-file-system-image@v1
-           # https://github.com/r-wasm/actions/blob/main/.github/workflows/release-file-system-image.yml
-        uses: r-wasm/actions/.github/workflows/release-file-system-image.yml@v2
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+      # For publishing artifact files to the release
+      contents: write
+      # To download GitHub Packages within action
+      repository-projects: read
