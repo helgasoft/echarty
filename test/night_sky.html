@@ -188,7 +188,7 @@ Source of data and processing code is <a href='https://www.r-bloggers.com/2023/0
 
   </div>
 
-  <div id="app" class="square"> <!-- app-area -->
+  <div id="app" class="square">
 	<div id='wver'>Loading WebR magic... </div><img id='amuse' src='../img/rubikon.gif' />
   </div>
 
@@ -667,9 +667,9 @@ import('https://webr.r-wasm.org/latest/webr.mjs').then(async ({ WebR }) => {
   wver= 'WebR v.'+ webR.version; console.log(wver); 
    
   msg.innerHTML = wver + ', loading R libraries...'; 
-  await webR.installPackages('echarty', {repos: ['https://helgasoft.r-universe.dev', 'https://repo.r-wasm.org']} );
-  await webR.installPackages(['jsonlite', 'dplyr', 'zoo'], true);
-  await webR.installPackages(['sf','s2','nominatimlite','lubridate','lutz','scales'], true);
+  await webR.installPackages('echarty', {mount:true, repos: ['https://helgasoft.r-universe.dev', 'https://repo.r-wasm.org']} );
+  await webR.installPackages(['jsonlite', 'dplyr', 'zoo'], {mount:true, repos:['https://repo.r-wasm.org']} );
+  await webR.installPackages(['sf','s2','nominatimlite','lubridate','lutz','scales'], {mount:true, repos:['https://repo.r-wasm.org']});
 
   await webR.objs.globalEnv.bind('ec.webR', true);   // inform R about web environment
   msg.textContent = "Please wait, building the Universe takes time...";
