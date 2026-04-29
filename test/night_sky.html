@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--  TODO:
+  size chart 100%, square 1x1, unnamed stars in different color  
+  https://theskylive.com/planetarium   https://theskylive.com/sky/constellations/ursa_minor-constellation
+-->
+	<title>Night sky</title>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width" />
+	<link rel="shortcut icon" href="../img/logo.ico" type="image/x-icon">
+	
+	<!--  ECharts sources  -->
+	<script src="https://cdn.jsdelivr.net/npm/echarts@latest/dist/echarts.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/echarts-gl@2.0.9/dist/echarts-gl.min.js"></script>
+	<!--  echarty dependencies  -->
+	<script src="https://cdn.jsdelivr.net/gh/ramnathv/htmlwidgets@v1.6.4/inst/www/htmlwidgets.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/gh/helgasoft/echarty@main/inst/htmlwidgets/echarty.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/gh/helgasoft/echarty@main/inst/js/renderers.min.js"></script>
+
+	<!--  geonames plugin  -->
+	<script src="https://code.jquery.com/jquery-3.6.3.min.js" integrity="sha256-pvPw+upLPUjgMXY0G+8O0xUf+/Im1MZjXxxgOcBQBXU=" crossorigin="anonymous"></script>
+
+<style>
+  .titl { font-size: 130%; color: lightblue; }
+  .fontu { font-size: 130%; color: Linen; }
+  .bton {
+    background: rgba(255,255,255,0.08);
+    border: 0.5px solid rgba(180,200,255,0.35);
+    color: #c8d8ff;
+    padding: 6px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    letter-spacing: 0.02em;
+    transition: background 0.2s;
+  }
+  .bton:hover { background: rgba(180,200,255,0.18); }
+  .lefto { margin-left: 10px; }
+  .center {
+    display: flex;
+    flex-direction: row;
+    align-items: center; justify-content: center; text-align: center;
+    flex-wrap: nowrap;
+    gap: 10px;
+    width: 90%;
+    padding: 14px 20px 12px;
+    position: relative;
+    z-index: 2;
+    overflow-x: visible;
+  }
+  .center a { display: flex; align-items: center; gap: 7px; text-decoration: none; flex-shrink: 0; }
+  .dropdown {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  .dropdown label {
+    color: rgba(180,200,255,0.75);
+    font-size: 13px;
+    white-space: nowrap;
+    margin: 0;
+    font-family: Arial, sans-serif;
+  }
+  .dropdown input[type=text] {
+    background: rgba(255,255,255,0.07);
+    border: 0.5px solid rgba(180,200,255,0.3);
+    border-radius: 6px;
+    color: #dde8ff;
+    padding: 5px 10px;
+    font-size: 13px;
+    font-family: Arial, sans-serif;
+    outline: none;
+    width: 190px;
+  }
+  .dropdown input[type=text]::placeholder { color: rgba(180,200,255,0.4); }
+  .dropdown input[type=text]:focus { border-color: rgba(180,200,255,0.6); background: rgba(255,255,255,0.11); }
+  .dropdown-menu {
+    position: absolute;
+    top: 100%; left: 0;
+    background-color: #1a2a50;
+    border: 0.5px solid rgba(180,200,255,0.3);
+    border-radius: 6px;
+    list-style: none;
+    padding: 4px 0; margin: 4px 0 0;
+    z-index: 9999;
+    box-shadow: 0px 8px 16px rgba(0,0,0,0.4);
+    min-width: 200px;
+    display: none;
+  }
+  .dropdown-menu li { padding: 7px 12px; font-size: 13px; color: #c8d8ff; cursor: pointer; }
+  .dropdown-menu li:hover { background: rgba(180,200,255,0.12); }
+  .likebtn-wrapper { flex-shrink: 0; }
+  #libut .lb-like { background-color: lightblue;}
+
+  .modal-overlay {
+    display: none;
+    position: absolute; inset: 0;
+    background: rgba(5,8,30,0.82);
+    align-items: center; justify-content: center;
+    z-index: 10;
+    border-radius: 16px;
+  }
+  .modal-overlay.open { display: flex; }
+
+  .modal-box {
+    background: #0d1540;
+    border: 0.5px solid rgba(180,200,255,0.3);
+    border-radius: 12px;
+    padding: 2rem 2.5rem;
+    max-width: 380px;
+    color: #c8d8ff;
+    position: relative;
+  }
+  .modal-box h3 { margin: 0 0 .75rem; font-size: 17px; font-weight: 500; color: #e8eeff; }
+  .modal-box p { margin: 0; font-size: 14px; line-height: 1.7; color: rgba(180,200,255,0.75); }
+  .modal-box a { color: #1a73e8; text-decoration: none; font-weight: 700;}
+  .close-btn {
+    position: absolute; top: 12px; right: 16px;
+    background: none; border: none; color: rgba(180,200,255,0.6);
+    font-size: 20px; cursor: pointer; line-height: 1;
+  }
+  .close-btn:hover { color: #e8eeff; }
+
+  .square {
+    width: 100%;
+    max-width: 100%;
+    aspect-ratio: 1/1;
+    max-height: 90vh;
+    text-align: center;
+  }
+  .app-area {
+    background: rgba(255,255,255,0.03);
+    border: 0.5px solid rgba(180,200,255,0.12);
+    border-radius: 12px;
+    width: calc(100% - 32px);
+    margin: 0 16px 16px;
+    aspect-ratio: 1/1;
+    max-height: 60vh;
+    display: flex; align-items: center; justify-content: center;
+    color: rgba(180,200,255,0.5);
+    font-size: 14px;
+    font-family: Arial, sans-serif;
+  }
+</style>
+</head>
+<body>
+<div style="position:relative; background:#060c2a; border-radius:16px; overflow:visible; font-family:Arial,sans-serif; color:Linen;">
+  <div class="center">
+    <a href="https://github.com/helgasoft/echarty">
+      <img src='../img/logo.png' width=40 />
+      <span class="titl">echarty</span>
+    </a>
+    <span class="fontu">Constellations</span> &nbsp; &nbsp; &nbsp;
+    <button class="bton" id="btnInfo" onclick="document.getElementById('modal').classList.add('open')">Info &#x1F4D3</button> &nbsp; &nbsp; &nbsp;
+    <div class="dropdown" id="askl">
+      <label for="autocompleteInput">Location:</label>
+      <input type="text" id="autocompleteInput" placeholder="e.g., 'Orlando, FL', 'Paris', ..." autocomplete="off">
+      <ul id="dropdownList" class="dropdown-menu"></ul>
+    </div> &nbsp; &nbsp;
+    <div id='libut'>
+	<!-- LikeBtn.com BEGIN -->
+	<span class="likebtn-wrapper" data-ef_voting="bounce" data-identifier="item_1" data-dislike_enabled="false"></span>
+	<script>(function(d,e,s){if(d.getElementById("likebtn_wjs"))return;a=d.createElement(e);m=d.getElementsByTagName(e)[0];a.async=1;a.id="likebtn_wjs";a.src=s;m.parentNode.insertBefore(a, m)})(document,"script","//w.likebtn.com/js/w/widget.js");</script>
+	<!-- LikeBtn.com END -->
+    </div>
+  </div>
+
+  <div id="modal" class="modal-overlay" onclick="if(event.target===this)this.classList.remove('open')">
+    <div class="modal-box">
+      <button class="close-btn" onclick="document.getElementById('modal').classList.remove('open')">&times;</button>
+<h3>Night sky with stars and constellations</h3>
+<p>
+This web page tries to get <b>your location</b> from the browser automatically, will ask for permission if needed.
+<br>Otherwise it will use a default location (Nice, FR).
+<br>You could also search by location name before the chart processing starts.
+<br><br>
+Made with <a href='https://helgasoft.github.io/echarty' target=_blank>echarty</a> and hosted with <a href='https://docs.r-wasm.org/webr/latest/' target=_blank>WebR</a>.
+This is live R-code execution inside a single web page without Rmd files or server installation.
+<br><br> 
+Source of data and processing code is <a href='https://www.r-bloggers.com/2023/01/star-map-with-r/' target=_blank>here</a>.
+<br>Original ggplot chart has been replaced with an interactive echarty chart featuring custom circles and polygons with zoom/pan, enterable tooltips with links and download SVG.
+<br>For additional messages, open browser's Developer Console with F12.
+</p>
+    </div>
+
+  </div>
+
+  <div id="app" class="square"> <!-- app-area -->
+	<div id='wver'>Loading WebR magic... </div><img id='amuse' src='../img/rubikon.gif' />
+  </div>
+
+</div>
+
+	<script>
+// ---------------------------------------------
+
+const DATA_URL = "https://nominatim.openstreetmap.org/search?format=json&q=";
+const input = document.getElementById('autocompleteInput');
+const ddl = document.getElementById('dropdownList');
+const msg = document.getElementById('wver');
+var js_loc = [0,0], js_name = '', lalo = [];
+var webR, fjson;
+var desired_place = 'Nice, FR';
+
+async function getLocationByName(name) {
+	const url = `${DATA_URL}${encodeURIComponent(name)}`;
+	
+	const response = await fetch(url, {
+	  headers: {
+	    // Nominatim requires a user-agent to identify your application
+	    "User-Agent": "echarty/1.0", 
+	  },
+	});
+	const data = await response.json();
+	console.log(data);
+    
+    if (data.length > 0) {
+      const { lat, lon, display_name } = data[0];
+      console.log(`Found: ${display_name}`);
+      console.log(`Coordinates: ${lat}, ${lon}`);
+	 js_name = display_name;
+	 js_loc = [lat, lon];
+	 out = js_name + ' ' + js_loc;
+    } else {
+      out = "Location not found.";
+    }
+    msg.textContent= out;
+}
+
+if ("geolocation" in navigator) {
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {  //console.log(pos.coords.latitude, pos.coords.longitude),
+		js_loc = [pos.coords.latitude, pos.coords.longitude];
+		msg.textContent = 'current: '+ js_loc[0]+' '+js_loc[1];
+	},
+    (err) => getLocationByName(desired_place),
+    { timeout: 5000, enableHighAccuracy: false }
+  );
+}
+
+input.addEventListener('input', async () => {
+    const term = input.value;
+    if (!term) {
+        ddl.style.display = 'none';
+        return;
+    }
+
+    // Append term to URL and fetch
+    const response = await fetch(`${DATA_URL}${encodeURIComponent(term)}`);
+    const jsonData = await response.json(); // RESPONSE IS USED HERE
+    
+    // USE THE RESPONSE to populate dropdown
+    const suggestions = jsonData.map(item => item.display_name); // Extract names
+    lalo = jsonData.map(item => [item.lat, item.lon]); // Extract lalo
+    ddl.innerHTML = suggestions.map(s => 
+        `<li onclick="document.getElementById('autocompleteInput').value='${s}'; this.parentElement.style.display='none'">
+            ${s}
+        </li>`
+    ).join('');
+    ddl.style.display = 'block';
+});
+
+ddl.addEventListener('click', async function(event) {
+  // 1. Find the nearest <li> relative to where the user clicked
+  const listItem = event.target.closest('li');
+
+  // 2. Ensure the click was actually inside our menu
+  if (listItem && ddl.contains(listItem)) {
+    
+    // 3. Grab the value
+    const selectedValue = listItem.textContent.trim();
+    // Convert children to an array to find the index of the clicked item
+    const index = Array.from(ddl.children).indexOf(listItem);
+    
+    console.log("Selected Item:",index," ",lalo[index]); //selectedValue);  // now find lat/lon
+    js_loc = lalo[index];
+    js_name = selectedValue;
+    msg.textContent = js_name +": "+ js_loc;
+    this.style.display = 'none';
+    await showSky();
+  }
+});
+
+async function showSky() {
+	var Rcode = `
+# celestial map
+# origin https://www.r-bloggers.com/2023/01/star-map-with-r/
+
+# Spatial manipulation
+library(sf)
+library(s2)
+library(nominatimlite)
+
+## Wrange data and dates
+library(dplyr)
+library(lubridate)
+library(lutz)
+library(scales)
+
+library(echarty); library(dplyr);
+
+# Cut a sf object with a buffer using spherical s2 geoms
+# Optionally, project and flip
+
+sf_spherical_cut <- function(x, the_buff, the_crs = sf::st_crs(x), flip = NULL) {
+  # Get geometry type
+  geomtype <- unique(gsub('MULTI', '', sf::st_geometry_type(x)))[1]
+
+  # Keep the data frame, s2 drops it
+  the_df <- sf::st_drop_geometry(x)
+  the_geom <- sf::st_geometry(x)
+  # Convert to s2 if needed
+  if (!inherits(the_buff, 's2_geography')) {
+    the_buff <- sf::st_as_s2(the_buff)
+  }
+
+  the_cut <- the_geom %>%
+    # Cut with s2
+    sf::st_as_s2() %>%
+    s2::s2_intersection(the_buff) %>%
+    # Back to sf and add the df
+    sf::st_as_sfc() %>%
+    sf::st_sf(the_df, geometry = .) %>%
+    dplyr::filter(!sf::st_is_empty(.)) %>%
+    sf::st_transform(crs = the_crs)
+
+  # If it is not POINT filter by valid and non-empty
+  # This if for performance
+  if (!geomtype == 'POINT') {
+    # If any is GEOMETRYCOLLECTION extract the right value
+    if (any(sf::st_geometry_type(the_cut) == 'GEOMETRYCOLLECTION')) {
+      the_cut <- the_cut %>%
+        sf::st_collection_extract(type = geomtype, warn = FALSE)
+    }
+
+    the_cut <- the_cut %>%
+      dplyr::filter(!is.na(sf::st_is_valid(.)))
+  }
+
+  if (!is.null(flip)) {
+    the_cut <- the_cut %>%
+      dplyr::mutate(geometry = geometry * flip) %>%
+      sf::st_set_crs(the_crs)
+  }
+
+  return(the_cut)
+}
+
+load_celestial <- function(filename,
+                           url = 'https://cdn.jsdelivr.net/gh/dieghernan/celestial_data@main/data/',
+                           cachedir = tempdir()) {
+  if (!dir.exists(cachedir)) {
+    stop(
+      'Please create ',
+      path.expand(cachedir),
+      ' directory',
+      'first'
+    )
+  }
+
+  url <- file.path(url, filename)
+  local_path <- file.path(cachedir, filename)
+
+
+  if (!file.exists(local_path)) {
+    download.file(url, local_path, mode = 'wb', quiet = TRUE)
+  }
+
+  celestial <- sf::st_read(local_path, quiet = TRUE)
+
+  return(celestial)
+}
+
+pretty_lonlat <- function(x, type, accuracy = 2) {
+  positive <- x >= 0
+
+  # Decompose
+  x <- abs(x)
+  D <- as.integer(x)
+  m <- (x - D) * 60
+  M <- as.integer(m)
+  S <- round((m - M) * 60, accuracy)
+
+  # Get label
+  if (type == 'lon') {
+    lab <- ifelse(positive > 0, 'E', 'W')
+  } else {
+    lab <- ifelse(positive > 0, 'N', 'S')
+  }
+
+
+  # Compose
+  label <- paste0(D, '\u00b0 ', M, "' ", S, '" ', lab)
+  return(label)
+}
+
+# Derive rotation degrees of the projection given a date and a longitude
+get_mst <- function(dt, lng) {
+  desired_date_utc <- lubridate::with_tz(dt, 'UTC')
+
+
+  yr <- lubridate::year(desired_date_utc)
+  mo <- lubridate::month(desired_date_utc)
+  dy <- lubridate::day(desired_date_utc)
+  h <- lubridate::hour(desired_date_utc)
+  m <- lubridate::minute(desired_date_utc)
+  s <- lubridate::second(desired_date_utc)
+
+  if ((mo == 1) || (mo == 2)) {
+    yr <- yr - 1
+    mo <- mo + 12
+  }
+
+  # Adjust times before Gregorian Calendar
+  # See https://squarewidget.com/julian-day/
+  if (lubridate::as_date(dt) > as.Date('1582-10-14')) {
+    a <- floor(yr / 100)
+    b <- 2 - a + floor(a / 4)
+  } else {
+    b <- 0
+  }
+  c <- floor(365.25 * yr)
+  d <- floor(30.6001 * (mo + 1))
+
+  # days since J2000.0
+  jd <- b + c + d - 730550.5 + dy + (h + m / 60 + s / 3600) / 24
+  jt <- jd / 36525
+
+  # Rotation
+  mst <- 280.46061837 + 360.98564736629 * jd +
+    0.000387933 * jt^2 - jt^3 / 38710000.0 + lng
+
+  # Modulo 360 degrees
+  mst <- mst %% 360
+
+  return(mst)
+}
+
+# Inputs -----------------------
+desired_place <- "` + js_name + `"
+
+# get the coordinates
+desired_loc <- c(` + js_loc[0] + ',' + js_loc[1] + `)	# get from JS
+if (sum(desired_loc)==0) {  # could not get lat/lon automatic
+	# Geocode place with nominatimlite
+	desired_place_geo <- geo_lite(desired_place, full_results = TRUE)
+	
+	desired_place_geo %>% select(address, lat, lon)
+
+	desired_loc <- desired_place_geo %>%
+	  select(lat, lon) %>%
+	  unlist()
+} else {
+	if (desired_place=='') desired_place <- paste(desired_loc, collapse=',')		# local
+}
+# We are not using yet the timezone
+desired_date <- make_datetime(year = 2015,  month = 9,  day = 22,  hour = 3,  min = 45)
+dd <- Sys.Date(); tt <- Sys.time()
+desired_date <- make_datetime(year= year(dd),  month= month(dd),  day= day(dd),  hour= hour(tt),  min= minute(tt))
+desired_date
+
+# Get tz
+get_tz <- tz_lookup_coords(desired_loc[1], desired_loc[2], warn = FALSE)
+get_tz
+
+# Force it to be local time
+desired_date_tz <- force_tz(desired_date, get_tz)
+
+# Get the rotation and prepare buffer and projection
+
+# Get right degrees
+lon_prj <- get_mst(desired_date_tz, desired_loc[2])
+lat_prj <- desired_loc[1]
+
+c(lon_prj, lat_prj)
+
+# Create proj4string w/ Airy projection
+
+target_crs <- paste0('+proj=airy +x_0=0 +y_0=0 +lon_0=', lon_prj, ' +lat_0=', lat_prj)
+target_crs
+
+# We need to flip celestial objects to get the impression of see from the Earth
+# to the sky, instead of from the sky to the Earth
+# Flip matrix for affine transformation
+
+flip_matrix <- matrix(c(-1, 0, 0, 1), 2, 2)
+
+
+# And create an s2 buffer of the visible hemisphere at the given location
+hemisphere_s2 <- s2_buffer_cells(
+  as_s2_geography(
+    paste0('POINT(', lon_prj, ' ', lat_prj, ')')
+  ),
+  9800000,
+  max_cells = 5000
+)
+
+# This one is for plotting
+hemisphere_sf <- hemisphere_s2 %>%
+  st_as_sf() %>%
+  st_transform(crs = target_crs) %>%
+  st_make_valid()
+
+mw <- load_celestial('mw.min.geojson')
+
+# Add colors to MW to use on fill
+cols <- colorRampPalette(c('white', 'yellow'))(5)
+mw$fill <- factor(cols, levels = cols)
+
+# And process it
+
+# Cut to buffer
+mw_end <- sf_spherical_cut(mw,
+  the_buff = hemisphere_s2,
+  # Change the crs
+  the_crs = target_crs,
+  flip = flip_matrix
+)
+
+const <- load_celestial('constellations.lines.min.geojson')
+
+# Cut to buffer
+
+const_end <- sf_spherical_cut(const,
+  the_buff = hemisphere_s2,
+  # Change the crs
+  the_crs = target_crs,
+  flip = flip_matrix
+)
+
+stars <- load_celestial('stars.6.min.geojson')
+
+# Cut to buffer
+
+stars_end <- sf_spherical_cut(stars,
+  the_buff = hemisphere_s2,
+  # Change the crs
+  the_crs = target_crs,
+  flip = flip_matrix
+)
+
+# Graticules ---------------
+grat <- st_graticule(
+  ndiscr = 5000,
+  lat = seq(-90, 90, 10),
+  lon = seq(-180, 180, 30)
+)
+
+# Cut to buffer, we dont flip this one (it is not an object of the space)
+grat_end <- sf_spherical_cut(
+  x = grat,
+  the_buff = hemisphere_s2,
+  # Change the crs
+  the_crs = target_crs
+)
+
+lat_lab <- pretty_lonlat(desired_loc[1], type = 'lat')
+lon_lab <- pretty_lonlat(desired_loc[2], type = 'lon')
+
+pretty_labs <- paste(lat_lab, '/', lon_lab)
+cat(pretty_labs)
+
+# Create final caption to put on bottom
+
+pretty_time <- format(desired_date_tz, format = '%d %b %Y %H:%M', usetz = TRUE)
+
+# Prepare MULTILINESTRING
+
+const_end_lines <- const_end %>%
+  st_cast('MULTILINESTRING') %>%
+  st_coordinates() %>%
+  as.data.frame()
+
+#-----------------------------------------------
+
+sers <- list()
+for (rr in 1:nrow(const_end)) {
+	sers <- c(sers, ec.util(cmd='sf.series', df=const_end[rr,], 
+		coordinateSystem='cartesian2d', polyline=T, nid= 'name', 
+		lineStyle= list(color='white', width=3) ))
+}
+sers <- lapply(sers, function(ss) { 
+	ss$data <- lapply(ss$data, function(kk) { list(coords=kk) })
+	tmp <- sub(' ','_', tolower(ss$name), fixed=T)
+	ss$tooltip <- list(formatter= 
+	  paste0('<a href="https://theskylive.com/sky/constellations/', tmp, '-constellation" target=_blank style="text-decoration: none;">{a}</a>')
+	)
+	ss 
+})
+
+pstars <- ec.util(cmd='sf.series', 
+  df= stars_end |> filter(br>0.01) |> rowwise() |> mutate(br= min(1.1,br)) |> ungroup() |> 
+    mutate(sz= scales::rescale(br, to=c(3,15)), id=NULL, mag=NULL, bv=NULL), 
+  coordinateSystem='cartesian2d', itemStyle=list(color='yellow'), z=6, animation=F, clip=T,
+  # tooltip= list(formatter='star {b}'), nid= 'name')    # for scatter
+  tooltip= list(formatter=ec.clmn('star %@',4))         # for custom
+)
+
+pstars[[1]]$type <- 'custom'   # replace scatter with custom for better zoom-in
+pstars[[1]]$data <- lapply(pstars[[1]]$data, function(dd) {
+  list(dd$value[1], dd$value[2], dd$sz, ifelse(is.na(dd$name),'X',dd$name))
+})
+pstars[[1]]$renderItem <- ec.clmn("function(_, api) {
+    const xVal = Number(api.value(0));
+    const yVal = Number(api.value(1));
+    const radiusValue = api.value(2);
+    const name = String(api.value(3));
+
+    let center = api.coord([xVal, yVal]);
+    const size = api.size([radiusValue, radiusValue]); // [x, y]
+    radius = size[0] * 10000; 
+    colr = api.visual('color');
+    opacity = radiusValue / 10;
+    if (name=='Polaris') { colr='red'; opacity=1; radius=radius*2 }
+
+    return {
+      type: 'circle', name: name+' ',
+      shape: {
+        cx: center[0],
+        cy: center[1],
+        r: radius
+      },
+      style: { fill: colr, stroke: colr, lineWidth: 1, opacity: opacity  }
+    };
+  }")
+
+chart <- ec.init(
+  iniOpts= list(renderer='svg'), height='100%', initOpts= list(useCoarsePointer=NULL),  # width='90%', #height=777,
+  title= list(top=0, subtext= paste('view from',desired_place,'on',desired_date_tz), 
+		subtextStyle= list(color= 'Linen', fontSize= 14)),
+  toolbox= list(feature= list(saveAsImage= list(iconStyle= list(borderColor='Linen',borderWidth=2), title='Save as SVG'))),
+  xAxis= list(show=F), yAxis= list(show=F), 
+  grid= list(show=T, backgroundColor='#060c2a', borderWidth=0, outerBoundsMode='none'),
+	series= c(sers, pstars),  # scatter + lines + border
+	tooltip= list(formatter= '{a}', textStyle= list(color='brown'), hideDelay=200, enterable=T, position='bottom'),
+	dataZoom= list(
+		list(type='inside', xAxisIndex=1, filterMode='none'),
+		list(type='inside', yAxisIndex=1, filterMode='none'))
+)
+`;
+//js_name = js_name.replaceAll("'", "~");
+//Rcode = `library(echarty); library(dplyr); chart <- cars |> ec.init(title= list(text='` + js_name +" "+ js_loc +`'))`;	// debug
+
+// -------- JS ---------------------------------------------------------
+  exec = Rcode + '\n as.character(htmlwidgets:::toHTML(chart))'
+  tags_plot = '';
+  try {
+	tags_plot = await webR.evalRString(exec);
+  } catch ({ name, message }) {
+	tags_plot = "<div class='err'>Error<br/>" + message + '</div>';
+  }  finally {
+	document.getElementById('app').innerHTML = tags_plot;
+  }
+  // render with HTMLWidgets
+  window.HTMLWidgets.staticRender();
+  document.getElementById('askl').style.display = "inline-block";    // allow location search again
+};
+
+//throw new Error("TESTING");   // stop to debug
+
+import('https://webr.r-wasm.org/latest/webr.mjs').then(async ({ WebR }) => {
+  webR = new WebR(); 
+  await webR.init();
+  wver= 'WebR v.'+ webR.version; console.log(wver); 
+   
+  msg.innerHTML = wver + ', loading R libraries...'; 
+  await webR.installPackages('echarty', {repos: ['https://helgasoft.r-universe.dev', 'https://repo.r-wasm.org']} );
+  await webR.installPackages(['jsonlite', 'dplyr', 'zoo'], true);
+  await webR.installPackages(['sf','s2','nominatimlite','lubridate','lutz','scales'], true);
+
+  await webR.objs.globalEnv.bind('ec.webR', true);   // inform R about web environment
+  msg.textContent = "Please wait, building the Universe takes time...";
+  document.getElementById('amuse').src = '../img/solar.system.gif';
+  document.getElementById('askl').style.display =  "none";
+
+  await showSky();
+});
+
+	</script>
+  </body>
+</html>
