@@ -3,6 +3,7 @@
 <head>
 <!--  TODO:
   size chart 100%, square 1x1, unnamed stars in different color; useCoarsePointer + pointerSize ?
+entering loc while loading libs >> err no 'sf'...
   https://theskylive.com/planetarium   https://theskylive.com/sky/constellations/ursa_minor-constellation
 -->
 	<title>Night sky</title>
@@ -274,9 +275,9 @@ const DATA_URL = "https://nominatim.openstreetmap.org/search?format=json&q=";
 const input = document.getElementById('autocompleteInput');
 const ddl = document.getElementById('dropdownList');
 const msg = document.getElementById('wver');
-var js_loc = [0,0], js_name = '', lalo = [];
-var webR, fjson;
 var desired_place = 'Nice, FR';
+var js_loc = [0,0], js_name = desired_place, lalo = [];
+var webR, fjson;
 const isMobile = window.matchMedia("(any-pointer: coarse)").matches;
 
 async function getLocationByName(name) {
@@ -522,7 +523,7 @@ if (sum(desired_loc)==0) {  # could not get lat/lon automatic
 	# Geocode place with nominatimlite
 	desired_place_geo <- geo_lite(desired_place, full_results = TRUE)
 	
-	desired_place_geo %>% select(address, lat, lon)
+	# desired_place_geo %>% select(address, lat, lon)
 
 	desired_loc <- desired_place_geo %>%
 	  select(lat, lon) %>%
