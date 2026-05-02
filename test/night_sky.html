@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <!--  TODO:
-  size chart 100%, square 1x1, unnamed stars in different color  
+  size chart 100%, square 1x1, unnamed stars in different color; useCoarsePointer + pointerSize ?
   https://theskylive.com/planetarium   https://theskylive.com/sky/constellations/ursa_minor-constellation
 -->
 	<title>Night sky</title>
@@ -58,7 +58,7 @@
     flex-shrink: 0;
   }
   .dropdown label {
-    color: rgba(180,200,255,0.75);
+    color: #c8d8ff;
     font-size: 13px;
     white-space: nowrap;
     margin: 0;
@@ -144,6 +144,81 @@
     font-size: 14px;
     font-family: Arial, sans-serif;
   }
+
+  /* Responsive GIF */
+  #amuse {
+    max-width: min(320px, 80vw);
+    max-height: min(320px, 80vw);
+    width: auto;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+  }
+
+  /* ════════════════════════════════
+     Mobile styles  (≤ 600 px)
+     ════════════════════════════════ */
+  @media (max-width: 600px) {
+
+    /* Toolbar becomes two compact rows */
+    .center {
+      flex-wrap: wrap;
+      justify-content: flex-start;
+      width: 100%;
+      padding: 10px 12px 8px;
+      gap: 8px;
+      box-sizing: border-box;
+    }
+
+    /* Row 1: logo + title + "Constellations" label + Info button */
+    .center a { flex-shrink: 0; }
+
+    .fontu { font-size: 110%; }
+    .titl  { font-size: 110%; }
+
+    /* Info button – slightly smaller tap target is fine; keep readable */
+    .bton { padding: 6px 10px; font-size: 12px; }
+
+    /* Location row: label + input stretch full width */
+    .dropdown {
+      width: 100%;
+      flex-wrap: nowrap;
+    }
+    .dropdown label { flex-shrink: 0; }
+    .dropdown input[type=text] {
+      flex: 1;           /* fill remaining row width */
+      width: auto;       /* override the fixed 190px */
+      min-width: 0;      /* allow shrinking below intrinsic size */
+      font-size: 16px;   /* prevents iOS auto-zoom on focus */
+    }
+
+    /* Dropdown suggestions: keep left edge aligned with input */
+    .dropdown-menu {
+      min-width: 0;
+      width: 100%;
+    }
+
+    /* LikeBtn – give it its own row so it doesn't crowd row 1 */
+    #libut {
+      order: 3;          /* push after location row */
+      width: 100%;
+      display: flex;
+      justify-content: flex-start;
+    }
+
+    /* Modal: prevent it from overflowing narrow screens */
+    .modal-box {
+      max-width: calc(100vw - 32px);
+      padding: 1.4rem 1.2rem;
+    }
+    .modal-box h3 { font-size: clamp(13px, 4vw, 17px); }
+    .modal-box p  { font-size: clamp(11px, 3.5vw, 14px); }
+
+    /* Chart: use full viewport height on phones so it stays square */
+    .square {
+      max-height: 100vw;  /* square == viewport width on mobile */
+    }
+  }
 </style>
 </head>
 <body>
@@ -153,7 +228,7 @@
       <img src='../img/logo.png' width=40 />
       <span class="titl">echarty</span>
     </a>
-    <span class="fontu">Constellations</span> &nbsp; &nbsp; &nbsp;
+    <span class="fontu">Constellations</span> &nbsp; &nbsp;
     <button class="bton" id="btnInfo" onclick="document.getElementById('modal').classList.add('open')">Info &#x1F4D3</button> &nbsp; &nbsp; &nbsp;
     <div class="dropdown" id="askl">
       <label for="autocompleteInput">Location:</label>
@@ -173,16 +248,14 @@
       <button class="close-btn" onclick="document.getElementById('modal').classList.remove('open')">&times;</button>
 <h3>Night sky with stars and constellations</h3>
 <p>
-This web page tries to get <b>your location</b> from the browser automatically, will ask for permission if needed.
-<br>Otherwise it will use a default location (Nice, FR).
+This web page tries to get <b>your location</b> from the browser automatically, will ask for permission if needed. Otherwise it will use a default location (Nice, FR).
 <br>You could also search by location name before the chart processing starts.
 <br><br>
 Made with <a href='https://helgasoft.github.io/echarty' target=_blank>echarty</a> and hosted with <a href='https://docs.r-wasm.org/webr/latest/' target=_blank>WebR</a>.
-This is live R-code execution inside a single web page without Rmd files or server installation.
 <br><br> 
 Source of data and processing code is <a href='https://www.r-bloggers.com/2023/01/star-map-with-r/' target=_blank>here</a>.
-<br>Original ggplot chart has been replaced with an interactive echarty chart featuring custom circles and polygons with zoom/pan, enterable tooltips with links and download SVG.
-<br>For additional messages, open browser's Developer Console with F12.
+<br>Original ggplot chart has been replaced with an interactive echarty chart featuring custom circles and lines with <b>click</b>, zoom, pan, enterable tooltips and download SVG.
+<br>Additional messages in Console (F12).
 </p>
     </div>
 
@@ -204,6 +277,7 @@ const msg = document.getElementById('wver');
 var js_loc = [0,0], js_name = '', lalo = [];
 var webR, fjson;
 var desired_place = 'Nice, FR';
+const isMobile = window.matchMedia("(any-pointer: coarse)").matches;
 
 async function getLocationByName(name) {
 	const url = `${DATA_URL}${encodeURIComponent(name)}`;
@@ -211,7 +285,7 @@ async function getLocationByName(name) {
 	const response = await fetch(url, {
 	  headers: {
 	    // Nominatim requires a user-agent to identify your application
-	    "User-Agent": "echarty/1.0", 
+	    "User-Agent": "echarty/1.7.3", 
 	  },
 	});
 	const data = await response.json();
@@ -285,7 +359,7 @@ ddl.addEventListener('click', async function(event) {
 });
 
 async function showSky() {
-	var Rcode = `
+	var Rcode = `mobile <- `+ (isMobile ? 'TRUE' : 'FALSE')+ `
 # celestial map
 # origin https://www.r-bloggers.com/2023/01/star-map-with-r/
 
@@ -592,11 +666,11 @@ sers <- lapply(sers, function(ss) {
 })
 
 pstars <- ec.util(cmd='sf.series', 
-  df= stars_end |> filter(br>0.01) |> rowwise() |> mutate(br= min(1.1,br)) |> ungroup() |> 
+  df= stars_end |> filter(br>0.015) |> rowwise() |> mutate(br= min(1.1,br)) |> ungroup() |> 
     mutate(sz= scales::rescale(br, to=c(3,15)), id=NULL, mag=NULL, bv=NULL), 
   coordinateSystem='cartesian2d', itemStyle=list(color='yellow'), z=6, animation=F, clip=T,
-  # tooltip= list(formatter='star {b}'), nid= 'name')    # for scatter
-  tooltip= list(formatter=ec.clmn('star %@',4))         # for custom
+  # tooltip= list(formatter= 'star {b}'), nid= 'name')    # for scatter
+  tooltip= list(formatter= ec.clmn('star %@',4))         # for custom
 )
 
 pstars[[1]]$type <- 'custom'   # replace scatter with custom for better zoom-in
@@ -626,19 +700,27 @@ pstars[[1]]$renderItem <- ec.clmn("function(_, api) {
       style: { fill: colr, stroke: colr, lineWidth: 1, opacity: opacity  }
     };
   }")
+link <- "function(prm) { url='https://theskylive.com/sky/constellations/' +prm.seriesName.replaceAll(' ','_').toLowerCase()+ '-constellation'; window.open(url, '_blank'); }"
+slink <- "function(prm) { if (prm.data[3]=='X') return; url='https://ase.exopla.net/index.php/'+prm.data[3]; window.open(url, '_blank'); }"
+jscursor <- "chart.getZr().on('mousemove', function (par) { chart.getZr().setCursorStyle('help');});"
+event.list <- ifelse(mobile, NULL, list(   # click on mobile will only show tooltip
+    list(event= 'click', query= 'series.lines', handler= ec.clmn(link) ),
+    list(event= 'click', query= 'series.custom', handler= ec.clmn(slink) )
+  ))
 
 chart <- ec.init(
-  iniOpts= list(renderer='svg'), height='100%', initOpts= list(useCoarsePointer=NULL),  # width='90%', #height=777,
-  title= list(top=0, subtext= paste('view from',desired_place,'on',desired_date_tz), 
-		subtextStyle= list(color= 'Linen', fontSize= 14)),
-  toolbox= list(feature= list(saveAsImage= list(iconStyle= list(borderColor='Linen',borderWidth=2), title='Save as SVG'))),
+  iniOpts= list(renderer='svg', useCoarsePointer=NULL), height='100%', js=jscursor,
+  title= list(top=0, subtext= paste('view from',desired_place,'on',pretty_time), 
+		subtextStyle= list(color= '#888', fontSize= 14)),
+  toolbox= list(right='5%', feature= list(saveAsImage= list(iconStyle= list(borderColor='Linen',borderWidth=2), title='Save as SVG'))),
   xAxis= list(show=F), yAxis= list(show=F), 
   grid= list(show=T, backgroundColor='#060c2a', borderWidth=0, outerBoundsMode='none'),
 	series= c(sers, pstars),  # scatter + lines + border
 	tooltip= list(formatter= '{a}', textStyle= list(color='brown'), hideDelay=200, enterable=T, position='bottom'),
 	dataZoom= list(
 		list(type='inside', xAxisIndex=1, filterMode='none'),
-		list(type='inside', yAxisIndex=1, filterMode='none'))
+		list(type='inside', yAxisIndex=1, filterMode='none')),
+  on= event.list
 )
 `;
 //js_name = js_name.replaceAll("'", "~");
@@ -659,21 +741,27 @@ chart <- ec.init(
   document.getElementById('askl').style.display = "inline-block";    // allow location search again
 };
 
-//throw new Error("TESTING");   // stop to debug
+// throw new Error("TESTING");   // stop to debug
 
 import('https://webr.r-wasm.org/latest/webr.mjs').then(async ({ WebR }) => {
   webR = new WebR(); 
   await webR.init();
   wver= 'WebR v.'+ webR.version; console.log(wver); 
    
-  msg.innerHTML = wver + ', loading R libraries...'; 
+  msg.innerHTML = wver + ', loading R libraries...';
+  if (isMobile) msg.innerHTML += 'on mobile';
   await webR.installPackages('echarty', {mount:true, repos: ['https://helgasoft.r-universe.dev', 'https://repo.r-wasm.org']} );
   await webR.installPackages(['jsonlite', 'dplyr', 'zoo'], {mount:true, repos:['https://repo.r-wasm.org']} );
-  await webR.installPackages(['sf','s2','nominatimlite','lubridate','lutz','scales'], {mount:true, repos:['https://repo.r-wasm.org']});
+  await webR.installPackages(['sf','s2','nominatimlite','lubridate','lutz','scales'], {mount:true, repos:['https://repo.r-wasm.org']})
+	.catch(err => {
+		console.warn("packages install failed, try again\n"+ err);
+		msg.textContent = "packages install failed, try again\n" + err;
+		return null; //{ default: false }; 
+	});
 
   await webR.objs.globalEnv.bind('ec.webR', true);   // inform R about web environment
   msg.textContent = "Please wait, building the Universe takes time...";
-  document.getElementById('amuse').src = '../img/solar.system.gif';
+  tmp = document.getElementById('amuse');  if (tmp) tmp.src = '../img/solar.system.gif';
   document.getElementById('askl').style.display =  "none";
 
   await showSky();
