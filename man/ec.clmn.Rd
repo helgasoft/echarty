@@ -64,4 +64,9 @@ ec.init(
   xAxis= list(type='category'), legend= list(formatter= 'Ch.{name}'),
   series.param= list(type='line', encode= list(x='Time', y='weight')),
 )
+
+mtcars |> ec.init(
+  series.param = list(encode= list(y='wt'), label= list(show=T, formatter=ec.clmn('\%R2@','wt'))), 
+  tooltip= list(valueFormatter= ec.clmn(scale=0) )
+)
 }

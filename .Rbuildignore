@@ -26,3 +26,5 @@ cleanup.bat
 ^doc$
 ^Meta$
 ^pkgdown$
+^\.positai$
+^\.claude$

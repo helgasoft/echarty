@@ -205,6 +205,33 @@ if (!is.null(flights)) {
   )
 }
 
+#------ lines in 2D, not geo -------
+library(sf)    # from ec.util example
+fname <- system.file("shape/nc.shp", package="sf")
+nc <- as.data.frame(st_read(fname)) |> head(3)
+Xmin <- Ymin <- 1e+6; Xmax <- Ymax <- -1e+6;  # axes ranges are a must for lines!
+ec.init(
+     series= ec.util(cmd='sf.series', df=nc, coordinateSystem='cartesian2d', polyline=T, nid= 'NAME',
+		    lineStyle= list(color='red', width=3) ),
+     tooltip= list(formatter= '{a}',  enterable=T, position='bottom'), 
+     dataZoom= list(list(type='inside',xAxisIndex =1), list(type='inside',yAxisIndex =1))
+  ) |> ec.upd({
+  series <- lapply(series, function(ss) {   # replace custom polygons with lines
+    ss$type <- 'lines'; ss$renderItem <- NULL
+    # 1. Convert to matrix
+    coords_mat <- do.call(rbind, ss$data)
+    # 2. use range for both at once
+    xyRanges <- apply(coords_mat, 2, range)
+    Xmin <<- min(Xmin, xyRanges[1,1]); Xmax <<- max(Xmax,xyRanges[2,1])
+    Ymin <<- min(Ymin, xyRanges[1,2]); Ymax <<- max(Ymax,xyRanges[2,2])
+    
+  	ss$data <- list(list(coords=ss$data))
+  	ss 
+  })
+  xAxis <- list( min=Xmin, max= Xmax )
+  yAxis <- list( min=Ymin, max= Ymax )
+})
+
 
 #------ registerMap JSON -----
 # registerMap supports also maps in SVG format, see website gallery
@@ -535,7 +562,7 @@ ec.init(
 
 #------ Sunburst -----
 # see website for different ways to set hierarchical data
-# https://helgasoft.github.io/echarty/uc3.html
+# https://helgasoft.github.io/echarty/articles/data.hierarchy.html
 data = list(list(name='Grandpa',children=list(list(name='Uncle Leo',value=15,
      children=list(list(name='Cousin Jack',value=2), list(name='Cousin Mary',value=5,
      children=list(list(name='Jackson',value=2))), list(name='Cousin Ben',value=4))),
@@ -548,6 +575,17 @@ ec.init( preset= FALSE,
                            radius= list(0, '90%'),
                            label= list(rotate='radial') ))
 )
+
+df <- data.frame(
+    parents= c("","Reptiles", "Reptiles", "Mammals", "Mammals", "Fish", "Sharks", "Sharks", "Animals", "Animals", "Animals"),
+    children= c("Animals", "Snakes", "Lizards", "Dogs", "Humans", "Sharks", "hammerhead", "thresher", "Reptiles", "Mammals", "Fish"),
+    value= c(100, 15, 20, 10, 25, 20, 8, 12, 40, 35, 25)) 
+dpc <- ec.data(df, format='treePC')
+ec.init(series.param= list(type='sunburst', emphasis= list(focus = "ancestor"),
+   #data= dpc,  # shows root 'Animals'
+   data= dpc[[1]]$children,  # hides root
+   levels= list(list(), list(itemStyle= list(color='pink')), list(), list(itemStyle= list(color='brown')))
+))
 
 #------ Gauge -----
 ec.init(preset= FALSE,
@@ -709,6 +747,26 @@ ec.init(
     list(type= "scatter", colorBy= "item", symbolSize= 8)
   )
 )
+
+#------ stage v.6 -----
+dd <- "type,from,to
+Planning, 2026-01-01,2026-01-15
+Research, 2026-01-10,2026-02-05
+Design,	2026-02-01,2026-03-01
+Development, 2026-03-01,2026-04-15
+Testing, 2026-04-05,2026-05-01"
+df <- read.csv(header=T, text=dd, strip.white=TRUE) |> mutate(from=as.Date(from), to=as.Date(to)) |> relocate(type, .after=last_col())
+ec.init( df,
+  xAxis= list(type= "time"), 
+  yAxis= list(type = 'category'),
+  series.param= list(renderItem= "stage", colorBy= "item",
+    itemPayload= list(axisLabel= list(formatter= ec.clmn("() => null")))
+    ,encode= list(x= c(1,2), y= 3)
+    #,encode= list(x= c(2,3), y= 1)  # ECharts bug
+  ),
+  tooltip= list(show=T)
+)
+
 
 #------ contour (density) v.6 -----
 ec.init(cars,  

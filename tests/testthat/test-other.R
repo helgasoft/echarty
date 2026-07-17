@@ -76,9 +76,10 @@ test_that("registerMap", {
     visualMap= list(type='continuous', calculable=TRUE,
       inRange= list(color = rainbow(8)) )
       #,min= min(vals), max= max(vals))
+    ,registerMap= list(list(mapName= 'paris', geoJSON= gjson))
   )
-  p$x$registerMap <- list(list(mapName= 'paris', geoJSON= gjson))
-  p
+  #p$x$registerMap <- list(list(mapName= 'paris', geoJSON= gjson))
+  #p
   expect_equal(length(p$x$registerMap[[1]]$geoJSON), 3)
   expect_equal(p$x$opts$geo$map, 'paris')
   expect_equal(p$x$opts$series[[1]]$data[[2]]$value, 1000)
@@ -390,6 +391,9 @@ test_that("old plugins", {
 test_that('unusual cases', {
   p <- ec.init(series.param= list(data=c(150, 230, 224)) )  # allowed
   expect_equal(length(p$x$opts$series[[1]]$data), 3)
+  p <-iris |> ec.init(series.param= list(encode=list(x='Sepal.Length', y='BLAH')))
+  # silent fail, takes default Y column (colY) for Y data
+  expect_equal(p$x$opts$yAxis$name, 'BLAH')
 })
 
 test_that('mostly for coverage', {

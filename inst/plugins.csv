@@ -11,3 +11,4 @@ stage,https://cdn.jsdelivr.net/gh/apache/echarts-custom-series@main/custom-serie
 violin,https://cdn.jsdelivr.net/gh/apache/echarts-custom-series@main/custom-series/violin/dist/violin.auto.js
 liquidFill,https://cdn.jsdelivr.net/gh/apache/echarts-custom-series@main/custom-series/liquidFill/dist/liquid-fill.auto.js
 wordCloud,https://cdn.jsdelivr.net/gh/apache/echarts-custom-series@main/custom-series/wordCloud/dist/word-cloud.auto.js
+d3.js,https://cdn.jsdelivr.net/npm/d3@latest/dist/d3.min.js

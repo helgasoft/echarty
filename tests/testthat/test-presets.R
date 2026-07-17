@@ -38,6 +38,7 @@ test_that("options preset", {
   expect_equal(p$x$opts$yAxis$gridIndex, 0)
   expect_equal(p$x$opts$visualMap[[1]]$dimension, 1)   # convert to numeric + decrement
   expect_equal(p$x$opts$dataset[[1]]$dimensions, c('speed','dist'))
+  expect_false(p$x$opts$dataset[[1]]$sourceHeader)
   
   # single column df with timeline; from ec.init examples
   p <- data.frame(n=1:5) |> dplyr::group_by(n) |> ec.init(
@@ -172,12 +173,12 @@ test_that("ec.init presets for timeline + groupBy, geo", {
   # 1. map serie picks up first num clmn for value, first char clmn for name
   # 2. visualMap picks up last numeric clmn for max/min, but 'name' as last clmn doesn't work
   p <- cns |> rename(val=value) |>
-    ec.init(load= 'world', visualMap= list(seriesIndex=1), 
-      geo= list(map='world', roam=TRUE), series= list(
-        list(type='map'), list(type='scatter', data=list(c(-117,32)))) )
+    ec.init(load= 'world', visualMap= list(seriesIndex=1), geo= list(roam=TRUE), #map='world', 
+            series= list(list(type='map'), list(type='scatter', data=list(c(-117,32)))) )
   #expect_equal(p$x$opts$dataset[[1]]$dimensions, c("val","name","dim"))
   expect_equal(p$x$opts$series[[1]]$geoIndex, 0)
   expect_equal(p$x$opts$visualMap[[1]]$max, 88)
+  expect_equal(p$x$opts$geo$map, 'world')
   
   p <- quakes |> head(11) |> group_by(stations) |> 
   ec.init(load='world', timeline= list(show=TRUE),
