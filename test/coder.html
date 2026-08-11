@@ -111,8 +111,8 @@ import('https://webr.r-wasm.org/latest/webr.mjs').then(async ({ WebR }) => {
   wver= 'WebR v.'+ webR.version; console.log(wver); 
    
   msg.innerHTML = wver+ ', loading echarty...'; 
-  //await webR.installPackages(["echarty"]); //, {repos:'https://helgasoft.r-universe.dev'}); 
-  await webR.installPackages(['jsonlite', 'echarty', 'dplyr', 'zoo'], true);
+  await webR.installPackages(['jsonlite', 'dplyr', 'zoo', 'data.tree', 'htmlwidgets'], true);
+  await webR.installPackages(['echarty'], {repos:'https://helgasoft.r-universe.dev'}); 
 
   await webR.objs.globalEnv.bind('ec.webR', true);   // inform R about web environment
   document.getElementById('app').innerHTML = 'Ready to plot &#x1f4ca' ;   //&#x1f44d  
