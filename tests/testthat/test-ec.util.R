@@ -352,12 +352,12 @@ test_that("ec.data boxlpot", {
   	symbolSize=5, itemStyle=list(opacity=0.9), 
   	emphasis= list(itemStyle= list(color= 'chartreuse', borderWidth=4, opacity=1))
 	)
-  p <- ec.init(
+  p <- ec.init( load='custom',  # required for outliers of grouped boxplots
     legend= list(show= TRUE), tooltip= list(show=TRUE),
     dataset= ds$dataset, series= ds$series, xAxis= ds$xAxis, yAxis= ds$yAxis
   ) |> 
   ec.upd({ 
-  	series[[1]] <- c(series[[1]], 
+  	series[[1]] <- modifyList(series[[1]], 
   	  list(color= 'LightGrey', itemStyle= list(color='DimGray')))
   }) |> ec.theme('dark-mushroom')
   expect_equal(p$x$opts$series[[1]]$name, 'boxplot')
@@ -407,6 +407,7 @@ test_that("ec.data treePC", {
   expect_equal(p$x$opts$series[[1]]$data[[1]]$value, 711)
   expect_equal(length(p$x$opts$series[[1]]$data[[1]]$children), 4)
   expect_error(ec.data(data.frame(x=1, y=1:10, char='A'), format='treePC'))
+  expect_error(ec.data(cars, format=='treePC'))
 })
 
 test_that("ec.data treeTK", {
@@ -426,6 +427,7 @@ test_that("ec.data treeTK", {
   )
   expect_equal(p$x$opts$series[[1]]$data[[1]]$value, 2201)
   expect_warning(ec.clmn(3, 'dd'))  # col is numeric, others are ignored 
+  expect_error(ec.data(cars, format=='treeTK'))
 })
 
 test_that("ec.data borders", {
@@ -569,3 +571,12 @@ test_that("ec.registerMap", {
   expect_equal(p$x$opts$dataset[[1]]$source[[1]][[1]], 'liver')
 })
 
+test_that("ec.clmn", {
+  expect_warning(cars |> ec.init() |> ec.upd({ lenv$coNames <- NULL; tooltip <- list(formatter=ec.clmn('%@','col')) }) )
+  p <- cars |> ec.init(
+    series.param= list(label= list(show=T, formatter=ec.clmn('speed', scale=0))) 
+  )
+  expect_true(grepl('vv = vv.map', p$x$opts$series[[1]]$label$formatter))
+  p <- cars |> ec.init(series.param= list(type='pie', label= list(show=T, formatter= ec.clmn(-1)) )) 
+  expect_true(grepl('String(x.value', p$x$opts$series[[1]]$label$formatter, fixed=TRUE))
+})

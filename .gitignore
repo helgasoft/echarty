@@ -17,5 +17,6 @@ cleanup.bat
 /doc/
 /Meta/
 docs
+lib
 pkgdown
 .positai

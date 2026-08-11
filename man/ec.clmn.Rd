@@ -66,7 +66,7 @@ ec.init(
 )
 
 mtcars |> ec.init(
-  series.param = list(encode= list(y='wt'), label= list(show=T, formatter=ec.clmn('\%R2@','wt'))), 
+  series.param= list(encode= list(y='wt'), label= list(show=TRUE, formatter=ec.clmn('\%R2@','wt'))), 
   tooltip= list(valueFormatter= ec.clmn(scale=0) )
 )
 }

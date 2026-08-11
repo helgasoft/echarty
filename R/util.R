@@ -75,7 +75,7 @@
 #' 
 #' @examples
 #' library(dplyr)
-#' if (interactive()) {  # comm.out: Cran Fedora errors about some 'browser'
+#' if (interactive()) {  # if comm.out: Cran Fedora errors about some 'browser'
 #'   library(sf)
 #'   fname <- system.file("shape/nc.shp", package="sf")
 #'   nc <- as.data.frame(st_read(fname))
@@ -864,7 +864,8 @@ ec.data <- function(df, format='dataset', header=FALSE, ...) {
       nms <- paste(unlist(lapply(bdf, \(x) {unique(x[[colas]])})), collapse="','")
       nms <- paste0("(p) => ['",nms,"'][p.value]")
       dataset <- list(
-        list(source= src),
+        #list(source= src),
+        list(source= if (length(src[[1]])==1) list(src) else src),
         list(transform= list(type= 'boxplot', 
               config= list(itemNameFormatter= htmlwidgets::JS(nms)
         )))
@@ -1026,7 +1027,7 @@ ec.data <- function(df, format='dataset', header=FALSE, ...) {
 #' )
 #' 
 #' mtcars |> ec.init(
-#'   series.param = list(encode= list(y='wt'), label= list(show=T, formatter=ec.clmn('%R2@','wt'))), 
+#'   series.param= list(encode= list(y='wt'), label= list(show=TRUE, formatter=ec.clmn('%R2@','wt'))), 
 #'   tooltip= list(valueFormatter= ec.clmn(scale=0) )
 #' )
 #' @export
@@ -1674,7 +1675,7 @@ strTabStyle3 <- "<style>
 
 #' ------------- Licence -----------------
 #'
-#' Original work Copyright 2021-2024 Larry Helgason
+#' Original work Copyright 2021-2026 Larry Helgason
 #' 
 #' Licensed under the Apache License, Version 2.0 (the "License");
 #' you may not use this file except in compliance with the License.

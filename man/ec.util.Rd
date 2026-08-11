@@ -85,7 +85,7 @@ tabset, table layout, support for GIS shapefiles through library 'sf'
 }
 \examples{
 library(dplyr)
-if (interactive()) {  # comm.out: Cran Fedora errors about some 'browser'
+if (interactive()) {  # if comm.out: Cran Fedora errors about some 'browser'
   library(sf)
   fname <- system.file("shape/nc.shp", package="sf")
   nc <- as.data.frame(st_read(fname))

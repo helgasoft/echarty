@@ -63,6 +63,9 @@ test_that("options preset", {
     p <- data.frame(x=-112, y=14, z=11) |> ec.init(load='3D')
     expect_equal(p$x$opts$series[[1]]$coordinateSystem, 'cartesian3D')
     expect_true(!is.null(p$x$opts$grid3D))
+    
+    p <- cars |> ec.init(load='3D', preset=F)
+    expect_equal(length(p$x$opts$series), 0)
   }
 })
 
@@ -396,7 +399,6 @@ test_that('column-to-style feature', {
   expect_equal(p$x$opts$series[[1]]$data[[2]]$itemStyle$opacity, 0.2)
   expect_true(is.null(p$x$opts$series[[1]]$encode))
   expect_true(is.null(p$x$opts$dataset))
-
 })
 
 test_that('preset axis type', {

@@ -250,13 +250,13 @@ HTMLWidgets.widget({
       //      R = 1:n, JS = 0:(n-1)
       //  ECharts 5.4.0: map selections are 'hidden' after filtering:
       //  see https://github.com/apache/echarts/issues/17772
+  // previous code version was in v.1.7.2
 
       if ((typeof x.settings)!='undefined' &&
     	    (typeof x.settings.crosstalk_key)!='undefined' && 
     	    (typeof x.settings.crosstalk_group)!='undefined' &&
     	    x.settings.crosstalk_key !=null && 
     	    x.settings.crosstalk_group !=null) {
-
         var tmp = opts.series.findIndex(x => x.datasetId === 'Xtalk');
         if (tmp==undefined) 
           console.log('no series found preset for crosstalk')
@@ -264,12 +264,31 @@ HTMLWidgets.widget({
         chart.sext = tmp;
         // chart.akeys = chart.filk = x.settings.crosstalk_key.map(x=>Number(x));
       	chart.akeys = chart.filk = x.settings.crosstalk_key;  // save all keys
-        chart.sele = [];
+        chart.sele = [];   // dataIndex currently highlighted in the chart, regardless of source
       	
       	var sel_handle = new crosstalk.SelectionHandle();
       	sel_handle.setGroup(x.settings.crosstalk_group);
       	var ct_filter =  new crosstalk.FilterHandle();
       	ct_filter.setGroup(x.settings.crosstalk_group);
+
+        // helper: fully clear whatever is currently highlighted/selected in the chart.
+        // NOTE: we deliberately do NOT rely on chart.sele (last known selection) here.
+        // That approach breaks for "deselect all" coming from crosstalk (DT sends an
+        // empty/null selection) because chart.sele can get out of sync with what's
+        // actually shown. Instead we clear across the FULL current index range
+        // (chart.filk, which always matches the currently filtered dataset), so the
+        // chart is guaranteed to return to a neutral state no matter how the previous
+        // highlight got there (click, external selection, or filter change).
+        function clearChartSelection() {
+          if (chart.filk && chart.filk.length > 0) {
+            var allIdx = chart.filk.map(function(_, i){ return i; });
+            chart.dispatchAction({type: 'downplay',
+                  seriesIndex: chart.sext, dataIndex: allIdx});
+            chart.dispatchAction({type: 'unselect',
+                  seriesIndex: chart.sext, dataIndex: allIdx});
+          }
+          chart.sele = [];
+        }
       	
       	chart.on("brushselected", function(keys) {    // send keys FROM echarty
       		let items = [];
@@ -291,23 +310,27 @@ HTMLWidgets.widget({
         		  //if (items.length==0) items = this.akeys; // send all keys: bad for map
         	    tmp = items.map(i=> chart.filk[i])
         		  sel_handle.set(tmp.map(String));
-              chart.sele = items;
+              chart.sele = items;   // native click-select is now the authoritative highlight state
         		}
       	})
     
     	  sel_handle.on("change", function(e) {  // external keys to our select
         	if (e.sender == sel_handle) return;
-          if (e.oldValue && e.oldValue.length>0) {   // clear previous
-      	    tmp = e.oldValue;  //.map(x=>Number(x));
-      	    tmp = tmp.map(r=> chart.filk.indexOf(r));
-            chart.dispatchAction({type: 'downplay', 
-                  seriesIndex: chart.sext, dataIndex: tmp });
-          }
-          if (e.value.length > 0) {
-    	      tmp = e.value;  //.map(x=>Number(x))
-      	    tmp = tmp.map(r=> chart.filk.indexOf(r))
+
+          // step 1: release ANY previous highlight/select, whether it came from a
+          // chart click (native select) or a prior external/crosstalk selection
+          // (programmatic highlight). This also correctly handles "deselect all"
+          // (e.value is empty/null) since it doesn't depend on what was selected before.
+          clearChartSelection();
+
+          // step 2: apply the new selection from the other widget (e.g. datatable)
+          if (e.value && e.value.length > 0) {
+    	      tmp = e.value  //.map(x=>Number(x))
+      	          .map(r=> chart.filk.indexOf(r))
+      	          .filter(i => i >= 0);
     	      chart.dispatchAction({type: 'highlight', 
     	            seriesIndex: chart.sext, dataIndex: tmp });
+            chart.sele = tmp;   // track it so the next clear knows what to release
           }
     	  });
     	  
@@ -326,7 +349,7 @@ HTMLWidgets.widget({
       	});
   	
       }   // ---------------- end crosstalk
-
+      
     },   // end renderValue
     
     getChart: function(){

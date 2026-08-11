@@ -155,17 +155,31 @@ data.frame(n=1:5) |> dplyr::group_by(n) |> ec.init(
   series.param= list(type='gauge', max=5)
 )
 
+# v.6  from https://github.com/apache/echarts-custom-series
 ec.init(
   series.param= list(
-    renderItem= 'segmentedDoughnut',   # v.6  from https://github.com/apache/echarts-custom-series
+    renderItem= 'segmentedDoughnut',
     itemPayload= list(segmentCount= 8, label= list(show=TRUE, formatter= '{c}/{b}', fontSize=35) ),
     data= list(5) )
 )
 
-ec.init(cars, js= 'confetti();',  # js code executes on init
+# JS code execution on init and on click
+ec.init(cars, js= 'confetti();',
   load= 'https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.4/dist/confetti.browser.min.js',
   ask= 'loadRemote',
   on= list(list(event= 'click', handler= ec.clmn('() => confetti()')) )
 )
 
+# Column-to-style binding with encode
+cars |> dplyr::mutate(
+  clr= sample(c('darkgreen','blue','red'), 50, TRUE),
+  opa= sample(c(0.3, 0.6, 0.9), 50, TRUE)
+) |>
+ec.init(
+  series.param= list(symbolSize=22, encode= list( 
+    data= list(value= c('speed', 'dist'),
+               label= list(show=TRUE, formatter='speed'),
+               itemStyle= list(color='clr', opacity='opa') )
+  ))
+) 
 }

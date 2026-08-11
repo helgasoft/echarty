@@ -26,6 +26,7 @@ A list of \strong{one serie} when type='polygon', or list of \strong{two series}
 }
 \description{
 A 'custom' serie with lower and upper boundaries
+ECharts v.6 introduced similar custom-series \href{https://github.com/apache/echarts-custom-series/tree/main/custom-series/lineRange}{lineRange}
 }
 \details{
 \itemize{

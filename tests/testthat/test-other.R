@@ -22,7 +22,7 @@ test_that("registerAll + custom-series v.6", {
     #ask= 'loadRemote',
     series.param= list(
       renderItem= 'segmentedDoughnut',
-      itemPayload= list(segmentCount= 8, label= list(show=T, formatter= '{c}/{b}', fontSize=35) ),
+      itemPayload= list(segmentCount= 8, label= list(show=TRUE, formatter= '{c}/{b}', fontSize=35) ),
       data= list(5) )    # data=5 does not work, auto-set help?
   )
   expect_equal(class(p$x$opts$series[[1]]$renderItem), 'character')
@@ -391,6 +391,7 @@ test_that("old plugins", {
 test_that('unusual cases', {
   p <- ec.init(series.param= list(data=c(150, 230, 224)) )  # allowed
   expect_equal(length(p$x$opts$series[[1]]$data), 3)
+  
   p <-iris |> ec.init(series.param= list(encode=list(x='Sepal.Length', y='BLAH')))
   # silent fail, takes default Y column (colY) for Y data
   expect_equal(p$x$opts$yAxis$name, 'BLAH')
@@ -421,4 +422,7 @@ test_that('mostly for coverage', {
   
   #p <- chickwts |> ec.init()  # bug #21282
   #expect_equal(p$x$opts$dataset[[1]]$dimensions[1], 'feed')
+  
+  expect_message(echarty:::.process_named_nested_lists(c(a=1, 4)))
+  ec.init( series.param= list(encode= list(x='aa')))    # for resolve_col
 })

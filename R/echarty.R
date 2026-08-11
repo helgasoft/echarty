@@ -157,19 +157,33 @@ renderCustom <- setNames(as.list(plf[[2]]), plf[[1]])
 #'   series.param= list(type='gauge', max=5)
 #' )
 #' 
+#' # v.6  from https://github.com/apache/echarts-custom-series
 #' ec.init(
 #'   series.param= list(
-#'     renderItem= 'segmentedDoughnut',   # v.6  from https://github.com/apache/echarts-custom-series
+#'     renderItem= 'segmentedDoughnut',
 #'     itemPayload= list(segmentCount= 8, label= list(show=TRUE, formatter= '{c}/{b}', fontSize=35) ),
 #'     data= list(5) )
 #' )
 #' 
-#' ec.init(cars, js= 'confetti();',  # js code executes on init
+#' # JS code execution on init and on click
+#' ec.init(cars, js= 'confetti();',
 #'   load= 'https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.4/dist/confetti.browser.min.js',
 #'   ask= 'loadRemote',
 #'   on= list(list(event= 'click', handler= ec.clmn('() => confetti()')) )
 #' )
-#' 
+#'
+#' # Column-to-style binding with encode
+#' cars |> dplyr::mutate(
+#'   clr= sample(c('darkgreen','blue','red'), 50, TRUE),
+#'   opa= sample(c(0.3, 0.6, 0.9), 50, TRUE)
+#' ) |>
+#' ec.init(
+#'   series.param= list(symbolSize=22, encode= list( 
+#'     data= list(value= c('speed', 'dist'),
+#'                label= list(show=TRUE, formatter='speed'),
+#'                itemStyle= list(color='clr', opacity='opa') )
+#'   ))
+#' ) 
 #' @importFrom htmlwidgets createWidget sizingPolicy getDependency JS shinyWidgetOutput shinyRenderWidget
 #' @importFrom utils read.csv modifyList
 #' @importFrom stats setNames
@@ -1265,6 +1279,7 @@ ec.upd <- function(wt, ...) {
 #' Area band
 #' 
 #' A 'custom' serie with lower and upper boundaries
+#' ECharts v.6 introduced similar custom-series \href{https://github.com/apache/echarts-custom-series/tree/main/custom-series/lineRange}{lineRange}
 #' 
 #' @param df A data.frame with lower and upper numerical columns and first column with X coordinates.
 #' @param lower The column name of band's lower boundary (string).
@@ -1843,7 +1858,7 @@ ec.plugjs <- function(wt=NULL, source=NULL, ask=FALSE) {
 #'
 #' Original work Copyright 2018 John Coene
 #' 
-#' Modified work Copyright 2021-2024 Larry Helgason
+#' Modified work Copyright 2021-2026 Larry Helgason
 #' 
 #' Licensed under the Apache License, Version 2.0 (the "License");
 #' you may not use this file except in compliance with the License.

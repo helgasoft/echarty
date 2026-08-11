@@ -2,7 +2,7 @@
 
 # echarty 1.7.3  in development
 
-* refactor some code inside _ec.init_
+* refactor some code inside _ec.init_, crosstalk small fix, more coverage tests
 
 # echarty 1.7.2  on CRAN
 

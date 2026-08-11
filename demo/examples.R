@@ -167,7 +167,7 @@ ec.init(load= 'leaflet',
 
 #------ Plugin 'world' with visualMap, minimal code -----
 data.frame(name=c('Brazil','Australia'), value=c(111,222)) |>
-ec.init(load= 'world', ctype='map', visualMap=list(show=T), color='#ddd')
+ec.init(load= 'world', ctype='map', visualMap=list(show=TRUE), color='#ddd')
 
 #------ Plugin 'world' with timeline -----
 set.seed(333)
@@ -211,9 +211,9 @@ fname <- system.file("shape/nc.shp", package="sf")
 nc <- as.data.frame(st_read(fname)) |> head(3)
 Xmin <- Ymin <- 1e+6; Xmax <- Ymax <- -1e+6;  # axes ranges are a must for lines!
 ec.init(
-     series= ec.util(cmd='sf.series', df=nc, coordinateSystem='cartesian2d', polyline=T, nid= 'NAME',
+     series= ec.util(cmd='sf.series', df=nc, coordinateSystem='cartesian2d', polyline=TRUE, nid= 'NAME',
 		    lineStyle= list(color='red', width=3) ),
-     tooltip= list(formatter= '{a}',  enterable=T, position='bottom'), 
+     tooltip= list(formatter= '{a}',  enterable=TRUE, position='bottom'), 
      dataZoom= list(list(type='inside',xAxisIndex =1), list(type='inside',yAxisIndex =1))
   ) |> ec.upd({
   series <- lapply(series, function(ss) {   # replace custom polygons with lines
@@ -682,31 +682,28 @@ hc <- hclust(dist(USArrests), "ave")
 cmax <- max(hc$height)
 treeData <- ec.data(hc, format='dendrogram')[[1]]
 
-if (FALSE) {
-  # data 2
-  library(data.tree); data(acme)
-  tmp <- acme
-  cmax <- max(tmp$Get('cost'), na.rm=TRUE)
-  tmp$Do(function(x) {   # works with or without values
-     cos <- as.numeric(x$cost); x$value <- ifelse(length(cos)==0, 0, cos) })  # add 'value'
-  treeData <- tmp |> ToListExplicit(unname =TRUE)
-}
-if (FALSE) {
-  # data 3
-  library(data.tree)
-  library(treemap); data(GNI2014)  # several dependencies...
-  tmp <- GNI2014
-  # Create a pathString column to define the hierarchy
-  tmp$continent <- as.character(tmp$continent)
-  tmp$pathString <- paste("world", tmp$continent, tmp$country, sep = "/")
-  # Convert the data frame to a data.tree Node
-  tmp <- as.Node(tmp[,])
-  tmp$Do(function(x) {
-    #pop <- as.numeric(x$population); x$value <- ifelse(length(pop)==0, 0, pop) })  # add 'value'
-    gni <- as.numeric(x$GNI); x$value <- ifelse(length(gni)==0, 0, gni) })  # add 'value'
-  cmax <- max(tmp$Get('GNI'), na.rm=TRUE) # add -1e9(-1B) for population
-  treeData <- tmp |> ToListExplicit(unname =TRUE)
-}
+  # # data 2
+  # library(data.tree); data(acme)
+  # tmp <- acme
+  # cmax <- max(tmp$Get('cost'), na.rm=TRUE)
+  # tmp$Do(function(x) {   # works with or without values
+  #    cos <- as.numeric(x$cost); x$value <- ifelse(length(cos)==0, 0, cos) })  # add 'value'
+  # treeData <- tmp |> ToListExplicit(unname =TRUE)
+
+  # # data 3
+  # library(data.tree)
+  # library(treemap); data(GNI2014)  # several dependencies...
+  # tmp <- GNI2014
+  # # Create a pathString column to define the hierarchy
+  # tmp$continent <- as.character(tmp$continent)
+  # tmp$pathString <- paste("world", tmp$continent, tmp$country, sep = "/")
+  # # Convert the data frame to a data.tree Node
+  # tmp <- as.Node(tmp[,])
+  # tmp$Do(function(x) {
+  #   #pop <- as.numeric(x$population); x$value <- ifelse(length(pop)==0, 0, pop) })  # add 'value'
+  #   gni <- as.numeric(x$GNI); x$value <- ifelse(length(gni)==0, 0, gni) })  # add 'value'
+  # cmax <- max(tmp$Get('GNI'), na.rm=TRUE) # add -1e9(-1B) for population
+  # treeData <- tmp |> ToListExplicit(unname =TRUE)
 
  # needed by JS for click event
 fdat <- jsonlite::toJSON(treeData, force=TRUE, auto_unbox=TRUE, null='null')
@@ -739,7 +736,7 @@ ec.init(load= 'custom', title= list(text='flame tree', bottom='5%'),
 #------ violin v.6 -----
 iris |> relocate(Species) |>   # X-axis column to be first
 ec.init(
-  tooltip = list(show=T), 
+  tooltip = list(show=TRUE), 
   xAxis = list(type= "category", jitter= 50, jitterOverlap= F), 
   series = list(
     list(renderItem= "violin", colorBy= "item",
@@ -755,7 +752,7 @@ Research, 2026-01-10,2026-02-05
 Design,	2026-02-01,2026-03-01
 Development, 2026-03-01,2026-04-15
 Testing, 2026-04-05,2026-05-01"
-df <- read.csv(header=T, text=dd, strip.white=TRUE) |> mutate(from=as.Date(from), to=as.Date(to)) |> relocate(type, .after=last_col())
+df <- read.csv(header=TRUE, text=dd, strip.white=TRUE) |> mutate(from=as.Date(from), to=as.Date(to)) |> relocate(type, .after=last_col())
 ec.init( df,
   xAxis= list(type= "time"), 
   yAxis= list(type = 'category'),
@@ -764,13 +761,13 @@ ec.init( df,
     ,encode= list(x= c(1,2), y= 3)
     #,encode= list(x= c(2,3), y= 1)  # ECharts bug
   ),
-  tooltip= list(show=T)
+  tooltip= list(show=TRUE)
 )
 
 
 #------ contour (density) v.6 -----
 ec.init(cars,  
-  legend= list(show=T),
+  legend= list(show=TRUE),
   series= list(
     list(type= 'scatter', name='scat', color='brown'),
     list(
@@ -783,7 +780,7 @@ ec.init(cars,
       tooltip= list(formatter='{c}') # contour tooltip is useless
     )
   ),
-  dataZoom= list(type='inside'), tooltip= list(show=T)
+  dataZoom= list(type='inside'), tooltip= list(show=TRUE)
 )
 
 #------ segmented donut v.6 -----
