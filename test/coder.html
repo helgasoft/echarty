@@ -103,19 +103,39 @@ https://github.com/r-wasm/webr/issues/435
 	2. echarty - compile to Webassembly + mount from github.io; dont rely on repos
 https://github.com/georgestagg/shiny-standalone-webr-demo/blob/main/shiny.js
    await webR.evalRVoid(`webr::mount("/shiny", "${window.location.href}/image/library.data")`);
+	3. code in querystring > execute at once
 */
+
+function processQueryString() {
+  // 1. Get the current URL parameters
+  const urlParams = new URLSearchParams(window.location.search);
+  
+  // 2. Check for your specific variable (change 'myVar' to your variable name)
+  const targetString = urlParams.get('rcode');
+  if (targetString !== null) {
+    
+    // Fill the textarea (change 'myTextarea' to your textarea's ID)
+    const textarea = document.getElementById('code');
+    if (textarea) {
+      textarea.value = targetString;   // needs %0A for line break, %23 for # 
+	 updCode();
+    }
+  }
+}
+
 var webR, fjson;
 import('https://webr.r-wasm.org/latest/webr.mjs').then(async ({ WebR }) => {
   webR = new WebR(); msg = document.getElementById('wver');
   await webR.init();
   wver= 'WebR v.'+ webR.version; console.log(wver); 
    
-  msg.innerHTML = wver+ ', loading echarty...'; 
+  msg.innerHTML = wver+ ', loading R libraries...'; 
   await webR.installPackages(['jsonlite', 'dplyr', 'zoo', 'data.tree', 'htmlwidgets'], true);
   await webR.installPackages(['echarty'], {repos:'https://helgasoft.r-universe.dev'}); 
 
   await webR.objs.globalEnv.bind('ec.webR', true);   // inform R about web environment
-  document.getElementById('app').innerHTML = 'Ready to plot &#x1f4ca' ;   //&#x1f44d  
+  document.getElementById('app').innerHTML = 'Ready to plot &#x1f4ca' ;   //&#x1f44d
+  processQueryString();
 });
 
 function rbHandler() {
@@ -196,7 +216,7 @@ chart <- ec.init(load='3D',  # grid3D= list(viewControl= list(autoRotate= TRUE))
 }
 
 async function updCode() {
-  document.getElementById('app').innerHTML= 'Wait...';
+  document.getElementById('app').innerHTML= 'Drawing chart...';
   exec = 'library(echarty);library(dplyr); \n' + document.getElementById('code').value +
   	    '\n as.character(htmlwidgets:::toHTML(chart))'
   tags_plot = '';
@@ -276,8 +296,8 @@ See also the <b>real-time data</b> processing <a href='realTime.html' target="_b
    </div>
    <textarea id='code' class='textarea inblock' rows=7 contenteditable>
 tmp <- help(package="echarty", help_type='text')
-title <- list(text= paste('echarty', gsub(' ','',tmp$info[[1]][4])), left='center')
-chart <- cars |> ec.init(title= title)
+txt <- paste(lapply(tmp$info[[1]], \(x) {sub(":\\s*", ": ", x)}) |> head(4) |> unlist() |> tail(2) |> rev(), collapse=' ')
+chart <- cars |> ec.init(title= list(text= txt, left='center'))
    </textarea>
    <a id='dlink' class='inblock' download='fullChart.json' onclick='dclick()'></a>
 	
@@ -320,6 +340,10 @@ window.onclick = function(event) {
     modal.style.display = "none";
   }
 }
+//document.addEventListener('DOMContentLoaded', (event) => {
+//	processQueryString();
+//});
+
 	</script>
   </body>
 </html>
